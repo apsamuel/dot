@@ -1,10 +1,10 @@
 # dotfiles
 
-one stop shop for configuration
-
-🍎 Apple M1 & Intel **`13.x+`** support
+Quickly setup a vanilla 🍎 Apple IOS **`13.x`**
 
 ## prerequisites
 
-- populate `./data/secrets` with values for tokens, etc.
+- install [homebrew](https://brew.sh)
+- populate [secrets](`./data/secrets`)
+  - `export FOO_SECRET=BAR_VALUE`
   - we'll export them in your shell session
