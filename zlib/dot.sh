@@ -21,6 +21,17 @@ export ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
 function dot.sh {
     local command="${1:-version}"
 
+    if [[ "${command}" =~ [Vv]ersion ]]; then
+        branch="$(git -C "${DOT_DIR}" rev-parse --abbrev-ref HEAD)"
+        local branch="${branch:-main}"
+        revision="$(git -C "${DOT_DIR}" rev-parse --short HEAD)"
+        local revision="${revision:-}"
+        date="$(git -C "${DOT_DIR}" log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M:%S')"
+        local date="${date:-}"
+        echo "${branch} (${revision}) built: ${date}"
+        return 0
+    fi
+
     if [[ "${command}" =~ [Uu]pdate ]]; then
         git -C "${DOT_DIR}" pull
     fi
