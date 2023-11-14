@@ -1,0 +1,93 @@
+#!/usr/local/bin/bash
+# disable warnings on expansion of variables locally, this is desired
+# shellcheck disable=SC2029
+export LAN_NETWORK="${LAN_NETWORK:-192.168.11.0/24}"
+declare -A LAN
+declare -A LAN_BINARY
+LAN_BINARY["address"]=$(command ipcalc "$LAN_NETWORK" | grep Address | awk '{print $3$4}')
+_octet4=$(echo "${LAN_BINARY["address"]}" | awk -F. '{print $4}')
+_octet3=$(echo "${LAN_BINARY["address"]}" | awk -F. '{print $3}')
+_octet2=$(echo "${LAN_BINARY["address"]}" | awk -F. '{print $2}')
+_octet1=$(echo "${LAN_BINARY["address"]}" | awk -F. '{print $1}')
+export _octet4 _octet3 _octet2 _octet1
+LAN_BINARY["netmask"]=$(command ipcalc "$LAN_NETWORK" | grep Netmask | awk '{print $3$4}')
+LAN_BINARY["network"]=$(command ipcalc "$LAN_NETWORK" | grep Network | awk '{print $3$4}')
+LAN_BINARY["broadcast"]=$(command ipcalc "$LAN_NETWORK" | grep Broadcast | awk '{print $3$4}')
+LAN_BINARY["hostmin"]=$(command ipcalc "$LAN_NETWORK" | grep HostMin | awk '{print $3$4}')
+LAN_BINARY["hostmax"]=$(command ipcalc "$LAN_NETWORK" | grep HostMax | awk '{print $3$4}')
+
+LAN["address"]=$(command ipcalc "$LAN_NETWORK" | grep Address | awk '{print $2}')
+LAN["netmask"]=$(command ipcalc "$LAN_NETWORK" | grep Netmask | awk '{print $2}')
+LAN["network"]=$(command ipcalc "$LAN_NETWORK" | grep Network | awk '{print $2}')
+LAN["broadcast"]=$(command ipcalc "$LAN_NETWORK" | grep Broadcast | awk '{print $2}')
+LAN["hostmin"]=$(command ipcalc "$LAN_NETWORK" | grep HostMin | awk '{print $2}')
+LAN["hostmax"]=$(command ipcalc "$LAN_NETWORK" | grep HostMax | awk '{print $2}')
+LAN["hosts"]=$(command ipcalc "$LAN_NETWORK" | grep Hosts | awk '{print $2}')
+export LAN LAN_BINARY
+
+
+
+export ROUTER=${LAN["hostmin"]}
+export DNS=${LAN["hostmin"]}
+export SWITCH=alphacentauri.home
+export ROUTER_DISK=/opt
+export CONF_DIR=/opt/etc
+export DNS_CONF=${CONF_DIR}/dnsmasq.conf
+
+function router::uptime() {
+    ssh "$ROUTER" 2>/dev/null uptime
+}
+
+function router::connect() {
+    ssh "$ROUTER" 2>/dev/null
+}
+
+function switch::connect() {
+    ssh "$SWITCH" 2>/dev/null
+}
+
+function router::backup() {
+
+    local backup_dir
+    backup_dir="$(ssh "$ROUTER" 2>/dev/null "mktemp -d")"
+
+    _ls() {
+        local _path="$1"
+        ssh "$ROUTER" 2>/dev/null ls -R1 "${_path}"
+    }
+
+    _backup() {
+        local timestamp
+        timestamp=$(date +%Y%m%d-%H%M%S)
+        ssh "$ROUTER" 2>/dev/null nvram backup "${backup_dir}/nvram-${timestamp}.bin"
+        ssh "$ROUTER" 2>/dev/null /opt/bin/opkg list-installed
+    }
+
+
+
+    ## backup NVRAM
+    echo "starting backup to $backup_dir on $(date)"
+
+    _backup
+    _ls "$backup_dir"
+}
+
+
+
+# function router::restore() {}
+
+function router::dns::restart() {
+    ssh "$ROUTER" 2>/dev/null "$ROUTER_DISK/admin/watch-dns.sh"
+}
+
+function router::dns::log() {
+    ssh "$ROUTER" 2>/dev/null "tail -f $ROUTER_DISK/admin/dnsmasq.log"
+}
+
+function router::dns::zone() {
+    ssh "$ROUTER" 2>/dev/null "cat $ROUTER_DISK/etc/dnsmasq.conf |grep -v '#' | grep -v '^$' |sort" | egrep '(address|dhcp-host)'
+}
+
+function router::dns::edit() {
+    ssh "$ROUTER" 2>/dev/null "vi $ROUTER_DISK/etc/dnsmasq.conf"
+}
