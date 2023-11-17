@@ -78,7 +78,7 @@ function software::validate::zsh () {
         software::install::zsh
     fi
 
-    if [[ -z "${ZSH}" ]]; then
+    if [[ -z ${ZSH} ]]; then
         echo "🛠️ zsh is not the default terminal..."
         software::configure::zsh
     fi
@@ -142,6 +142,7 @@ function software::install::font () {
 }
 
 function software::validate::fonts () {
+   brew tap homebrew/cask-fonts
    local desired_fonts=(
     [powerline]="font-powerline-symbols"
     [meslo]="font-meslo-for-powerline"
