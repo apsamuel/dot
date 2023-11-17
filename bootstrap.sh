@@ -3,13 +3,13 @@
 # shellcheck source=/dev/null
 
 function bootstrap::preflight () {
-    bootstrap::check::brew
-    bootstrap::check::zsh
-    bootstrap::check::omz
-    bootstrap::check::p10k
+    software::validate::brew
+    software::validate::zsh
+    software::validate::omz
+    software::validate::p10k
 }
 
-function bootstrap::install::brew () {
+function software::install::brew () {
     if command bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     then
         echo "✅ brew is installed"
@@ -20,7 +20,7 @@ function bootstrap::install::brew () {
     fi
 }
 
-function bootstrap::check::brew () {
+function software::validate::brew () {
     if ! command -v brew &> /dev/null
     then
         echo "💡 brew is installed"
@@ -28,34 +28,34 @@ function bootstrap::check::brew () {
     fi
 }
 
-function bootstrap::install::zsh () {
+function software::install::zsh () {
     if ! command brew install zsh
     then
         echo "🛠️ installing zsh..."
-        bootstrap::install::zsh
+        software::install::zsh
     fi
 }
 
-function bootstrap::configure::zsh () {
+function software::configure::zsh () {
     chsh -s "$(command -v zsh)" "${USER}"
 }
 
-function bootstrap::check::zsh () {
+function software::validate::zsh () {
     if ! command -v zsh &> /dev/null
     then
         echo "🛠️ installing zsh..."
-        bootstrap::install::zsh
+        software::install::zsh
     fi
 
     if [[ -z "${ZSH}" ]]; then
         echo "🛠️ zsh is not the default terminal..."
-        bootstrap::configure::zsh
+        software::configure::zsh
     fi
 
     return 0
 }
 
-function bootstrap::check::jq () {
+function software::validate::jq () {
     if command -v jq &> /dev/null
     then
         echo "💡 jq is installed"
@@ -67,7 +67,7 @@ function bootstrap::check::jq () {
 
 }
 
-function bootstrap::install::jq () {
+function software::install::jq () {
     if command brew install jq
     then
         echo "✅ jq is installed"
@@ -78,7 +78,7 @@ function bootstrap::install::jq () {
     fi
 }
 
-function bootstrap::check::omz () {
+function software::validate::omz () {
     # TODO: devise a better method of validating omz is actually installed, using type requires sourcing ZSH
     if [[ -d $HOME/.oh-my-zsh ]];
     then
@@ -90,7 +90,7 @@ function bootstrap::check::omz () {
     fi
 }
 
-function bootstrap::install::omz () {
+function software::install::omz () {
     if command sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     then
         echo "✅ oh-my-zsh is installed"
@@ -101,12 +101,12 @@ function bootstrap::install::omz () {
     fi
 }
 
-function bootstrap::check::p10k () {
+function software::validate::p10k () {
     if [[ -d "{ZSH_CUSTOM}/plugins/themes/powerlevel10k" ]];
     then
         echo "💡 powerlevel10k is installed"
     else
-        bootstrap::install::p10k
+        software::install::p10k
     fi
     if [[ -f "${HOME}/.p10k.zsh" ]];
     then
@@ -117,7 +117,7 @@ function bootstrap::check::p10k () {
     fi
 }
 
-function bootstrap::install::p10k () {
+function software::install::p10k () {
     if command git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"/themes/powerlevel10k
     then
         echo "✅ powerlevel10k is installed"
