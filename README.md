@@ -6,4 +6,4 @@ Quickly personalize your terminal/shell configuration on 🍎 Apple IOS **`>=13.
 
 - populate [secrets](./docs/SECRETS.md)
 - execute [bootstrap](./docs/BOOTSTRAP.md)
-- start `iterm2` !!
+- read the [faq](./docs/FAQ.md)
