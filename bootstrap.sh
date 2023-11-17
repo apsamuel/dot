@@ -78,7 +78,7 @@ function software::validate::zsh () {
         software::install::zsh
     fi
 
-    if [[ ! "${SHELL}" =~ .+zsh ]]; then
+    if [[ ! "$(basename -- "${SHELL}")" == "zsh" ]]; then
         echo "🛠️ zsh is not the default terminal..."
         software::configure::zsh
     fi
