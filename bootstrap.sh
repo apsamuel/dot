@@ -1,7 +1,7 @@
 #!/bin/bash
 # 🕵️ ignore shellcheck warnings about source statements
 
-directory="$(basename "$0")"
+directory="$(dirname "$0")"
 
 
 function bootstrap::preflight () {
