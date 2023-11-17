@@ -1,6 +1,6 @@
 # dotfiles
 
-Quickly personalize your terminal/shell configuration on 🍎 Apple IOS **`>=13.x`**
+**My** terminal/shell configuration on 🍎 Apple IOS **`>=13.x`**
 
 ## prerequisites
 
