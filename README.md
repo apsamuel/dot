@@ -4,10 +4,9 @@ Quickly personalize your terminal/shell configuration on 🍎 Apple IOS **`>=13.
 
 ## prerequisites
 
-- run [bootstrap](`./bootstrap.sh`)
-- populate [secrets](`./data/secrets`)
-  - treat this file like an `envrc`
-- restart your shell
+- populate [secrets](./docs/SECRETS.md)
+- execute [bootstrap](./docs/BOOTSTRAP.md)
+- start `iterm2` !!
 
 ## faqs
 
