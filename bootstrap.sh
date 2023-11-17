@@ -23,8 +23,8 @@ function software::install::brew () {
 function software::validate::brew () {
     if ! command -v brew &> /dev/null
     then
-        echo "💡 brew is installed"
-        return 0
+        echo "🛠️ installing brew ..."
+        software::install::brew
     fi
 }
 
@@ -37,7 +37,8 @@ function software::install::zsh () {
 }
 
 function software::configure::zsh () {
-    chsh -s "$(command -v zsh)" "${USER}"
+    chsh -s "$(command -v zsh)" "${USER}" && \
+    echo "✅ zsh is the default terminal, please restart your sessions"
 }
 
 function software::validate::zsh () {
@@ -55,18 +56,6 @@ function software::validate::zsh () {
     return 0
 }
 
-function software::validate::jq () {
-    if command -v jq &> /dev/null
-    then
-        echo "💡 jq is installed"
-    else
-        # return 1
-        echo "🛠️ jq is not installed..."
-        # command brew install jq
-    fi
-
-}
-
 function software::install::jq () {
     if command brew install jq
     then
@@ -78,16 +67,13 @@ function software::install::jq () {
     fi
 }
 
-function software::validate::omz () {
-    # TODO: devise a better method of validating omz is actually installed, using type requires sourcing ZSH
-    if [[ -d $HOME/.oh-my-zsh ]];
+function software::validate::jq () {
+    if ! command -v jq &> /dev/null
     then
-        echo "💡 oh-my-zsh is installed"
-    else
-        echo "🛠️ oh-my-zsh is not installed..."
-        # command sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-        # source ${HOME}/.zshrc
+        echo "🛠️ installing jq ..."
+        software::install::jq
     fi
+
 }
 
 function software::install::omz () {
@@ -101,19 +87,13 @@ function software::install::omz () {
     fi
 }
 
-function software::validate::p10k () {
-    if [[ -d "{ZSH_CUSTOM}/plugins/themes/powerlevel10k" ]];
+function software::validate::omz () {
+    # TODO: devise a better method of validating omz is actually installed, using type requires sourcing ZSH
+    if [[ ! -d $HOME/.oh-my-zsh ]];
     then
-        echo "💡 powerlevel10k is installed"
-    else
-        software::install::p10k
-    fi
-    if [[ -f "${HOME}/.p10k.zsh" ]];
-    then
-        echo "💡 powerlevel10k is installed"
-    else
-        echo "🛠️ powerlevel10k is not configured..."
-        # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"/themes/powerlevel10k
+        echo "🛠️ installing oh-my-zsh..."
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+        # source ${HOME}/.zshrc
     fi
 }
 
@@ -127,5 +107,26 @@ function software::install::p10k () {
         return 1
     fi
 }
+
+function software::configure::p10k () {
+    echo
+}
+
+function software::validate::p10k () {
+    if [[ ! -d "{ZSH_CUSTOM}/plugins/themes/powerlevel10k" ]];
+    then
+        echo "🛠️ installing powerlevel10k ..."
+        software::install::p10k
+    fi
+    if [[ -f "${HOME}/.p10k.zsh" ]];
+    then
+        echo "💡 powerlevel10k is installed"
+    else
+        echo "🛠️ powerlevel10k is not configured..."
+        # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"/themes/powerlevel10k
+    fi
+}
+
+
 
 bootstrap::preflight;
