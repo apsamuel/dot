@@ -35,7 +35,6 @@ function system::validate::cloud () {
         if [[ ! -L "${icloud_link}" ]]; then
             echo "🛠️ linking ${HOME}/iCloud ..."
             system::link::cloud
-
         fi
     fi
 }
