@@ -1,15 +1,15 @@
 # dotfiles
 
-Quickly setup a vanilla 🍎 Apple IOS **`13.x`**
+Quickly personalize your terminal/shell configuration on 🍎 Apple IOS **`>=13.x`**
 
 ## prerequisites
 
 - run [bootstrap](`./bootstrap.sh`)
 - populate [secrets](`./data/secrets`)
-  - `export FOO_SECRET=BAR_VALUE`
+  - treat this file like an `envrc`
 - restart your shell
 
 ## faqs
 
 - **Is this a ZSH framework?**
-  - *This is automation for local configuration of MY shell & opinions are made about which [frameworks](./docs/FRAMEWORKS.md) are in use*
+  - *No, but various [frameworks](./docs/FRAMEWORKS.md) are in use*
