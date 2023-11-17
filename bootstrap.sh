@@ -219,7 +219,7 @@ function software::configure::p10k () {
 }
 
 function software::validate::p10k () {
-    if [[ ! -d "{ZSH_CUSTOM}/plugins/themes/powerlevel10k" ]];
+    if [[ ! -d "${ZSH_CUSTOM}/plugins/themes/powerlevel10k" ]];
     then
         echo "🛠️ installing powerlevel10k ..."
         software::install::p10k
