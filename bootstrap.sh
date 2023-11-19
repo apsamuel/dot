@@ -8,15 +8,12 @@ dot_bootstrap_deps=${DOT_DEPS:-0}
 
 function dot::bootstrap () {
     # install & configure brew
-    if [[ ! $(dot::validate::brew) ]]; then
-        echo "🛠️ installing brew ..."
-        dot::install::brew
-    fi
-
+    dot::validate::brew
     # install our Brewfile
     dot::install::deps
-    # dot::validate::zsh
-    # dot::validate::omz
+    dot::validate::cloud
+    dot::validate::zsh
+    dot::validate::omz
     # dot::validate::p10k
 }
 
@@ -64,10 +61,11 @@ function dot::validate::cloud () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
 
-    if [[ -d "${icloud_directory}" ]]
+    if [[ -d "${icloud_directory}" ]];
+    echo "✅ iCloud is enabled"
     then
         if [[ ! -L "${icloud_link}" ]]; then
-            echo "🛠️ linking ${HOME}/iCloud ..."
+            echo "🛠️ linking ${icloud_link} ..."
             dot::link::cloud
         fi
     fi
@@ -87,7 +85,11 @@ function dot::install::brew () {
 function dot::validate::brew () {
     if ! command -v brew &> /dev/null
     then
-        return 1
+        echo "🛠️ installing brew..."
+        dot::install::brew
+    else
+        echo "✅ brew is installed"
+        return 0
     fi
 }
 
@@ -96,6 +98,9 @@ function dot::install::zsh () {
     then
         echo "🛠️ installing zsh..."
         dot::install::zsh
+    else
+        echo "✅ zsh is installed"
+        return 0
     fi
 }
 
@@ -109,11 +114,15 @@ function dot::validate::zsh () {
     then
         echo "🛠️ installing zsh..."
         dot::install::zsh
+    else
+        echo "✅ zsh is installed"
     fi
 
     if [[ ! "$(basename -- "${SHELL}")" == "zsh" ]]; then
         echo "🛠️ zsh is not the default terminal..."
         dot::configure::zsh
+    else
+        echo "✅ zsh is the default terminal"
     fi
 
     return 0
@@ -135,7 +144,10 @@ function dot::validate::jq () {
     then
         echo "🛠️ installing jq ..."
         dot::install::jq
+    else
+        echo "✅ jq is installed"
     fi
+    return 0
 
 }
 
@@ -151,7 +163,11 @@ function dot::install::iterm () {
 }
 
 function dot::configure::iterm () {
-    echo
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+
+    # enable icloud preferences in iterm2
+    defaults write com.googlecode.iterm2 PrefsCustomFolder -string "${icloud_directory}/dot/terminal"
+    defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
 }
 
 function dot::validate::iterm () {
@@ -159,6 +175,9 @@ function dot::validate::iterm () {
     then
         echo "🛠️ installing iterm2 ..."
         dot::install::iterm
+    else
+        echo "✅ iterm2 is installed"
+        return 0
     fi
 }
 
@@ -213,17 +232,23 @@ function dot::validate::themes () {
 
 }
 
+function dot::configure::omz () {
+    cp "${dot_bootstrap_directory}"/config/zshrc "${HOME}/.zshrc"
+}
+
 function dot::install::omz () {
-    curl -L https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh > "${TMP}"/install_omz.sh
-    chmod +x "${TMP}"/install_omz.sh
-    if KEEP_ZSHRC=yes CHSH=no RUNZSH=no ./"${TMP}/install_omz.sh"; then
+    curl -L https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install_omz.sh
+    chmod +x /tmp/install_omz.sh
+    if KEEP_ZSHRC=yes CHSH=no RUNZSH=no /tmp/install_omz.sh; then
+        #copy the zshrc in place
+        dot::configure::omz
         echo "✅ oh-my-zsh is installed"
-        return 0
     else
         echo "❌ oh-my-zsh installation failed"
         return 1
     fi
 
+    return 0
 }
 
 function dot::validate::omz () {
@@ -233,6 +258,8 @@ function dot::validate::omz () {
         echo "🛠️ installing oh-my-zsh..."
         dot::install::omz
     fi
+    echo "✅ configuring zsh..."
+    dot::configure::omz
 }
 
 function dot::install::p10k () {
@@ -247,24 +274,23 @@ function dot::install::p10k () {
 }
 
 function dot::configure::p10k () {
-    # TODO: move font installation to a separate function
-    brew install font-meslo-for-powerline font-powerline-symbols font-menlo-for-powerline
-    cp "${dot_bootstrap_directory}"/config/.p10k.zsh "${HOME}/.p10k.zsh"
+    cp "${dot_bootstrap_directory}"/config/p10k.zsh "${HOME}/.p10k.zsh"
 }
 
 function dot::validate::p10k () {
+    # installed
     if [[ ! -d "${ZSH_CUSTOM}/plugins/themes/powerlevel10k" ]];
     then
         echo "🛠️ installing powerlevel10k ..."
         dot::install::p10k
     fi
     if [[ -f "${HOME}/.p10k.zsh" ]];
+    # configured
     then
-        echo "💡 powerlevel10k is installed"
+        echo "✅ powerlevel10k is installed"
     else
-        echo "🛠️ powerlevel10k is not configured..."
+        echo "❌ powerlevel10k is not configured..."
         dot::configure::p10k
-        # git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"/themes/powerlevel10k
     fi
 }
 

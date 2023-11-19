@@ -59,7 +59,8 @@ brew "fzf"
 brew "gdk-pixbuf"
 brew "gh"
 brew "ghostscript"
-brew "giflossy"
+# brew "giflossy"
+brew "giflib"
 brew "git"
 brew "git-extras"
 brew "glfw"
@@ -120,7 +121,7 @@ brew "rlwrap"
 brew "ruby"
 brew "shellcheck"
 brew "speedtest-cli"
-brew "stormssh-completion"
+# brew "stormssh-completion"
 brew "telnet"
 brew "terraform"
 brew "terraform-docs"
@@ -139,7 +140,7 @@ brew "z"
 brew "zsh"
 brew "zsh-completions"
 brew "zsh-syntax-highlighting"
-brew "mongodb/brew/mongodb-community"
+# brew "mongodb/brew/mongodb-community"
 brew "eksctl"
 cask "1password-cli"
 cask "anaconda"
@@ -159,8 +160,8 @@ cask "wireshark"
 mas "Adblock Plus", id: 1432731683
 mas "Amphetamine", id: 937984704
 mas "AWS Extend Switch Roles", id: 1592710340
-mas "C. Anatomy", id: 1141323850
-mas "CleanMyMac X", id: 1339170533
+#mas "C. Anatomy", id: 1141323850
+#mas "CleanMyMac X", id: 1339170533
 mas "Curve", id: 1219074514
 mas "GarageBand", id: 682658836
 mas "Grammarly for Safari", id: 1462114288
@@ -168,19 +169,19 @@ mas "Hotspot Shield", id: 771076721
 mas "HP Smart", id: 1474276998
 mas "iMovie", id: 408981434
 mas "Keynote", id: 409183694
-mas "Kindle Classic", id: 405399194
-mas "Microsoft Remote Desktop", id: 1295203466
+#mas "Kindle Classic", id: 405399194
+#mas "Microsoft Remote Desktop", id: 1295203466
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
-mas "PCalc", id: 403504866
-mas "Pixelmator Pro", id: 1289583905
+#mas "PCalc", id: 403504866
+#mas "Pixelmator Pro", id: 1289583905
 mas "PrettyJSON for Safari", id: 1445328303
 mas "Remote Desktop", id: 409907375
 mas "Speedtest", id: 1153157709
-mas "Vimari", id: 1480933944
+#mas "Vimari", id: 1480933944
 mas "WiFi Speed Test", id: 1455463454
-mas "World of Guns", id: 1143779751
-mas "Civilization VI", id: 1123795278
+#mas "World of Guns", id: 1143779751
+#mas "Civilization VI", id: 1123795278
 vscode "4ops.terraform"
 vscode "ahmadawais.shades-of-purple"
 vscode "alefragnani.project-manager"

@@ -1,12 +1,24 @@
 #!/usr/local/bin/bash
+set -o nopipefail
 
-# command zsh -c 'emulate bash'
-# function hello () {
-#     echo "hello world"
-# }
+
+# executing in linux
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+# executing in native arm64 mac
+elif [[ $OSTYPE == darwin* && "$ARCH" == "arm64" ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+# executing in rosetta or an intel mac
+elif [[ $OSTYPE == darwin* && "$ARCH" == "i386" ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+else
+    echo "Warning: problem detecting OSTYPE"
+fi
+
 
 function brew::check {
-  if brew list -1 | grep -q "$1"; then
+  local input="$1"
+  if brew list -1 | grep -q "${input}"; then
     echo "Package '$1' is installed"
   else
     echo "Package '$1' is not installed"
