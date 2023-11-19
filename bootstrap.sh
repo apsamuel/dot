@@ -32,7 +32,7 @@ function dot::install::deps () {
 }
 
 function dot::validate::deps () {
-    # force reinstallation of dependencies by setting DOT_DEPS=1
+    # you can force reinstallation of dependencies by setting DOT_DEPS=1
     if [[ "${dot_bootstrap_deps}" -gt 0 ]]; then
         echo "🛠️ installing bootstrap deps ..."
         dot::install::deps
