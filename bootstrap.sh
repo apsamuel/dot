@@ -21,7 +21,7 @@ function dot::bootstrap () {
 }
 
 function dot::install::deps () {
-    if command brew bundle install --file "${dot_bootstrap_directory}/Brewfile";
+    if command brew bundle install --file "${dot_bootstrap_directory}/data/Brewfile";
     then
         echo "✅ dependencies ok"
         return 0
@@ -37,7 +37,7 @@ function dot::validate::deps () {
         echo "🛠️ installing bootstrap deps ..."
         dot::install::deps
     else
-        if ! command brew bundle check --file "${dot_bootstrap_directory}/Brewfile" &> /dev/null
+        if ! command brew bundle check --file "${dot_bootstrap_directory}/data/Brewfile" &> /dev/null
         then
             echo "🛠️ installing dependencies ..."
             dot::install::deps
