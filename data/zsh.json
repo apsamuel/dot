@@ -1,4 +1,6 @@
 {
+    "theme": "powerlevel10k/powerlevel10k",
+    "path": [],
     "options": [
         "autopushd",
         "extendedglob",

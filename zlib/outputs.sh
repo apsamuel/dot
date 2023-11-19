@@ -38,6 +38,16 @@ function termLogo() {
 	find "${HOME}/.terminal_images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --width=80 -b {}
 }
 
+function termImage () {
+
+    local image="${1}"
+    TERM=screen-256color "$HOME"/.iterm2/imgcat "${image}"
+    sleep 5
+    export TERM=xterm-256color
+    # echo "hi"
+}
+
+
 function termRandomFont() {
 	fonts=(
 		"cyberlarge"
