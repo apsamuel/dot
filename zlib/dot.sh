@@ -43,12 +43,12 @@ function dot::sh {
 
     # reload
     if [[ "${command}" =~ reload ]]; then
-        # since we are using oh-my-zsh, we just do...
+        # we are using oh-my-zsh, so basically...
         omz reload
     fi
 
     # changelog
-    if [[ "${command}" =~ changelog ]]; then
+    if [[ "${command}" == changelog ]]; then
         # accept subcommand(s)
         local subcommand="${2:-}"
 
@@ -70,7 +70,7 @@ function dot::sh {
     fi
 
     # env
-    if [[ "${command}" =~ printenv ]]; then
+    if [[ "${command}" == printenv ]]; then
         env | "${HOME}"/.dot/bin/mask.sh
     fi
 
