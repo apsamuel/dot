@@ -49,16 +49,29 @@ function dot::sh {
 
     # changelog
     if [[ "${command}" =~ changelog ]]; then
-        git -C "${DOT_DIR}" log --pretty="%C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset))%x09 %C(Cyan)%an: %C(reset)%s" --date=short -7
+        # accept subcommand(s)
+        local subcommand="${2:-}"
+
+        if [[ "${subcommand}" == "" || -z "${subcommand}" ]]; then
+            git -C "${DOT_DIR}" log --pretty="%C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset))%x09 %C(Cyan)%an: %C(reset)%s" --date=short -7 && return 0
+            return 1
+            # return 0
+        fi
+
+        if [[ "${subcommand}" == "-all" ]]; then
+            git -C "${DOT_DIR}" log --pretty="%C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset))%x09 %C(Cyan)%an: %C(reset)%s" --date=short && return 0
+            return 1
+        fi
+
+        if [[ "${subcommand}" == "-details" ]]; then
+            git -C "${DOT_DIR}" log -p --pretty="%C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset))%x09 %C(Cyan)%an: %C(reset)%s" --date=short -7 && return 0
+            return 1
+        fi
     fi
 
     # env
     if [[ "${command}" =~ printenv ]]; then
-        # PAGER=${PAGER:-bat} printenv
-        set
+        env | "${HOME}"/.dot/bin/mask.sh
     fi
-    if [[ "${command}" =~ showenv ]]; then
-        # PAGER=${PAGER:-bat} printenv
-        set | vim -R -
-    fi
+
 }
