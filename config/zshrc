@@ -17,6 +17,23 @@ ZLIB_HELPERS_DIR="${ZLIB_HELPERS_DIR:-$DOT_PROJECT_DIR/zlib}"
 SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # where are we? https://stackoverflow.com/a/246128/1235074
 SHELL_INIT_START=$(date +%s)
 
+export TERM=xterm-256color
+export MANPATH="/usr/local/man:$MANPATH"
+export HISTSIZE=100000
+export SAVEHIST=$HISTSIZE
+export HISTFILE=$HOME/.zsh_history
+export MANPATH="/usr/local/man:$MANPATH"
+GPG_TTY=$(tty)
+export GPG_TTY
+export LANG=en_US.UTF-8
+export EDITOR=vim
+export ZSH_COLORIZE_TOOL=pygmentize
+export PAGER='bat '
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
+arch="$(arch)"
+export ARCH="${arch}"
+
 # run bootstrap
 # sh "$HOME"/.dot/bootstrap.sh
 
@@ -66,6 +83,7 @@ zstyle :omz:plugins:ssh-agent agent-forwarding on
 zstyle :omz:plugins:ssh-agent lifetime
 
 # load & export secrets from $HOME/.config/secrets.json
+# TODO: move secrets to icloud directory
 if [[ -d "$HOME"/.dot/data && -f "$HOME"/.dot/data/secrets.json ]]; then
     # uses an associative array to load secrets into memory
     declare -A secrets
@@ -95,33 +113,6 @@ if [[ -d "$HOME"/.dot/data && -f "$HOME"/.dot/data/secrets.json ]]; then
 fi
 
 
-# if [[ -d "$HOME"/.config && -f "$HOME"/.config/secrets ]]; then
-#     source "$HOME"/.config/secrets
-# fi
-
-# # load & export secrets from $HOME/.dot/data/secrets
-# if [[ -d "$HOME"/.dot/data && -f "$HOME"/.dot/data/secrets ]]; then
-#     source "$HOME"/.dot/data/secrets
-# fi
-
-
-export TERM=xterm-256color
-export MANPATH="/usr/local/man:$MANPATH"
-export HISTSIZE=100000
-export SAVEHIST=$HISTSIZE
-export HISTFILE=$HOME/.zsh_history
-export MANPATH="/usr/local/man:$MANPATH"
-GPG_TTY=$(tty)
-export GPG_TTY
-export LANG=en_US.UTF-8
-export EDITOR=vim
-export ZSH_COLORIZE_TOOL=pygmentize
-export PAGER='bat '
-export MANPAGER="sh -c 'col -bx | bat -l man -p'"
-export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
-arch="$(arch)"
-export ARCH="${arch}"
-
 if [[ ${DOT_PROJECT_SPLASH_ENTRANCE} == true && "${DOT_PROJECT_SPLASH_TYPE}" == "quote" ]]; then
     # echo "quote"
     termQuote
@@ -129,18 +120,6 @@ fi
 if [[ ${DOT_PROJECT_SPLASH_ENTRANCE} == true && "${DOT_PROJECT_SPLASH_TYPE}" == "ascii" ]]; then
     termLogo
 fi
-
-
-# # set homebrew path based on session architecture
-# if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-#     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-# elif [[ $OSTYPE == darwin* && "$ARCH" == "arm64" ]]; then
-#     eval "$(/opt/homebrew/bin/brew shellenv)"
-# elif [[ $OSTYPE == darwin* && "$ARCH" == "i386" ]]; then
-#     eval "$(/usr/local/bin/brew shellenv)"
-# else
-#     echo "Warning: problem detecting OSTYPE"
-# fi
 
 ## node
 export NODE_VERSION=16.13.2
@@ -180,7 +159,8 @@ export ZSH="$HOME/.oh-my-zsh"
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 #ZSH_THEME="robbyrussell"
-export ZSH_THEME="powerlevel10k/powerlevel10k"
+ZSH_THEME="$(jq -r '.theme' "$HOME"/.dot/data/zsh.json)"
+export ZSH_THEME
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
