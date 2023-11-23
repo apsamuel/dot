@@ -1,4 +1,6 @@
 #!/bin/bash
+#% description: prepare a new macos machine for my personal use
+#% usage: ./bootstrap.sh
 # 🕵️ ignore shellcheck warnings about source statements
 
 dot_bootstrap_directory="$(dirname "$0")"
@@ -12,6 +14,7 @@ function dot::bootstrap () {
     # install our Brewfile
     dot::install::deps
     dot::validate::cloud
+    dot::validate::iterm
     dot::validate::zsh
     dot::validate::omz
     # dot::validate::p10k
@@ -177,6 +180,7 @@ function dot::validate::iterm () {
         dot::install::iterm
     else
         echo "✅ iterm2 is installed"
+        dot::configure::iterm
         return 0
     fi
 }
