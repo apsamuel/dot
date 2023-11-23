@@ -167,10 +167,19 @@ function dot::install::iterm () {
 
 function dot::configure::iterm () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local dynamic_profiles="${HOME}/Library/Application Support/iTerm2/DynamicProfiles"
 
     # enable icloud preferences in iterm2
     defaults write com.googlecode.iterm2 PrefsCustomFolder -string "${icloud_directory}/dot/terminal"
     defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
+
+    # copy Profiles to DynamicProfiles path
+    if [[ ! -d "${dynamic_profiles}" ]];
+    then
+        mkdir -p "${dynamic_profiles}"
+    fi
+    cp "${icloud_directory}/dot/terminal/iterm2.profiles.json" "${dynamic_profiles}/Profiles.json"
+
 }
 
 function dot::validate::iterm () {
