@@ -64,7 +64,7 @@ function termRandomFont() {
 
 function randomQuote() {
 	randomQuote="$(
-		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${HOME}/.zsh_helpers/quotes.json" |shuf -n1
+		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${HOME}/.dot/data/quotes.json" |shuf -n1
 	)"
 	echo "${randomQuote}"
 }

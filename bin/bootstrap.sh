@@ -3,16 +3,21 @@
 #% usage: ./bootstrap.sh
 # 🕵️ ignore shellcheck warnings about source statements
 
+# globals
 dot_bootstrap_directory="$(dirname "$0")"
 dot_boostrap_file="${dot_bootstrap_directory}/bootstrap.sh"
-echo "🛠️ executing ${dot_boostrap_file}"
 dot_bootstrap_deps=${DOT_DEPS:-0}
+
+function dot::bootstrap::info () {
+    echo "🛠️ executing ${dot_boostrap_file}"
+}
 
 function dot::bootstrap () {
     # install & configure brew
     dot::validate::brew
     # install our Brewfile
     dot::install::deps
+    dot::configure::ssh
     dot::validate::cloud
     dot::validate::iterm
     dot::validate::zsh
@@ -72,6 +77,35 @@ function dot::validate::cloud () {
             dot::link::cloud
         fi
     fi
+}
+
+function dot::configure::ssh () {
+    local ssh_config="${HOME}/.ssh/config"
+    local ssh_config_dot="${HOME}/iCloud/dot/ssh/config"
+    local ssh_keys=()
+
+    # always update the ssh config file
+    rm -f "${ssh_config}" && \
+    ln -s "${ssh_config_dot}" "${ssh_config}" && \
+    echo "✅ ${ssh_config} is linked to ${ssh_config_dot}"
+
+    # refresh the keys from iCloud
+    mapfile -t ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
+
+    for ssh_key in "${ssh_keys[@]}"; do
+        if [[ "${ssh_key}" =~ config ]]; then
+            continue
+        fi
+        local ssh_key_name
+        ssh_key_name="$(basename "${ssh_key}")"
+        local ssh_key_path="${HOME}/.ssh/${ssh_key_name}"
+        rm -f "${ssh_key_path}" && \
+        ln -s "${ssh_key}" "${ssh_key_path}" && \
+        echo "✅ ${ssh_key_path} is linked to ${ssh_key}"
+    done
+
+
+
 }
 
 function dot::install::brew () {
@@ -247,6 +281,20 @@ function dot::validate::themes () {
 
 function dot::configure::omz () {
     cp "${dot_bootstrap_directory}"/config/zshrc "${HOME}/.zshrc"
+    # checkout custom plugins
+    # local custom_plugins=()
+    local custom_plugins_length
+    custom_plugins_length=$(jq -r '.plugins.custom| length' "${HOME}/.dot/data/zsh.json")
+    # mapfile -t custom_plugins < <(jq -r '.plugins.custom | .[]' "${HOME}/.dot/data/zsh.json")
+    for (( i=1; i<custom_plugins_length; i++ )); do
+        local custom_plugin
+        # load each dictionary item as an associative array
+        custom_plugin=$(
+            jq -r --arg index "${i}" '"(", (.plugins.custom[($index)] | to_entries | .[] | "["+(.key|@sh)+"]="+(.value|@sh) ), ")"' "${HOME}/.dot/data/zsh.json"
+        )
+        echo "✅ loading custom plugin ${custom_plugin}"
+
+    done
 }
 
 function dot::install::omz () {
@@ -309,4 +357,4 @@ function dot::validate::p10k () {
 
 
 
-dot::bootstrap;
+# dot::bootstrap;

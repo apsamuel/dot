@@ -1,13 +1,25 @@
-#% description: a Mac OSX agnostic ZSH resource file
-#% usage:
-#%  - chsh -s $(which zsh) & reload terminal
-#%  - source ~/.zshrc in a ZSH session
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
 # 🕵️ ignore shellcheck warnings about read/mapfile
 # shellcheck disable=SC2207
 
+#% description: a Mac OSX agnostic ZSH resource file
+#% usage: chsh -s $(which zsh) , source ~/.zshrc
+
 ulimit -c unlimited
+
+# compile terminfo
+function compile::terminfo() {
+    infocmp -x xterm-256color
+    printf '\t%s\n' 'ncv@,'
+} >/tmp/t && tic -x /tmp/t
+
+# {
+#     infocmp -x xterm-256color
+#     printf '\t%s\n' 'ncv@,'
+# } >/tmp/t && tic -x /tmp/t
+
+compile::terminfo
 
 DOT_PROJECT_DEBUG=${DOT_PROJECT_DEBUG:-false}
 DOT_PROJECT_SPLASH_ENTRANCE=${DOT_PROJECT_SPLASH_ENTRANCE:-true}
@@ -34,10 +46,21 @@ export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
 arch="$(arch)"
 export ARCH="${arch}"
 
-# run bootstrap
-# sh "$HOME"/.dot/bootstrap.sh
+# enable zsh options
+ZSH_OPTIONS=(
+    $(
+        jq -r '.options[]' "$HOME"/.dot/data/zsh.json | xargs
+    )
+)
+export ZSH_OPTIONS
+for opt in "${ZSH_OPTIONS[@]}"; do
+    if [[ ! "${DOT_PROJECT_DEBUG}x" == "x" && "${DOT_PROJECT_DEBUG}" == true ]]; then
+        echo "sets option: $opt"
+    fi
+    setopt "${opt}"
+done
 
-# source zlib
+# source zsh libraries from $ZLIB_HELPERS_DIR
 if [[ -d "$ZLIB_HELPERS_DIR" ]]; then
     for lib in "${ZLIB_HELPERS_DIR}"/* ; do
         if [[ ! "${DOT_PROJECT_DEBUG}x" == "x" && "${DOT_PROJECT_DEBUG}" == true ]]; then
@@ -49,23 +72,6 @@ else
     echo "Warning: ZLIB_HELPERS_DIR not found: $ZLIB_HELPERS_DIR"
 fi
 
-
-
-ZSH_OPTIONS=(
-    $(
-        jq -r '.options[]' "$HOME"/.dot/data/zsh.json | xargs
-    )
-)
-export ZSH_OPTIONS
-
-# set ZSH flag options
-
-for opt in "${ZSH_OPTIONS[@]}"; do
-    if [[ ! "${DOT_PROJECT_DEBUG}x" == "x" && "${DOT_PROJECT_DEBUG}" == true ]]; then
-        echo "sets option: $opt"
-    fi
-    setopt "${opt}"
-done
 
 # 💡 the zstyle section should precede sourcing of oh-my-zsh
 zstyle :omz:plugins:iterm2 shell-integration yes # enable zsh integration
@@ -82,8 +88,7 @@ zstyle :omz:plugins:ssh-agent identities id_rsa id_import_rsa id_rsa_switch noop
 zstyle :omz:plugins:ssh-agent agent-forwarding on
 zstyle :omz:plugins:ssh-agent lifetime
 
-# load & export secrets from $HOME/.config/secrets.json
-# TODO: move secrets to icloud directory
+# TODO: host secrets in icloud directory (optionally)
 if [[ -d "$HOME"/.dot/data && -f "$HOME"/.dot/data/secrets.json ]]; then
     # uses an associative array to load secrets into memory
     declare -A secrets
@@ -114,21 +119,20 @@ fi
 
 
 if [[ ${DOT_PROJECT_SPLASH_ENTRANCE} == true && "${DOT_PROJECT_SPLASH_TYPE}" == "quote" ]]; then
-    # echo "quote"
     termQuote
 fi
 if [[ ${DOT_PROJECT_SPLASH_ENTRANCE} == true && "${DOT_PROJECT_SPLASH_TYPE}" == "ascii" ]]; then
     termLogo
 fi
 
-## node
+## TODO: move node setup to library file
 export NODE_VERSION=16.13.2
 export N_PREFIX=${HOME}/devops/node
 NODE_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 export NODE_OS
 export NODE_ARCH=x64
 
-# path
+# TODO: move path setup to library file, use JSON to define additional paths
 export PATH=${HOME}/devops/node/node-v${NODE_VERSION}-${NODE_OS}-${NODE_ARCH}/bin:${HOME}/devops/scripts:$PATH:/Users/aaronsamuel/Library/Python/3.11/bin
 export PATH="$HOME/.jenv/bin:$PATH"
 eval "$(jenv init -)"
@@ -219,41 +223,6 @@ export plugins=(
         jq -r '.plugins[]' "$HOME"/.dot/data/zsh.json | xargs
     )
 )
-# export plugins=(
-#     brew
-#     history
-#     alias-finder
-#     colorize
-#     colored-man-pages
-#     copybuffer
-#     copypath
-#     direnv
-#     emoji
-#     emoji-clock
-#     dash
-#     vi-mode
-#     ssh-agent
-#     zsh-navigation-tools
-#     kubectl
-#     git
-#     git-extras
-#     gitignore
-#     gh
-#     gnu-utils
-#     web-search
-#     node
-#     npm
-#     conda-zsh-completion
-#     autopep8
-#     python
-#     docker
-#     docker-compose
-#     zsh-autosuggestions
-#     thefuck
-#     zsh_codex
-#     F-Sy-H
-#     nmap
-# )
 
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#E0F40A,bg=black,bold,underline"
 
@@ -287,34 +256,24 @@ bindkey '\e[F' end-of-line
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f "$HOME"/.p10k.zsh ]] || source "$HOME"/.p10k.zsh
 
-# zsh syntax highlighting
-# source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-#export ZSH_HIGHLIGHT_HIGHLIGHTERS_DIR=/usr/local/share/zsh-syntax-highlighting/highlighters
-#source /usr/local/opt/zsh-fast-syntax-highlighting/share/zsh-fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
-#source /usr/local/Cellar/zsh-syntax-highlighting/0.7.1/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
 #iterm integration
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
-
-#zsh completions
+# load zsh completions
 if type brew &>/dev/null; then
     FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
     autoload -Uz compinit
     compinit
 fi
 
-{
-    infocmp -x xterm-256color
-    printf '\t%s\n' 'ncv@,'
-} >/tmp/t && tic -x /tmp/t
+
 
 # thefuck
 eval "$(thefuck --enable-experimental-instant-mode --yeah --alias)"
 #launchctl completions
 source /usr/local/Cellar/launchctl-completion/1.0/etc/bash_completion.d/launchctl
 #stormssh completions
-source /usr/local/Cellar/stormssh-completion/0.1.1/etc/bash_completion.d/stormssh
+#source /usr/local/Cellar/stormssh-completion/0.1.1/etc/bash_completion.d/stormssh
 # z plugin
 source /usr/local/Cellar/z/1.9/etc/profile.d/z.sh
 

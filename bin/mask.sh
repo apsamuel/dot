@@ -20,6 +20,7 @@ secret_keys=(
     )
 )
 
+
 # if secrets length is greater than 0, write to /tmp/.secrets
 if [[ ${#secret_keys[@]} -gt 0  ]]; then
     # echo $TMPDIR
@@ -27,6 +28,9 @@ if [[ ${#secret_keys[@]} -gt 0  ]]; then
     echo "#!/bin/bash" > "$TMPDIR"/.secrets
 fi
 
+# "conda-zsh-completion": "conda-incubator",
+#             "zsh-autosuggestions": "zsh-users",
+#             "F-Sy-H": "z-shell"
 declare -A secrets
 declare secret_word_filter
 declare blocked_word_filter
