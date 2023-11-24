@@ -16,7 +16,7 @@ blocked_words=(
 
 secret_keys=(
     $(
-        jq -r '. | keys | .[]' "$HOME"/.dot/data/secrets.json | xargs
+        jq -r '. | keys | .[]' "$ICLOUD"/dot/secrets.json | xargs
     )
 )
 
@@ -40,7 +40,7 @@ blocked_word_filter="SuperSecretPassword"
 
 # rebuild secrets file & associative array
 for secret_key in "${secret_keys[@]}"; do
-    secrets["$secret_key"]="$(jq --arg secret_key "${secret_key}" -r '.[$secret_key]' "$HOME"/.dot/data/secrets.json)"
+    secrets["$secret_key"]="$(jq --arg secret_key "${secret_key}" -r '.[$secret_key]' "$ICLOUD"/dot/secrets.json)"
     echo "${secret_key}=${secrets[$secret_key]}" >> "$TMPDIR"/.secrets
 done
 
