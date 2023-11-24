@@ -112,7 +112,7 @@ if [[ -d "$ICLOUD"/dot && -f "$ICLOUD"/dot/secrets.json ]]; then
         echo "#!/bin/bash" > "$TMPDIR"/.secrets
     fi
     for secretKey in "${secretKeys[@]}"; do
-        secrets[$secretKey]="$(jq --arg secretKey "${secretKey}" -r '.[$secretKey]' "$HOME"/.dot/data/secrets.json)"
+        secrets[$secretKey]="$(jq --arg secretKey "${secretKey}" -r '.[$secretKey]' "$ICLOUD"/dot/secrets.json)"
         echo "${secretKey}=${secrets[$secretKey]}" >> "$TMPDIR"/.secrets
     done
 

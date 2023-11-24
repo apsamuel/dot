@@ -21,6 +21,7 @@ function __load_secrets () {
         secret_keys+=("${secret_key}")
     done < <(jq -r '. | keys | .[]' "${ICLOUD}"/dot/secrets.json) # -print0
 }
+
 function dot::bootstrap::info () {
     echo "🛠️ executing ${dot_boostrap_file}"
 }
