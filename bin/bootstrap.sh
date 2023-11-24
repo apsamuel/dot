@@ -82,24 +82,25 @@ function dot::validate::cloud () {
 function dot::configure::ssh () {
     local ssh_config="${HOME}/.ssh/config"
     local ssh_config_dot="${HOME}/iCloud/dot/ssh/config"
-    local ssh_keys=()
+    local ssh_keys
 
     # always update the ssh config file
     rm -f "${ssh_config}" && \
     ln -s "${ssh_config_dot}" "${ssh_config}" && \
-    echo "✅ ${ssh_config} is linked to ${ssh_config_dot}"
+    echo "✅  ${ssh_config} is linked to ${ssh_config_dot}"
 
     # refresh the keys from iCloud
-    if [[ "$BASH_VERSION" == 5* ]]; then
+    if [[ "$BASH_VERSION" =~ 5* ]]; then
+        echo "detected bash 5.x.x"
         mapfile -t ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
     fi
 
-    if [[ "$BASH_VERSION" == 3* || "$BASH_VERSION" == 4* ]]; then
+    if [[ "$BASH_VERSION" =~ 3* || "$BASH_VERSION" =~ 4* ]]; then
+        echo "detected bash 3.x.x or 4.x.x"
         # ssh_keys=(${HOME}/iCloud/dot/ssh/*)
         # use read -a ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
-        read -r -a ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
+        read -r -a ssh_keys < <(find "${HOME}/iCloud/dot/ssh" -type f -exec echo '{}' \;)
     fi
-
 
     for ssh_key in "${ssh_keys[@]}"; do
         if [[ "${ssh_key}" =~ config ]]; then
@@ -108,12 +109,24 @@ function dot::configure::ssh () {
         local ssh_key_name
         ssh_key_name="$(basename "${ssh_key}")"
         local ssh_key_path="${HOME}/.ssh/${ssh_key_name}"
-        rm -f "${ssh_key_path}" && \
-        ln -s "${ssh_key}" "${ssh_key_path}" && \
-        echo "✅ ${ssh_key_path} is linked to ${ssh_key}"
+        # link exists
+        if [[ -L "${ssh_key_path}" ]]; then
+            rm -f "${ssh_key_path}" && \
+            ln -s "${ssh_key}" "${ssh_key_path}" && \
+            echo "✅  ${ssh_key_path} is linked to ${ssh_key}"
+        fi
+
+        # link/file does not exist
+        if [[ ! -f "${ssh_key_path}" ]]; then
+            echo "🛠️ linking ${ssh_key_path} ..."
+            ln -s "${ssh_key}" "${ssh_key_path}" && \
+            echo "✅  ${ssh_key_path} is linked to ${ssh_key}"
+        fi
+        # rm -f "${ssh_key_path}" && \
+        # ln -s "${ssh_key}" "${ssh_key_path}" && \
+        # echo "✅ ${ssh_key_path} is linked to ${ssh_key}"
     done
-
-
+    echo "ssh_keys contains ${#ssh_keys[@]} elements"
 
 }
 
