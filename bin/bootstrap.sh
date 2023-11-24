@@ -5,8 +5,13 @@
 # 🕵️ ignore shellcheck warnings about source statements
 
 # globals
-dot_bootstrap_directory="$(dirname "$0")"
-dot_boostrap_file="${dot_bootstrap_directory}/bootstrap.sh"
+ZSH=${ZSH:-$HOME/.oh-my-zsh}
+ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
+
+# FIXME: the script is now located in ./bin
+
+dot_bootstrap_directory="$(dirname "$(dirname "$0")")"
+dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
 function dot::bootstrap::info () {
@@ -129,6 +134,32 @@ function dot::configure::git () {
     rm -f "${git_config}" && \
     ln -s "${git_config_dot}" "${git_config}" && \
     echo "✅  your git installation is configured"
+}
+
+function dot::configure::gh () {
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local git_config_dir_dot="${icloud_directory}/dot/git/gh"
+    local git_config_dir="${HOME}/.config/gh"
+    # check if the gh config directory exists
+    if [[ ! -d "${git_config_dir}" ]]; then
+        mkdir -p "${git_config_dir}"
+    fi
+    # if the file exists, remove it and use a soft link
+    if [[ -f "${git_config_dir}/config.yml" ]]; then
+        rm -f "${git_config_dir}/config.yml"
+        ln -s "${git_config_dir_dot}/config.yml" "${git_config_dir}/config.yml"
+    else
+        ln -s "${git_config_dir_dot}/config.yml" "${git_config_dir}/config.yml"
+    fi
+
+    # link the hosts file
+    if [[ -f "${git_config_dir}/hosts.yml" ]]; then
+        rm -f "${git_config_dir}/hosts.yml"
+        ln -s "${git_config_dir_dot}/hosts.yml" "${git_config_dir}/hosts.yml"
+    fi
+
+    echo "✅  your gh installation is configured"
+
 }
 
 function dot::install::brew () {
@@ -347,7 +378,7 @@ function dot::validate::omz () {
 }
 
 function dot::install::p10k () {
-    if command git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"/themes/powerlevel10k
+    if command git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
     then
         echo "✅  powerlevel10k is installed"
         return 0
@@ -359,14 +390,15 @@ function dot::install::p10k () {
 
 function dot::configure::p10k () {
     # TODO: should this be a link to icloud?
-    cp "${dot_bootstrap_directory}"/config/p10k.zsh "${HOME}/.p10k.zsh"
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    # cp "${dot_bootstrap_directory}"/config/p10k.zsh "${HOME}/.p10k.zsh"
+    ln -s "${icloud_directory}/dot/shell/p10k.zsh" "${HOME}/.p10k.zsh"
     echo "✅  powerlevel10k is configured"
 }
 
 function dot::validate::p10k () {
     # installed
-    echo "${ZSH_CUSTOM:-${HOME}/.oh-my-zsh/custom}/plugins/themes/powerlevel10k"
-    if [[ ! -d "${ZSH_CUSTOM:-${HOME}/.oh-my-zsh/custom}/plugins/themes/powerlevel10k" ]];
+    if [[ ! -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]];
     then
         echo "🛠️  installing powerlevel10k ..."
         dot::install::p10k
@@ -374,7 +406,7 @@ function dot::validate::p10k () {
     if [[ -f "${HOME}/.p10k.zsh" ]];
     # configured
     then
-        echo "✅  powerlevel10k is installed"
+        echo "✅  powerlevel10k is configured"
     else
         echo "❌  powerlevel10k is not configured..."
         dot::configure::p10k
