@@ -65,13 +65,13 @@ zstyle :omz:plugins:ssh-agent identities id_rsa id_import_rsa id_rsa_switch noop
 zstyle :omz:plugins:ssh-agent agent-forwarding on
 zstyle :omz:plugins:ssh-agent lifetime
 
-# load & export secrets from $HOME/.config/secrets.json
-if [[ -d "$HOME"/.dot/data && -f "$HOME"/.dot/data/secrets.json ]]; then
+# load & export secrets from icloud
+if [[ -d "$ICLOUD"/dot && -f "$ICLOUD"/dot/secrets.json ]]; then
     # uses an associative array to load secrets into memory
     declare -A secrets
     secretKeys=(
         $(
-            jq -r '. | keys | .[]' "$HOME"/.dot/data/secrets.json | xargs
+            jq -r '. | keys | .[]' "$ICLOUD"/dot/secrets.json | xargs
         )
     )
     export DOT_SECRET_KEYS=("${secretKeys[@]}")
@@ -84,7 +84,7 @@ if [[ -d "$HOME"/.dot/data && -f "$HOME"/.dot/data/secrets.json ]]; then
         echo "#!/bin/bash" > "$TMPDIR"/.secrets
     fi
     for secretKey in "${secretKeys[@]}"; do
-        secrets[$secretKey]="$(jq --arg secretKey "${secretKey}" -r '.[$secretKey]' "$HOME"/.dot/data/secrets.json)"
+        secrets[$secretKey]="$(jq --arg secretKey "${secretKey}" -r '.[$secretKey]' "$ICLOUD"/dot/secrets.json)"
         echo "${secretKey}=${secrets[$secretKey]}" >> "$TMPDIR"/.secrets
     done
 
