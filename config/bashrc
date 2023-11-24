@@ -1,50 +1,35 @@
 #!/usr/local/bin/bash
-echo "loading config/bashrc"
+# 🕵️ ignore shellcheck warnings about source statements
+# shellcheck source=/dev/null
 ZSH=${ZSH:-$HOME/.oh-my-zsh}
 ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
 PS1='[\u@\h \W]\$ '
-ICLOUD="${DOT_ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}}"
+ICLOUD="${DOT_ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
 ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
 ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
 ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
-
-export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
+PROMPT_COMMAND='history -a'
 DOT_PROJECT_DEBUG=${DOT_PROJECT_DEBUG:-false}
 DOT_PROJECT_SPLASH_ENTRANCE=${DOT_PROJECT_SPLASH_ENTRANCE:-true}
 DOT_PROJECT_SPLASH_TYPE="${DOT_PROJECT_SPLASH_TYPE:-quote}"
 DOT_PROJECT_DIR="${DOT_PROJECT_DIR:-$HOME/.dot}"
-ZLIB_HELPERS_DIR="${ZLIB_HELPERS_DIR:-$DOT_PROJECT_DIR/zlib}"
+DOT_ZLIB_DIR="${DOT_ZLIB_DIR:-$DOT_PROJECT_DIR/zlib}"
 SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # where are we? https://stackoverflow.com/a/246128/1235074
-export DOT_PROJECT_DIR ZLIB_HELPERS_DIR SHELL_INIT_DIR
-export DOT_PROJECT_DEBUG DOT_PROJECT_SPLASH_ENTRANCE DOT_PROJECT_SPLASH_TYPE
-export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
-export ZSH ZSH_CUSTOM PS1
 
-# TODO: host secrets in icloud directory (optionally)
+# TODO: ensure secrets are available in bash as well
 if [[ -d "$ICLOUD"/dot && -f "$ICLOUD"/dot/secrets.json ]]; then
     # uses an associative array to load secrets into memory
     declare -A secrets
-    # secretKeys=(
-    #     $(
-    #         jq -r '. | keys | .[]' "$ICLOUD"/dot/secrets.json | xargs
-    #     )
-    # )
+    read -r -a secret_keys <<< "$(jq -r '. | keys | .[]' "$ICLOUD"/dot/secrets.json | xargs)"
+    export DOT_SECRET_KEYS=("${secret_keys[@]}")
 
-    # use map file to set secret keys
-    mapfile -t secretKeys < <(jq -r '. | keys | .[]' "$ICLOUD"/dot/secrets.json | xargs)
-    export DOT_SECRET_KEYS=("${secretKeys[@]}")
-    echo "length of keys ${#secretKeys[@]}"
-
-    #echo "${secretKeys[@]}"
-    # if secrets length is greater than 0, write to /tmp/.secrets
-    if [[ ${#secretKeys[@]} -gt 0  ]]; then
-        # echo $TMPDIR
-        touch "${TMPDIR}"/.secrets
+    touch "${TMPDIR}"/.secrets
+    if [[ ${#secret_keys[@]} -gt 0  ]]; then
         echo "#!/bin/bash" > "$TMPDIR"/.secrets
     fi
-    for secretKey in "${secretKeys[@]}"; do
-        secrets[$secretKey]="$(jq --arg secretKey "${secretKey}" -r '.[$secretKey]' "$ICLOUD"/dot/secrets.json)"
-        echo "${secretKey}=${secrets[$secretKey]}" >> "$TMPDIR"/.secrets
+    for secret_key in "${secret_keys[@]}"; do
+        secrets[$secret_key]="$(jq --arg secret_key "${secret_key}" -r '.[$secret_key]' "$ICLOUD"/dot/secrets.json)"
+        echo "${secret_key}=${secrets[$secret_key]}" >> "$TMPDIR"/.secrets
     done
 
     if [[ -f "$TMPDIR"/.secrets ]]; then
@@ -54,3 +39,7 @@ if [[ -d "$ICLOUD"/dot && -f "$ICLOUD"/dot/secrets.json ]]; then
         echo "no secrets file found"
     fi
 fi
+
+export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
+export PROMPT_COMMAND DOT_PROJECT_DIR DOT_ZLIB_DIR SHELL_INIT_DIR DOT_PROJECT_DEBUG DOT_PROJECT_SPLASH_ENTRANCE DOT_PROJECT_SPLASH_TYPE
+export ZSH ZSH_CUSTOM PS1
