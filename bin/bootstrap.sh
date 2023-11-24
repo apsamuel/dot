@@ -90,7 +90,16 @@ function dot::configure::ssh () {
     echo "✅ ${ssh_config} is linked to ${ssh_config_dot}"
 
     # refresh the keys from iCloud
-    mapfile -t ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
+    if [[ "$BASH_VERSION" == 5* ]]; then
+        mapfile -t ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
+    fi
+
+    if [[ "$BASH_VERSION" == 3* || "$BASH_VERSION" == 4* ]]; then
+        # ssh_keys=(${HOME}/iCloud/dot/ssh/*)
+        # use read -a ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
+        read -r -a ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
+    fi
+
 
     for ssh_key in "${ssh_keys[@]}"; do
         if [[ "${ssh_key}" =~ config ]]; then
