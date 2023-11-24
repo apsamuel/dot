@@ -20,7 +20,12 @@ function compile::terminfo() {
 # } >/tmp/t && tic -x /tmp/t
 
 compile::terminfo
+ICLOUD="${DOT_ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}}"
+ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
+ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
+ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
 
+export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
 DOT_PROJECT_DEBUG=${DOT_PROJECT_DEBUG:-false}
 DOT_PROJECT_SPLASH_ENTRANCE=${DOT_PROJECT_SPLASH_ENTRANCE:-true}
 DOT_PROJECT_SPLASH_TYPE="${DOT_PROJECT_SPLASH_TYPE:-quote}"
@@ -89,12 +94,12 @@ zstyle :omz:plugins:ssh-agent agent-forwarding on
 zstyle :omz:plugins:ssh-agent lifetime
 
 # TODO: host secrets in icloud directory (optionally)
-if [[ -d "$HOME"/.dot/data && -f "$HOME"/.dot/data/secrets.json ]]; then
+if [[ -d "$ICLOUD"/dot && -f "$ICLOUD"/dot/secrets.json ]]; then
     # uses an associative array to load secrets into memory
     declare -A secrets
     secretKeys=(
         $(
-            jq -r '. | keys | .[]' "$HOME"/.dot/data/secrets.json | xargs
+            jq -r '. | keys | .[]' "$ICLOUD"/dot/secrets.json | xargs
         )
     )
     export DOT_SECRET_KEYS=("${secretKeys[@]}")
@@ -220,7 +225,7 @@ export HIST_STAMPS="dd.mm.yyyy"
 # Add wisely, as too many plugins slow down shell startup.
 export plugins=(
     $(
-        jq -r '.plugins[]' "$HOME"/.dot/data/zsh.json | xargs
+        jq -r '.plugins.builtin[]' "$HOME"/.dot/data/zsh.json | xargs
     )
 )
 

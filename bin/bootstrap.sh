@@ -14,6 +14,13 @@ dot_bootstrap_directory="$(dirname "$(dirname "$0")")"
 dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
+function __load_secrets () {
+    # build secrets file and associative array
+    declare -a secret_keys
+    while IFS= read -r -d '' secret_key; do
+        secret_keys+=("${secret_key}")
+    done < <(jq -r '. | keys | .[]' "${ICLOUD}"/dot/secrets.json) # -print0
+}
 function dot::bootstrap::info () {
     echo "🛠️ executing ${dot_boostrap_file}"
 }
@@ -198,6 +205,10 @@ function dot::install::zsh () {
 function dot::configure::zsh () {
     chsh -s "$(command -v zsh)" "${USER}" && \
     echo "✅  zsh is configured, please restart any open shells!"
+}
+
+function dot::configure::bash () {
+    cp "${dot_bootstrap_directory}"/config/bashrc "${HOME}/.bashrc"
 }
 
 function dot::validate::zsh () {
