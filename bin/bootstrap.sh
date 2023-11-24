@@ -1,5 +1,6 @@
 #!/bin/bash
 #% description: prepare a new macos machine for my personal use
+#% notes: because this must work on bash 3.x.x and 4.x.x, some of the syntax is a bit weird
 #% usage: ./bootstrap.sh
 # 🕵️ ignore shellcheck warnings about source statements
 
@@ -82,52 +83,52 @@ function dot::validate::cloud () {
 function dot::configure::ssh () {
     local ssh_config="${HOME}/.ssh/config"
     local ssh_config_dot="${HOME}/iCloud/dot/ssh/config"
-    local ssh_keys
+    local ssh_keys=()
 
     # always update the ssh config file
     rm -f "${ssh_config}" && \
     ln -s "${ssh_config_dot}" "${ssh_config}" && \
-    echo "✅  ${ssh_config} is linked to ${ssh_config_dot}"
 
-    # refresh the keys from iCloud
-    if [[ "$BASH_VERSION" =~ 5* ]]; then
-        echo "detected bash 5.x.x"
-        mapfile -t ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
-    fi
+    while IFS= read -r -d '' ssh_key; do
+        ssh_keys+=("${ssh_key}")
+    done < <(find "${HOME}/iCloud/dot/ssh" -type f -print0) # -print0
 
-    if [[ "$BASH_VERSION" =~ 3* || "$BASH_VERSION" =~ 4* ]]; then
-        echo "detected bash 3.x.x or 4.x.x"
-        # ssh_keys=(${HOME}/iCloud/dot/ssh/*)
-        # use read -a ssh_keys < <(ls "${HOME}/iCloud/dot/ssh/")
-        read -r -a ssh_keys < <(find "${HOME}/iCloud/dot/ssh" -type f -exec echo '{}' \;)
-    fi
-
+    local ssh_key_name
     for ssh_key in "${ssh_keys[@]}"; do
         if [[ "${ssh_key}" =~ config ]]; then
             continue
         fi
-        local ssh_key_name
         ssh_key_name="$(basename "${ssh_key}")"
         local ssh_key_path="${HOME}/.ssh/${ssh_key_name}"
-        # link exists
+        # a link exists with this identity
         if [[ -L "${ssh_key_path}" ]]; then
             rm -f "${ssh_key_path}" && \
-            ln -s "${ssh_key}" "${ssh_key_path}" && \
-            echo "✅  ${ssh_key_path} is linked to ${ssh_key}"
+            ln -s "${ssh_key}" "${ssh_key_path}"
         fi
 
-        # link/file does not exist
-        if [[ ! -f "${ssh_key_path}" ]]; then
-            echo "🛠️ linking ${ssh_key_path} ..."
-            ln -s "${ssh_key}" "${ssh_key_path}" && \
-            echo "✅  ${ssh_key_path} is linked to ${ssh_key}"
+        # neither a link nor file exist with this identity
+        if [[ ! -f "${ssh_key_path}" && ! -L "${ssh_key_path}" ]]; then
+            ln -s "${ssh_key}" "${ssh_key_path}"
         fi
-        # rm -f "${ssh_key_path}" && \
-        # ln -s "${ssh_key}" "${ssh_key_path}" && \
-        # echo "✅ ${ssh_key_path} is linked to ${ssh_key}"
+
+        # a file exists with this identity, it is not a link
+        if [[ -f "${ssh_key_path}" && ! -L "${ssh_key_path}" ]]; then
+            mv "${ssh_key_path}" "${ssh_key_path}.bak"
+            ln -s "${ssh_key}" "${ssh_key_path}"
+        fi
     done
-    echo "ssh_keys contains ${#ssh_keys[@]} elements"
+    echo "✅  your ssh client is configured"
 
+}
+
+function dot::configure::git () {
+    local git_config="${HOME}/.gitconfig"
+    local git_config_dot="${HOME}/iCloud/dot/git/config"
+
+    # always update the git config file
+    rm -f "${git_config}" && \
+    ln -s "${git_config_dot}" "${git_config}" && \
+    echo "✅  your git installation is configured"
 }
 
 function dot::install::brew () {
@@ -165,7 +166,7 @@ function dot::install::zsh () {
 
 function dot::configure::zsh () {
     chsh -s "$(command -v zsh)" "${USER}" && \
-    echo "✅ zsh is the default terminal, please restart your sessions"
+    echo "✅  zsh is configured, please restart any open shells!"
 }
 
 function dot::validate::zsh () {
@@ -235,6 +236,7 @@ function dot::configure::iterm () {
         mkdir -p "${dynamic_profiles}"
     fi
     cp "${icloud_directory}/dot/terminal/iterm2.profiles.json" "${dynamic_profiles}/Profiles.json"
+    echo "✅ iterm2 is configured, please start/restart iterm2!"
 
 }
 
@@ -314,8 +316,7 @@ function dot::configure::omz () {
         custom_plugin=$(
             jq -r --arg index "${i}" '"(", (.plugins.custom[($index)] | to_entries | .[] | "["+(.key|@sh)+"]="+(.value|@sh) ), ")"' "${HOME}/.dot/data/zsh.json"
         )
-        echo "✅ loading custom plugin ${custom_plugin}"
-
+        echo "✅ loading custom OMZ plugin ${custom_plugin}"
     done
 }
 
@@ -325,9 +326,9 @@ function dot::install::omz () {
     if KEEP_ZSHRC=yes CHSH=no RUNZSH=no /tmp/install_omz.sh; then
         #copy the zshrc in place
         dot::configure::omz
-        echo "✅ oh-my-zsh is installed"
+        echo "✅  oh-my-zsh is installed"
     else
-        echo "❌ oh-my-zsh installation failed"
+        echo "❌  oh-my-zsh installation failed"
         return 1
     fi
 
@@ -348,31 +349,34 @@ function dot::validate::omz () {
 function dot::install::p10k () {
     if command git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"/themes/powerlevel10k
     then
-        echo "✅ powerlevel10k is installed"
+        echo "✅  powerlevel10k is installed"
         return 0
     else
-        echo "❌ powerlevel10k installation failed"
+        echo "❌  powerlevel10k installation failed"
         return 1
     fi
 }
 
 function dot::configure::p10k () {
+    # TODO: should this be a link to icloud?
     cp "${dot_bootstrap_directory}"/config/p10k.zsh "${HOME}/.p10k.zsh"
+    echo "✅  powerlevel10k is configured"
 }
 
 function dot::validate::p10k () {
     # installed
-    if [[ ! -d "${ZSH_CUSTOM}/plugins/themes/powerlevel10k" ]];
+    echo "${ZSH_CUSTOM:-${HOME}/.oh-my-zsh/custom}/plugins/themes/powerlevel10k"
+    if [[ ! -d "${ZSH_CUSTOM:-${HOME}/.oh-my-zsh/custom}/plugins/themes/powerlevel10k" ]];
     then
-        echo "🛠️ installing powerlevel10k ..."
+        echo "🛠️  installing powerlevel10k ..."
         dot::install::p10k
     fi
     if [[ -f "${HOME}/.p10k.zsh" ]];
     # configured
     then
-        echo "✅ powerlevel10k is installed"
+        echo "✅  powerlevel10k is installed"
     else
-        echo "❌ powerlevel10k is not configured..."
+        echo "❌  powerlevel10k is not configured..."
         dot::configure::p10k
     fi
 }
