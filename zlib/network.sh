@@ -80,12 +80,12 @@ function router::dns::restart() {
     ssh "$ROUTER" 2>/dev/null "$ROUTER_DISK/admin/watch-dns.sh"
 }
 
-# function router::dns::log() {
-#     ssh "$ROUTER" 2>/dev/null "tail -f $ROUTER_DISK/admin/dnsmasq.log"
-# }
-
 function router::dns::zone() {
     ssh "$ROUTER" 2>/dev/null "cat $ROUTER_DISK/etc/dnsmasq.conf |grep -v '#' | grep -v '^$' |sort" | grep -E '(address|dhcp-host)'
+}
+
+function router::dns::settings() {
+   ssh "$ROUTER" 2>/dev/null "cat $ROUTER_DISK/etc/dnsmasq.conf |grep -v '#' | grep -v '^$' |sort" | grep -v -E '(address|dhcp-host)'
 }
 
 function router::dns::edit() {
