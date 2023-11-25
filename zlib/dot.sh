@@ -22,6 +22,18 @@ export ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
 function dot::sh {
     local command="${1:-version}"
 
+    # help
+    if [[ "${command}" =~ [Hh]elp ]]; then
+        echo "Usage: dot::sh [command]"
+        echo ""
+        echo "Commands:"
+        echo "  version     print version information"
+        echo "  update      update dotfiles"
+        echo "  reload      reload dotfiles"
+        echo "  changelog   print changelog"
+        echo "  printenv    print environment variables"
+        return 0
+    fi
     # version
     if [[ "${command}" =~ [Vv]ersion ]]; then
         branch="$(git -C "${DOT_DIR}" rev-parse --abbrev-ref HEAD)"
