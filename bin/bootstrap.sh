@@ -453,7 +453,7 @@ function dot::install::iterm () {
 function dot::install::fonts () {
     if command cp "$ICLOUD"/dot/terminal/fonts/* ~/Library/Fonts/
     then
-        echo "✅ fonts are installed"
+        echo "✅  fonts are installed"
         return 0
     else
         echo "❌ fonts installation failed"
