@@ -15,7 +15,7 @@ dot_bootstrap_directory="$(dirname "$(dirname "$0")")"
 dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
-function __load_secrets () {
+function __load_secrets__ () {
     # build secrets file and associative array
     # declare -a secret_keys
     local secret_keys=()
@@ -46,21 +46,32 @@ function dot::bootstrap::info () {
 }
 
 function dot::bootstrap () {
-    # install & configure brew
-    __load_secrets
+    # load secrets
+    __load_secrets__
+    # install brew
     dot::validate::brew
-    # install our Brewfile
+    # install Brewfile
     dot::install::deps
-    dot::configure::ssh
+    # configure icloud links
+    # configure bash
+    dot::configure::zsh
+    dot::configure::bash
     dot::validate::cloud
+    # configure ssh
+    dot::configure::ssh
+    dot::configure::git
+    # validate and configure iterm
     dot::validate::iterm
+    dot::configure::figlet
     dot::validate::zsh
     dot::validate::omz
-    # dot::validate::p10k
+    dot::validate::p10k
+    dot::configure::ohmytmux
+
 }
 
 function dot::install::deps () {
-    if command brew bundle install --file "${dot_bootstrap_directory}/data/Brewfile";
+    if command brew bundle install --file "${ICLOUD}/dot/Brewfile";
     then
         echo "✅ dependencies ok"
         return 0
@@ -113,11 +124,18 @@ function dot::validate::cloud () {
     fi
 }
 
-function dot::configure::tmux () {
+function dot::configure::ohmytmux () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local tmux_local_config="${HOME}/.tmux.conf.local"
     ln -s -f "${icloud_link}/dot/shell/tmux/conf" "${tmux_local_config}"
+    # start a new tmux session, and install plugins
+    if tmux has-session -t bootstrap; then
+        tmux kill-session -t bootstrap
+    fi
+    tmux new-session -d -s bootstrap && \
+    tmux send-keys -t bootstrap C-I && \
+    tmux kill-session -t bootstrap
     echo "✅  tmux is configured"
 }
 
@@ -226,12 +244,19 @@ function dot::configure::gh () {
 }
 
 function dot::configure::zsh () {
-    chsh -s "$(command -v zsh)" "${USER}" && \
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local icloud_link="${HOME}/iCloud"
+    local rc="${HOME}/.zshrc"
+    chsh -s "$(command -v zsh)" "${USER}"
+    ln -s -f "${icloud_link}/dot/shell/zsh/rc" "${rc}" && \
     echo "✅  zsh is configured, please restart any open shells!"
 }
 
 function dot::configure::bash () {
-    cp "${dot_bootstrap_directory}"/config/bashrc "${HOME}/.bashrc"
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local icloud_link="${HOME}/iCloud"
+    local rc="${HOME}/.bashrc"
+    ln -s -f "${icloud_link}/dot/shell/bash/rc" "${rc}"
     echo "✅  bash is configured, please restart any open shells!"
 }
 
@@ -314,21 +339,22 @@ function dot::validate::iterm () {
 }
 
 function dot::validate::fonts () {
-   brew tap homebrew/cask-fonts
-   local desired_fonts=(
-    [powerline]="font-powerline-symbols"
-    [meslo]="font-meslo-for-powerline"
-    [menlo]="font-menlo-for-powerline"
-   )
-   local package
-   for desired_font in "${!desired_fonts[@]}"; do
-       package="${desired_fonts[${desired_font}]}"
-       if ! fc-list | grep -q -Ei "${desired_font}" &> /dev/null
-       then
-           echo "🛠️ installing ${desired_font} font ..."
-           dot::install::font "${package}"
-       fi
-   done
+#    brew tap homebrew/cask-fonts
+#    local desired_fonts=(
+#     [powerline]="font-powerline-symbols"
+#     [meslo]="font-meslo-for-powerline"
+#     [menlo]="font-menlo-for-powerline"
+#    )
+#    local package
+#    for desired_font in "${!desired_fonts[@]}"; do
+#        package="${desired_fonts[${desired_font}]}"
+#        if ! fc-list | grep -q -Ei "${desired_font}" &> /dev/null
+#        then
+#            echo "🛠️ installing ${desired_font} font ..."
+#            dot::install::font "${package}"
+#        fi
+#    done
+    true
 }
 
 function dot::validate::themes () {
@@ -412,14 +438,25 @@ function dot::install::iterm () {
     fi
 }
 
-function dot::install::font () {
-    local package="${1}"
-    if command brew install --cask "${package}"
+# function dot::install::font () {
+#     local package="${1}"
+#     if command brew install --cask "${package}"
+#     then
+#         echo "✅ ${package} is installed"
+#         return 0
+#     else
+#         echo "❌ ${package} installation failed"
+#         return 1
+#     fi
+# }
+
+function dot::install::fonts () {
+    if command cp "$ICLOUD"/dot/terminal/fonts/* ~/Library/Fonts/
     then
-        echo "✅ ${package} is installed"
+        echo "✅ fonts are installed"
         return 0
     else
-        echo "❌ ${package} installation failed"
+        echo "❌ fonts installation failed"
         return 1
     fi
 }
@@ -474,8 +511,5 @@ function dot::install::p10k () {
         return 1
     fi
 }
-
-
-
 
 # dot::bootstrap;
