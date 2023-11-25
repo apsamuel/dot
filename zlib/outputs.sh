@@ -35,7 +35,8 @@ function printAttribute() {
 }
 
 function termLogo() {
-	find "${HOME}/.terminal_images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --width=80 -b {}
+	# find "${ICLOUD}/dot/shell/images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --term-fit --width="$(( $(terminalWidth) / 2 ))" -b {}
+    find "${ICLOUD}/dot/shell/images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --width="$(( $(terminalWidth) / 2 ))" --border --color-depth=24 --background=dark {}
 }
 
 function termImage () {
@@ -64,7 +65,7 @@ function termRandomFont() {
 
 function randomQuote() {
 	randomQuote="$(
-		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${HOME}/.dot/data/quotes.json" |shuf -n1
+		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${DOT_DIR}/data/quotes.json" |shuf -n1
 	)"
 	echo "${randomQuote}"
 }
@@ -72,9 +73,9 @@ function randomQuote() {
 function termQuote() {
 	# can we do random selection of fonts?
 	randomQuote="$(
-		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${HOME}/.zsh_helpers/quotes.json" |shuf -n1
+		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${DOT_DIR}/data/quotes.json" |shuf -n1
 	)"
-	echo "${randomQuote}" | figlet -p -w "$(terminalWidth)" -d "${HOME}/.zsh_helpers/figlet-fonts" -f "$(termRandomFont "${@}")" -k -l| lolcat
+	echo "${randomQuote}" | figlet -p -w "$(terminalWidth)" -d "${HOME}/.figlet" -f "$(termRandomFont "${@}")" -k -l| lolcat
 }
 
 function toFiglet() {

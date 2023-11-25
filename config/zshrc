@@ -8,16 +8,11 @@
 
 ulimit -c unlimited
 
-# compile terminfo
+# TODO: move to a main function file
 function compile::terminfo() {
     infocmp -x xterm-256color
     printf '\t%s\n' 'ncv@,'
 } >/tmp/t && tic -x /tmp/t
-
-# {
-#     infocmp -x xterm-256color
-#     printf '\t%s\n' 'ncv@,'
-# } >/tmp/t && tic -x /tmp/t
 
 compile::terminfo
 ICLOUD="${DOT_ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}}"
@@ -26,11 +21,13 @@ ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
 ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
 
 export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
+DOT_SHELL="zsh"
+export DOT_SHELL
 DOT_PROJECT_DEBUG=${DOT_PROJECT_DEBUG:-false}
 DOT_PROJECT_SPLASH_ENTRANCE=${DOT_PROJECT_SPLASH_ENTRANCE:-true}
 DOT_PROJECT_SPLASH_TYPE="${DOT_PROJECT_SPLASH_TYPE:-quote}"
 DOT_PROJECT_DIR="${DOT_PROJECT_DIR:-$HOME/.dot}"
-ZLIB_HELPERS_DIR="${ZLIB_HELPERS_DIR:-$DOT_PROJECT_DIR/zlib}"
+DOT_ZLIB_DIR="${DOT_ZLIB_DIR:-$DOT_PROJECT_DIR/zlib}"
 SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # where are we? https://stackoverflow.com/a/246128/1235074
 SHELL_INIT_START=$(date +%s)
 
@@ -65,16 +62,16 @@ for opt in "${ZSH_OPTIONS[@]}"; do
     setopt "${opt}"
 done
 
-# source zsh libraries from $ZLIB_HELPERS_DIR
-if [[ -d "$ZLIB_HELPERS_DIR" ]]; then
-    for lib in "${ZLIB_HELPERS_DIR}"/* ; do
+# source zsh libraries from $DOT_ZLIB_DIR
+if [[ -d "$DOT_ZLIB_DIR" ]]; then
+    for lib in "${DOT_ZLIB_DIR}"/* ; do
         if [[ ! "${DOT_PROJECT_DEBUG}x" == "x" && "${DOT_PROJECT_DEBUG}" == true ]]; then
             echo "loading: $lib"
         fi
         source "$lib" || true
     done
 else
-    echo "Warning: ZLIB_HELPERS_DIR not found: $ZLIB_HELPERS_DIR"
+    echo "Warning: DOT_ZLIB_DIR not found: $DOT_ZLIB_DIR"
 fi
 
 
@@ -325,5 +322,5 @@ alias less='bat --paging=always'
 # post exports
 SHELL_INIT_END=$(date +%s)
 SHELL_INIT_TIME="$((SHELL_INIT_END - SHELL_INIT_START)) seconds"
-export SHELL_INIT_DIR SHELL_INIT_START SHELL_INIT_END SHELL_INIT_TIME ZLIB_HELPERS_DIR DOT_PROJECT_DIR DOT_PROJECT_DEBUG DOT_PROJECT_SPLASH_ENTRANCE DOT_PROJECT_SPLASH_TYPE
+export SHELL_INIT_DIR SHELL_INIT_START SHELL_INIT_END SHELL_INIT_TIME DOT_ZLIB_DIR DOT_PROJECT_DIR DOT_PROJECT_DEBUG DOT_PROJECT_SPLASH_ENTRANCE DOT_PROJECT_SPLASH_TYPE
 export PATH=$PATH:$HOME/.dot/bin
