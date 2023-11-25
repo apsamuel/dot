@@ -1,6 +1,14 @@
 #!/usr/local/bin/bash
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
+
+shopt -s histappend # append to history, don't overwrite it
+shopt -s histreedit # allow re-editing of failed history substitution
+shopt -s histverify # don't execute immediately upon history substitution
+shopt -s checkwinsize # update the values of LINES and COLUMNS after each command if altered
+shopt -s autocd # if a command is entered that is not a path, assume it is a path and cd to it
+
+HISTFILE=$HOME/.bash_history
 ZSH=${ZSH:-$HOME/.oh-my-zsh}
 ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
 PS1='[\u@\h \W]\$ '
