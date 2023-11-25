@@ -3,23 +3,42 @@
 #% notes: because this must work on bash 3.x.x and 4.x.x, some of the syntax is a bit weird
 #% usage: ./bootstrap.sh
 # 🕵️ ignore shellcheck warnings about source statements
+# 🕵️ ignore shellcheck warnings about source statements
+# shellcheck source=/dev/null
 
 # globals
 ZSH=${ZSH:-$HOME/.oh-my-zsh}
 ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
 
-# FIXME: the script is now located in ./bin
-
+# the script is now located in ./bin, this is a hack to get the project root
 dot_bootstrap_directory="$(dirname "$(dirname "$0")")"
 dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
 function __load_secrets () {
     # build secrets file and associative array
-    declare -a secret_keys
-    while IFS= read -r -d '' secret_key; do
+    # declare -a secret_keys
+    local secret_keys=()
+    # declare -A secrets
+    while IFS=' ' read -r -d ' ' secret_key; do
         secret_keys+=("${secret_key}")
-    done < <(jq -r '. | keys | .[]' "${ICLOUD}"/dot/secrets.json) # -print0
+    done < <(jq -r '. | keys | .[]' "${ICLOUD}"/dot/secrets.json | xargs) # -print0
+    touch "${TMPDIR}"/.secrets
+    if [[ ${#secret_keys[@]} -gt 0  ]]; then
+        echo "#!/bin/bash" > "$TMPDIR"/.secrets
+    fi
+    for secret_key in "${secret_keys[@]}"; do
+        secret_value="$(jq --arg secret_key "${secret_key}" -r '.[$secret_key]' "${ICLOUD}"/dot/secrets.json)"
+        echo "${secret_key}=${secret_value}" >> "$TMPDIR"/.secrets
+    done
+    if [[ -f "$TMPDIR"/.secrets ]]; then
+        source "$TMPDIR"/.secrets
+        rm -f "$TMPDIR"/.secrets
+    else
+        echo "no secrets file found"
+    fi
+    export BOOTSTRAP_SECRETS_LOADED=1
+    echo "🛻  loaded ${#secret_keys[@]} secrets"
 }
 
 function dot::bootstrap::info () {
@@ -28,6 +47,7 @@ function dot::bootstrap::info () {
 
 function dot::bootstrap () {
     # install & configure brew
+    __load_secrets
     dot::validate::brew
     # install our Brewfile
     dot::install::deps
@@ -91,6 +111,41 @@ function dot::validate::cloud () {
             dot::link::cloud
         fi
     fi
+}
+
+function dot::configure::tmux () {
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local icloud_link="${HOME}/iCloud"
+    local tmux_local_config="${HOME}/.tmux.conf.local"
+    ln -s -f "${icloud_link}/dot/shell/tmux/conf" "${tmux_local_config}"
+    echo "✅  tmux is configured"
+}
+
+function dot::configure::figlet () {
+    if [[ ! -d "$HOME"/.figlet ]]; then
+        git clone git@github.com:xero/figlet-fonts.git "$HOME"/.figlet &> /dev/null
+    else
+        git -C "$HOME"/.figlet pull &> /dev/null
+    fi
+    echo "✅  figlet is configured"
+}
+
+function dot::configure::iterm () {
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local dynamic_profiles="${HOME}/Library/Application Support/iTerm2/DynamicProfiles"
+
+    # enable icloud preferences in iterm2
+    defaults write com.googlecode.iterm2 PrefsCustomFolder -string "${icloud_directory}/dot/terminal"
+    defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
+
+    # copy Profiles to DynamicProfiles path
+    if [[ ! -d "${dynamic_profiles}" ]];
+    then
+        mkdir -p "${dynamic_profiles}"
+    fi
+    cp "${icloud_directory}/dot/terminal/iterm2.profiles.json" "${dynamic_profiles}/Profiles.json"
+    echo "✅ iterm2 is configured, please start/restart iterm2!"
+
 }
 
 function dot::configure::ssh () {
@@ -170,15 +225,38 @@ function dot::configure::gh () {
 
 }
 
-function dot::install::brew () {
-    if command bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    then
-        echo "✅ brew is installed"
-        return 0
-    else
-        echo "❌ brew installation failed"
-        return 1
-    fi
+function dot::configure::zsh () {
+    chsh -s "$(command -v zsh)" "${USER}" && \
+    echo "✅  zsh is configured, please restart any open shells!"
+}
+
+function dot::configure::bash () {
+    cp "${dot_bootstrap_directory}"/config/bashrc "${HOME}/.bashrc"
+    echo "✅  bash is configured, please restart any open shells!"
+}
+
+function dot::configure::omz () {
+    cp "${dot_bootstrap_directory}"/config/zshrc "${HOME}/.zshrc"
+    # checkout custom plugins
+    local custom_plugins_length
+    custom_plugins_length=$(jq -r '.plugins.custom| length' "${HOME}/.dot/data/zsh.json")
+    # mapfile -t custom_plugins < <(jq -r '.plugins.custom | .[]' "${HOME}/.dot/data/zsh.json")
+    for (( i=1; i<custom_plugins_length; i++ )); do
+        local custom_plugin
+        # load each dictionary item as an associative array
+        custom_plugin=$(
+            jq -r --arg index "${i}" '"(", (.plugins.custom[($index)] | to_entries | .[] | "["+(.key|@sh)+"]="+(.value|@sh) ), ")"' "${HOME}/.dot/data/zsh.json"
+        )
+        echo "✅ loading custom OMZ plugin ${custom_plugin}"
+    done
+}
+
+function dot::configure::p10k () {
+    # TODO: should this be a link to icloud?
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    # cp "${dot_bootstrap_directory}"/config/p10k.zsh "${HOME}/.p10k.zsh"
+    ln -s "${icloud_directory}/dot/shell/p10k.zsh" "${HOME}/.p10k.zsh"
+    echo "✅  powerlevel10k is configured"
 }
 
 function dot::validate::brew () {
@@ -190,26 +268,6 @@ function dot::validate::brew () {
         echo "✅ brew is installed"
         return 0
     fi
-}
-
-function dot::install::zsh () {
-    if ! command brew install zsh
-    then
-        echo "🛠️ installing zsh..."
-        dot::install::zsh
-    else
-        echo "✅ zsh is installed"
-        return 0
-    fi
-}
-
-function dot::configure::zsh () {
-    chsh -s "$(command -v zsh)" "${USER}" && \
-    echo "✅  zsh is configured, please restart any open shells!"
-}
-
-function dot::configure::bash () {
-    cp "${dot_bootstrap_directory}"/config/bashrc "${HOME}/.bashrc"
 }
 
 function dot::validate::zsh () {
@@ -231,17 +289,6 @@ function dot::validate::zsh () {
     return 0
 }
 
-function dot::install::jq () {
-    if command brew install jq
-    then
-        echo "✅ jq is installed"
-        return 0
-    else
-        echo "❌ jq installation failed"
-        return 1
-    fi
-}
-
 function dot::validate::jq () {
     if ! command -v jq &> /dev/null
     then
@@ -254,35 +301,6 @@ function dot::validate::jq () {
 
 }
 
-function dot::install::iterm () {
-    if command brew install --cask iterm2
-    then
-        echo "✅ iterm2 is installed"
-        return 0
-    else
-        echo "❌ iterm2 installation failed"
-        return 1
-    fi
-}
-
-function dot::configure::iterm () {
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    local dynamic_profiles="${HOME}/Library/Application Support/iTerm2/DynamicProfiles"
-
-    # enable icloud preferences in iterm2
-    defaults write com.googlecode.iterm2 PrefsCustomFolder -string "${icloud_directory}/dot/terminal"
-    defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
-
-    # copy Profiles to DynamicProfiles path
-    if [[ ! -d "${dynamic_profiles}" ]];
-    then
-        mkdir -p "${dynamic_profiles}"
-    fi
-    cp "${icloud_directory}/dot/terminal/iterm2.profiles.json" "${dynamic_profiles}/Profiles.json"
-    echo "✅ iterm2 is configured, please start/restart iterm2!"
-
-}
-
 function dot::validate::iterm () {
     if ! mdfind "kMDItemKind == 'Application'" | grep -q -Ei '^/Applications/[i]Term.*?.app' &> /dev/null
     then
@@ -292,18 +310,6 @@ function dot::validate::iterm () {
         echo "✅ iterm2 is installed"
         dot::configure::iterm
         return 0
-    fi
-}
-
-function dot::install::font () {
-    local package="${1}"
-    if command brew install --cask "${package}"
-    then
-        echo "✅ ${package} is installed"
-        return 0
-    else
-        echo "❌ ${package} installation failed"
-        return 1
     fi
 }
 
@@ -325,18 +331,6 @@ function dot::validate::fonts () {
    done
 }
 
-function dot::install::themes () {
-    if command gh repo clone apsamuel/iTerm2-Color-Schemes "${HOME}/.themes"
-    then
-        bash "${HOME}/.themes/tools/import-scheme.sh"
-        echo "✅ iterm2 themes are installed"
-        return 0
-    else
-        echo "❌ iterm2 themes installation failed"
-        return 1
-    fi
-}
-
 function dot::validate::themes () {
     if [[ ! -d "${HOME}/.themes" ]];
     then
@@ -344,38 +338,6 @@ function dot::validate::themes () {
         dot::install::themes
     fi
 
-}
-
-function dot::configure::omz () {
-    cp "${dot_bootstrap_directory}"/config/zshrc "${HOME}/.zshrc"
-    # checkout custom plugins
-    # local custom_plugins=()
-    local custom_plugins_length
-    custom_plugins_length=$(jq -r '.plugins.custom| length' "${HOME}/.dot/data/zsh.json")
-    # mapfile -t custom_plugins < <(jq -r '.plugins.custom | .[]' "${HOME}/.dot/data/zsh.json")
-    for (( i=1; i<custom_plugins_length; i++ )); do
-        local custom_plugin
-        # load each dictionary item as an associative array
-        custom_plugin=$(
-            jq -r --arg index "${i}" '"(", (.plugins.custom[($index)] | to_entries | .[] | "["+(.key|@sh)+"]="+(.value|@sh) ), ")"' "${HOME}/.dot/data/zsh.json"
-        )
-        echo "✅ loading custom OMZ plugin ${custom_plugin}"
-    done
-}
-
-function dot::install::omz () {
-    curl -L https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install_omz.sh
-    chmod +x /tmp/install_omz.sh
-    if KEEP_ZSHRC=yes CHSH=no RUNZSH=no /tmp/install_omz.sh; then
-        #copy the zshrc in place
-        dot::configure::omz
-        echo "✅  oh-my-zsh is installed"
-    else
-        echo "❌  oh-my-zsh installation failed"
-        return 1
-    fi
-
-    return 0
 }
 
 function dot::validate::omz () {
@@ -387,25 +349,6 @@ function dot::validate::omz () {
     fi
     echo "✅ configuring zsh..."
     dot::configure::omz
-}
-
-function dot::install::p10k () {
-    if command git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
-    then
-        echo "✅  powerlevel10k is installed"
-        return 0
-    else
-        echo "❌  powerlevel10k installation failed"
-        return 1
-    fi
-}
-
-function dot::configure::p10k () {
-    # TODO: should this be a link to icloud?
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    # cp "${dot_bootstrap_directory}"/config/p10k.zsh "${HOME}/.p10k.zsh"
-    ln -s "${icloud_directory}/dot/shell/p10k.zsh" "${HOME}/.p10k.zsh"
-    echo "✅  powerlevel10k is configured"
 }
 
 function dot::validate::p10k () {
@@ -424,6 +367,114 @@ function dot::validate::p10k () {
         dot::configure::p10k
     fi
 }
+
+function dot::install::brew () {
+    if command bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    then
+        echo "✅ brew is installed"
+        return 0
+    else
+        echo "❌ brew installation failed"
+        return 1
+    fi
+}
+
+function dot::install::zsh () {
+    if ! command brew install zsh
+    then
+        echo "🛠️ installing zsh..."
+        dot::install::zsh
+    else
+        echo "✅ zsh is installed"
+        return 0
+    fi
+}
+
+function dot::install::jq () {
+    if command brew install jq
+    then
+        echo "✅ jq is installed"
+        return 0
+    else
+        echo "❌ jq installation failed"
+        return 1
+    fi
+}
+
+function dot::install::iterm () {
+    if command brew install --cask iterm2
+    then
+        echo "✅ iterm2 is installed"
+        return 0
+    else
+        echo "❌ iterm2 installation failed"
+        return 1
+    fi
+}
+
+function dot::install::font () {
+    local package="${1}"
+    if command brew install --cask "${package}"
+    then
+        echo "✅ ${package} is installed"
+        return 0
+    else
+        echo "❌ ${package} installation failed"
+        return 1
+    fi
+}
+
+function dot::install::themes () {
+    if command gh repo clone apsamuel/iTerm2-Color-Schemes "${HOME}/.themes"
+    then
+        bash "${HOME}/.themes/tools/import-scheme.sh"
+        echo "✅ iterm2 themes are installed"
+        return 0
+    else
+        echo "❌ iterm2 themes installation failed"
+        return 1
+    fi
+}
+
+function dot::install::omz () {
+    curl -L https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install_omz.sh
+    chmod +x /tmp/install_omz.sh
+    if KEEP_ZSHRC=yes CHSH=no RUNZSH=no /tmp/install_omz.sh; then
+        #copy the zshrc in place
+        dot::configure::omz
+        echo "✅  oh-my-zsh is installed"
+    else
+        echo "❌  oh-my-zsh installation failed"
+        return 1
+    fi
+
+    return 0
+}
+
+function dot::install::ohmytmux () {
+    if command git clone git@github.com:gpakosz/.tmux.git "${HOME}/.tmux"
+    then
+        ln -s -f "${HOME}/.tmux/.tmux.conf" "${HOME}/.tmux.conf"
+        #cp "${HOME}/.tmux/.tmux.conf.local" "${HOME}/.tmux.conf.local"
+        echo "✅  oh-my-tmux is installed"
+        return 0
+    else
+        echo "❌  oh-my-tmux installation failed"
+        return 1
+    fi
+}
+
+function dot::install::p10k () {
+    if command git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
+    then
+        echo "✅  powerlevel10k is installed"
+        return 0
+    else
+        echo "❌  powerlevel10k installation failed"
+        return 1
+    fi
+}
+
 
 
 
