@@ -62,9 +62,9 @@ function brew::cask::check () {
 }
 
 function brew::dump () {
-    brew bundle dump --force --file="${1:-/tmp/Brewfile}"
+    brew bundle dump --force --file="${1:-${ICLOUD}/dot/Brewfile}"
 }
 
 function brew::load () {
-    brew bundle install --file="${1:-/tmp/Brewfile}"
+    brew bundle install --file="${1:-${ICLOUD}/dot/Brewfile}"
 }
