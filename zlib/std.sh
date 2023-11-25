@@ -9,7 +9,7 @@ function emulate::interpreter () {
 
 function emulate::sh () {
     local code="${1:-echo "Hello World"}"
-    command zsh -c "emulate bash; $code"
+    command zsh -c "emulate bash; ${code}"
 }
 
 function run::sh () {
