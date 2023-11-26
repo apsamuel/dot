@@ -308,7 +308,7 @@ function dot::validate::zsh () {
         echo "✅ zsh is installed"
     fi
 
-    if [[ ! "$(basename -- "${SHELL}")" == "zsh" ]]; then
+    if [[ ! "$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")" == "zsh" ]]; then
         echo "🛠️ zsh is not the default terminal..."
         dot::configure::zsh
     else
