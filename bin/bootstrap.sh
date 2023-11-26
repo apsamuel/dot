@@ -261,7 +261,11 @@ function dot::configure::bash () {
 }
 
 function dot::configure::omz () {
-    cp "${dot_bootstrap_directory}"/config/zshrc "${HOME}/.zshrc"
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local icloud_link="${HOME}/iCloud"
+    local rc="${HOME}/.zshrc"
+    ln -s -f "${icloud_link}/dot/shell/zsh/rc" "${rc}"
+    # cp "${dot_bootstrap_directory}"/config/zshrc "${HOME}/.zshrc"
     # checkout custom plugins
     local custom_plugins_length
     custom_plugins_length=$(jq -r '.plugins.custom| length' "${HOME}/.dot/data/zsh.json")
@@ -270,7 +274,7 @@ function dot::configure::omz () {
         local custom_plugin
         # load each dictionary item as an associative array
         custom_plugin=$(
-            jq -r --arg index "${i}" '"(", (.plugins.custom[($index)] | to_entries | .[] | "["+(.key|@sh)+"]="+(.value|@sh) ), ")"' "${HOME}/.dot/data/zsh.json"
+            jq -r --arg index "${i}" '"(", (.plugins.custom[($index |tonumber)] | to_entries | .[] | "["+(.key|@sh)+"]="+(.value|@sh) ), ")"' "${HOME}/.dot/data/zsh.json"
         )
         echo "✅ loading custom OMZ plugin ${custom_plugin}"
     done
