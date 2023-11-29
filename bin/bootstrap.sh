@@ -16,8 +16,6 @@ dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
 function __load_secrets__ () {
-    # build secrets file and associative array
-    # declare -a secret_keys
     local secret_keys=()
     # declare -A secrets
     while IFS=' ' read -r -d ' ' secret_key; do
@@ -48,10 +46,8 @@ function dot::bootstrap::info () {
 function dot::bootstrap () {
     # load secrets
     __load_secrets__
-    # install brew
-    dot::validate::brew
-    # install Brewfile
-    dot::install::deps
+    dot::validate::brew # install brew
+    dot::install::deps # install Brewfile
     # configure icloud links
     # configure bash
     dot::configure::zsh
