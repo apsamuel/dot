@@ -9,11 +9,11 @@
 
 ulimit -c unlimited
 
-DOT_PROJECT_DEBUG=${DOT_PROJECT_DEBUG:-false}
-DOT_PROJECT_SPLASH_ENTRANCE=${DOT_PROJECT_SPLASH_ENTRANCE:-true}
-DOT_PROJECT_SPLASH_TYPE="${DOT_PROJECT_SPLASH_TYPE:-quote}"
-DOT_PROJECT_DIR="${DOT_PROJECT_DIR:-$HOME/.dot}"
-ZLIB_HELPERS_DIR="${ZLIB_HELPERS_DIR:-$DOT_PROJECT_DIR/zlib}"
+DOT_DEBUG=${DOT_DEBUG:-false}
+DOT_SPLASH_SCREEN=${DOT_SPLASH_SCREEN:-true}
+DOT_SPLASH_TYPE="${DOT_SPLASH_TYPE:-quote}"
+DOT_DIR="${DOT_DIR:-$HOME/.dot}"
+ZLIB_HELPERS_DIR="${ZLIB_HELPERS_DIR:-$DOT_DIR/zlib}"
 SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # where are we? https://stackoverflow.com/a/246128/1235074
 SHELL_INIT_START=$(date +%s)
 
@@ -23,7 +23,7 @@ SHELL_INIT_START=$(date +%s)
 # source zlib
 if [[ -d "$ZLIB_HELPERS_DIR" ]]; then
     for lib in "${ZLIB_HELPERS_DIR}"/* ; do
-        if [[ ! "${DOT_PROJECT_DEBUG}x" == "x" && "${DOT_PROJECT_DEBUG}" == true ]]; then
+        if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
             echo "loading: $lib"
         fi
         source "$lib" || true
@@ -44,7 +44,7 @@ export ZSH_OPTIONS
 # set ZSH flag options
 
 for opt in "${ZSH_OPTIONS[@]}"; do
-    if [[ ! "${DOT_PROJECT_DEBUG}x" == "x" && "${DOT_PROJECT_DEBUG}" == true ]]; then
+    if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
         echo "sets option: $opt"
     fi
     setopt "${opt}"
@@ -122,11 +122,11 @@ export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
 arch="$(arch)"
 export ARCH="${arch}"
 
-if [[ ${DOT_PROJECT_SPLASH_ENTRANCE} == true && "${DOT_PROJECT_SPLASH_TYPE}" == "quote" ]]; then
+if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "quote" ]]; then
     # echo "quote"
     termQuote
 fi
-if [[ ${DOT_PROJECT_SPLASH_ENTRANCE} == true && "${DOT_PROJECT_SPLASH_TYPE}" == "ascii" ]]; then
+if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "ascii" ]]; then
     termLogo
 fi
 
@@ -381,5 +381,5 @@ alias less='bat --paging=always'
 # post exports
 SHELL_INIT_END=$(date +%s)
 SHELL_INIT_TIME="$((SHELL_INIT_END - SHELL_INIT_START)) seconds"
-export SHELL_INIT_DIR SHELL_INIT_START SHELL_INIT_END SHELL_INIT_TIME ZLIB_HELPERS_DIR DOT_PROJECT_DIR DOT_PROJECT_DEBUG DOT_PROJECT_SPLASH_ENTRANCE DOT_PROJECT_SPLASH_TYPE
+export SHELL_INIT_DIR SHELL_INIT_START SHELL_INIT_END SHELL_INIT_TIME ZLIB_HELPERS_DIR DOT_DIR DOT_DEBUG DOT_SPLASH_SCREEN DOT_SPLASH_TYPE
 export PATH=$PATH:$HOME/.dot/bin
