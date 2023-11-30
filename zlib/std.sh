@@ -51,3 +51,13 @@ function emulate::zsh () {
     local code="${1:-echo "Hello World"}"
     command zsh -c "emulate zsh; $code"
 }
+
+function run::arm () {
+    local code="${1:-echo "Hello World"}"
+    command arch -arm64e zsh -c "$code"
+}
+
+function run::intel () {
+    local code="${1:-echo "Hello World"}"
+    command arch -x86_64 zsh -c "$code"
+}
