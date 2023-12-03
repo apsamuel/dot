@@ -53,11 +53,11 @@ function emulate::zsh () {
 }
 
 function run::arm () {
-    local code="${1:-echo "Hello World"}"
-    command arch -arm64e zsh -c "$code"
+    local code="${1:-uname}"
+    arch -arm64 zsh -c "$code"
 }
 
 function run::intel () {
-    local code="${1:-echo "Hello World"}"
+    local code="${1:-uname}"
     command arch -x86_64 zsh -c "$code"
 }
