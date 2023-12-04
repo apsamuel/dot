@@ -12,7 +12,7 @@ function emulate::sh () {
     command zsh -c "emulate bash; ${code}"
 }
 
-function run::sh () {
+function spawn::sh () {
     local code="${1:-echo "Hello World"}"
     command sh -c "$code"
 }
@@ -22,7 +22,7 @@ function emulate::bash () {
     emulate::sh "$code"
 }
 
-function run::bash () {
+function spawn::bash () {
     local code="${1:-echo "Hello World"}"
     command bash -c "$code"
 }
@@ -32,7 +32,7 @@ function emulate::csh () {
     command zsh -c "emulate csh; $code"
 }
 
-function run::csh () {
+function spawn::csh () {
     local code="${1:-echo "Hello World"}"
     command csh -c "$code"
 }
@@ -42,22 +42,22 @@ function emulate::ksh () {
     command zsh -c "emulate ksh; $code"
 }
 
-function run::ksh () {
+function spawn::ksh () {
     local code="${1:-echo "Hello World"}"
     command ksh -c "$code"
 }
 
 function emulate::zsh () {
     local code="${1:-echo "Hello World"}"
-    command zsh -c "emulate zsh; $code"
+    command zsh -l -c "emulate zsh; $code"
 }
 
-function run::arm () {
+function spawn::arm () {
     local code="${1:-uname}"
-    arch -arm64 zsh -c "$code"
+    arch -arm64 zsh -l -c "$code"
 }
 
-function run::intel () {
+function spawn::intel () {
     local code="${1:-uname}"
-    command arch -x86_64 zsh -c "$code"
+    command arch -x86_64 zsh -l -c "$code"
 }
