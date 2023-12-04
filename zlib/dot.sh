@@ -87,3 +87,11 @@ function dot::sh {
     fi
 
 }
+
+if type -t dot::sh &>/dev/null; then
+    DOT_ENABLED=true
+else
+    DOT_ENABLED=false
+fi
+DOT_ENABLED=true
+export DOT_ENABLED
