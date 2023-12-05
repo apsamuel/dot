@@ -1,8 +1,8 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/genv bash
+#shellcheck shell=bash
 #% note: this runs first!
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
-
 
 
 function __load_secrets__ () {

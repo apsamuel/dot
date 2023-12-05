@@ -1,4 +1,5 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/genv bash
+# shellcheck shell=bash
 # set -o nopipefail
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null

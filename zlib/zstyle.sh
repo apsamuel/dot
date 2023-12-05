@@ -1,6 +1,7 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/genv zsh
+# shellcheck shell=bash
 
-
+# TODO: should only run in zsh sessions
 # Uncomment one of the following lines to change the auto-update behavior
 # zstyle ':omz:update' mode disabled  # disable automatic updates
 # zstyle ':omz:update' mode auto      # update automatically without asking

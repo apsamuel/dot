@@ -1,4 +1,5 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/genv bash
+# shellcheck shell=bash
 
 _directory_name="$(dirname "${0}")"
 directory_name="$(dirname "${_directory_name}")"

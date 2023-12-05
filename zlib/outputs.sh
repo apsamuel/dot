@@ -1,4 +1,5 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/genv bash
+# shellcheck shell=bash
 
 function availableColorTab() {
 	for ((i=0; i<256; i++)) ;do
