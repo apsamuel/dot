@@ -1,4 +1,5 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/genv bash
+# shellcheck shell=bash
 
 function emulate::interpreter () {
     local emulation="${1:-sh}"

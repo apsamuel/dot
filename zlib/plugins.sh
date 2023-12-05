@@ -1,4 +1,5 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/genv bash
+# shellcheck shell=bash
 
 export ZSH_OPTIONS=(
     autopushd            # Push the old directory onto the directory stack when changing directories.

@@ -1,4 +1,5 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/genv bash
+# shellcheck shell=bash
 # disable warnings on expansion of variables locally, this is desired
 # shellcheck disable=SC2029
 export LAN_NETWORK="${LAN_NETWORK:-192.168.11.0/24}"
