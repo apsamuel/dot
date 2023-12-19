@@ -1,4 +1,3 @@
-#!/usr/local/bin/genv bash
 # shellcheck shell=bash
 
 function emulate::interpreter () {

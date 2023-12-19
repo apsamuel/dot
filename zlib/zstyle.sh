@@ -1,4 +1,3 @@
-#!/usr/local/bin/genv zsh
 # shellcheck shell=bash
 
 # TODO: should only run in zsh sessions

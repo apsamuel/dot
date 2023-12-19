@@ -1,4 +1,3 @@
-#!/usr/local/bin/genv bash
 # shellcheck shell=bash
 # set -o nopipefail
 # 🕵️ ignore shellcheck warnings about source statements
@@ -39,6 +38,14 @@ function brew::install () {
     echo "Installing '$1'"
     brew install "$1"
   fi
+}
+
+function brew::install::arm () {
+  arch -arm64 brew install "$1"
+}
+
+function brew::install::intel () {
+  arch -x86_64 brew install "$1"
 }
 
 function brew::refresh () {

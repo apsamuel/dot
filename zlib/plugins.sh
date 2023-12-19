@@ -1,4 +1,3 @@
-#!/usr/local/bin/genv bash
 # shellcheck shell=bash
 
 export ZSH_OPTIONS=(
