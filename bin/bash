@@ -1,0 +1,15 @@
+#
+# shellcheck shell=bash
+
+if [[ -z $USER ]]; then
+    export USER="blah"
+fi
+
+if [[ -z $HOME ]]; then
+    export HOME="/Users/$USER"
+fi
+
+if [[ -z $SHELL ]]; then
+    export SHELL="genv bash"
+fi
+zsh -l -c "echo \$0"

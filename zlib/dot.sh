@@ -1,4 +1,3 @@
-#!/usr/local/bin/genv bash
 # shellcheck shell=bash
 
 _directory_name="$(dirname "${0}")"
@@ -57,7 +56,14 @@ function dot::sh {
     # reload
     if [[ "${command}" =~ reload ]]; then
         # we are using oh-my-zsh, so basically...
-        omz reload
+        if [[ "${2}" == "-debug" ]]; then
+            set -x
+            omz reload
+            set +x
+        else
+            omz reload
+        fi
+        #omz reload
     fi
 
     # changelog

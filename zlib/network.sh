@@ -1,4 +1,3 @@
-#!/usr/local/bin/genv bash
 # shellcheck shell=bash
 # disable warnings on expansion of variables locally, this is desired
 # shellcheck disable=SC2029
