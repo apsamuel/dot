@@ -1,6 +1,13 @@
 # shellcheck shell=bash
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
+DOT_DEBUG="${DOT_DEBUG:-0}"
+directory=$(dirname "$0")
+library=$(basename "$0")
+
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${library} (${directory})"
+fi
 
 ANACONDA_DIR=/usr/local/anaconda3
 # conditionally set the anaconda directory based on architecture

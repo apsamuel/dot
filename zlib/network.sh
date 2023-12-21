@@ -1,6 +1,13 @@
 # shellcheck shell=bash
 # disable warnings on expansion of variables locally, this is desired
 # shellcheck disable=SC2029
+DOT_DEBUG="${DOT_DEBUG:-0}"
+directory=$(dirname "$0")
+library=$(basename "$0")
+
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${library} (${directory})"
+fi
 export LAN_NETWORK="${LAN_NETWORK:-192.168.11.0/24}"
 declare -A LAN
 declare -A LAN_BINARY
