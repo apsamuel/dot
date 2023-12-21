@@ -1,4 +1,11 @@
 # shellcheck shell=bash
+DOT_DEBUG="${DOT_DEBUG:-0}"
+directory=$(dirname "$0")
+library=$(basename "$0")
+
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${library} (${directory})"
+fi
 
 # TODO: should only run in zsh sessions
 # Uncomment one of the following lines to change the auto-update behavior

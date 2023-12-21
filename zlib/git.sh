@@ -4,7 +4,19 @@
 # shellcheck source=/dev/null
 # 🕵️ ignore shellcheck warnings about read/mapfile
 # shellcheck disable=SC2207
+DOT_DEBUG="${DOT_DEBUG:-0}"
+directory=$(dirname "$0")
+library=$(basename "$0")
 
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${library} (${directory})"
+fi
+
+merge_branch=1
+rebase_branch=0
+stash_commit=0
+source_branch="main"
+destination_branch="staging"
 username="apsamuel"
 email="aaron.psamuel@gmail.com"
 
@@ -12,7 +24,7 @@ git::config() {
 
     # use getops to parse arguments to this function
     # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
-    export git_global_config=0
+    export global=0
     while getopts ":g:u:e:" opt; do
         case ${opt} in
             u ) # process option u
@@ -24,7 +36,7 @@ git::config() {
                 echo "email: $email"
                 ;;
             g ) # process option g
-                git_global_config=1
+                global=1
                 echo "global mode"
                 ;;
             \? ) echo "Usage: cmd [-g] [-f filename]" 1>&2
@@ -32,7 +44,7 @@ git::config() {
         esac
     done
 
-    if [[ $git_global_config -eq 1 ]]; then
+    if [[ $global -eq 1 ]]; then
         echo "git config --global user.name $username"
         git config --global user.name "$username"
         echo "git config --global user.email $email"
@@ -45,22 +57,28 @@ git::config() {
     fi
 }
 
-git::noop::sync() {
+git::noop::sync-dev() {
+
     remote="origin"
     source_branch="main"
     destination_branch="staging"
-    merge=1
-    rebase=0
-    # use getops to merge or rebase
-    while getopts ":mr:s:d:R:" opt; do
+    merge_branch=1
+    rebase_branch=0
+    # use getops to merge or rebase_branch
+    while getopts ":mrS:s:d:R:" opt; do
         case ${opt} in
             m ) # process option m
                 #echo "merging"
-                merge=1
+                merge_branch=1
                 ;;
             r ) # process option r
                 #echo "rebasing"
-                rebase=1
+                rebase_branch=1
+                ;;
+            #stash
+            S ) # process option S
+                echo "stash: $OPTARG"
+                stash_commit=1
                 ;;
             s ) # process option s
                 echo "source branch: $OPTARG"
@@ -79,19 +97,20 @@ git::noop::sync() {
         esac
     done
 
-    if [[ $merge -eq 1 ]]; then
-        echo "git merge $source_branch $destination_branch"
+    if [[ $merge_branch -eq 1 ]]; then
+        echo "merging $source_branch $destination_branch"
+        # check if the branch is currently dirty, if so, stash it
         git checkout "$source_branch"
         git pull
         git checkout "$destination_branch"
-        git merge "$remote"/"$source_branch"
+        #git merge "$remote"/"$source_branch"
         #git merge "$source_branch" "$destination_branch"
-    elif [[ $rebase -eq 1 ]]; then
-        echo "git rebase $source_branch $destination_branch"
+    elif [[ $rebase_branch -eq 1 ]]; then
+        echo "git rebasing $source_branch $destination_branch"
         git checkout "$source_branch"
         git pull
         git checkout "$destination_branch"
-        git rebase "$remote"/"$source_branch"
-        #git rebase "$source_branch" "$destination_branch"
+        #git rebase "$remote"/"$source_branch"
+        #git rebase_branch "$source_branch" "$destination_branch"
     fi
 }

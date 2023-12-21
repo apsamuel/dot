@@ -1,5 +1,13 @@
 # shellcheck shell=bash
 
+DOT_DEBUG="${DOT_DEBUG:-0}"
+directory=$(dirname "$0")
+library=$(basename "$0")
+
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${library} (${directory})"
+fi
+
 _directory_name="$(dirname "${0}")"
 directory_name="$(dirname "${_directory_name}")"
 export DOT_DIR="${directory_name}"

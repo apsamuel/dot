@@ -3,17 +3,22 @@
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
 # executing in linux
+DOT_DEBUG="${DOT_DEBUG:-0}"
+directory=$(dirname "$0")
+library=$(basename "$0")
+
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${library} (${directory})"
+fi
+
 
 if [[ "$OPERATING_SYSTEM" == "linux-gnu"* ]]; then
-    echo "setting up linux"
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 # executing in native arm64 mac
 elif [[ $OPERATING_SYSTEM == "darwin" && "$CPU_ARCHITECTURE" == "arm64" ]]; then
-    echo "setting up mac/arm64"
     eval "$(/opt/homebrew/bin/brew shellenv)"
 # executing in rosetta or on an intel mac
 elif [[ $OPERATING_SYSTEM == "darwin" && ("$CPU_ARCHITECTURE" == "i386" || "$CPU_ARCHITECTURE" == "x86_64") ]]; then
-    echo "setting up mac/intel"
     eval "$(/usr/local/bin/brew shellenv)"
 else
     echo "Warning: problem detecting OPERATING_SYSTEM!"
