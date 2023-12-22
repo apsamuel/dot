@@ -57,13 +57,13 @@ git::config() {
     fi
 }
 
-git::noop::sync-dev() {
-
+git::noop::sync() {
     remote="origin"
     source_branch="main"
     destination_branch="staging"
     merge_branch=1
     rebase_branch=0
+    current_branch=$(git branch --show-current)
     # use getops to merge or rebase_branch
     while getopts ":mrS:s:d:R:" opt; do
         case ${opt} in
@@ -97,20 +97,42 @@ git::noop::sync-dev() {
         esac
     done
 
+    # do not operate on main directly
+    if [[ "$current_branch" == "$source_branch" ]]; then
+        echo "please checkout an active development branch before using this command"
+        return 1
+    fi
+
+    # check in or stash changes if there are any
+    if [[ $(git status --porcelain) ]]; then
+        echo "there are changes in the working directory"
+        if [[ $stash_commit -eq 1 ]]; then
+            git stash
+        else
+            commit_message="chore: sync $source_branch to $destination_branch"
+            git add .
+            git commit -m "$commit_message"
+            return 1
+        fi
+    else
+        echo "there are no changes in the working directory"
+    fi
+
+
+
     if [[ $merge_branch -eq 1 ]]; then
         echo "merging $source_branch $destination_branch"
-        # check if the branch is currently dirty, if so, stash it
         git checkout "$source_branch"
         git pull
         git checkout "$destination_branch"
-        #git merge "$remote"/"$source_branch"
-        #git merge "$source_branch" "$destination_branch"
+        git merge "$remote"/"$source_branch"
+        git merge "$source_branch" "$destination_branch"
     elif [[ $rebase_branch -eq 1 ]]; then
         echo "git rebasing $source_branch $destination_branch"
         git checkout "$source_branch"
         git pull
         git checkout "$destination_branch"
-        #git rebase "$remote"/"$source_branch"
-        #git rebase_branch "$source_branch" "$destination_branch"
+        git rebase "$remote"/"$source_branch"
+        git rebase_branch "$source_branch" "$destination_branch"
     fi
 }
