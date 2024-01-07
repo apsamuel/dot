@@ -1,4 +1,10 @@
 # shellcheck shell=bash
+## TODO: move node setup to library file
+#export NODE_VERSION=16.13.2
+#export N_PREFIX=${HOME}/devops/node
+#NODE_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+#export NODE_OS
+#export NODE_ARCH=x64
 DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
