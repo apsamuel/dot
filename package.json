@@ -1,0 +1,28 @@
+{
+  "name": "@apsamuel/dot",
+  "version": "0.0.1",
+  "description": "OSX Shell Sandard",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apsamuel/dot.git"
+  },
+  "keywords": [
+    "setup",
+    "bootstrap"
+  ],
+  "author": "spiceyengineer@icloud.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/apsamuel/dot/issues"
+  },
+  "homepage": "https://github.com/apsamuel/dot#readme"
+}

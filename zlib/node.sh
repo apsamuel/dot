@@ -7,6 +7,8 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
 
+N_PREFIX="${HOME}"/.node-$(arch)
+
 NODE_VERSION="${NODE_VERSION:-20.10.0}"
 NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-x64.tar.xz"
 
@@ -21,3 +23,5 @@ function node::install () {
     echo "Downloading node from $NODE_URL"
     curl -L "$NODE_URL" | tar -xJ --strip-components=1 -C /tmp/node
 }
+
+export N_PREFIX
