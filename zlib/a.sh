@@ -17,4 +17,10 @@ source "${directory}"/mac.sh
 FOO=bar
 BAR=baz
 
+
+## alias definitions
+alias cat='bat'
+alias ls='ls --color=always'
+alias less='bat --paging=always'
+
 export FOO BAR
