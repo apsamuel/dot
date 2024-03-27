@@ -14,8 +14,7 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
 source "${directory}"/mac.sh
-FOO=bar
-BAR=baz
+
 
 
 ## alias definitions
@@ -23,4 +22,12 @@ alias cat='bat'
 alias ls='ls --color=always'
 alias less='bat --paging=always'
 
-export FOO BAR
+function getShellName () {
+    currentShell="$(command ps -p $$ -ocomm=)"
+    echo "$currentShell"
+}
+
+function getSecureString () {
+    secureString="$(pwgen -n -y 15 1)"
+    echo "$secureString"
+}
