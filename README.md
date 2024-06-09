@@ -1,6 +1,10 @@
-# dotfiles
+# dot
 
-**My** terminal/shell configuration on 🍎 Apple IOS **`>=13.x`**
+laptop/desktop config
+
+## use cases
+
+- Minimize time to a succesful onboarding by defining your workstation setup as code.
 
 ## prerequisites
 
