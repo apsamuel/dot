@@ -2,10 +2,12 @@
 # shellcheck source=/dev/null
 
 # load iterm shell integration
+export ITERM2_SQUELCH_MARK=1
+export ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX=1
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
 # load thefuck
-command -v thefuck && eval "$(thefuck --enable-experimental-instant-mode --yeah --alias)"
+command -v thefuck >/dev/null 2>&1 && eval "$(thefuck --enable-experimental-instant-mode --yeah --alias)"
 
 # load zsh autosuggestions
 test -e "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh && source "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh

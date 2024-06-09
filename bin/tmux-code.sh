@@ -1,6 +1,6 @@
 #!/usr/local/bin/bash
 # author: github.com/apsamuel
-# description: create or attach to a session in the directory VScode has open
+# description: make tmux great again
 
 folder="$(pwd)"
 session="$(basename "${folder}")"

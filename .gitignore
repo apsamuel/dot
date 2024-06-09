@@ -148,4 +148,4 @@ data/secrets.json
 data/Brewfile.lock.json
 
 # NOTE: these paths are being gracefully phased in to avoid junk, and breaking changes
-shellx
+turtle

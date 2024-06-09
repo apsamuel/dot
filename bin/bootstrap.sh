@@ -239,13 +239,14 @@ function dot::configure::gh () {
 
 }
 
+
 function dot::configure::zsh () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.zshrc"
     chsh -s "$(command -v zsh)" "${USER}"
     ln -s -f "${icloud_link}/dot/shell/zsh/rc" "${rc}" && \
-    echo "✅  zsh is configured, please restart any open shells!"
+    echo "✅  zsh shell is configured, please restart any open shells!"
 }
 
 function dot::configure::bash () {
@@ -253,7 +254,41 @@ function dot::configure::bash () {
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.bashrc"
     ln -s -f "${icloud_link}/dot/shell/bash/rc" "${rc}"
-    echo "✅  bash is configured, please restart any open shells!"
+    echo "✅  bash shell is configured, please restart any open shells!"
+}
+
+function dot::configure::fish () {
+    # TODO: make real
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local icloud_link="${HOME}/iCloud"
+    local rc="${HOME}/.config/fish/config.fish"
+    ln -s -f "${icloud_link}/dot/shell/fish/rc" "${rc}"
+    echo "✅  fish shell is configured, please restart any open shells!"
+    true
+}
+
+function dot::configure::ksh () {
+    # TODO: make real    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local icloud_link="${HOME}/iCloud"
+    local rc="${HOME}/.kshrc"
+    ln -s -f "${icloud_link}/dot/shell/ksh/rc" "${rc}"
+    echo "✅  ksh shell is configured, please restart any open shells!"
+    true
+}
+
+function dot::configure::csh () {
+    # TODO: make real
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local icloud_link="${HOME}/iCloud"
+    local rc="${HOME}/.kshrc"
+    ln -s -f "${icloud_link}/dot/shell/csh/rc" "${rc}"
+    echo "✅  csh shell is configured, please restart any open shells!"
+    true
+}
+
+
+function dot::configure::pwsh () {
+    true
 }
 
 function dot::configure::omz () {
@@ -511,5 +546,4 @@ function dot::install::p10k () {
         return 1
     fi
 }
-
 # dot::bootstrap;
