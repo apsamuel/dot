@@ -1,4 +1,6 @@
 # shellcheck shell=bash
+#% note: make brew great again
+
 # set -o nopipefail
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
@@ -53,7 +55,7 @@ function brew::install::intel () {
   arch -x86_64 brew install "$1"
 }
 
-function brew::refresh () {
+function brew::update () {
     brew update
 }
 
@@ -80,6 +82,10 @@ function brew::cask::check () {
 
 function brew::dump () {
     brew bundle dump --force --file="${1:-${ICLOUD}/dot/Brewfile}"
+}
+
+function brew::recipe () {
+  cat "${1:-${ICLOUD}/dot/Brewfile}"
 }
 
 function brew::load () {

@@ -1,4 +1,5 @@
 #shellcheck shell=bash
+#% note: enable any completion steps here
 # shellcheck source=/dev/null
 
 

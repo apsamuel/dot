@@ -1,4 +1,5 @@
 #shellcheck shell=bash
+#% note: base variables and functions
 DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
