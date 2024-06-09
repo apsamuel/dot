@@ -47,7 +47,6 @@ function termLogo() {
 }
 
 function termImage () {
-
     local image="${1}"
     TERM=screen-256color "$HOME"/.iterm2/imgcat "${image}"
     sleep 5
