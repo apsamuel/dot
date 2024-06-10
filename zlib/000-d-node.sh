@@ -23,7 +23,15 @@ if [ "$CPU_ARCHITECTURE" = "arm64" ]; then
     NODE_URL="${NODE_URL:-https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-arm64.tar.xz}"
 fi
 
-function node::install () {
+# update the path to include the latest node version
+if brew list | grep node >/dev/null 2>&1 ; then
+    node=$(brew list |grep node | sort -n | tail -1)
+    export PATH="/usr/local/opt/${node}/bin:${PATH}"
+    export LDFLAGS="${LDFLAGS} -L/usr/local/opt/${node}/lib"
+    export CPPFLAGS="${CPPFLAGS} -I/usr/local/opt/${node}/include"
+fi
+
+function node::tar::install () {
     # download node into a temporary directory
     mkdir -p /tmp/node
     echo "Downloading node from $NODE_URL"

@@ -8,10 +8,11 @@
 # shellcheck disable=SC2207
 
 DOT_DEBUG="${DOT_DEBUG:-0}"
-DOT_DIRECTORY=$(dirname "$0")
-DOT_LIBRARY=$(basename "$0")
+DOT_DIRECTORY="${DOT_DIRECTORY:-$(dirname "$0")}"
+DOT_LIBRARY="${DOT_LIBRARY:-$(basename "$0")}"
 
 
+# TODO: deprecate these variables, they are not very descriptive
 directory=$(dirname "$0")
 library=$(basename "$0")
 
@@ -21,14 +22,11 @@ export DOT_DEBUG DOT_DIRECTORY DOT_LIBRARY
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
-source "${directory}"/mac.sh
+
+# we need to source the mac.sh file first
+source "${directory}"/000-c-mac.sh
 
 
-
-## alias definitions
-alias cat='bat'
-alias ls='ls --color=always'
-alias less='bat --paging=always'
 
 function getShellName () {
     currentShell="$(command ps -p $$ -ocomm=)"
@@ -36,6 +34,7 @@ function getShellName () {
 }
 
 function getSecureString () {
-    secureString="$(pwgen -n -y 15 1)"
+    len="${1:-15}"
+    secureString="$(pwgen -n -y "${len}" 1)"
     echo "$secureString"
 }
