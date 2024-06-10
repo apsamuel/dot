@@ -11,7 +11,6 @@ fi
 
 ANACONDA_DIR=/usr/local/anaconda3
 # conditionally set the anaconda directory based on architecture
-
 if [[ $(uname -m) == "x86_64" ]]; then
     export ANACONDA_DIR=/usr/local/anaconda3
 else
@@ -30,3 +29,5 @@ else
     fi
 fi
 unset __conda_setup
+
+# activate base conda environment
