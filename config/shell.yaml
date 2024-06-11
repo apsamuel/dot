@@ -15,7 +15,52 @@
 ## define secret sources (getFromEnv, getFromFile, getFromUrl)
 ---
 shells:
+  - name: default
+    image: busybox
+    posix: true
+    secrets:
+      - source: getFromEnv
+        name: KEY
+      - source: getFromFile
+        type: json
+        name: KEY
+      - source: getFromUrl
+        type: https
+          cert: n/a
+          key: n/a
+          ca: n/a
+        name: KEY
+    config:
+      theme: robbyrussel
+      framework: oh-my-bash
+      plugins:
+        - git
+        - zsh-autosuggestions
+        - zsh-syntax-highlighting
+  - name: busybox
+    image: busybox
+    posix: true
+    secrets:
+      - source: getFromEnv
+        name: KEY
+      - source: getFromFile
+        type: json
+        name: KEY
+      - source: getFromUrl
+        type: https
+          cert: n/a
+          key: n/a
+          ca: n/a
+        name: KEY
+    config:
+      theme: robbyrussel
+      framework: oh-my-bash
+      plugins:
+        - git
+        - zsh-autosuggestions
+        - zsh-syntax-highlighting
   - name: bash
+    image: xxx.io/bash
     posix: true
     secrets:
       - source: getFromEnv
