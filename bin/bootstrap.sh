@@ -15,7 +15,7 @@ dot_bootstrap_directory="$(dirname "$(dirname "$0")")"
 dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
-function __load_secrets__ () {
+function __load_secrets () {
     local secret_keys=()
     # declare -A secrets
     while IFS=' ' read -r -d ' ' secret_key; do
@@ -45,7 +45,7 @@ function printDumpFile () {
 
 function bootstrapSystem() {
     # load secrets
-    __load_secrets__
+    __load_secrets
     validatebrew # install brew
     installDependencies # install Brewfile
     # configure icloud links
