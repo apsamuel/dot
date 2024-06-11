@@ -1,16 +1,16 @@
 # shellcheck shell=bash
-## TODO: move node setup to library file
+## TODO: move node setup to DOT_LIBRARY file
 #export NODE_VERSION=16.13.2
 #export N_PREFIX=${HOME}/devops/node
 #NODE_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 #export NODE_OS
 #export NODE_ARCH=x64
-DOT_DEBUG="${DOT_DEBUG:-0}"
-directory=$(dirname "$0")
-library=$(basename "$0")
+# DOT_DEBUG="${DOT_DEBUG:-0}"
+# DOT_DIRECTORY=$(dirname "$0")
+# DOT_LIBRARY=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
+    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
 
 N_PREFIX="${HOME}"/.node-$(arch)
@@ -32,7 +32,7 @@ if brew list | grep node >/dev/null 2>&1 ; then
 fi
 
 function node::tar::install () {
-    # download node into a temporary directory
+    # download node into a temporary DOT_DIRECTORY
     mkdir -p /tmp/node
     echo "Downloading node from $NODE_URL"
     curl -L "$NODE_URL" | tar -xJ --strip-components=1 -C /tmp/node

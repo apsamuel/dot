@@ -1,11 +1,8 @@
 #shellcheck shell=bash
-#% note: base variables and functions
-DOT_DEBUG="${DOT_DEBUG:-0}"
-directory=$(dirname "$0")
-library=$(basename "$0")
+#% description: base variables and functions
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
+    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
 # System information
 CPU_BRAND="$(sysctl -n machdep.cpu.brand_string)"

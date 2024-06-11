@@ -2,6 +2,8 @@
 #% note: enable any completion steps here
 # shellcheck source=/dev/null
 
+# enable zsh completions
+autoload -U +X bashcompinit && bashcompinit
 
 # load zsh completions
 if type brew &>/dev/null; then

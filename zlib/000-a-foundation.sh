@@ -1,36 +1,33 @@
-#shellcheck shell=bash
-#% note: these steps will run first, as the order or sourcing is lexicographic hence the name 'a.sh'
+#% author: Aaron Samuel
+#% description: define baseline environment variables required for the dotfiles ecosystem and the shell
+# shellcheck shell=bash
 
-# 🕵️ ignore shellcheck warnings about source statements
+#** disable relevant shellcheck warnings **#
 # shellcheck source=/dev/null
-
-# 🕵️ ignore shellcheck warnings about read/mapfile
 # shellcheck disable=SC2207
 
-DOT_DEBUG="${DOT_DEBUG:-0}"
-DOT_DIRECTORY="${DOT_DIRECTORY:-$(dirname "$0")}"
-DOT_LIBRARY="${DOT_LIBRARY:-$(basename "$0")}"
-
-
-# TODO: deprecate these variables, they are not very descriptive
-directory=$(dirname "$0")
-library=$(basename "$0")
-
-export DOT_DEBUG DOT_DIRECTORY DOT_LIBRARY
-
-
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
+    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
 
 # we need to source the mac.sh file first
-source "${directory}"/000-c-mac.sh
+source "${DOT_LIBRARY}"/static/lib/mac.sh
 
 
+function compileTermInfo() {
+    infocmp -x xterm-256color
+    printf '\t%s\n' 'ncv@,'
+} >/tmp/t && tic -x /tmp/t
 
 function getShellName () {
+    if [[ -z "$fish_pid" ]]; then
+        echo "fish"
+    else
     currentShell="$(command ps -p $$ -ocomm=)"
-    echo "$currentShell"
+    # removes non-standard characters and returns the shell name
+    echo "${currentShell}" | tr '[:upper:]' '[:lower:]' | sed -e s/-//g
+
+    fi
 }
 
 function getSecureString () {
