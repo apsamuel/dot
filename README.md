@@ -1,6 +1,6 @@
 # dot
 
-laptop/desktop config
+a standard unit of shell configuration
 
 ## use cases
 
