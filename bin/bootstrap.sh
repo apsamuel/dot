@@ -39,34 +39,34 @@ function __load_secrets__ () {
     echo "🛻  loaded ${#secret_keys[@]} secrets"
 }
 
-function dot::bootstrap::info () {
+function printDumpFile () {
     echo "🛠️ executing ${dot_boostrap_file}"
 }
 
-function dot::bootstrap () {
+function bootstrapSystem() {
     # load secrets
     __load_secrets__
-    dot::validate::brew # install brew
-    dot::install::deps # install Brewfile
+    validatebrew # install brew
+    installDependencies # install Brewfile
     # configure icloud links
     # configure bash
-    dot::configure::zsh
-    dot::configure::bash
-    dot::validate::cloud
+    configureZsh
+    configureBash
+    validateCloud
     # configure ssh
-    dot::configure::ssh
-    dot::configure::git
+    configureSSH
+    configureGit
     # validate and configure iterm
-    dot::validate::iterm
-    dot::configure::figlet
-    dot::validate::zsh
-    dot::validate::omz
-    dot::validate::p10k
-    dot::configure::ohmytmux
+    validateIterm
+    configureFiglet
+    validateZsh
+    validateOhMyZsh
+    validatePowerlevel10K
+    validateOhMyTmux
 
 }
 
-function dot::install::deps () {
+function installDependencies () {
     if command brew bundle install --file "${ICLOUD}/dot/Brewfile";
     then
         echo "✅ dependencies ok"
@@ -81,12 +81,12 @@ function dot::validate::deps () {
     # you can force reinstallation of dependencies by setting DOT_DEPS=1
     if [[ "${dot_bootstrap_deps}" -gt 0 ]]; then
         echo "🛠️ installing bootstrap deps ..."
-        dot::install::deps
+        installDependencies
     else
         if ! command brew bundle check --file "${dot_bootstrap_directory}/data/Brewfile" &> /dev/null
         then
             echo "🛠️ installing dependencies ..."
-            dot::install::deps
+            installDependencies
         fi
     fi
 }
@@ -106,7 +106,7 @@ function dot::link::cloud () {
 
 }
 
-function dot::validate::cloud () {
+function validateCloud () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
 
@@ -120,7 +120,7 @@ function dot::validate::cloud () {
     fi
 }
 
-function dot::configure::ohmytmux () {
+function validateOhMyTmux () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local tmux_local_config="${HOME}/.tmux.conf.local"
@@ -135,7 +135,7 @@ function dot::configure::ohmytmux () {
     echo "✅  tmux is configured"
 }
 
-function dot::configure::figlet () {
+function configureFiglet () {
     if [[ ! -d "$HOME"/.figlet ]]; then
         git clone git@github.com:xero/figlet-fonts.git "$HOME"/.figlet &> /dev/null
     else
@@ -162,7 +162,7 @@ function dot::configure::iterm () {
 
 }
 
-function dot::configure::ssh () {
+function configureSSH () {
     local ssh_config="${HOME}/.ssh/config"
     local ssh_config_dot="${HOME}/iCloud/dot/ssh/config"
     local ssh_keys=()
@@ -203,7 +203,7 @@ function dot::configure::ssh () {
 
 }
 
-function dot::configure::git () {
+function configureGit () {
     local git_config="${HOME}/.gitconfig"
     local git_config_dot="${HOME}/iCloud/dot/git/config"
 
@@ -240,7 +240,7 @@ function dot::configure::gh () {
 }
 
 
-function dot::configure::zsh () {
+function configureZsh () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.zshrc"
@@ -249,7 +249,7 @@ function dot::configure::zsh () {
     echo "✅  zsh shell is configured, please restart any open shells!"
 }
 
-function dot::configure::bash () {
+function configureBash () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.bashrc"
@@ -319,7 +319,7 @@ function dot::configure::p10k () {
     echo "✅  powerlevel10k is configured"
 }
 
-function dot::validate::brew () {
+function validatebrew () {
     if ! command -v brew &> /dev/null
     then
         echo "🛠️ installing brew..."
@@ -330,7 +330,7 @@ function dot::validate::brew () {
     fi
 }
 
-function dot::validate::zsh () {
+function validateZsh () {
     if ! command -v zsh &> /dev/null
     then
         echo "🛠️ installing zsh..."
@@ -341,7 +341,7 @@ function dot::validate::zsh () {
 
     if [[ ! "$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")" == "zsh" ]]; then
         echo "🛠️ zsh is not the default terminal..."
-        dot::configure::zsh
+        configureZsh
     else
         echo "✅ zsh is the default terminal"
     fi
@@ -361,7 +361,7 @@ function dot::validate::jq () {
 
 }
 
-function dot::validate::iterm () {
+function validateIterm () {
     if ! mdfind "kMDItemKind == 'Application'" | grep -q -Ei '^/Applications/[i]Term.*?.app' &> /dev/null
     then
         echo "🛠️ installing iterm2 ..."
@@ -401,7 +401,7 @@ function dot::validate::themes () {
 
 }
 
-function dot::validate::omz () {
+function validateOhMyZsh () {
     # TODO: devise a better method of validating omz is actually installed, using type requires sourcing ZSH
     if [[ ! -d $HOME/.oh-my-zsh ]];
     then
@@ -412,7 +412,7 @@ function dot::validate::omz () {
     dot::configure::omz
 }
 
-function dot::validate::p10k () {
+function validatePowerlevel10K () {
     # installed
     if [[ ! -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]];
     then
