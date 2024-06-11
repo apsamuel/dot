@@ -13,7 +13,7 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
 fi
 
 
-function __load_secrets__ () {
+function __load_secrets () {
     local secret_keys=()
     # declare -A secrets
     while IFS=' ' read -r -d ' ' secret_key; do
