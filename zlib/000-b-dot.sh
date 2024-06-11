@@ -1,16 +1,17 @@
 # shellcheck shell=bash
 
-DOT_DEBUG="${DOT_DEBUG:-0}"
-directory=$(dirname "$0")
-library=$(basename "$0")
+# DOT_DEBUG="${DOT_DEBUG:-0}"
+# DOT_DIRECTORY=$(dirname "$0")
+# DOT_LIBRARY=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
+    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
 
-_directory_name="$(dirname "${0}")"
-directory_name="$(dirname "${_directory_name}")"
-export DOT_DIR="${directory_name}"
+# DOT_DIRECTORY_NAME="$(dirname "${0}")"
+DOT_DIRECTORY_NAME="$(dirname "${DOT_DIRECTORY_NAME}")"
+# temporarily set DOC_DIR to a basename for git ops...
+DOT_DIR="${DOT_DIRECTORY_NAME}"
 
 # detect TMUX session if present
 if [[ -n "${TMUX}" ]]; then

@@ -1,10 +1,10 @@
 # shellcheck shell=bash
 DOT_DEBUG="${DOT_DEBUG:-0}"
-directory=$(dirname "$0")
-library=$(basename "$0")
+# DOT_DIRECTORY=$(dirname "$0")
+# DOT_LIBRARY=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
+    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
 
 function emulate::interpreter () {

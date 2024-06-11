@@ -1,10 +1,14 @@
+#% author: Aaron Samuel
+#% description: shell output functions
 # shellcheck shell=bash
-DOT_DEBUG="${DOT_DEBUG:-0}"
-directory=$(dirname "$0")
-library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
+#** disable relevant shellcheck warnings **#
+# shellcheck source=/dev/null
+# shellcheck disable=SC2207
+
+
+if [[ "${DOT_DEBUG:-0}" -eq 1 ]]; then
+    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
 
 function availableColorTab() {

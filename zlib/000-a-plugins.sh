@@ -1,12 +1,17 @@
+#% author: Aaron Samuel
+#% description: define baseline environment variables required for the dotfiles ecosystem and the shell
 # shellcheck shell=bash
-DOT_DEBUG="${DOT_DEBUG:-0}"
-directory=$(dirname "$0")
-library=$(basename "$0")
+
+#** disable relevant shellcheck warnings **#
+# shellcheck source=/dev/null
+# shellcheck disable=SC2207
+
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
+    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
 
+#TODO: these options need to be read from a file
 export ZSH_OPTIONS=(
     autopushd            # Push the old directory onto the directory stack when changing directories.
     extendedglob         # Use extended globbing syntax.
