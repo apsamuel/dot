@@ -75,7 +75,7 @@ function termRandomFont() {
 
 function randomQuote() {
 	randomQuote="$(
-		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${DOT_DIR}/data/quotes.json" |shuf -n1
+		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${DOT_DIRECTORY}/data/quotes.json" |shuf -n1
 	)"
 	echo "${randomQuote}"
 }
@@ -83,7 +83,7 @@ function randomQuote() {
 function termQuote() {
 	# can we do random selection of fonts?
 	randomQuote="$(
-		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${DOT_DIR}/data/quotes.json" |shuf -n1
+		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${DOT_DIRECTORY}/data/quotes.json" |shuf -n1
 	)"
 	echo "${randomQuote}" | figlet -p -w "$(terminalWidth)" -d "${HOME}/.figlet" -f "$(termRandomFont "${@}")" -k -l| lolcat
 }

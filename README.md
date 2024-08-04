@@ -1,28 +1,36 @@
-# dot
+# shelld ( 🐢 )
 
-What is a dot?
+a based shell
 
-a containerize shell, it contains all the libraries, dependencies and software to reliably run a shell
+```bash
+tUnit=60
+tScale=5
+tLen=$((tUnit * tScale))
+tortoise_start=0
+tortoise_unit=5
+tortoise_freq=5
+hare_start=10
+hare_unit=1
+hare_freq=1
 
-Why should I use a dot?
+function tortoise() {
+  start=${tortoise_start:-0}
+  length=${tLen:-${tLen}}
+}
 
-Workstation configuration should be dreamy
+function hare() {
+  start=${${hare_start}:-10}
+}
+```
 
-When should I use a dot?
+## **`NASF`** *(Not Another Shell Framework)*
 
-- You have booted a new workstation and want to quickly get setup with your familiar tools and utilities
-- You just started a new job, you have a new workstation, builds are flexible, and you need to quickly become a value addition
+`ohmyzsh`, `ohmybash`, `OMGGOSH` -- this is not another shell framework
 
-How does dot work?
+## Declarative
 
-I will leverage the most native virtualization and containerization technologies to your platform to provide a reliable shell configuration
+Specify a state, the shell engine will facilitate & maintain it
 
-## dependencies
+## Events
 
-- any OS with a native virt or containerization layer
-
-## prerequisites
-
-- populate [secrets](./docs/SECRETS.md)
-- execute [bootstrap](./docs/BOOTSTRAP.md)
-- read the [faq](./docs/FAQ.md)
+shells stream events, you can respond to them

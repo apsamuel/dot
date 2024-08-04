@@ -99,7 +99,7 @@ function dot::sh {
 
     # env
     if [[ "${command}" == printenv ]]; then
-        env | "${HOME}"/.dot/bin/mask.sh
+        env | grep -E '^DOT' | "${HOME}"/.dot/bin/mask.sh
     fi
 
 }

@@ -10,7 +10,7 @@
 ## detect system and make best case judgement for cloud storage directories
 ## this is a macOS specific configuration
 
-# let's configure our cloud storage directories
+# icloud directories
 ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
 ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
 ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"

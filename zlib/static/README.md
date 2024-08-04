@@ -1,3 +1,3 @@
 # Static
 
-...
+static shell

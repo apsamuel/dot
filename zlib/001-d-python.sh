@@ -9,7 +9,7 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
 
-ANACONDA_DIR=/usr/local/anaconda3
+# ANACONDA_DIR=/usr/local/anaconda3
 # conditionally set the anaconda DOT_DIRECTORY based on architecture
 if [[ $(uname -m) == "x86_64" ]]; then
     export ANACONDA_DIR=/usr/local/anaconda3
@@ -31,3 +31,4 @@ fi
 unset __conda_setup
 
 # activate base conda environment
+conda activate base

@@ -9,7 +9,6 @@
         "BANG_HIST",
         "EXTENDED_HISTORY",
         "INC_APPEND_HISTORY",
-        "SHARE_HISTORY",
         "histexpiredupsfirst",
         "histignoredups",
         "histignorealldups",
