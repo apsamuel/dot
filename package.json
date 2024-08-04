@@ -2,7 +2,7 @@
   "name": "@apsamuel/dot",
   "type": "module",
   "version": "0.0.1",
-  "description": "MacOS Dot Project",
+  "description": "A simple CLI tool to bootstrap your shell environment",
   "main": "index.js",
   "directories": {
     "doc": "docs",

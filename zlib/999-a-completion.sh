@@ -12,5 +12,9 @@ if type brew &>/dev/null; then
     compinit
 fi
 
+if command -v ngrok &>/dev/null; then
+eval "$(ngrok completion)"
+fi
+
 # # load launchctl completions
 source /usr/local/Cellar/launchctl-completion/1.0/etc/bash_completion.d/launchctl

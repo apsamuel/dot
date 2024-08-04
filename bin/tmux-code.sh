@@ -1,6 +1,5 @@
-#!/usr/local/bin/bash
-# author: github.com/apsamuel
-# description: make tmux great again
+#!/usr/bin/env bash
+
 
 folder="$(pwd)"
 session="$(basename "${folder}")"
@@ -11,6 +10,7 @@ echo "selfPid: ${selfPid}"
 function tmuxSetOptions() {
     session_name="$1"
     echo "setting options for session ${session_name}"
+    # TODO: set window status format
     #tmux set-option window_status_format "test #I #{?window_bell_flag,🔔,}#{?window_zoomed_flag,🔍,} #{b:pane_current_path} - #{pane_current_command}"
     #tmux set-window-option status-interval 5
 }
@@ -34,7 +34,9 @@ fi
 
 function onDetached() {
     echo "exiting tmux session ${session}'"
-    tmux kill-session -t "${session}"
+    # when sessions names contain dots (hidden directories, etc) ...
+    # tmux will replace them with underscores
+    tmux kill-session -t "${session//./_}"
 }
 
 function onExit() {
@@ -43,3 +45,4 @@ function onExit() {
 
 
 trap onExit exit
+trap onDetached SIGINT

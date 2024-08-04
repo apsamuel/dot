@@ -25,8 +25,7 @@ function getShellName () {
     else
     currentShell="$(command ps -p $$ -ocomm=)"
     # removes non-standard characters and returns the shell name
-    echo "${currentShell}" | tr '[:upper:]' '[:lower:]' | sed -e s/-//g
-
+    echo "${currentShell}" | tr '[:upper:]' '[:lower:]' | sed -e s/-//g | xargs
     fi
 }
 
