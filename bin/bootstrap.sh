@@ -315,7 +315,7 @@ function bootstrap::configure::p10k () {
     # TODO: should this be a link to icloud?
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     # cp "${dot_bootstrap_directory}"/config/p10k.zsh "${HOME}/.p10k.zsh"
-    ln -s "${icloud_directory}/dot/shell/p10k.zsh" "${HOME}/.p10k.zsh"
+    ln -s "${icloud_directory}/dot/shell/powerlevel/rc.zsh" "${HOME}/.p10k.zsh"
     echo "✅  powerlevel10k is configured"
 }
 
