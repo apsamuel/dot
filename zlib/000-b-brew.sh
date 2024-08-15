@@ -91,3 +91,7 @@ function brew::recipe () {
 function brew::load () {
     brew bundle install --file="${1:-${ICLOUD}/dot/Brewfile}"
 }
+
+function brew::package::query () {
+    brew info --json "$@"
+}

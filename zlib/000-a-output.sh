@@ -75,7 +75,7 @@ function termRandomFont() {
 
 function randomQuote() {
 	randomQuote="$(
-		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${DOT_DIRECTORY}/data/quotes.json" |shuf -n1
+		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 45)' "${DOT_DIRECTORY}/data/quotes.json" |shuf -n1
 	)"
 	echo "${randomQuote}"
 }
@@ -83,25 +83,56 @@ function randomQuote() {
 function termQuote() {
 	# can we do random selection of fonts?
 	randomQuote="$(
-		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 50)' "${DOT_DIRECTORY}/data/quotes.json" |shuf -n1
+		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 45)' "${DOT_DIRECTORY}/data/quotes.json" |shuf -n1
 	)"
-	echo "${randomQuote}" | figlet -p -w "$(terminalWidth)" -d "${HOME}/.figlet" -f "$(termRandomFont "${@}")" -k -l| lolcat
+	# echo "${randomQuote}" | figlet -p -w "$(terminalWidth)" -d "${HOME}/.figlet" -f "$(termRandomFont "${@}")" -k -l| lolcat
+    echo "${randomQuote}" | figlet -p -w "$(( $(terminalWidth)  ))" -d "${HOME}/.figlet" -f "$(termRandomFont "${@}")" -k -l| lolcat
 }
 
 function toFiglet() {
 	message="${1}"
 	color="${2:-false}"
-	shift 2
-	args="${*}"
+    echo "$#"
+    #	shift 2
+    #	args="${*}"
 
 
-	#echo "args: ${args}"
-	if [[ "${color}" == "true" ]]; then
-			echo "$message" | figlet "$args"| lolcat
-	fi
-	if [[ ! "${color}" == "true" ]]; then
-			echo "$message" | figlet "$args"
-	fi
+    if [ $# -eq 1 ]; then
+        # shift 1
+        message="${*}"
+        figlet "$message"
+    fi
+
+    if [ $# -eq 2 ]; then
+        # shift 2
+        message="${1}"
+        color="${2}"
+        if [[ "${color}" == "true" ]]; then
+            figlet "$message" | lolcat
+        else
+            figlet "$message"
+        fi
+    fi
+
+    if [ $# -ge 3 ]; then
+        message="${1}"
+        color="${2}"
+        shift 2
+        args="${*}"
+        if [[ "${color}" == "true" ]]; then
+            echo "$message" | figlet "$args"| lolcat
+        fi
+        if [[ ! "${color}" == "true" ]]; then
+            echo "$message" | figlet "$args"
+        fi
+    fi
+	# echo "args: ${args}"
+	# if [[ "${color}" == "true" ]]; then
+	# 		echo "$message" | figlet "$args"| lolcat
+	# fi
+	# if [[ ! "${color}" == "true" ]]; then
+	# 		echo "$message" | figlet "$args"
+	# fi
 
 
 }
@@ -120,9 +151,9 @@ function showcolors256() {
     local white="\033[1;37m"
     local reset="\033[0m"
 
-    echo -e "Set foreground color: \\\\033[38;5;${white}NNN${reset}m"
-    echo -e "Set background color: \\\\033[48;5;${white}NNN${reset}m"
-    echo -e "Reset color & style:  \\\\033[0m"
+    echo -e "set foreground: \\\\033[38;5;${white}NNN${reset}m"
+    echo -e "set background: \\\\033[48;5;${white}NNN${reset}m"
+    echo -e "reset color & style:  \\\\033[0m"
     echo
 
     echo 16 standard color codes:
