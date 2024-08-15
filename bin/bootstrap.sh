@@ -244,7 +244,9 @@ function bootstrap::configure::zsh () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.zshrc"
+    # change users shell
     chsh -s "$(command -v zsh)" "${USER}"
+    # link from dot/config/shell/
     ln -s -f "${icloud_link}/dot/shell/zsh/rc" "${rc}" && \
     echo "✅  zsh shell is configured, please restart any open shells!"
 }
