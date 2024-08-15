@@ -91,6 +91,10 @@ function bootstrap::validate::deps () {
     fi
 }
 
+function bootstrap::configure::python () {
+    true
+}
+
 function bootstrap::link::cloud () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
@@ -247,7 +251,8 @@ function bootstrap::configure::zsh () {
     # change users shell
     chsh -s "$(command -v zsh)" "${USER}"
     # link from dot/config/shell/
-    ln -s -f "${icloud_link}/dot/shell/zsh/rc" "${rc}" && \
+    ln -s -f "${dot_bootstrap_directory}/config/shell/rc" "${rc}"
+    # ln -s -f "${icloud_link}/dot/shell/zsh/rc" "${rc}" && \
     echo "✅  zsh shell is configured, please restart any open shells!"
 }
 
@@ -377,21 +382,6 @@ function bootstrap::validate::iterm () {
 
 function bootstrap::validate::fonts () {
     true
-#    brew tap homebrew/cask-fonts
-#    local desired_fonts=(
-#     [powerline]="font-powerline-symbols"
-#     [meslo]="font-meslo-for-powerline"
-#     [menlo]="font-menlo-for-powerline"
-#    )
-#    local package
-#    for desired_font in "${!desired_fonts[@]}"; do
-#        package="${desired_fonts[${desired_font}]}"
-#        if ! fc-list | grep -q -Ei "${desired_font}" &> /dev/null
-#        then
-#            echo "🛠️ installing ${desired_font} font ..."
-#            bootstrap::install::font "${package}"
-#        fi
-#    done
     true
 }
 
