@@ -81,7 +81,12 @@ function brew::cask::check () {
 }
 
 function brew::dump () {
-    brew bundle dump --force --file="${1:-${ICLOUD}/dot/Brewfile}"
+    #local backend=""
+    brew bundle dump --describe --brews --tap --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile}"
+}
+
+function brew::dump::mas () {
+    brew bundle dump --describe --mas --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile.mas}"
 }
 
 function brew::recipe () {
@@ -90,6 +95,10 @@ function brew::recipe () {
 
 function brew::load () {
     brew bundle install --file="${1:-${ICLOUD}/dot/Brewfile}"
+}
+
+function brew::load::mas () {
+    brew bundle install --mas --file="${1:-${ICLOUD}/dot/Brewfile.mas}"
 }
 
 function brew::package::query () {
