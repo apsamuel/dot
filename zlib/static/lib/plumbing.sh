@@ -10,7 +10,7 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
 fi
 
 function __load_configuration () {
-  true
+    true
 }
 
 function __load_secrets () {
@@ -34,6 +34,13 @@ function __load_secrets () {
         echo "no secrets file found"
         exit 1
     fi
-    export BOOTSTRAP_SECRETS_LOADED=1
+    export DOT_SECRETS_LOADED=1
     echo "🛻  loaded ${#secret_keys[@]} secrets"
+}
+
+function __reload_secrets () {
+    if [[ -n "${DOT_SECRETS_LOADED}" ]]; then
+        unset DOT_SECRETS_LOADED
+    fi
+    __load_secrets
 }

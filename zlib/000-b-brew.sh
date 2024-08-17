@@ -82,7 +82,7 @@ function brew::cask::check () {
 
 function brew::dump () {
     #local backend=""
-    brew bundle dump --describe --brews --tap --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile}"
+    brew bundle dump --describe --casks --brews --taps --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile}"
 }
 
 function brew::dump::mas () {

@@ -82,7 +82,7 @@ fi
 
 # TODO: create a bootrapped flag, ensure to not re-bootstrap this system...
 
-(source "${DOT_LIBRARY}"/zlib/static/lib/functions.sh || . "${DOT_LIBRARY}"/zlib/static/lib/functions.sh ||
+(source "${DOT_LIBRARY}"/zlib/static/lib/internal.sh || . "${DOT_LIBRARY}"/zlib/static/lib/internal.sh ||
     echo "Error: unable to load functions" && exit 1
 )
 # configure environment variable germaine to your dot environment
