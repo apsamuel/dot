@@ -79,9 +79,12 @@ if [[ -f "${DOT_BOOTSTRAP}" ]]; then
     )
 fi
 
+
 # TODO: create a bootrapped flag, ensure to not re-bootstrap this system...
 
-
+(source "${DOT_LIBRARY}"/zlib/static/lib/functions.sh || . "${DOT_LIBRARY}"/zlib/static/lib/functions.sh ||
+    echo "Error: unable to load functions" && exit 1
+)
 # configure environment variable germaine to your dot environment
 (source "${DOT_LIBRARY}"/static/dotenv.sh || . "${DOT_LIBRARY}"/static/dotenv.sh) || (
     echo "Error: unable to load dotenv"
@@ -249,14 +252,6 @@ if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "ascii" ]]; then
     termLogo
 fi
 
-
-# TODO: move path setup to alibrary file, use JSON to define additional paths
-#export PATH=${HOME}/devops/scripts:$PATH:/Users/aaronsamuel/Library/Python/3.11/bin
-export PATH=${HOME}/devops/scripts:$PATH
-
-# export PATH="$HOME/.jenv/bin:$PATH"
-# eval "$(jenv init -)"
-export PATH="/usr/local/opt/openjdk/bin:$PATH"
 export VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
 export VI_MODE_SET_CURSOR=true
 
@@ -270,12 +265,6 @@ export POWERLEVEL9K_INSTANT_PROMPT=quiet
 export POWERLEVEL9K_INSTANT_PROMPT=off
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
-
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:/usr/local/bin:$PATH
-#export PATH=/opt/homebrew/bin:$PATH
-
-
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,

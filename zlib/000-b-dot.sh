@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+# shellcheck source=/dev/null
 
 # DOT_DEBUG="${DOT_DEBUG:-0}"
 # DOT_DIRECTORY=$(dirname "$0")
@@ -27,6 +28,9 @@ export ICLOUD="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
 export ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
 export ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
 export ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
+
+
+. "${DOT_DIR}"/zlib/static/lib/functions.sh
 
 function dot::sh {
     local command="${1:-version}"
@@ -60,6 +64,7 @@ function dot::sh {
     # update
     if [[ "${command}" =~ update ]]; then
         git -C "${DOT_DIR}" pull 2>/dev/null|| echo "please update your dotfiles manually"
+        omz update
     fi
 
     # reload
