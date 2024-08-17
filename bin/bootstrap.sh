@@ -49,7 +49,7 @@ function bootstrap::sys() {
     # load secrets
     __load_secrets
     bootstrap::validate::brew # install brew
-    installDependencies # install Brewfile
+    bootstrap::deps # install Brewfile
     # configure icloud links
     # configure bash
     bootstrap::configure::zsh
