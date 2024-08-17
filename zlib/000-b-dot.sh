@@ -30,7 +30,7 @@ export ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
 export ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
 
 
-. "${DOT_DIR}"/zlib/static/lib/functions.sh
+. "${DOT_DIR}"/zlib/static/lib/internal.sh
 
 function dot::sh {
     local command="${1:-version}"
