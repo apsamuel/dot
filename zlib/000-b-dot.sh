@@ -12,7 +12,7 @@ fi
 # DOT_DIRECTORY_NAME="$(dirname "${0}")"
 DOT_DIRECTORY_NAME="$(dirname "${DOT_DIRECTORY_NAME}")"
 # temporarily set DOC_DIR to a basename for git ops...
-DOT_DIR="${DOT_DIRECTORY_NAME}"
+DOT_DIR="${DOT_DIRECTORY}"
 
 # detect TMUX session if present
 if [[ -n "${TMUX}" ]]; then
@@ -115,4 +115,4 @@ else
     DOT_ENABLED=false
 fi
 DOT_ENABLED=true
-export DOT_ENABLED
+export DOT_ENABLED DOT_DIR
