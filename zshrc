@@ -229,14 +229,14 @@ if [[ -d "$ICLOUD"/dot && -f "$ICLOUD"/dot/secrets.json ]]; then
 
     # if secrets length is greater than 0, write to /tmp/.secrets
     if [[ ${#secretKeys[@]} -gt 0  ]]; then
-        # echo $TMPDIR
         touch "${TMPDIR}"/.secrets
         echo "#!/bin/bash" > "$TMPDIR"/.secrets
     fi
 
     for secretKey in "${secretKeys[@]}"; do
         secrets[$secretKey]="$(jq --arg secretKey "${secretKey}" -r '.[$secretKey]' "$ICLOUD"/dot/secrets.json)"
-        echo "${secretKey}=${secrets[$secretKey]}" >> "$TMPDIR"/.secrets
+        # ensure secrets are exported...
+        echo "export ${secretKey}=${secrets[$secretKey]}" >> "$TMPDIR"/.secrets
     done
 
     if [[ -f "$TMPDIR"/.secrets ]]; then

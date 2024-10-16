@@ -14,10 +14,10 @@ DOT_DIRECTORY_NAME="$(dirname "${DOT_DIRECTORY_NAME}")"
 # temporarily set DOC_DIR to a basename for git ops...
 DOT_DIR="${DOT_DIRECTORY}"
 
-echo "debug: $DOT_DIR"
 
 # detect TMUX session if present
 if [[ -n "${TMUX}" ]]; then
+    # TODO: we should catch the error and set a default value
     session_name="$(tmux display-message -p '#S')"
     export TMUX_SESSION_NAME="${session_name}"
 else
