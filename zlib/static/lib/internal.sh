@@ -6,6 +6,11 @@
 # shellcheck source=/dev/null
 # shellcheck disable=SC2207
 
+_exec_location() {
+  loc="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+  echo "${loc}"
+}
+
 _list_zsh_plugins() {
   local plugins=()
   for plugin in "${ZSH_CUSTOM}"/plugins/*; do
