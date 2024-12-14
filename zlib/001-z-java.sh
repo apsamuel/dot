@@ -2,6 +2,9 @@
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
 
+if [[ "${DOT_CONFIGURE_JAVA}" -eq 0 ]]; then
+    return
+fi
 
 if command -v jenv >/dev/null 2>&1; then
     eval "$(jenv init -)" >/dev/null 2>&1
