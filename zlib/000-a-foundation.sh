@@ -6,6 +6,7 @@
 # shellcheck source=/dev/null
 # shellcheck disable=SC2207
 
+
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi

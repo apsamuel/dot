@@ -3,6 +3,10 @@
 
 
 
+if [[ "${DOT_CONFIGURE_POWERLEVEL}" -eq 0 ]]; then
+    return
+fi
+
 export POWERLEVEL9K_INSTANT_PROMPT=quiet
 export POWERLEVEL9K_INSTANT_PROMPT=off
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=off

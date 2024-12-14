@@ -2,6 +2,11 @@
 # shellcheck source=/dev/null
 
 # load iterm shell integration
+
+if [[ "${DOT_CONFIGURE_EXTENSIONS}" -eq 0 ]]; then
+    return
+fi
+
 export ITERM2_SQUELCH_MARK=1
 export ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX=1
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"

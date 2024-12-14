@@ -4,6 +4,10 @@
 # shellcheck source=/dev/null
 # 🕵️ ignore shellcheck warnings about read/mapfile
 # shellcheck disable=SC2207
+if [[ "${DOT_CONFIGURE_GIT}" -eq 0 ]]; then
+    return
+fi
+
 DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
