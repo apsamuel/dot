@@ -6,12 +6,16 @@
 # shellcheck source=/dev/null
 # shellcheck disable=SC2207
 
-if [[ "${DOT_CONFIGURE_OUTPUT}" -eq 0 ]]; then
-    return
-fi
+# if [[ "${DOT_CONFIGURE_OUTPUT}" -eq 0 ]]; then
+#     return
+# fi
 
 if [[ "${DOT_DEBUG:-0}" -eq 1 ]]; then
     echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+fi
+
+if [[ "${DOT_DISABLE_OUTPUTS}" -eq 1 ]]; then
+    return
 fi
 
 function availableColorTab() {

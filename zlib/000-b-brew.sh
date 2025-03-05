@@ -4,18 +4,18 @@
 # set -o nopipefail
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
-# executing in linux
-# DOT_DEBUG="${DOT_DEBUG:-0}"
-# DOT_DIRECTORY=$(dirname "$0")
-# DOT_LIBRARY=$(basename "$0")
-if [[ "${DOT_CONFIGURE_BREW}" -eq 0 ]]; then
-    return
-fi
+
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
 
+if [[ "${DOT_DISABLE_BREW}" -eq 1 ]]; then
+    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+        echo "brew is disabled"
+    fi
+    return
+fi
 
 if [[ "$OPERATING_SYSTEM" == "linux-gnu"* ]]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"

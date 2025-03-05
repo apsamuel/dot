@@ -4,9 +4,9 @@
 # shellcheck source=/dev/null
 # 🕵️ ignore shellcheck warnings about read/mapfile
 # shellcheck disable=SC2207
-if [[ "${DOT_CONFIGURE_GIT}" -eq 0 ]]; then
-    return
-fi
+# if [[ "${DOT_CONFIGURE_GIT}" -eq 0 ]]; then
+#     return
+# fi
 
 DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
@@ -14,6 +14,13 @@ library=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
+fi
+
+if [[ "${DOT_DISABLE_GIT}" -eq 1 ]]; then
+    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+        echo "git is disabled"
+    fi
+    return
 fi
 
 DOT_GIT_DEFAULT_MERGE_BRANCH=1

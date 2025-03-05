@@ -8,9 +8,9 @@ DOT_DEBUG="${DOT_DEBUG:-0}"
 # DOT_DIRECTORY=$(dirname "$0")
 # DOT_LIBRARY=$(basename "$0")
 
-if [[ "${DOT_CONFIGURE_SECRETS}" -eq 0 ]]; then
-    return
-fi
+# if [[ "${DOT_CONFIGURE_SECRETS}" -eq 0 ]]; then
+#     return
+# fi
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"

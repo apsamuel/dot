@@ -3,7 +3,18 @@
 
 
 
-if [[ "${DOT_CONFIGURE_POWERLEVEL}" -eq 0 ]]; then
+# if [[ "${DOT_CONFIGURE_POWERLEVEL}" -eq 0 ]]; then
+#     return
+# fi
+
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+fi
+
+if [[ "${DOT_DISABLE_P10K}" -eq 1 ]]; then
+    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+        echo "powerlevel10k is disabled"
+    fi
     return
 fi
 
