@@ -5,13 +5,21 @@
 # DOT_DIRECTORY=$(dirname "$0")
 # DOT_LIBRARY=$(basename "$0")
 
-if [[ "${DOT_CONFIGURE_LOCAL_NET}" -eq 0 ]]; then
-    return
-fi
+# if [[ "${DOT_CONFIGURE_LOCAL_NET}" -eq 0 ]]; then
+#     return
+# fi
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
 fi
+
+if [[ "${DOT_DISABLE_NETWORK}" -eq 1 ]]; then
+    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+        echo "network is disabled"
+    fi
+    return
+fi
+
 export LAN_NETWORK="${LAN_NETWORK:-192.168.11.0/24}"
 declare -A LAN
 declare -A LAN_BINARY

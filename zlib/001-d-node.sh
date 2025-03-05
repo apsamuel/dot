@@ -9,12 +9,19 @@
 # DOT_DIRECTORY=$(dirname "$0")
 # DOT_LIBRARY=$(basename "$0")
 
-if [[ "${DOT_CONFIGURE_NODE}" -eq 0 ]]; then
-    return
-fi
+# if [[ "${DOT_CONFIGURE_NODE}" -eq 0 ]]; then
+#     return
+# fi
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+fi
+
+if [[ "${DOT_DISABLE_NODE}" -eq 1 ]]; then
+    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+        echo "node setup is disabled"
+    fi
+    return
 fi
 
 N_PREFIX="${HOME}"/.node-$(arch)
