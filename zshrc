@@ -10,6 +10,7 @@
 # shellcheck disable=SC2207
 # set -x
 
+export DOT_DEBUG=1
 # shell data
 # where are we? https://stackoverflow.com/a/246128/1235074
 SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -46,7 +47,13 @@ export SAVEHIST=${ZSH_SAVEHIST}
 
 
 # initialize static sources
-unset DOT_ROOT DOT_DIRECTORY DOT_LIBRARY DOT_LIBRARY_FILES DOT_DEBUG DOT_INTERACTIVE DOT_BOOT DOT_BOOTED
+unset DOT_BOOTED
+unset DOT_BOOT DOT_ROOT
+unset DOT_DIRECTORY
+unset DOT_LIBRARY DOT_LIBRARY_FILES
+unset DOT_DEBUG
+unset DOT_INTERACTIVE
+
 export DOT_DEBUG="${DOT_DEBUG:-0}"
 export DOT_SHELL="${DOT_SHELL:-zsh}"
 export DOT_INTERACTIVE="${DOT_INTERACTIVE:-0}"
