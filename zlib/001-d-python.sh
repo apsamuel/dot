@@ -26,18 +26,25 @@ else
     export ANACONDA_DIR=/opt/homebrew/anaconda3
 fi
 
-
-__conda_setup="$($ANACONDA_DIR/bin/conda 'shell.zsh' 'hook' 2>/dev/null)"
-if $ANACONDA_DIR/bin/conda 'shell.zsh' 'hook' >/dev/null 2>&1 ; then
-    eval "$__conda_setup" >/dev/null 2>&1
-else
-    if [ -f "${ANACONDA_DIR}/etc/profile.d/conda.sh" ]; then
-        . "${ANACONDA_DIR}/etc/profile.d/conda.sh"
-    else
-        export PATH="${ANACONDA_DIR}/bin:$PATH"
+## allow disabling anaconda
+if [[ "${DOT_DISABLE_ANACONDA}" -eq 1 ]]; then
+    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+        echo "anaconda is disabled"
     fi
-fi
-unset __conda_setup
+else
 
-# activate base conda environment
-conda activate base
+    __conda_setup="$($ANACONDA_DIR/bin/conda 'shell.zsh' 'hook' 2>/dev/null)"
+    if $ANACONDA_DIR/bin/conda 'shell.zsh' 'hook' >/dev/null 2>&1 ; then
+        eval "$__conda_setup" >/dev/null 2>&1
+    else
+        if [ -f "${ANACONDA_DIR}/etc/profile.d/conda.sh" ]; then
+            . "${ANACONDA_DIR}/etc/profile.d/conda.sh"
+        else
+            export PATH="${ANACONDA_DIR}/bin:$PATH"
+        fi
+    fi
+    unset __conda_setup
+
+    # activate base conda environment
+    conda activate base
+fi
