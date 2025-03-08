@@ -6,8 +6,11 @@
 # shellcheck source=/dev/null
 
 
+directory=$(dirname "$0")
+library=$(basename "$0")
+
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
 
 if [[ "${DOT_DISABLE_BREW}" -eq 1 ]]; then
@@ -84,12 +87,15 @@ function brew::cask::check () {
 }
 
 function brew::dump () {
-    #local backend=""
-    brew bundle dump --describe --casks --brews --taps --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile}"
+    brew bundle dump --describe --brews --taps --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile}"
 }
 
 function brew::dump::mas () {
     brew bundle dump --describe --mas --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile.mas}"
+}
+
+function brew::dump::cask () {
+    brew bundle dump --describe --casks --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile.cask}"
 }
 
 function brew::recipe () {
@@ -102,6 +108,10 @@ function brew::load () {
 
 function brew::load::mas () {
     brew bundle install --mas --file="${1:-${ICLOUD}/dot/Brewfile.mas}"
+}
+
+function brew::load::cask () {
+    brew bundle install --cask --file="${1:-${ICLOUD}/dot/Brewfile.cask}"
 }
 
 function brew::package::query () {

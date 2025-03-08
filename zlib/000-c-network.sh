@@ -1,17 +1,14 @@
 # shellcheck shell=bash
 # disable warnings on expansion of variables locally, this is desired
 # shellcheck disable=SC2029
-# DOT_DEBUG="${DOT_DEBUG:-0}"
-# DOT_DIRECTORY=$(dirname "$0")
-# DOT_LIBRARY=$(basename "$0")
 
-# if [[ "${DOT_CONFIGURE_LOCAL_NET}" -eq 0 ]]; then
-#     return
-# fi
+directory=$(dirname "$0")
+library=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
+
 
 if [[ "${DOT_DISABLE_NETWORK}" -eq 1 ]]; then
     if [[ "${DOT_DEBUG}" -eq 1 ]]; then
@@ -20,7 +17,7 @@ if [[ "${DOT_DISABLE_NETWORK}" -eq 1 ]]; then
     return
 fi
 
-export LAN_NETWORK="${LAN_NETWORK:-192.168.11.0/24}"
+export LAN_NETWORK="${LAN_NETWORK:-192.168.0.0/24}"
 declare -A LAN
 declare -A LAN_BINARY
 LAN_BINARY["address"]=$(command ipcalc "$LAN_NETWORK" | grep Address | awk '{print $3$4}')

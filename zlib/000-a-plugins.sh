@@ -7,9 +7,13 @@
 # shellcheck disable=SC2207
 
 
+directory=$(dirname "$0")
+library=$(basename "$0")
+
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
+
 
 #TODO: these options need to be read from a file
 export ZSH_OPTIONS=(

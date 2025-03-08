@@ -1,19 +1,13 @@
 # shellcheck shell=bash
 # shellcheck source=/dev/null
 
-# DOT_DEBUG="${DOT_DEBUG:-0}"
-# DOT_DIRECTORY=$(dirname "$0")
-# DOT_LIBRARY=$(basename "$0")
-
-# if [[ "${DOT_CONFIGURE_ANACONDA}" -eq 0 ]]; then
-#     return
-# fi
+directory=$(dirname "$0")
+library=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
 
-# DOT_DIRECTORY_NAME="$(dirname "${0}")"
 DOT_DIRECTORY_NAME="$(dirname "${DOT_DIRECTORY_NAME}")"
 # temporarily set DOC_DIR to a basename for git ops...
 DOT_DIR="${DOT_DIRECTORY}"

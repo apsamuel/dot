@@ -1,20 +1,12 @@
 # shellcheck shell=bash
 ## TODO: move node setup to DOT_LIBRARY file
-#export NODE_VERSION=16.13.2
-#export N_PREFIX=${HOME}/devops/node
-#NODE_OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-#export NODE_OS
-#export NODE_ARCH=x64
-# DOT_DEBUG="${DOT_DEBUG:-0}"
-# DOT_DIRECTORY=$(dirname "$0")
-# DOT_LIBRARY=$(basename "$0")
 
-# if [[ "${DOT_CONFIGURE_NODE}" -eq 0 ]]; then
-#     return
-# fi
+
+directory=$(dirname "$0")
+library=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
 
 if [[ "${DOT_DISABLE_NODE}" -eq 1 ]]; then

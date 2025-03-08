@@ -2,14 +2,12 @@
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
 
-# if [[ "${DOT_CONFIGURE_JAVA}" -eq 0 ]]; then
-#     return
-# fi
+directory=$(dirname "$0")
+library=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
-
 
 if command -v jenv >/dev/null 2>&1; then
     eval "$(jenv init -)" >/dev/null 2>&1

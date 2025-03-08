@@ -8,12 +8,12 @@
 # shellcheck source=/dev/null
 # - ignore shellcheck warnings about read/mapfile
 # shellcheck disable=SC2207
-# set -x
 
-export DOT_DEBUG=1
-# shell data
+
 # where are we? https://stackoverflow.com/a/246128/1235074
-SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# this is broken in zsh
+SHELL_INIT_DIR=$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )
+# SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # shell start time
 SHELL_INIT_START=$(date +%s)
 
@@ -37,7 +37,6 @@ if [[ -z "$SHELL" ]]; then
 fi
 
 export ZSH="$HOME/.oh-my-zsh"
-# export ZSH_HISTORY=1000000
 export ZSH_HISTFILE="$HOME/.zsh_history"
 export ZSH_HISTSIZE=1000000
 export ZSH_SAVEHIST=1000000
@@ -46,13 +45,6 @@ export HISTSIZE=${ZSH_HISTSIZE}
 export SAVEHIST=${ZSH_SAVEHIST}
 
 
-# initialize static sources
-unset DOT_BOOTED
-unset DOT_BOOT DOT_ROOT
-unset DOT_DIRECTORY
-unset DOT_LIBRARY DOT_LIBRARY_FILES
-unset DOT_DEBUG
-unset DOT_INTERACTIVE
 
 export DOT_DEBUG="${DOT_DEBUG:-0}"
 export DOT_SHELL="${DOT_SHELL:-zsh}"
@@ -66,8 +58,20 @@ export DOT_LIBRARY_FILES=($(find "${DOT_LIBRARY}" -maxdepth 1 -type f -name "*.s
 export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/bin/bootstrap.sh}"
 export DOT_BOOTED="${DOT_BOOTED:-false}"
 export DOT_ANACONDA_ENABLED="${DOT_ANACONDA_ENABLED:-0}"
+export DOT_DISABLE_BREW="${DOT_DISABLE_BREW:-0}"
+export DOT_DISABLE_EXTENSIONS="${DOT_DISABLE_EXTENSIONS:-0}"
+export DOT_DISABLE_THEFUCK="${DOT_DISABLE_THEFUCK:-0}"
+export DOT_DISABLE_ZSH_AUTOSUGGESTIONS="${DOT_DISABLE_ZSH_AUTOSUGGESTIONS:-0}"
+export DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING="${DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING:-0}"
+export DOT_DISABLE_Z="${DOT_DISABLE_Z:-0}"
+export DOT_DISABLE_ANACONDA="${DOT_DISABLE_ANACONDA:-0}"
+export DOT_DISABLE_OUTPUTS="${DOT_DISABLE_OUTPUTS:-0}"
+export DOT_DISABLE_GIT="${DOT_DISABLE_GIT:-0}"
+export DOT_DISABLE_MAC="${DOT_DISABLE_MAC:-0}"
+export DOT_DISABLE_P10K="${DOT_DISABLE_P10K:-0}"
+export DOT_DISABLE_NODE="${DOT_DISABLE_NODE:-0}"
+export DOT_DISABLE_NETWORK="${DOT_DISABLE_NETWORK:-0}"
 export DOT_DIRECTORY DOT_LIBRARY DOT_LIBRARY_FILES DOT_DEBUG DOT_INTERACTIVE DOT_BOOT DOT_BOOTED DOT_ROOT DOT_SHELL DOT_DEBUG_RC DOT_ANACONDA_ENABLED
-# export DOT_ANACONDA_DIR="${DOT_ANACONDA_DIR:-/usr/local/anaconda3}"
 
 if [[ $(uname -m) == "x86_64" ]]; then
     export DOT_ANACONDA_DIR=/usr/local/anaconda3
@@ -87,11 +91,11 @@ if [[ -f "${DOT_BOOTSTRAP}" ]]; then
 fi
 
 
-# TODO: create a bootrapped flag, ensure to not re-bootstrap this system...
+# TODO: create a bootrapped flag, ensure to not re-bootstrap a system...
+# (source "${DOT_LIBRARY}"/zlib/static/lib/internal.sh || . "${DOT_LIBRARY}"/zlib/static/lib/internal.sh ||
+#     echo "Error: unable to load functions" && exit 1
+# )
 
-(source "${DOT_LIBRARY}"/zlib/static/lib/internal.sh || . "${DOT_LIBRARY}"/zlib/static/lib/internal.sh ||
-    echo "Error: unable to load functions" && exit 1
-)
 # configure environment variable germaine to your dot environment
 (source "${DOT_LIBRARY}"/static/dotenv.sh || . "${DOT_LIBRARY}"/static/dotenv.sh) || (
     echo "Error: unable to load dotenv"
@@ -134,6 +138,7 @@ export SSH_KEYS
 
 # iCloud references
 ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
+ICLOUD_DIR="${ICLOUD}" # for backward compatibility
 ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
 ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
 ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
@@ -149,8 +154,6 @@ DOT_LIBS_DIR="${DOT_LIBS_DIR:-$DOT_DIR/zlib}"
 DOT_CLOUD_DIR="${ICLOUD}/dot"
 DOT_SHELL_DATA=${DOT_SHELL_DATA:-$HOME/.dot/data/zsh.json}
 DOT_SECRETS_DATA=${DOT_SECRETS_DATA:-"${DOT_CLOUD_DIR}/secrets.json"}
-
-
 
 export TERM=xterm-256color
 export MANPATH="/usr/local/man:$MANPATH"
@@ -349,12 +352,6 @@ bindkey '\e[H' beginning-of-line
 bindkey '\e[F' end-of-line
 
 # You may need to manually set your language environment
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"

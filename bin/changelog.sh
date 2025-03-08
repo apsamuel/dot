@@ -1,6 +1,7 @@
 #!/usr/local/bin/zsh
-
-cd "$ZSH"
+# shellcheck shell=bash
+# ZSH=${"/Users/aaronsamuel/.oh-my-zsh:=ZSH"}
+# cd "$ZSH"
 setopt extendedglob
 
 ##############################

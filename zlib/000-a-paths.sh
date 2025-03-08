@@ -7,6 +7,14 @@
 # shellcheck disable=SC2207
 
 # edirect tools
+
+directory=$(dirname "$0")
+library=$(basename "$0")
+
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${library} (${directory})"
+fi
+
 if [ -d "${HOME}/Tools/edirect" ] ; then
   PATH="${HOME}/Tools/edirect:${PATH}"
 fi

@@ -1,15 +1,13 @@
 # shellcheck shell=bash
 # shellcheck source=/dev/null
 
-
-
-# if [[ "${DOT_CONFIGURE_POWERLEVEL}" -eq 0 ]]; then
-#     return
-# fi
+directory=$(dirname "$0")
+library=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
+
 
 if [[ "${DOT_DISABLE_P10K}" -eq 1 ]]; then
     if [[ "${DOT_DEBUG}" -eq 1 ]]; then
