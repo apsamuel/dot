@@ -1,21 +1,12 @@
 # shellcheck shell=bash
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
-# DOT_DEBUG="${DOT_DEBUG:-0}"
-# DOT_DIRECTORY=$(dirname "$0")
-# DOT_LIBRARY=$(basename "$0")
 
-# if [[ "${DOT_CONFIGURE_ANACONDA}" -eq 0 ]]; then
-#     return
-# fi
+directory=$(dirname "$0")
+library=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
-fi
-
-
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
 
 # ANACONDA_DIR=/usr/local/anaconda3

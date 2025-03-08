@@ -2,8 +2,11 @@
 #% note: enable any completion steps here
 # shellcheck source=/dev/null
 
+directory=$(dirname "$0")
+library=$(basename "$0")
+
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
 
 

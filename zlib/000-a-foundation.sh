@@ -5,10 +5,13 @@
 #** disable relevant shellcheck warnings **#
 # shellcheck source=/dev/null
 # shellcheck disable=SC2207
+DOT_DEBUG="${DOT_DEBUG:-0}"
 
+directory=$(dirname "$0")
+library=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
 
 # we need to source the mac.sh file first

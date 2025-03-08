@@ -6,13 +6,14 @@
 # shellcheck source=/dev/null
 # shellcheck disable=SC2207
 
-# if [[ "${DOT_CONFIGURE_OUTPUT}" -eq 0 ]]; then
-#     return
-# fi
+DOT_DEBUG="${DOT_DEBUG:-0}"
+directory=$(dirname "$0")
+library=$(basename "$0")
 
-if [[ "${DOT_DEBUG:-0}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${library} (${directory})"
 fi
+
 
 if [[ "${DOT_DISABLE_OUTPUTS}" -eq 1 ]]; then
     return

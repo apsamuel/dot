@@ -1,15 +1,13 @@
 #shellcheck shell=bash
 # shellcheck source=/dev/null
 
-# load iterm shell integration
-
-# if [[ "${DOT_CONFIGURE_EXTENSIONS}" -eq 0 ]]; then
-#     return
-# fi
+directory=$(dirname "$0")
+library=$(basename "$0")
 
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
+
 
 if [[ "${DOT_DISABLE_EXTENSIONS}" -eq 1 ]]; then
     if [[ "${DOT_DEBUG}" -eq 1 ]]; then
