@@ -24,6 +24,12 @@ if [[ "${DOT_DISABLE_ANACONDA}" -eq 1 ]]; then
     fi
 else
 
+    # TODO: conditionally exit if anaconda is not installed
+    if [ ! -d "${ANACONDA_DIR}" ]; then
+        echo "Anaconda is not installed at ${ANACONDA_DIR}. Exiting."
+        exit 1
+    fi
+
     __conda_setup="$($ANACONDA_DIR/bin/conda 'shell.zsh' 'hook' 2>/dev/null)"
     if $ANACONDA_DIR/bin/conda 'shell.zsh' 'hook' >/dev/null 2>&1 ; then
         eval "$__conda_setup" >/dev/null 2>&1
