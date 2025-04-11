@@ -1,6 +1,6 @@
 # Configuration
 
-define the desired state of a shell in the `shell.yaml`
+define the desired state of a shell in the `data.json`
 
 ```yaml
 - name: Bash
