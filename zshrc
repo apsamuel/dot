@@ -1,6 +1,7 @@
-#!/usr/local/bin/zsh
+#!/bin/sh
 # - ignore shellcheck warnings ZSH files, we are loading a ZSH environment
 # shellcheck disable=SC1071
+
 #% author: Aaron Peter Samuel
 #% description: configure the shell environment, this will be executed from a bash shell with considerations taken for non-posix compliant shells
 #% usage: chsh -s $(which zsh) , source ~/.zshrc
@@ -387,13 +388,13 @@ add-zsh-hook chpwd tmux-window-name
 zle -N create_completion
 
 
-complete -o nospace -C /usr/local/bin/terraform terraform
+# complete -o nospace -C /usr/local/bin/terraform terraform
 
 
 
 # post exports
 SHELL_INIT_END=$(date +%s)
-SHELL_INIT_TIME="$((SHELL_INIT_END - SHELL_INIT_START)) seconds"
+SHELL_INIT_TIME="$((SHELL_INIT_END - SHELL_INIT_START))"
 export SHELL_INIT_DIR SHELL_INIT_START SHELL_INIT_END SHELL_INIT_TIME DOT_LIBS_DIR DOT_DIR DOT_DEBUG DOT_SPLASH_SCREEN DOT_SPLASH_TYPE DOT_CLOUD_DIR DOT_SHELL_DATA DOT_SECRETS_DATA
 export PATH=$PATH:$HOME/.dot/bin
 

@@ -26,10 +26,6 @@ if [ -d "${HOME}/devops/scripts" ] ; then
   PATH="${HOME}/devops/scripts:${PATH}"
 fi
 
-# export PATH="$HOME/.jenv/bin:$PATH"
-# eval "$(jenv init -)"
-# add openjdk to path
-PATH="/usr/local/opt/openjdk/bin:$PATH"
 
 
 export PATH

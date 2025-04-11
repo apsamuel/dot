@@ -371,3 +371,6 @@ export SHELL_INIT_DIR SHELL_INIT_START SHELL_INIT_END SHELL_INIT_TIME DOT_LIBS_D
 export PATH=$PATH:$HOME/.dot/bin
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+# Added by LM Studio CLI (lms)
+set -gx PATH $PATH /Users/aaronsamuel/.lmstudio/bin

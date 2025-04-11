@@ -17,8 +17,18 @@ function tmuxSetOptions() {
 
 function tmuxSessionExists() {
     session_name="$1"
+    # replace dots with underscores
+    session_name="${session_name//./_}"
+
     tmux list-sessions | grep -q "${session_name}"
     echo $?
+}
+
+function onDetached() {
+    echo "exiting tmux session ${session}'"
+    # when sessions names contain dots (hidden directories, etc) ...
+    # tmux will replace them with underscores
+    tmux kill-session -t "${session//./_}"
 }
 
 if [[ $(tmuxSessionExists "$session") -eq 0 ]]; then
@@ -32,12 +42,6 @@ else
 fi
 
 
-function onDetached() {
-    echo "exiting tmux session ${session}'"
-    # when sessions names contain dots (hidden directories, etc) ...
-    # tmux will replace them with underscores
-    tmux kill-session -t "${session//./_}"
-}
 
 function onExit() {
     echo "exited ${session}"
