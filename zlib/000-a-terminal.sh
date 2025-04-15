@@ -1,4 +1,4 @@
-#shellcheck shell=bash
+# shellcheck shell=bash
 # shellcheck source=/dev/null
 
 function compileTerminalInfo() {
@@ -10,11 +10,11 @@ function compileTerminalInfo() {
 # fzf
 if [ -d "$HOMEBREW_PREFIX/Cellar/fzf" ]; then
     # get currently installed version
-    fzf_version="$(brew info fzf --json | jq -r '.[0].versions.stable')"
+    fzf_version="$(brew info fzf --json | jq -r '.[0].linked_keg')"
     # shellcheck disable=SC1090
-    source "$HOMEBREW_PREFIX"/Cellar/fzf/"${fzf_version}"/shell/completion.bash
+    source "$HOMEBREW_PREFIX"/Cellar/fzf/"${fzf_version}"/shell/completion.zsh
     # shellcheck disable=SC1090
-    source "$HOMEBREW_PREFIX"/Cellar/fzf/"${fzf_version}"/shell/key-bindings.bash
+    # translate bind to bindkey
+    source "$HOMEBREW_PREFIX"/Cellar/fzf/"${fzf_version}"/shell/key-bindings.zsh
+    # source "$HOMEBREW_PREFIX"/Cellar/fzf/"${fzf_version}"/shell/key-bindings.bash
 fi
-# source "$HOMEBREW_PREFIX"/Cellar/fzf/"$(brew info fzf --json | jq -r '.[0].versions.stable')"/shell/completion.zsh
-# source "$HOMEBREW_PREFIX"/Cellar/fzf/"$(brew info fzf --json | jq -r '.[0].versions.stable')"/shell/key-bindings.zsh
