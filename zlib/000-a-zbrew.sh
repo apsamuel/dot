@@ -106,6 +106,39 @@ function brew::load () {
     brew bundle install --file="${1:-${ICLOUD}/dot/Brewfile}"
 }
 
+function parseLine() {
+  ## if tap, the second word is the name of the tap
+  ## if brew install, the second word is the name of the package
+
+  local line="$1"
+
+  local operation
+  local target
+  # parse the line into two parameters
+
+  operation="$(echo "$line" | awk '{print $1}')"
+  target="$(echo "$line" | awk '{print $2}')"
+  echo "$operation" "$target"
+}
+
+function brew::load::v2() {
+  ## list each line of the Brewfile
+  ## either configure a tap, or install a package
+  ## configure an exclude for the brewfile
+
+
+  parseLine "$@"
+  while IFS= read -r line; do
+    if [[ "$line" == *"tap"* ]]; then
+      echo "tapping: $line"
+      eval "$line"
+    elif [[ "$line" == *"brew"* ]]; then
+      echo "installing: $line"
+      eval "$line"
+    fi
+  done < "${1:-${ICLOUD}/dot/Brewfile}"
+}
+
 function brew::load::mas () {
     brew bundle install --mas --file="${1:-${ICLOUD}/dot/Brewfile.mas}"
 }
