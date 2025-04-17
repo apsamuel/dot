@@ -13,8 +13,8 @@
 
 # where are we? https://stackoverflow.com/a/246128/1235074
 # this is broken in zsh
-SHELL_INIT_DIR=$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )
-# SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+#SHELL_INIT_DIR=$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )
+SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # shell start time
 SHELL_INIT_START=$(date +%s)
 
