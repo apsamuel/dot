@@ -537,3 +537,120 @@ function bootstrap::install::p10k () {
         return 1
     fi
 }
+
+
+function boostrap::validate::vim () {
+    if ! command -v vim &> /dev/null
+    then
+        echo "❌ vim is not installed"
+        bootstrap::install::vim
+    else
+        echo "✅ vim is installed"
+        return 0
+    fi
+}
+
+function bootstrap::install::vim () {
+    echo "🛠️ validating vim..."
+    if ! command brew install vim
+    then
+        echo "🛠️ installing vim..."
+        bootstrap::install::vim
+    else
+        echo "✅ vim is installed"
+        return 0
+    fi
+}
+
+function bootstrap::configure::vim () {
+    echo "🛠️ configuring vim..."
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    # handle .vimrc
+    if [[ ! -f "${HOME}/.vimrc" ]];
+    then
+        # chec if .vimrc is a link
+        ln -s -f "${icloud_directory}/dot/shell/vim/rc" "${HOME}/.vimrc"
+    else
+        # check if .vimrc is a link
+        if [[ ! -L "${HOME}/.vimrc" ]];
+        then
+            # it isn't, so we'll back it up and link in the new one
+            echo "🛠️ backing up your old .vimrc..."
+            mv "${HOME}/.vimrc" "${HOME}/.vimrc.bak"
+            ln -s -f "${icloud_directory}/dot/shell/vim/rc" "${HOME}/.vimrc"
+        else
+            # check if .vimrc is a link to the correct file
+            if [[ ! "$(readlink "${HOME}/.vimrc")" == "${icloud_directory}/dot/shell/vim/rc" ]];
+            then
+                rm -f "${HOME}/.vimrc"
+                ln -s -f "${icloud_directory}/dot/shell/vim/rc" "${HOME}/.vimrc"
+            else
+                echo "✅ .vimrc is already configured"
+            fi
+
+        fi
+    fi
+
+    # handle .vim folder
+    if [[ ! -d "${HOME}/.vim" ]];
+    then
+        # check if .vim is a link
+        ln -s -f "${icloud_directory}/dot/shell/vim/rc-dir" "${HOME}/.vim"
+    else
+        # check if .vim is a link
+        if [[ ! -L "${HOME}/.vim" ]];
+        then
+            # it isn't, so we'll back it up and link in the new one
+            echo "🛠️ backing up your old .vim rc directory ..."
+            mv "${HOME}/.vim" "${HOME}/.vim.bak"
+            ln -s -f "${icloud_directory}/dot/shell/vim/rc-dir" "${HOME}/.vim"
+        else
+            # check if .vim is a link to the correct file
+            if [[ ! "$(readlink "${HOME}/.vim")" == "${icloud_directory}/dot/shell/vim/rc-dir" ]];
+            then
+                # we don't know what this is linked to, so we'll remove it and link in the right one
+                rm -f "${HOME}/.vim"
+                ln -s -f "${icloud_directory}/dot/shell/vim/rc-dir" "${HOME}/.vim"
+            else
+                echo "✅ the .vim rc directory is already configured"
+            fi
+
+        fi
+    fi
+
+    # handle the .vim_runtime folder
+    if [[ ! -d "${HOME}/.vim_runtime" ]];
+    then
+        # check if .vim_runtime is a link
+        ln -s -f "${icloud_directory}/dot/shell/vim/vim_runtime" "${HOME}/.vim_runtime"
+    else
+        # check if .vim_runtime is a link
+        if [[ ! -L "${HOME}/.vim_runtime" ]];
+        then
+            # it isn't, so we'll back it up and link in the new one
+            echo "🛠️ backing up your old .vim_runtime..."
+            mv "${HOME}/.vim_runtime" "${HOME}/.vim_runtime.bak"
+            ln -s -f "${icloud_directory}/dot/shell/vim/vim_runtime" "${HOME}/.vim_runtime"
+        else
+            # check if .vim_runtime is a link to the correct file
+            if [[ ! "$(readlink "${HOME}/.vim_runtime")" == "${icloud_directory}/dot/shell/vim/vim_runtime" ]];
+            then
+                # we don't know what this is linked to, so we'll remove it and link in the right one
+                rm -f "${HOME}/.vim_runtime"
+                ln -s -f "${icloud_directory}/dot/shell/vim/vim_runtime" "${HOME}/.vim_runtime"
+            else
+                echo "✅ .vim_runtime is already configured"
+            fi
+
+        fi
+    fi
+
+}
+
+function bootstrap::validate::nvim () {
+    echo "🛠️ installing nvim..."
+}
+
+function bootstrap::configure::nvim () {
+    echo "🛠️ configuring nvim..."
+}
