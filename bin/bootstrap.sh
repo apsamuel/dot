@@ -41,6 +41,12 @@ dot_bootstrap_deps=${DOT_DEPS:-0}
 #     echo "🛻  loaded ${#secret_keys[@]} secrets"
 # }
 
+function boostrap::info () {
+    echo "🛠️  ${dot_boostrap_file}"
+    echo "🛠️  ${dot_bootstrap_directory}"
+    echo "🛠️  ${dot_bootstrap_deps}"
+}
+
 function bootstrap::print () {
     echo "🛠️ executing ${dot_boostrap_file}"
 }
