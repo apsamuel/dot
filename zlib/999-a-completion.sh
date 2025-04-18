@@ -28,7 +28,7 @@ fi
 source /usr/local/Cellar/launchctl-completion/1.0/etc/bash_completion.d/launchctl
 
 # conditionally load twilio cli completions
-TWILIO_AC_ZSH_SETUP_PATH=/Users/aaronsamuel/.twilio-cli/autocomplete/zsh_setup
+TWILIO_AC_ZSH_SETUP_PATH="${HOME}/.twilio-cli/autocomplete/zsh_setup"
 if [[ -f "$TWILIO_AC_ZSH_SETUP_PATH" ]]; then
     source "$TWILIO_AC_ZSH_SETUP_PATH" # twilio autocomplete setup
 fi
