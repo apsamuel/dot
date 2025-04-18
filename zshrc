@@ -2,8 +2,8 @@
 # - ignore shellcheck warnings ZSH files, we are loading a ZSH environment
 # shellcheck disable=SC1071
 
-#% author: Aaron Peter Samuel
-#% description: configure the shell environment, this will be executed from a bash shell with considerations taken for non-posix compliant shells
+#% author: Aaron P. Samuel
+#% description: configure the shell environment
 #% usage: chsh -s $(which zsh) , source ~/.zshrc
 # - ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
@@ -11,18 +11,16 @@
 # shellcheck disable=SC2207
 
 
-# where are we? https://stackoverflow.com/a/246128/1235074
-# this is broken in zsh
-#SHELL_INIT_DIR=$( cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P )
-SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+DOT_INIT_DIR=$(pwd -P)
 # shell start time
-SHELL_INIT_START=$(date +%s)
+DOT_INIT_START_TIME=$(date +%s)
 
 # enable zsh completions
 # autoload -U +X bashcompinit && bashcompinit
 
 # baseline conditions
-if [[ -z "$HOME"  ]]; then
+if [ -z "$HOME"  ]; then
     echo "Error: HOME environment variable not set"
     exit 1
 fi
@@ -393,10 +391,9 @@ zle -N create_completion
 
 
 # post exports
-SHELL_INIT_END=$(date +%s)
-SHELL_INIT_TIME="$((SHELL_INIT_END - SHELL_INIT_START))"
-export SHELL_INIT_DIR SHELL_INIT_START SHELL_INIT_END SHELL_INIT_TIME DOT_LIBS_DIR DOT_DIR DOT_DEBUG DOT_SPLASH_SCREEN DOT_SPLASH_TYPE DOT_CLOUD_DIR DOT_SHELL_DATA DOT_SECRETS_DATA
+DOT_INIT_END_TIME=$(date +%s)
+DOT_LOAD_TIME="$((DOT_INIT_END_TIME - DOT_INIT_START_TIME))"
+export DOT_INIT_DIR DOT_INIT_START_TIME DOT_INIT_END_TIME DOT_LOAD_TIME DOT_LIBS_DIR DOT_DIR DOT_DEBUG DOT_SPLASH_SCREEN DOT_SPLASH_TYPE DOT_CLOUD_DIR DOT_SHELL_DATA DOT_SECRETS_DATA
 export PATH=$PATH:$HOME/.dot/bin
 
-test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-export PATH=/Users/aaronsamuel/edirect:${PATH}
+test -e "${HOME}/.iterm2_shell_integration.zsh" && . "${HOME}/.iterm2_shell_integration.zsh"
