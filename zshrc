@@ -25,12 +25,12 @@ if [ -z "$HOME"  ]; then
     exit 1
 fi
 
-if [[ -z "$USER" ]]; then
+if [ -z "$USER" ]; then
     echo "Error: USER environment variable not set"
     exit 1
 fi
 
-if [[ -z "$SHELL" ]]; then
+if [ -z "$SHELL" ]; then
     echo "Error: SHELL environment variable not set"
     exit 1
 fi
@@ -72,7 +72,7 @@ export DOT_DISABLE_NODE="${DOT_DISABLE_NODE:-0}"
 export DOT_DISABLE_NETWORK="${DOT_DISABLE_NETWORK:-0}"
 export DOT_DIRECTORY DOT_LIBRARY DOT_LIBRARY_FILES DOT_DEBUG DOT_INTERACTIVE DOT_BOOT DOT_BOOTED DOT_ROOT DOT_SHELL DOT_DEBUG_RC DOT_ANACONDA_ENABLED
 
-if [[ $(uname -m) == "x86_64" ]]; then
+if [ "$(uname -m)"  = "x86_64" ]; then
     export DOT_ANACONDA_DIR=/usr/local/anaconda3
     export ANACONDA_DIR=/usr/local/anaconda3
 else
@@ -82,8 +82,8 @@ fi
 export DOT_ANACONDA_ENV="${DOT_ANACONDA_ENV:-base}"
 
 
-if [[ -f "${DOT_BOOTSTRAP}" ]]; then
-    (source "${DOT_BOOTSTRAP}" || . "${DOT_BOOTSTRAP}") || (
+if [ -f "${DOT_BOOTSTRAP}" ]; then
+    . "${DOT_BOOTSTRAP}" || (
         echo "Error: unable to load bootstrapper"
         exit 1
     )
@@ -96,25 +96,25 @@ fi
 # )
 
 # configure environment variable germaine to your dot environment
-(source "${DOT_LIBRARY}"/static/dotenv.sh || . "${DOT_LIBRARY}"/static/dotenv.sh) || (
+(. "${DOT_LIBRARY}"/static/dotenv.sh || . "${DOT_LIBRARY}"/static/dotenv.sh) || (
     echo "Error: unable to load dotenv"
     exit 1
 )
 
 # shell limits (user)
-(source "${DOT_LIBRARY}"/static/limits.sh || . "${DOT_LIBRARY}"/static/limits.sh) || (
+(. "${DOT_LIBRARY}"/static/limits.sh || . "${DOT_LIBRARY}"/static/limits.sh) || (
     echo "Error: unable to load shell limits"
     exit 1
 )
 
 # shell autoloads (ZSH)
-(source "${DOT_LIBRARY}"/static/autoload.sh || . "${DOT_LIBRARY}"/static/autoload.sh) || (
+(. "${DOT_LIBRARY}"/static/autoload.sh || . "${DOT_LIBRARY}"/static/autoload.sh) || (
     echo "Error: unable to configure autoloads"
     exit 1
 )
 
 # bootstrap functions
-(source "${DOT_DIRECTORY}"/bin/bootstrap.sh || . "${DOT_DIRECTORY}"/bin/bootstrap.sh) || (
+(. "${DOT_DIRECTORY}"/bin/bootstrap.sh || . "${DOT_DIRECTORY}"/bin/bootstrap.sh) || (
     echo "Error: unable to load bootstrap functions"
     exit 1
 )
@@ -122,7 +122,7 @@ fi
 declare -a SSH_KEYS
 
 # prepare files in .ssh directory for the ssh-agent
-if [[ -d "$HOME"/.ssh ]]; then
+if [ -d "$HOME"/.ssh ]; then
     files=("$HOME"/.ssh/*)
     for file in "${files[@]}"; do
         if [[ "$file" =~ (config|deprecated|.*pub|environment.*|known_hosts.*) ]]; then
@@ -187,7 +187,7 @@ for opt in "${ZSH_OPTIONS[@]}"; do
 done
 
 # make ZLIB available to shell
-if [[ -d "$DOT_LIBS_DIR" ]]; then
+if [ -d "$DOT_LIBS_DIR" ]; then
     for lib in $(find "${DOT_LIBS_DIR}" -type f -name "*.sh" | sort -d); do
         # skip README.md files
         if [[ "$lib" =~ .*README.md ]]; then
@@ -196,7 +196,7 @@ if [[ -d "$DOT_LIBS_DIR" ]]; then
         if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
             echo "load source: $lib"
         fi
-        source "$lib" || true
+        . "$lib" || true
     done
 else
     echo "Warning: DOT_LIBS_DIR not found: $DOT_LIBS_DIR"
