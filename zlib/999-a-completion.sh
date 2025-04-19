@@ -20,12 +20,17 @@ if type brew &>/dev/null; then
     compinit
 fi
 
+# ngrok completions
 if command -v ngrok &>/dev/null; then
     eval "$(ngrok completion)"
 fi
 
 # # load launchctl completions
-source /usr/local/Cellar/launchctl-completion/1.0/etc/bash_completion.d/launchctl
+if [ -f "${HOMEBREW_CELLAR}"/launchctl-completion/1.0/etc/bash_completion.d/launchctl ]; then
+    # shellcheck source=/dev/null
+    source "${HOMEBREW_CELLAR}"/launchctl-completion/1.0/etc/bash_completion.d/launchctl
+fi
+
 
 # conditionally load twilio cli completions
 TWILIO_AC_ZSH_SETUP_PATH="${HOME}/.twilio-cli/autocomplete/zsh_setup"
