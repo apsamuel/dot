@@ -9,8 +9,9 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
 
-# ANACONDA_DIR=/usr/local/anaconda3
-# conditionally set the anaconda DOT_DIRECTORY based on architecture
+# when accepting the default values for anaconda, the default install location is:
+# /usr/local/anaconda3 for x86_64
+# /opt/homebrew/anaconda3 for arm64
 if [[ $(uname -m) == "x86_64" ]]; then
     export ANACONDA_DIR=/usr/local/anaconda3
 else
