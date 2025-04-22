@@ -23,92 +23,91 @@ fi
 
 . "${dot_bootstrap_directory}/zlib/static/lib/internal.sh"
 
-function bootstrap::info () {
+function bootstrapInfo () {
     # we will build up a status string and print it
 
 
     # print architecture
-    echo "🔧 architecture $(uname -m)"
+    echo "🔧 architecture: $(uname -m)"
     # print os version
-    echo "🔧 os $(sw_vers -productVersion)"
+    echo "🔧 os: $(sw_vers -productVersion)"
 
     current_shell="$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")"
     # check if we are running in a ZSH shell
     if [[ $current_shell == "zsh" ]]; then
-        echo "❌ 🐢 shell is zsh"
+        echo "✅ shell (🐢): zsh"
     else
-        echo "✅ 🐢 shell is not zsh"
+        echo "❌ shell (🐢): !zsh"
     fi
     # check if ICLOUD environment variable is set
     if [[ -z "${ICLOUD}" ]]; then
-        echo "❌ ICLOUD environment variable is not set"
+        echo "❌ env: ICLOUD -> 💣"
     else
-
-        echo "✅ ICLOUD environment variable is set"
+        echo "✅ env: ICLOUD -> (${ICLOUD})"
     fi
 
     # check if brew is installed
     if command -v brew &> /dev/null
     then
-        echo "✅ brew is installed ($(command brew --version))"
+        echo "✅ cli: brew is installed ($(command brew --version))"
     else
-        echo "❌ brew is not installed"
+        echo "❌ cli: brew is not installed"
     fi
 
     # check if git is installed
     if command -v git &> /dev/null
     then
-        echo "✅ git is installed ($(command git --version))"
+        echo "✅ cli: git is installed ($(command git --version))"
     else
-        echo "❌ git is not installed"
+        echo "❌ cli: git is not installed"
     fi
 
     # check if jq is installed
     if command -v jq &> /dev/null
     then
-        echo "✅ jq is installed ($(command jq --version))"
+        echo "✅ cli: jq is installed ($(command jq --version))"
     else
-        echo "❌ jq is not installed"
+        echo "❌ cli: jq is not installed"
     fi
 
     # check if curl is installed
     if command -v curl &> /dev/null
     then
-        echo "✅ curl is installed ($(command curl --version | head -n 1))"
+        echo "✅ cli: curl is installed ($(command curl --version | head -n 1))"
     else
-        echo "❌ curl is not installed"
+        echo "❌ cli: curl is not installed"
     fi
 
 }
 
-function bootstrap::print () {
+function bootstrapPrint () {
     echo "🛠️ executing ${dot_boostrap_file}"
 }
 
-function bootstrap::sys() {
+function bootstrapSystem() {
     # load secrets
     __load_secrets
-    bootstrap::validate::brew # install brew
-    bootstrap::deps # install Brewfile
+    bootstrapCheckBrew # install brew
+    bootstrapDependencies # install Brewfile
     # configure icloud links
     # configure bash
-    bootstrap::configure::zsh
-    bootstrap::configure::bash
-    bootstrap::validate::cloud
+    bootstrapConfigureZsh
+    bootstrapConfigureBash
+    bootstrapCheckCloud
     # configure ssh
-    bootstrap::configure::ssh
-    bootstrap::configure::git
+    bootstrapConfigureSsh
+    bootstrapConfigureGit
     # validate and configure iterm
-    bootstrap::validate::iterm
-    bootstrap::configure::figlet
-    bootstrap::validate::zsh
-    bootstrap::validate::ohmyzsh
-    bootstrap::validate::p10k
-    bootstrap::validate::ohmytmux
+    bootstrapCheckIterm
+    bootstrapConfigureFiglet
+    bootstrapCheckZsh
+    bootstrapCheckOhMyZsh
+    bootstrapCheckPowershell10K
+    bootstrapCheckOhMyTmux
 
 }
 
-function bootstrap::deps () {
+function bootstrapDependencies () {
     if command brew bundle install --file "${ICLOUD}/dot/Brewfile";
     then
         echo "✅ dependencies ok"
@@ -119,7 +118,7 @@ function bootstrap::deps () {
     fi
 }
 
-function bootstrap::validate::deps () {
+function bootstrapCheckDependencies () {
     # you can force reinstallation of dependencies by setting DOT_DEPS=1
     if [[ "${dot_bootstrap_deps}" -gt 0 ]]; then
         echo "🛠️ installing bootstrap deps ..."
@@ -133,11 +132,14 @@ function bootstrap::validate::deps () {
     fi
 }
 
-function bootstrap::configure::python () {
+
+# check, configure and install:
+
+function bootstrapConfigurePython () {
     true
 }
 
-function bootstrap::link::cloud () {
+function bootstrapLinkCloud () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
 
@@ -152,7 +154,7 @@ function bootstrap::link::cloud () {
 
 }
 
-function bootstrap::validate::cloud () {
+function bootstrapCheckCloud () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
 
@@ -161,12 +163,12 @@ function bootstrap::validate::cloud () {
     then
         if [[ ! -L "${icloud_link}" ]]; then
             echo "🛠️ linking ${icloud_link} ..."
-            bootstrap::link::cloud
+            bootstrapLinkCloud
         fi
     fi
 }
 
-function bootstrap::validate::ohmytmux () {
+function bootstrapCheckOhMyTmux () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local tmux_local_config="${HOME}/.tmux.conf.local"
@@ -181,7 +183,7 @@ function bootstrap::validate::ohmytmux () {
     echo "✅  tmux is configured"
 }
 
-function bootstrap::configure::figlet () {
+function bootstrapConfigureFiglet () {
     if [[ ! -d "$HOME"/.figlet ]]; then
         git clone git@github.com:xero/figlet-fonts.git "$HOME"/.figlet &> /dev/null
     else
@@ -190,7 +192,7 @@ function bootstrap::configure::figlet () {
     echo "✅  figlet is configured"
 }
 
-function bootstrap::configure::iterm () {
+function bootstrapConfigureIterm () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local dynamic_profiles="${HOME}/Library/Application Support/iTerm2/DynamicProfiles"
 
@@ -208,7 +210,7 @@ function bootstrap::configure::iterm () {
 
 }
 
-function bootstrap::configure::ssh () {
+function bootstrapConfigureSsh () {
     local ssh_config="${HOME}/.ssh/config"
     local ssh_config_dot="${HOME}/iCloud/dot/ssh/config"
     local ssh_keys=()
@@ -249,7 +251,7 @@ function bootstrap::configure::ssh () {
 
 }
 
-function bootstrap::configure::git () {
+function bootstrapConfigureGit () {
     local git_config="${HOME}/.gitconfig"
     local git_config_dot="${HOME}/iCloud/dot/git/config"
 
@@ -259,7 +261,7 @@ function bootstrap::configure::git () {
     echo "✅  your git installation is configured"
 }
 
-function bootstrap::configure::gh () {
+function bootstrapConfigureGh () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local git_config_dir_dot="${icloud_directory}/dot/git/gh"
     local git_config_dir="${HOME}/.config/gh"
@@ -285,7 +287,7 @@ function bootstrap::configure::gh () {
 
 }
 
-function bootstrap::configure::zsh () {
+function bootstrapConfigureZsh () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.zshrc"
@@ -297,7 +299,7 @@ function bootstrap::configure::zsh () {
     echo "✅  zsh shell is configured, please restart any open shells!"
 }
 
-function bootstrap::configure::bash () {
+function bootstrapConfigureBash () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.bashrc"
@@ -315,7 +317,7 @@ function bootstrap::configure::fish () {
     true
 }
 
-function bootstrap::configure::ksh () {
+function bootstrapConfigureKsh () {
     # TODO: make real    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.kshrc"
@@ -324,7 +326,7 @@ function bootstrap::configure::ksh () {
     true
 }
 
-function bootstrap::configure::csh () {
+function bootstrapConfigureCsh () {
     # TODO: make real
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
@@ -335,11 +337,11 @@ function bootstrap::configure::csh () {
 }
 
 
-function bootstrap::configure::pwsh () {
+function bootstrapConfigurePwsh () {
     true
 }
 
-function bootstrap::configure::omz () {
+function bootstrapConfigureOmz () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.zshrc"
@@ -359,7 +361,7 @@ function bootstrap::configure::omz () {
     done
 }
 
-function bootstrap::configure::p10k () {
+function bootstrapConfigurePowershell10K () {
     # TODO: should this be a link to icloud?
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     # cp "${dot_bootstrap_directory}"/config/p10k.zsh "${HOME}/.p10k.zsh"
@@ -367,29 +369,29 @@ function bootstrap::configure::p10k () {
     echo "✅  powerlevel10k is configured"
 }
 
-function bootstrap::validate::brew () {
+function bootstrapCheckBrew () {
     if ! command -v brew &> /dev/null
     then
         echo "🛠️ installing brew..."
-        bootstrap::install::brew
+        bootstrapInstallBrew
     else
         echo "✅ brew is installed"
         return 0
     fi
 }
 
-function bootstrap::validate::zsh () {
+function bootstrapCheckZsh () {
     if ! command -v zsh &> /dev/null
     then
         echo "🛠️ installing zsh..."
-        bootstrap::install::zsh
+        bootstrapInstallZsh
     else
         echo "✅ zsh is installed"
     fi
 
     if [[ ! "$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")" == "zsh" ]]; then
         echo "🛠️ zsh is not the default terminal..."
-        bootstrap::configure::zsh
+        bootstrapConfigureZsh
     else
         echo "✅ zsh is the default terminal"
     fi
@@ -397,11 +399,11 @@ function bootstrap::validate::zsh () {
     return 0
 }
 
-function bootstrap::validate::jq () {
+function bootstrapCheckJq () {
     if ! command -v jq &> /dev/null
     then
         echo "🛠️ installing jq ..."
-        bootstrap::install::jq
+        bootstrapInstallJq
     else
         echo "✅ jq is installed"
     fi
@@ -409,48 +411,48 @@ function bootstrap::validate::jq () {
 
 }
 
-function bootstrap::validate::iterm () {
+function bootstrapCheckIterm () {
     if ! mdfind "kMDItemKind == 'Application'" | grep -q -Ei '^/Applications/[i]Term.*?.app' &> /dev/null
     then
         echo "🛠️ installing iterm2 ..."
-        bootstrap::install::iterm
+        bootstrapInstallIterm
     else
         echo "✅ iterm2 is installed"
-        bootstrap::configure::iterm
+        bootstrapConfigureIterm
         return 0
     fi
 }
 
-function bootstrap::validate::fonts () {
+function bootstrapCheckFonts () {
     true
     true
 }
 
-function bootstrap::validate::themes () {
+function bootstrapCheckThemes () {
     if [[ ! -d "${HOME}/.themes" ]];
     then
         echo "🛠️ installing iterm2 themes ..."
-        bootstrap::install::themes
+        bootstrapInstallThemes
     fi
 }
 
-function bootstrap::validate::ohmyzsh () {
+function bootstrapCheckOhMyZsh () {
     # TODO: devise a better method of validating omz is actually installed, using type requires sourcing ZSH
     if [[ ! -d $HOME/.oh-my-zsh ]];
     then
         echo "🛠️ installing oh-my-zsh..."
-        bootstrap::install::omz
+        bootstrapInstallOhMyZsh
     fi
     echo "✅ configuring zsh..."
-    bootstrap::configure::omz
+    bootstrapConfigureOmz
 }
 
-function bootstrap::validate::p10k () {
+function bootstrapCheckPowershell10K () {
     # installed
     if [[ ! -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]];
     then
         echo "🛠️  installing powerlevel10k ..."
-        bootstrap::install::p10k
+        bootstrapInstallPowershell10K
     fi
     if [[ -f "${HOME}/.p10k.zsh" ]];
     # configured
@@ -458,11 +460,11 @@ function bootstrap::validate::p10k () {
         echo "✅  powerlevel10k is configured"
     else
         echo "❌  powerlevel10k is not configured..."
-        bootstrap::configure::p10k
+        bootstrapConfigurePowershell10K
     fi
 }
 
-function bootstrap::install::brew () {
+function bootstrapInstallBrew () {
     if command bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     then
         echo "✅ brew is installed"
@@ -473,18 +475,18 @@ function bootstrap::install::brew () {
     fi
 }
 
-function bootstrap::install::zsh () {
+function bootstrapInstallZsh () {
     if ! command brew install zsh
     then
         echo "🛠️ installing zsh..."
-        bootstrap::install::zsh
+        bootstrapInstallZsh
     else
         echo "✅ zsh is installed"
         return 0
     fi
 }
 
-function bootstrap::install::jq () {
+function bootstrapInstallJq () {
     if command brew install jq
     then
         echo "✅ jq is installed"
@@ -495,7 +497,7 @@ function bootstrap::install::jq () {
     fi
 }
 
-function bootstrap::install::iterm () {
+function bootstrapInstallIterm () {
     if command brew install --cask iterm2
     then
         echo "✅ iterm2 is installed"
@@ -506,7 +508,7 @@ function bootstrap::install::iterm () {
     fi
 }
 
-function bootstrap::install::fonts () {
+function bootstrapInstallFonts () {
     if command cp "$ICLOUD"/dot/terminal/fonts/* ~/Library/Fonts/
     then
         echo "✅  fonts are installed"
@@ -517,7 +519,7 @@ function bootstrap::install::fonts () {
     fi
 }
 
-function bootstrap::install::themes () {
+function bootstrapInstallThemes () {
     if command gh repo clone apsamuel/iTerm2-Color-Schemes "${HOME}/.themes"
     then
         bash "${HOME}/.themes/tools/import-scheme.sh"
@@ -529,12 +531,12 @@ function bootstrap::install::themes () {
     fi
 }
 
-function bootstrap::install::omz () {
+function bootstrapInstallOhMyZsh () {
     curl -L https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install_omz.sh
     chmod +x /tmp/install_omz.sh
     if KEEP_ZSHRC=yes CHSH=no RUNZSH=no /tmp/install_omz.sh; then
         #copy the zshrc in place
-        bootstrap::configure::omz
+        bootstrapConfigureOmz
         echo "✅  oh-my-zsh is installed"
     else
         echo "❌  oh-my-zsh installation failed"
@@ -544,7 +546,7 @@ function bootstrap::install::omz () {
     return 0
 }
 
-function bootstrap::install::ohmytmux () {
+function bootstrapInstallOhMyTmux () {
     # TODO: check if the folder exists and is not empty, if not, we actually resinstall
     if [ ! -d "${HOME}"/.tmux ]; then
         echo "🛠️ installing oh-my-tmux..."
@@ -565,7 +567,7 @@ function bootstrap::install::ohmytmux () {
 
 }
 
-function bootstrap::install::p10k () {
+function bootstrapInstallPowershell10K () {
     if command git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
     then
         echo "✅  powerlevel10k is installed"
@@ -576,30 +578,30 @@ function bootstrap::install::p10k () {
     fi
 }
 
-function bootstrap::validate::vim () {
+function bootstrapCheckVim () {
     if ! command -v vim &> /dev/null
     then
         echo "❌ vim is not installed"
-        bootstrap::install::vim
+        bootstrapInstallVim
     else
         echo "✅ vim is installed"
         return 0
     fi
 }
 
-function bootstrap::install::vim () {
+function bootstrapInstallVim () {
     echo "🛠️ validating vim..."
     if ! command brew install vim
     then
         echo "🛠️ installing vim..."
-        bootstrap::install::vim
+        bootstrapInstallVim
     else
         echo "✅ vim is installed"
         return 0
     fi
 }
 
-function bootstrap::configure::vim () {
+function bootstrapConfigureVim () {
     echo "🛠️ configuring vim..."
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     # handle .vimrc
@@ -684,33 +686,29 @@ function bootstrap::configure::vim () {
 
 }
 
-function bootstrap::install::nvim () {
-    brew install neovim
-}
-
-function bootstrap::install::nvim () {
+function bootstrapInstallNVim () {
     if ! command brew install neovim
     then
         echo "🛠️ installing nvim..."
-        bootstrap::install::nvim
+        bootstrapInstallNVim
     else
         echo "✅ nvim is installed"
         return 0
     fi
 }
 
-function bootstrap::validate::nvim () {
+function bootstrapCheckNVim () {
     echo "🛠️ validating nvim..."
     if ! command -v nvim &> /dev/null
     then
         echo "❌ nvim is not installed"
-        bootstrap::install::nvim
+        bootstrapInstallNVim
     else
         echo "✅ nvim is installed"
         return 0
     fi
 }
 
-function bootstrap::configure::nvim () {
+function bootstrapConfigureNVim () {
     echo "🛠️ configuring nvim..."
 }
