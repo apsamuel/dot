@@ -15,36 +15,70 @@ dot_bootstrap_directory="$(dirname "$(dirname "$0")")"
 dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
+
+if [ ! -d "${dot_bootstrap_directory}" ]; then
+    echo "❌  ${dot_bootstrap_directory} does not exist"
+    exit 1
+fi
+
 . "${dot_bootstrap_directory}/zlib/static/lib/internal.sh"
 
-# function __load_secrets () {
-#     local secret_keys=()
-#     # declare -A secrets
-#     while IFS=' ' read -r -d ' ' secret_key; do
-#         secret_keys+=("${secret_key}")
-#     done < <(jq -r '. | keys | .[]' "${ICLOUD}"/dot/secrets.json | xargs) # -print0
-#     touch "${TMPDIR}"/.secrets
-#     if [[ ${#secret_keys[@]} -gt 0  ]]; then
-#         echo "#!/bin/bash" > "$TMPDIR"/.secrets
-#     fi
-#     for secret_key in "${secret_keys[@]}"; do
-#         secret_value="$(jq --arg secret_key "${secret_key}" -r '.[$secret_key]' "${ICLOUD}"/dot/secrets.json)"
-#         echo "${secret_key}=${secret_value}" >> "$TMPDIR"/.secrets
-#     done
-#     if [[ -f "$TMPDIR"/.secrets ]]; then
-#         source "$TMPDIR"/.secrets
-#         rm -f "$TMPDIR"/.secrets
-#     else
-#         echo "no secrets file found"
-#     fi
-#     export DOT_SECRETS_LOADED=1
-#     echo "🛻  loaded ${#secret_keys[@]} secrets"
-# }
+function bootstrap::info () {
+    # we will build up a status string and print it
 
-function boostrap::info () {
-    echo "🛠️  ${dot_boostrap_file}"
-    echo "🛠️  ${dot_bootstrap_directory}"
-    echo "🛠️  ${dot_bootstrap_deps}"
+
+    # print architecture
+    echo "🔧 architecture $(uname -m)"
+    # print os version
+    echo "🔧 os $(sw_vers -productVersion)"
+
+    current_shell="$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")"
+    # check if we are running in a ZSH shell
+    if [[ $current_shell == "zsh" ]]; then
+        echo "❌ 🐢 shell is zsh"
+    else
+        echo "✅ 🐢 shell is not zsh"
+    fi
+    # check if ICLOUD environment variable is set
+    if [[ -z "${ICLOUD}" ]]; then
+        echo "❌ ICLOUD environment variable is not set"
+    else
+
+        echo "✅ ICLOUD environment variable is set"
+    fi
+
+    # check if brew is installed
+    if command -v brew &> /dev/null
+    then
+        echo "✅ brew is installed ($(command brew --version))"
+    else
+        echo "❌ brew is not installed"
+    fi
+
+    # check if git is installed
+    if command -v git &> /dev/null
+    then
+        echo "✅ git is installed ($(command git --version))"
+    else
+        echo "❌ git is not installed"
+    fi
+
+    # check if jq is installed
+    if command -v jq &> /dev/null
+    then
+        echo "✅ jq is installed ($(command jq --version))"
+    else
+        echo "❌ jq is not installed"
+    fi
+
+    # check if curl is installed
+    if command -v curl &> /dev/null
+    then
+        echo "✅ curl is installed ($(command curl --version | head -n 1))"
+    else
+        echo "❌ curl is not installed"
+    fi
+
 }
 
 function bootstrap::print () {
@@ -251,7 +285,6 @@ function bootstrap::configure::gh () {
 
 }
 
-
 function bootstrap::configure::zsh () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
@@ -399,7 +432,6 @@ function bootstrap::validate::themes () {
         echo "🛠️ installing iterm2 themes ..."
         bootstrap::install::themes
     fi
-
 }
 
 function bootstrap::validate::ohmyzsh () {
@@ -544,8 +576,7 @@ function bootstrap::install::p10k () {
     fi
 }
 
-
-function boostrap::validate::vim () {
+function bootstrap::validate::vim () {
     if ! command -v vim &> /dev/null
     then
         echo "❌ vim is not installed"
@@ -653,8 +684,31 @@ function bootstrap::configure::vim () {
 
 }
 
+function bootstrap::install::nvim () {
+    brew install neovim
+}
+
+function bootstrap::install::nvim () {
+    if ! command brew install neovim
+    then
+        echo "🛠️ installing nvim..."
+        bootstrap::install::nvim
+    else
+        echo "✅ nvim is installed"
+        return 0
+    fi
+}
+
 function bootstrap::validate::nvim () {
-    echo "🛠️ installing nvim..."
+    echo "🛠️ validating nvim..."
+    if ! command -v nvim &> /dev/null
+    then
+        echo "❌ nvim is not installed"
+        bootstrap::install::nvim
+    else
+        echo "✅ nvim is installed"
+        return 0
+    fi
 }
 
 function bootstrap::configure::nvim () {

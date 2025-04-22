@@ -27,7 +27,6 @@ else
 
     # TODO: conditionally exit if anaconda is not installed
     if [ ! -d "${ANACONDA_DIR}" ]; then
-        echo "Anaconda is not installed at ${ANACONDA_DIR}. Exiting."
         # exit 1
         return
     fi
