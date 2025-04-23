@@ -9,64 +9,64 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
 
-function emulate::interpreter () {
+function emulateIntepreter() {
     local emulation="${1:-sh}"
     local code="${1:-echo "Hello World"}"
     command zsh -c "emulate ${emulation}; $code"
 
 }
 
-function emulate::sh () {
+function emulateZsh() {
     local code="${1:-echo "Hello World"}"
     command zsh -c "emulate bash; ${code}"
 }
 
-function spawn::sh () {
+function spawnSh() {
     local code="${1:-echo "Hello World"}"
     command sh -c "$code"
 }
 
-function emulate::bash () {
+function emulateBash() {
     local code="${1:-echo "Hello World"}"
-    emulate::sh "$code"
+    emulateZsh "$code"
 }
 
-function spawn::bash () {
+function spawnBash() {
     local code="${1:-echo "Hello World"}"
     command bash -c "$code"
 }
 
-function emulate::csh () {
+function emulateCsh() {
     local code="${1:-echo "Hello World"}"
     command zsh -c "emulate csh; $code"
 }
 
-function spawn::csh () {
+function spawnCsh () {
     local code="${1:-echo "Hello World"}"
     command csh -c "$code"
 }
 
-function emulate::ksh () {
+function emulateKsh () {
     local code="${1:-echo "Hello World"}"
     command zsh -c "emulate ksh; $code"
 }
 
-function spawn::ksh () {
+function spawnKsh () {
     local code="${1:-echo "Hello World"}"
     command ksh -c "$code"
 }
 
-function emulate::zsh () {
+function emulateZsh () {
     local code="${1:-echo "Hello World"}"
     command zsh -l -c "emulate zsh; $code"
 }
 
-function spawn::arm () {
+function spawnArm () {
     local code="${1:-uname}"
     arch -arm64 zsh -l -c "$code"
 }
 
-function spawn::intel () {
+function spawnIntel () {
     local code="${1:-uname}"
     command arch -x86_64 zsh -l -c "$code"
 }

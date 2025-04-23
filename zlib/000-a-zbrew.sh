@@ -33,7 +33,7 @@ else
 fi
 
 
-function brew::check {
+function brewCheckInstalled {
   local input="$1"
   if brew list -1 | grep  "${input}" &> /dev/null; then
     echo "Package '$1' is installed"
@@ -43,8 +43,8 @@ function brew::check {
   fi
 }
 
-function brew::install () {
-  if brew::check "$1"; then
+function brewInstall() {
+  if brewCheckInstalled "$1"; then
     echo "Reinstalling '$1'"
     brew reinstall "$1"
   else
@@ -53,31 +53,31 @@ function brew::install () {
   fi
 }
 
-function brew::install::arm () {
+function brewInstallArm () {
   arch -arm64 brew install "$1"
 }
 
-function brew::install::intel () {
+function brewInstallIntel () {
   arch -x86_64 brew install "$1"
 }
 
-function brew::update () {
+function brewUpdate() {
     brew update
 }
 
-function brew::upgrade () {
+function brewUpgrade () {
     brew update && brew upgrade
 }
 
-function brew::list () {
+function brewList () {
     brew list -1
 }
 
-function brew::cask::list () {
+function brewCaskList () {
     brew list --cask -1
 }
 
-function brew::cask::check () {
+function brewCheckCask () {
   if brew list --cask -1 | grep  "$1" &> /dev/null; then
     echo "Package '$1' is installed"
   else
@@ -86,23 +86,23 @@ function brew::cask::check () {
   fi
 }
 
-function brew::dump () {
+function brewDump() {
     brew bundle dump --describe --brews --taps --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile}"
 }
 
-function brew::dump::mas () {
+function brewDumpMas () {
     brew bundle dump --describe --mas --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile.mas}"
 }
 
-function brew::dump::cask () {
+function brewDumpCask () {
     brew bundle dump --describe --casks --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile.cask}"
 }
 
-function brew::recipe () {
+function brewRecipe () {
   cat "${1:-${ICLOUD}/dot/Brewfile}"
 }
 
-function brew::load () {
+function brewLoad () {
     brew bundle install --file="${1:-${ICLOUD}/dot/Brewfile}"
 }
 
@@ -121,7 +121,7 @@ function parseLine() {
   echo "$operation" "$target"
 }
 
-function brew::load::v2() {
+function brewLoad.v2() {
   ## list each line of the Brewfile
   ## either configure a tap, or install a package
   ## configure an exclude for the brewfile
@@ -139,14 +139,14 @@ function brew::load::v2() {
   done < "${1:-${ICLOUD}/dot/Brewfile}"
 }
 
-function brew::load::mas () {
+function brewLoadMas () {
     brew bundle install --mas --file="${1:-${ICLOUD}/dot/Brewfile.mas}"
 }
 
-function brew::load::cask () {
+function brewLoadCask () {
     brew bundle install --cask --file="${1:-${ICLOUD}/dot/Brewfile.cask}"
 }
 
-function brew::package::query () {
+function brewQuery () {
     brew info --json "$@"
 }

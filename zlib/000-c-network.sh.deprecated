@@ -88,10 +88,6 @@ function router::backup() {
     _ls "$backup_dir"
 }
 
-
-
-# function router::restore() {}
-
 function router::dns::restart() {
     ssh "$ROUTER" 2>/dev/null "$ROUTER_DISK/admin/watch-dns.sh"
 }
@@ -101,7 +97,7 @@ function router::dns::zone() {
 }
 
 function router::dns::settings() {
-   ssh "$ROUTER" 2>/dev/null "cat $ROUTER_DISK/etc/dnsmasq.conf |grep -v '#' | grep -v '^$' |sort" | grep -v -E '(address|dhcp-host)'
+    ssh "$ROUTER" 2>/dev/null "cat $ROUTER_DISK/etc/dnsmasq.conf |grep -v '#' | grep -v '^$' |sort" | grep -v -E '(address|dhcp-host)'
 }
 
 function router::dns::edit() {
