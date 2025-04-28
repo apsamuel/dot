@@ -32,12 +32,12 @@ export ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
 
 . "${DOT_DIR}"/zlib/static/lib/internal.sh
 
-function dot::sh {
+function dot.shell {
     local command="${1:-version}"
 
     # help
     if [[ "${command}" =~ [Hh]elp ]]; then
-        echo "Usage: dot::sh [command]"
+        echo "Usage: dot.shell [command]"
         echo ""
         echo "Commands:"
         echo "  version     print version information"
@@ -109,7 +109,7 @@ function dot::sh {
 
 }
 
-if type -t dot::sh &>/dev/null; then
+if type -t dot.shell &>/dev/null; then
     DOT_ENABLED=true
 else
     DOT_ENABLED=false
