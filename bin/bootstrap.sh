@@ -172,7 +172,12 @@ function bootstrapCheckOhMyTmux () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local tmux_local_config="${HOME}/.tmux.conf.local"
-    ln -s -f "${icloud_link}/dot/shell/tmux/conf" "${tmux_local_config}"
+    local tmux_icloud_config="${icloud_directory}/dot/shell/tmux/conf"
+
+
+
+
+    ln -s -f "${tmux_icloud_config}" "${tmux_local_config}"
     # start a new tmux session, and install plugins
     if tmux has-session -t bootstrap; then
         tmux kill-session -t bootstrap
@@ -195,6 +200,15 @@ function bootstrapConfigFiglet () {
 function bootstrapConfigIterm () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local dynamic_profiles="${HOME}/Library/Application Support/iTerm2/DynamicProfiles"
+
+    # ensure the plist file exists where iterm2 expects it
+
+
+    # ensure that all themes are installed
+
+    # install iTerm-Color-Schemes
+    "$ICLOUD"/dot/terminal/themes/iTerm2-Color-Schemes/tools/import-scheme.sh -v "$ICLOUD"/dot/terminal/themes/iTerm2-Color-Schemes/schemes/
+    "$ICLOUD"/dot/terminal/themes/iTerm2-Color-Schemes/tools/import-scheme.sh  -v "$ICLOUD"/dot/terminal/themes/catppuccin/catppuccin/colors/
 
     # enable icloud preferences in iterm2
     defaults write com.googlecode.iterm2 PrefsCustomFolder -string "${icloud_directory}/dot/terminal"
@@ -341,7 +355,7 @@ function bootstrapConfigPwsh () {
     true
 }
 
-function bootstrapConfigOmz () {
+function bootstrapConfigOhMyZsh () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.zshrc"
@@ -444,7 +458,7 @@ function bootstrapCheckOhMyZsh () {
         bootstrapInstallOhMyZsh
     fi
     echo "✅ configuring zsh..."
-    bootstrapConfigOmz
+    bootstrapConfigOhMyZsh
 }
 
 function bootstrapCheckPowershell10K () {
@@ -536,7 +550,7 @@ function bootstrapInstallOhMyZsh () {
     chmod +x /tmp/install_omz.sh
     if KEEP_ZSHRC=yes CHSH=no RUNZSH=no /tmp/install_omz.sh; then
         #copy the zshrc in place
-        bootstrapConfigOmz
+        bootstrapConfigOhMyZsh
         echo "✅  oh-my-zsh is installed"
     else
         echo "❌  oh-my-zsh installation failed"
