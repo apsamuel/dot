@@ -8,7 +8,7 @@ function compileTerminalInfo() {
 
 
 # fzf
-if  command -v fzf ; then
+if  command -v fzf 2>&1 >/dev/null; then
     # get currently installed version
     fzf_version="$(brew info fzf --json | jq -r '.[0].linked_keg')"
     # shellcheck disable=SC1090
