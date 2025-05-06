@@ -45,6 +45,7 @@
     "plugins": {
         "builtin": [
             "brew",
+            "fzf",
             "history",
             "alias-finder",
             "colorize",
@@ -57,7 +58,6 @@
             "dash",
             "vi-mode",
             "ssh-agent",
-            "zsh-navigation-tools",
             "kubectl",
             "git",
             "git-extras",
