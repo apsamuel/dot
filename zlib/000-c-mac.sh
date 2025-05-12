@@ -16,10 +16,10 @@ if [[ "${DOT_DISABLE_MAC}" -eq 1 ]]; then
     return
 fi
 
-osx::cpu::cores() {
+osCpuCores() {
     sysctl -n machdep.cpu.core_count
 }
 
-osx::cpu::brand() {
+osCpuBrand() {
     sysctl -n machdep.cpu.brand_string
 }

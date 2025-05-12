@@ -36,6 +36,7 @@
             "vi-mode",
             "ssh-agent",
             "kubectl",
+            "zsh-navigation-tools",
             "git",
             "git-extras",
             "gitignore",

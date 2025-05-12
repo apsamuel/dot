@@ -326,6 +326,10 @@ function bootstrapConfigFish () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.config/fish/config.fish"
+    # if a file exists back it up
+    if [[ -f "${rc}" ]]; then
+        mv "${rc}" "${rc}.bak"
+    fi
     ln -s -f "${icloud_link}/dot/shell/fish/rc" "${rc}"
     echo "✅  fish shell is configured, please restart any open shells!"
     true
@@ -335,6 +339,10 @@ function bootstrapConfigKsh () {
     # TODO: make real    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.kshrc"
+    # if a file exists back it up
+    if [[ -f "${rc}" ]]; then
+        mv "${rc}" "${rc}.bak"
+    fi
     ln -s -f "${icloud_link}/dot/shell/ksh/rc" "${rc}"
     echo "✅  ksh shell is configured, please restart any open shells!"
     true
@@ -345,6 +353,10 @@ function bootstrapConfigCsh () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.kshrc"
+    # if a file exists back it up
+    if [[ -f "${rc}" ]]; then
+        mv "${rc}" "${rc}.bak"
+    fi
     ln -s -f "${icloud_link}/dot/shell/csh/rc" "${rc}"
     echo "✅  csh shell is configured, please restart any open shells!"
     true
@@ -352,22 +364,35 @@ function bootstrapConfigCsh () {
 
 
 function bootstrapConfigPwsh () {
-    true
+    return 0
 }
 
 function bootstrapConfigOhMyZsh () {
+    return 0
+}
+
+# TODO: this is not the bootstrap ohmyzsh function, it is a good start for working with custom zsh plugins
+# each custom plugin should theoretically need to be "installed", or fetched
+# can we just
+function bootstrapConfigZshCustomPlugins () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.zshrc"
-    ln -s -f "${icloud_link}/dot/shell/zsh/rc" "${rc}"
-    # cp "${dot_bootstrap_directory}"/config/zshrc "${HOME}/.zshrc"
+    # check if the file exists
+    if [[ -f "${rc}" ]]; then
+        # it exists, so we'll back it up and link in the new one
+        echo "🛠️ backing up your old .zshrc..."
+        mv "${rc}" "${rc}.bak"
+    fi
+
     # checkout custom plugins
     local custom_plugins_length
     custom_plugins_length=$(jq -r '.plugins.custom| length' "${HOME}/.dot/data/zsh.json")
+    # in a perfect world, we would use a mapfile to load the custom plugins
     # mapfile -t custom_plugins < <(jq -r '.plugins.custom | .[]' "${HOME}/.dot/data/zsh.json")
     for (( i=1; i<custom_plugins_length; i++ )); do
         local custom_plugin
-        # load each dictionary item as an associative array
+        # loads each dictionary item as an associative array
         custom_plugin=$(
             jq -r --arg index "${i}" '"(", (.plugins.custom[($index |tonumber)] | to_entries | .[] | "["+(.key|@sh)+"]="+(.value|@sh) ), ")"' "${HOME}/.dot/data/zsh.json"
         )

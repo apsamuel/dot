@@ -46,7 +46,6 @@
         "builtin": [
             "brew",
             "fzf",
-            "history",
             "alias-finder",
             "colorize",
             "colored-man-pages",
