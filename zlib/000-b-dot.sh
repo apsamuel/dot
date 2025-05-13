@@ -45,6 +45,7 @@ function dot.shell {
         echo "  reload      reload dotfiles"
         echo "  changelog   print changelog"
         echo "  printenv    print environment variables"
+        echo "  source-zlib source all zlib modules"
         return 0
     fi
     # version
@@ -107,6 +108,27 @@ function dot.shell {
         env | grep -E '^DOT' | "${HOME}"/.dot/bin/mask.sh
     fi
 
+    # source-zlibs
+    if [[ "${command}" == source-zlib ]]; then
+        # make ZLIB available to shell
+        if [ -d "$DOT_LIBS_DIR" ]; then
+            for lib in $(find "${DOT_LIBS_DIR}" -type f -name "*.sh" | sort -d); do
+                # skip README.md files
+                if [[ "$lib" =~ .*README.md ]]; then
+                    continue
+                fi
+                if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
+                    echo "load source: $lib"
+                fi
+                . "$lib" || true
+            done
+        else
+            echo "Warning: DOT_LIBS_DIR not found: $DOT_LIBS_DIR"
+        fi
+    # true
+    fi
+
+    return 0
 }
 
 if type -t dot.shell &>/dev/null; then
