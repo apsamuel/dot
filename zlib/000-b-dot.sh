@@ -108,6 +108,55 @@ function dot.shell {
         env | grep -E '^DOT' | "${HOME}"/.dot/bin/mask.sh
     fi
 
+    # secrets
+    if [[ "${command}" == secrets ]]; then
+        local subcommand="${2:-}"
+        if [[ "${subcommand}" == "" || -z "${subcommand}" ]]; then
+            echo "Please provide a subcommand."
+            return 1
+        fi
+        if [[ "${subcommand}" == "-all" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+        if [[ "${subcommand}" == "-details" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+        if [[ "${subcommand}" == "-list" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+        if [[ "${subcommand}" == "-add" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+        if [[ "${subcommand}" == "-remove" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+        if [[ "${subcommand}" == "-update" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+        if [[ "${subcommand}" == "-get" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+        if [[ "${subcommand}" == "-set" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+        if [[ "${subcommand}" == "-import" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+        if [[ "${subcommand}" == "-export" ]]; then
+            echo "This is a placeholder for secrets command."
+            return 0
+        fi
+
+    fi
     # source-zlibs
     if [[ "${command}" == source-zlib ]]; then
         # make ZLIB available to shell
@@ -127,6 +176,8 @@ function dot.shell {
         fi
     # true
     fi
+
+
 
     return 0
 }
