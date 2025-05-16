@@ -396,4 +396,8 @@ DOT_LOAD_TIME="$((DOT_INIT_END_TIME - DOT_INIT_START_TIME))"
 export DOT_INIT_DIR DOT_INIT_START_TIME DOT_INIT_END_TIME DOT_LOAD_TIME DOT_LIBS_DIR DOT_DIR DOT_DEBUG DOT_SPLASH_SCREEN DOT_SPLASH_TYPE DOT_CLOUD_DIR DOT_SHELL_DATA DOT_SECRETS_DATA
 export PATH="$PATH:$HOME/.dot/bin"
 
-test -e "${HOME}/.iterm2_shell_integration.zsh" && . "${HOME}/.iterm2_shell_integration.zsh"
+test -e "${HOME}/.iterm2_shell_integration.zsh" && . "${HOME}/.iterm2_shell_integration.zsh"o
+
+# Zsh will override CTRL-R & provide its builtin reverse-history-search if this line is not executed here
+# https://github.com/junegunn/fzf/issues/1812 
+configureFzf
