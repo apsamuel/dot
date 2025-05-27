@@ -15,22 +15,22 @@
     },
     "options": [
         "autopushd",
-        "extendedglob",
-        "share_history",
-        "hist_ignore_all_dups",
         "BANG_HIST",
-        "EXTENDED_HISTORY",
-        "INC_APPEND_HISTORY",
-        "SHARE_HISTORY",
+        "extendedglob",
+        "extendedhistory",
+        "hist_ignore_all_dups",
         "histexpiredupsfirst",
-        "histignoredups",
+        "histfindnodups",
         "histignorealldups",
-        "HIST_FIND_NO_DUPS",
-        "HIST_IGNORE_SPACE",
+        "histignoredups",
+        "histignorespace",
+        "histnostore",
+        "histreduceblanks",
         "histsavenodups",
-        "HIST_REDUCE_BLANKS",
-        "HIST_NO_STORE",
-        "histverify"
+        "histverify",
+        "incappendhistory",
+        "share_history",
+        "sharehistory"
     ],
     "themes": {
         "builtin": [],
@@ -77,16 +77,22 @@
             {
                 "owner": "conda-incubator",
                 "repo": "conda-zsh-completion",
+                "pre": "",
+                "post": "",
                 "exec": ""
             },
             {
                 "owner": "zsh-users",
                 "repo": "zsh-autosuggestions",
+                "pre": "",
+                "post": "",
                 "exec": ""
             },
             {
                 "owner": "z-shell",
                 "repo": "F-Sy-H",
+                "pre": "",
+                "post": "",
                 "exec": ""
             }
         ]
