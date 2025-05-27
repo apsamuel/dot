@@ -23,6 +23,88 @@ fi
 
 . "${dot_bootstrap_directory}/zlib/static/lib/internal.sh"
 
+
+function deployZsh () {
+    # set -x
+    dry_mode=0
+    debug=0
+    while getopts ":ndh" opt; do
+        case ${opt} in
+            n)
+                dry_mode=1
+                ;;
+            d)
+                debug=1
+
+                ;;
+            h)
+                echo "Usage: ${0} [-d] [-h]"
+                echo "  -d, --dry-run   Enable dry run mode"
+                echo "  -h, --help      Show this help message"
+                return 0
+                ;;
+            \?)
+                echo "Invalid option: -$OPTARG" >&2
+                ;;
+            :)
+                echo "Option -$OPTARG requires an argument." >&2
+                ;;
+        esac
+    done
+
+    if [[ -z "${ICLOUD}" ]]; then
+        echo "ICLOUD is not set"
+        return 1
+    fi
+
+    [[ $debug -gt 0 ]] && (
+        echo "zsh debug" && set -x
+    )
+
+    [[ $debug -gt 0 ]] && echo "deploying rc files to ${ICLOUD}"
+
+    # copy config files
+    if [[ "$dry_mode" -gt 0 ]]; then
+        [[ $debug -eq 0 ]] && (
+            echo "cp ${dot_bootstrap_directory}/config/data.json ${ICLOUD}/dot/data.json" ||
+            echo "cp -v ${dot_bootstrap_directory}/config/data.json ${ICLOUD}/dot/data.json"
+        )
+
+    else
+        [[ $debug -gt 0 ]] && (
+            cp -v "${dot_bootstrap_directory}/config/data.json" "${ICLOUD}"/dot/data.json ||
+            cp"${dot_bootstrap_directory}/config/data.json" "${ICLOUD}"/dot/data.json
+        )
+
+    fi
+
+    # copy the zshrc file to iCloud
+    if [ "$dry_mode" -gt 0 ]; then
+        echo cp -v "${dot_bootstrap_directory}/zshrc" "${ICLOUD}"/dot/shell/zsh/rc
+    else
+        cp -v "${dot_bootstrap_directory}/zshrc" "${ICLOUD}"/dot/shell/zsh/rc
+    fi
+
+    # check if $HOME/.zshrc exists and is a link to $ICLOUD/dot/shell/zsh/rc
+    if [[ -f "${HOME}/.zshrc" ]]; then
+        [[ $debug -gt 0 ]] && echo "🛠️  checking if .zshrc is a link to ${ICLOUD}/dot/shell/zsh/rc"
+        if [[ ! -L "${HOME}/.zshrc" ]]; then
+            [[ $debug -gt 0 ]] && echo "🛠️ backing up your old .zshrc..."
+            if [ "$dry_mode" -gt 0 ]; then
+                echo mv "${HOME}/.zshrc" "${HOME}/.zshrc.bak"
+            else
+                mv "${HOME}/.zshrc" "${HOME}/.zshrc.bak"
+                rm -f "${HOME}/.zshrc"
+            fi
+
+        fi
+    fi
+
+    # link the zshrc file to iCloud
+    ln -s -f "${ICLOUD}/dot/shell/zsh/rc" "${HOME}/.zshrc" && \
+    [[ $debug -gt 0 ]] && echo "✅  zshrc is deployed to ${ICLOUD}/dot/shell/zsh/rc"
+}
+
 function bootstrapInfo () {
     # we will build up a status string and print it
 
@@ -35,47 +117,47 @@ function bootstrapInfo () {
     current_shell="$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")"
     # check if we are running in a ZSH shell
     if [[ $current_shell == "zsh" ]]; then
-        echo "✅ shell (🐢): zsh"
+        echo "✅ in zsh 🐢 !"
     else
-        echo "❌ shell (🐢): !zsh"
+        echo "💣 not in zsh"
     fi
     # check if ICLOUD environment variable is set
     if [[ -z "${ICLOUD}" ]]; then
-        echo "❌ env: ICLOUD -> 💣"
+        echo "💣 env: \$ICLOUD is not a link"
     else
-        echo "✅ env: ICLOUD -> (${ICLOUD})"
+        echo "✅ env: \$ICLOUD 🔗 (${ICLOUD})"
     fi
 
     # check if brew is installed
     if command -v brew &> /dev/null
     then
-        echo "✅ cli: brew is installed ($(command brew --version))"
+        echo "✅ cli: brew is available ($(command brew --version))"
     else
-        echo "❌ cli: brew is not installed"
+        echo "💣 cli: brew is not available"
     fi
 
     # check if git is installed
     if command -v git &> /dev/null
     then
-        echo "✅ cli: git is installed ($(command git --version))"
+        echo "✅ cli: git is available ($(command git --version))"
     else
-        echo "❌ cli: git is not installed"
+        echo "💣 cli: git is not available"
     fi
 
     # check if jq is installed
     if command -v jq &> /dev/null
     then
-        echo "✅ cli: jq is installed ($(command jq --version))"
+        echo "✅ cli: jq is available ($(command jq --version))"
     else
-        echo "❌ cli: jq is not installed"
+        echo "💣 cli: jq is not available"
     fi
 
     # check if curl is installed
     if command -v curl &> /dev/null
     then
-        echo "✅ cli: curl is installed ($(command curl --version | head -n 1))"
+        echo "✅ cli: curl is available ($(command curl --version | head -n 1))"
     else
-        echo "❌ cli: curl is not installed"
+        echo "💣 cli: curl is not available"
     fi
 
 }
@@ -132,8 +214,16 @@ function bootstrapCheckDependencies () {
     fi
 }
 
-
-# check, configure and install:
+function installDependencies () {
+    if command brew bundle install --file "${dot_bootstrap_directory}/data/Brewfile"
+    then
+        echo "✅ dependencies installed"
+        return 0
+    else
+        echo "❌ dependencies installation failed"
+        return 1
+    fi
+}
 
 function bootstrapConfigPython () {
     true
@@ -173,9 +263,6 @@ function bootstrapCheckOhMyTmux () {
     local icloud_link="${HOME}/iCloud"
     local tmux_local_config="${HOME}/.tmux.conf.local"
     local tmux_icloud_config="${icloud_directory}/dot/shell/tmux/conf"
-
-
-
 
     ln -s -f "${tmux_icloud_config}" "${tmux_local_config}"
     # start a new tmux session, and install plugins
@@ -362,7 +449,6 @@ function bootstrapConfigCsh () {
     true
 }
 
-
 function bootstrapConfigPwsh () {
     return 0
 }
@@ -371,9 +457,6 @@ function bootstrapConfigOhMyZsh () {
     return 0
 }
 
-# TODO: this is not the bootstrap ohmyzsh function, it is a good start for working with custom zsh plugins
-# each custom plugin should theoretically need to be "installed", or fetched
-# can we just
 function bootstrapConfigZshCustomPlugins () {
     local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local icloud_link="${HOME}/iCloud"
@@ -398,6 +481,106 @@ function bootstrapConfigZshCustomPlugins () {
         )
         echo "✅ loading custom OMZ plugin ${custom_plugin}"
     done
+}
+
+function bootstrapCheckOhMyZshPlugin () {
+    while getopts ":o:r:" opt; do
+        case ${opt} in
+            o)
+                org="${OPTARG}"
+                ;;
+            r)
+                repo="${OPTARG}"
+                ;;
+            \?)
+                echo "Invalid option: -$OPTARG" >&2
+                ;;
+            :)
+                echo "Option -$OPTARG requires an argument." >&2
+                ;;
+        esac
+    done
+
+    # if o or r is not set, return
+    if [[ -z "${org}" || -z "${repo}" ]]; then
+        echo "❌  org or repo not set"
+        return 1
+    fi
+}
+
+function bootstrapListOhMyZshPluginConfiguredPlugins () {
+    # get plugins from j
+    plugins=$(
+        find "${HOME}/.oh-my-zsh/custom/plugins/" -maxdepth 1 -type d -exec basename {} \;
+    )
+    if [[ -n "${plugins}" ]]; then
+        echo "🛠️  configured oh-my-zsh plugins:"
+        for plugin in ${plugins}; do
+            echo " - ${plugin}"
+        done
+    else
+        echo "❌  no configured oh-my-zsh plugins found"
+    fi
+}
+
+function bootstrapListOhMyZshPlugin () {
+    listLocal=0
+    while getopts ":lch" opt; do
+        case ${opt} in
+            l)
+                # echo "listing local plugins"
+                listLocal=1
+                ;;
+            c)
+                # echo "listing configured plugins"
+                listConfigured=1
+                ;;
+            h)
+                echo "Usage: ${0} [-l] [-h]"
+                return 0
+                ;;
+            \?)
+                echo "Invalid option: -$OPTARG" >&2
+                ;;
+            :)
+                echo "Option -$OPTARG requires an argument." >&2
+                ;;
+        esac
+    done
+
+    echo "🛠️  available oh-my-zsh plugins"
+
+    # list all plugins
+    if [ "${listLocal}" -gt 0 ]; then
+        # list local plugins
+        find "${HOME}/.oh-my-zsh/custom/plugins/" -maxdepth 1 -type d -exec basename {} \;
+    fi
+
+    if [ "${listConfigured}" -gt 0 ]; then
+        # get plugins from file
+        jq '.' -r '"$(\.plugins.custom[].owner)' "${HOME}/.dot/data/zsh.json" | \
+        while IFS= read -r plugin; do
+            echo " - ${plugin}"
+        done
+    fi
+
+}
+
+function bootstrapInstallOhMyZshPlugin() {
+    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    local icloud_link="${HOME}/iCloud"
+    local rc="${HOME}/.zshrc"
+
+    # repo
+    local org="${1}"
+    local repo="${2}"
+    gh repo clone "${org}/${repo}" "${ZSH_CUSTOM}/plugins/${repo}" &> /dev/null
+
+    if ! gh repo clone "${org}/${repo}" "${ZSH_CUSTOM}/plugins/${repo}"
+    then
+        echo "❌ failed to install ${repo}"
+        return 1
+    fi
 }
 
 function bootstrapConfigPowershell10K () {

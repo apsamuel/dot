@@ -10,8 +10,6 @@
 # - ignore shellcheck warnings about read/mapfile
 # shellcheck disable=SC2207
 
-
-
 DOT_INIT_DIR=$(pwd -P)
 # shell start time
 DOT_INIT_START_TIME=$(date +%s)
@@ -43,8 +41,7 @@ export HISTFILE="$HOME/.zsh_history"
 export HISTSIZE=${ZSH_HISTSIZE}
 export SAVEHIST=${ZSH_SAVEHIST}
 
-
-
+# dot exports
 export DOT_DEBUG="${DOT_DEBUG:-0}"
 export DOT_SHELL="${DOT_SHELL:-zsh}"
 export DOT_INTERACTIVE="${DOT_INTERACTIVE:-0}"
@@ -95,6 +92,8 @@ fi
 #     echo "Error: unable to load functions" && exit 1
 # )
 
+
+
 # configure environment variable germaine to your dot environment
 (. "${DOT_LIBRARY}"/static/dotenv.sh || . "${DOT_LIBRARY}"/static/dotenv.sh) || (
     echo "Error: unable to load dotenv"
@@ -116,6 +115,12 @@ fi
 # bootstrap functions
 (. "${DOT_DIRECTORY}"/bin/bootstrap.sh || . "${DOT_DIRECTORY}"/bin/bootstrap.sh) || (
     echo "Error: unable to load bootstrap functions"
+    exit 1
+)
+
+# load common functions
+(. "${DOT_LIBRARY}"/bin/common.sh || . "${DOT_LIBRARY}"/bin/common.sh) || (
+    echo "Error: unable to load common functions"
     exit 1
 )
 
@@ -399,5 +404,5 @@ export PATH="$PATH:$HOME/.dot/bin"
 test -e "${HOME}/.iterm2_shell_integration.zsh" && . "${HOME}/.iterm2_shell_integration.zsh"
 
 # Zsh will override CTRL-R & provide its builtin reverse-history-search if this line is not executed here
-# https://github.com/junegunn/fzf/issues/1812 
+# https://github.com/junegunn/fzf/issues/1812
 configureFzf

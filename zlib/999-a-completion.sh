@@ -15,9 +15,12 @@ autoload -U +X bashcompinit && bashcompinit
 
 # load zsh completions
 if type brew &>/dev/null; then
-    FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
-    autoload -Uz compinit
-    compinit
+    if [ -d "$(brew --prefix)/share/zsh-completions" ]; then
+        FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
+        autoload -Uz compinit
+        compinit
+    fi
+
 fi
 
 # ngrok completions
@@ -29,11 +32,4 @@ fi
 if [ -f "${HOMEBREW_CELLAR}"/launchctl-completion/1.0/etc/bash_completion.d/launchctl ]; then
     # shellcheck source=/dev/null
     source "${HOMEBREW_CELLAR}"/launchctl-completion/1.0/etc/bash_completion.d/launchctl
-fi
-
-
-# conditionally load twilio cli completions
-TWILIO_AC_ZSH_SETUP_PATH="${HOME}/.twilio-cli/autocomplete/zsh_setup"
-if [[ -f "$TWILIO_AC_ZSH_SETUP_PATH" ]]; then
-    source "$TWILIO_AC_ZSH_SETUP_PATH" # twilio autocomplete setup
 fi

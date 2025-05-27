@@ -1,0 +1,97 @@
+theme: "powerlevel10k/powerlevel10k"
+path:
+  - "$HOME/.config/zsh"
+  - "$HOME/.config/p10k"
+  - "$HOME/.config/oh-my-zsh/custom"
+  - "$HOME/.config/oh-my-zsh/plugins"
+  - "$HOME/.config/oh-my-zsh/themes"
+  - "$HOME/.config/oh-my-zsh/aliases.zsh"
+  - "$HOME/.config/oh-my-zsh/functions.zsh"
+  - "$HOME/.config/oh-my-zsh/custom.zsh"
+  - "$HOME/.config/zshrc.zsh"
+  - "$HOME/.zprofile"
+  - "$HOME/.zshenv"
+conditions:
+  - type: "network"
+    name: "Network Check"
+    command: "ping -c 1 192.168.0.1"
+languages:
+  - type: "python"
+    dependencies:
+      - "libtmux==0.36.0"
+shell:
+  themes:
+    builtin: "powerlevel10k/powerlevel10k"
+    custom:
+      - org: romkatv
+        repo: powerlevel10k
+        reference: master
+  plugins:
+    builtin:
+      - "brew"
+      - "fzf"
+      - "alias-finder"
+      - "colorize"
+      - "colored-man-pages"
+      - "copybuffer"
+      - "copypath"
+      - "direnv"
+      - "emoji"
+      - "emoji-clock"
+      - "dash"
+      - "vi-mode"
+      - "ssh-agent"
+      - "kubectl"
+      - "git"
+      - "git-extras"
+      - "gitignore"
+      - "gh"
+      - "gnu-utils"
+      - "web-search"
+      - "node"
+      - "npm"
+      - "autopep8"
+      - "python"
+      - "docker"
+      - "docker-compose"
+      - "thefuck"
+      - "nmap"
+    custom:
+      - org: conda-incubator
+        repo: conda-zsh-completion
+        reference: master
+        pre: ""
+        post: ""
+      - org: zsh-users
+        repo: zsh-autosuggestions
+        reference: master
+        pre: ""
+        post: ""
+      - org: z-shell
+        repo: F-Sy-H
+        reference: master
+        pre: ""
+        post: ""
+  options:
+    - autopushd
+    - extendedglob
+    - extendedhistory
+    - hist_ignore_all_dups
+    - histexpiredupsfirst
+    - histfindnodups
+    - BANG_HIST
+    - extendedglob
+    - extendedhistory
+    - hist_ignore_all_dups
+    - histexpiredupsfirst
+    - histfindnodups
+    - histignorealldups
+    - histignoredups
+    - histignorespace
+    - histnostore
+    - histreduceblanks
+    - histsavenodups
+    - histverify
+    - incappendhistory
+    - share_history
+    - sharehistory
