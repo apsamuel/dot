@@ -37,13 +37,8 @@ joinList() {
     if [[ -z "${delimiter}" ]]; then
         delimiter=" "  # default to space if no delimiter is provided
     fi
-
-
     local delimiter="$1"
     shift
-
-
-
     local elements=("$@")
 
     if [[ -z "${elements}" ]]; then
@@ -67,8 +62,13 @@ joinList() {
             joined+="${delimiter}${element}"  # append with delimiter
         fi
     done
-    echo "${joined}"  # print the joined string
-    return 0
+    printf "%s" "${joined}"  # print the joined string
+    return_code=$?
+    if [[ ${return_code} -ne 0 ]]; then
+        echo "Error joining elements"
+        return ${return_code}  # return error code if join fails
+    fi
+    return 0  # return success
 }
 
 bcSolve() {
@@ -88,4 +88,94 @@ bcSolve() {
     result=$(echo "${expression}" | bc -l)
     echo "${result}"  # print the result
     return 0
+}
+
+addPath() {
+  if [[ -z "$1" ]]; then
+    echo "Usage: addPath <path1> <path2> ..."
+    return 1  # return error if no path is provided
+  fi
+  path_array=(
+    $(splitString "${PATH}" ":")
+  )
+  for path in "$@"; do
+
+    # skip empty paths
+    if [[ -z "${path}" ]]; then
+      echo "skipping empty path: '${path}'"
+      continue  # skip empty paths
+    fi
+
+    # check if the path is an existing directory
+    if [ -d "${path}" ]; then
+      # check if the path is already in the PATH array
+      if [[ "${path_array[*]}" =~ ${path} ]]; then
+        echo "skipping existing path: '${path}'"
+        continue  # skip if the path is already in the PATH
+      fi
+
+      # skip paths that are not executable
+      if [[ ! -x "${path}" ]]; then
+        echo "skipping inaccessible path: ${path}"
+        continue  # skip if the path does not exist
+      fi
+
+      # skip paths that do not contain any executable files ...
+      if [[ -z "$(find "${path}" -maxdepth 1 -type f -executable)" ]]; then
+        echo "skipping path with no executables: ${path}"
+        continue  # skip if the path does not contain any executable files
+      fi
+
+      echo "adding path: ${path}"
+      # add the path to the array
+      path_array+=("${path}")
+    else
+      echo "skipping non-directory path: ${path}"
+      continue  # skip if the path is not a directory
+    fi
+
+  done
+  # join the array back into a string
+  PATH=$(joinList ":" "${path_array[@]}")
+  export PATH  # export the updated PATH variable
+  return 0
+
+}
+
+deletePath() {
+  # delete one or more paths from the PATH variable
+  if [[ -z "$1" ]]; then
+    echo "Usage: deletePath <path1> <path2> ..."
+    return 1  # return error if no path is provided
+  fi
+  new_path_array=()
+  path_array=(
+    $(splitString "${PATH}" ":")
+  )
+  for path in "${path_array[@]}"; do
+    # skip empty paths
+    if [[ -z "${path}" ]]; then
+      echo "skipping empty path: '${path}'"
+      continue  # skip empty paths
+    fi
+
+    # check if the path is in the arguments to delete
+    if [[ " $* " =~ " ${path} " ]]; then
+      echo "deleting path: ${path}"
+      continue  # skip if the path is in the arguments to delete
+    fi
+
+    # add the path to the new array
+    new_path_array+=("${path}")
+  done
+
+  return_code=$?
+  if [[ ${return_code} -ne 0 ]]; then
+    echo "Error deleting paths"
+    return ${return_code}
+  fi
+}
+
+printPath() {
+  return 0
 }
