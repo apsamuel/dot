@@ -119,7 +119,7 @@ fi
 )
 
 # load common functions
-(. "${DOT_LIBRARY}"/bin/common.sh || . "${DOT_LIBRARY}"/bin/common.sh) || (
+(. "${DOT_DIRECTORY}"/bin/common.sh || . "${DOT_DIRECTORY}"/bin/common.sh) || (
     echo "Error: unable to load common functions"
     exit 1
 )
