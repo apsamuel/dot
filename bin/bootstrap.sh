@@ -15,6 +15,8 @@ dot_bootstrap_directory="$(dirname "$(dirname "$0")")"
 dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
+icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+
 
 if [ ! -d "${dot_bootstrap_directory}" ]; then
     echo "❌  ${dot_bootstrap_directory} does not exist"
@@ -25,17 +27,25 @@ fi
 
 
 function deployZsh () {
-    # set -x
-    dry_mode=0
-    debug=0
-    while getopts ":ndh" opt; do
+    local dry_mode=0
+    local handle_data=0
+    local handle_rc=0
+    local debug=0
+
+    while getopts ":ndhrx" opt; do
         case ${opt} in
             n)
                 dry_mode=1
                 ;;
             d)
-                debug=1
+                handle_data=1
+                ;;
+            r)
 
+                handle_rc=1
+                ;;
+            x)
+                debug=1
                 ;;
             h)
                 echo "Usage: ${0} [-d] [-h]"
@@ -57,52 +67,73 @@ function deployZsh () {
         return 1
     fi
 
+
+    data_source="${dot_bootstrap_directory}/config/data.json"
+    data_dest="${icloud_directory}/dot/shell/zsh/zsh.json"
+    rc_source="${dot_bootstrap_directory}/zshrc"
+    rc_dest="${icloud_directory}/dot/shell/zsh/rc"
+
     [[ $debug -gt 0 ]] && (
         echo "zsh debug" && set -x
     )
 
     [[ $debug -gt 0 ]] && echo "deploying rc files to ${ICLOUD}"
 
-    # copy config files
-    if [[ "$dry_mode" -gt 0 ]]; then
-        [[ $debug -eq 0 ]] && (
-            echo "cp ${dot_bootstrap_directory}/config/data.json ${ICLOUD}/dot/data.json" ||
-            echo "cp -v ${dot_bootstrap_directory}/config/data.json ${ICLOUD}/dot/data.json"
-        )
+    if [[ ${handle_rc} -gt 0 ]]; then
+        # creates a link to the zshrc file in iCloud
 
-    else
-        [[ $debug -gt 0 ]] && (
-            cp -v "${dot_bootstrap_directory}/config/data.json" "${ICLOUD}"/dot/data.json ||
-            cp"${dot_bootstrap_directory}/config/data.json" "${ICLOUD}"/dot/data.json
-        )
-
-    fi
-
-    # copy the zshrc file to iCloud
-    if [ "$dry_mode" -gt 0 ]; then
-        echo cp -v "${dot_bootstrap_directory}/zshrc" "${ICLOUD}"/dot/shell/zsh/rc
-    else
-        cp -v "${dot_bootstrap_directory}/zshrc" "${ICLOUD}"/dot/shell/zsh/rc
-    fi
-
-    # check if $HOME/.zshrc exists and is a link to $ICLOUD/dot/shell/zsh/rc
-    if [[ -f "${HOME}/.zshrc" ]]; then
-        [[ $debug -gt 0 ]] && echo "🛠️  checking if .zshrc is a link to ${ICLOUD}/dot/shell/zsh/rc"
-        if [[ ! -L "${HOME}/.zshrc" ]]; then
-            [[ $debug -gt 0 ]] && echo "🛠️ backing up your old .zshrc..."
-            if [ "$dry_mode" -gt 0 ]; then
-                echo mv "${HOME}/.zshrc" "${HOME}/.zshrc.bak"
-            else
-                mv "${HOME}/.zshrc" "${HOME}/.zshrc.bak"
-                rm -f "${HOME}/.zshrc"
+        # if dry we only print the command
+        if [[ ${dry_mode} -gt 0 ]]; then
+            echo "ln -s -f ${rc_source} ${rc_dest}"
+            return 0
+        else
+            # if the file exists, we remove it
+            if [[ -f "${rc_dest}" ]]; then
+                rm -f "${rc_dest}" && \
+                [[ $debug -gt 0 ]] && echo "🗑️  removed existing zshrc at ${rc_dest}"
             fi
 
+            # if the file is a link, we remove it
+            if [[ -L "${rc_dest}" ]]; then
+                rm -f "${rc_dest}" && \
+                [[ $debug -gt 0 ]] && echo "🗑️  removed existing zshrc link at ${rc_dest}"
+            fi
+
+            # create a new link
+            ln -s -f "${rc_source}" "${rc_dest}" && \
+            [[ $debug -gt 0 ]] && echo "✅  zshrc is deployed to ${rc_dest}"
         fi
     fi
 
-    # link the zshrc file to iCloud
-    ln -s -f "${ICLOUD}/dot/shell/zsh/rc" "${HOME}/.zshrc" && \
-    [[ $debug -gt 0 ]] && echo "✅  zshrc is deployed to ${ICLOUD}/dot/shell/zsh/rc"
+    if [[ ${handle_data} -gt 0 ]]; then
+
+        # if the source data is newer than the destination data, we copy it
+        if [[ -f "${data_dest}" && "${data_source}" -nt "${data_dest}" ]]; then
+            # check if we are in dry mode
+            if [[ ${dry_mode} -gt 0 ]]; then
+                echo "cp ${data_source} ${data_dest}"
+            else
+                # if the file exists, we remove it
+                if [[ -f "${data_dest}" ]]; then
+                    rm -f "${data_dest}" && \
+                    [[ $debug -gt 0 ]] && echo "🗑️  removed existing zsh.json at ${data_dest}"
+                fi
+
+                # copy the data file to the destination
+                cp "${data_source}" "${data_dest}" && \
+                [[ $debug -gt 0 ]] && echo "✅  zsh.json is deployed to ${data_dest}"
+            fi
+            # rm -f "${data_dest}" && \
+            # [[ $debug -gt 0 ]] && echo "🗑️  removed existing zsh.json at ${data_dest}"
+        fi
+
+    fi
+
+    # always relink the zshrc file to iCloud
+    # ln -s -f "${ICLOUD}/dot/shell/zsh/rc" "${HOME}/.zshrc" && \
+    # [[ $debug -gt 0 ]] && echo "✅  zshrc is deployed to ${ICLOUD}/dot/shell/zsh/rc"
+
+    return 0
 }
 
 function bootstrapInfo () {
