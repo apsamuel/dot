@@ -203,53 +203,29 @@ function printPretty() {
     # print the output
     echo -n "${output}"
 }
-# function printSuccess() {
-#     # use getopts to handle options
-#     # the last argument is the message to print
-#     #
-#     local message="${1}"
-#     #local timestamp="$(date +%Y-%d-%m.%H.%M.%S)"
-
-#     if [[ "$level" == "info" ]]; then
-#         # check if we enable color
-#         if [[ "$color" -eq 1 ]]; then
-#             printf "$(tput setab 238)$(tput setaf 250) info! ℹ️  [%s] %s $(tput sgr0)\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
-#             return 0
-
-#         else
-#             printf "info! ℹ️  [%s] %s\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
-#             return 0
-#         fi
-#     fi
-# }
-
-# function printError() {
-#     local message="${1}"
-#     printf "$(tput setab 232)$(tput setaf 160) error! 💣  [%s] %s $(tput sgr0)\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
-# }
-
-# function printDebug() {
-#     local message="${1}"
-#     printf "$(tput setab 238)$(tput setaf 250) debug! 🛠️  [%s] %s $(tput sgr0)\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
-# }
-
-# function printAttribute() {
-# 	local key="${1}"
-# 	local value="${2}"
-# 	printf "$(tput setab 236)$(tput setaf 002)$(tput bold)%s:$(tput sgr0) $(tput setab 242)$(tput setaf 021)$(tput smul)%s$(tput rmul)$(tput sgr0)\n"	"$key" "$value"
-# }
 
 function termLogo() {
-	# find "${ICLOUD}/dot/shell/images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --term-fit --width="$(( $(terminalWidth) / 2 ))" -b {}
     find "${ICLOUD}/dot/shell/images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --width="$(( $(terminalWidth) / 3 ))" --border --color-depth=24 --background=dark {}
 }
 
 function termImage () {
     local image="${1}"
+
+    if ! command -v imgcat &> /dev/null; then
+        echo "imgcat is not available, please install it to use this function."
+        return 1
+    fi
+
+    if [[ -z "${image}" ]]; then
+        echo "Usage: termImage <image_path>"
+        return 1
+    fi
+
+
     TERM=screen-256color "$HOME"/.iterm2/imgcat "${image}"
     sleep 5
     export TERM=xterm-256color
-    # echo "hi"
+    return 0
 }
 
 
