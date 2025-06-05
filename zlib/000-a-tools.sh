@@ -177,5 +177,93 @@ deletePath() {
 }
 
 printPath() {
-  return 0
+  path_array=(
+    $(splitString "${PATH}" ":")
+  )
+  if [[ ${#path_array[@]} -eq 0 ]]; then
+    echo "No paths in PATH variable"
+    return 0  # return success if no paths are found
+  fi
+
+  for path in "${path_array[@]}"; do
+    if [[ -z "${path}" ]]; then
+      continue  # skip empty paths
+    fi
+    echo "path: ${path}"  # print each path
+  done
+}
+
+fetchRemote() {
+  # cat a remote file using ssh
+  if [[ $# -ne 1 ]]; then
+    echo "Usage: fetchRemote <remote_user@remote_host:remote_file>"
+    echo "Example: fetchRemote user@host:/path/to/remote/file.txt"
+    return 1  # return error if not enough arguments are provided
+  fi
+  local remote_file="$1"
+  local tmpfile
+  tmpfile=$(mktemp /tmp/remote_file.XXXXXX)  # create a temporary file to store the remote file content
+  trap 'rm -f "${tmpfile}"' EXIT  # ensure the temporary file is removed on exit
+
+  # check if the argument is a remote file
+  if [[ "$remote_file" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[/].* ]]; then
+    echo "Fetching remote file: ${remote_file}"
+    # use ssh to cat the remote file
+    if ! ssh "${remote_file}" "cat \${remote_file#*:}" > "${tmpfile}"; then
+      echo "Error fetching remote file: ${remote_file}"
+      return 1  # return error if ssh command fails
+    fi
+    cat "${tmpfile}"
+  else
+    echo "Invalid remote file format: ${remote_file}"
+    return 1  # return error if the argument is not a valid remote file format
+  fi
+}
+
+
+
+sshDiff() {
+  # compare remote and local files using ssh
+  # compare remote files using ssh
+  if [[ $# -ne 2 ]]; then
+    echo "Usages: "
+    echo "  sshDiff <remote_user@remote_host:remote_file> <local_file>"
+    echo "  sshDiff user@host:/path/to/remote/file.txt /path/to/local/file.txt"
+    echo "  sshDiff <remote_user@remote_host:remote_file> <remote_user@remote_host:remote_file>"
+    return 1  # return error if not enough arguments are provided
+  fi
+
+
+  local a="$1"
+  local b="$2"
+
+
+  # check if the first argument is a remote file
+  if [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[/].* ]]; then
+    a="$1"
+  else
+    # check if the first argument is a valid local file
+    if [[ -f "$1" ]]; then
+      echo "First argument is a valid local file: ${1}"
+      a="$1"  # treat it as a local file
+    else
+      echo "First argument is not a valid remote file format or local file: ${1}"
+      return 1  # return error if the first argument is not a valid remote file format or local file
+    fi
+  fi
+
+
+  # check if the second argument is a remote file
+  if [[ "$2" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[/].* ]]; then
+    b="$2"
+  else
+    echo "Second argument is not a valid remote file format: ${2}"
+    return 1  # return error if the second argument is not a valid remote file format
+  fi
+
+
+  echo "Comparing files:"
+  echo "  Remote file: ${a}"
+  echo "  Local file: ${b}"
+  #
 }

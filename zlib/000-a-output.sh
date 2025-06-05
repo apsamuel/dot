@@ -10,6 +10,27 @@ DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
 
+
+# default colors for output
+info_color="$(tput setab 238)$(tput setaf 250)"
+error_color="$(tput setab 232)$(tput setaf 160)"
+debug_color="$(tput setab 238)$(tput setaf 250)"
+reset_color="$(tput sgr0)"
+
+
+# default emojis for output
+emoji_info=" ℹ️ "
+emoji_error=" 💣 "
+emoji_debug=" 🛠️ "
+emoji_unknown=" ❓ "
+
+
+levels=(
+    "info"
+    "error"
+    "debug"
+)
+
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
@@ -32,26 +53,191 @@ function availableColorTab() {
 	done
 }
 
-function printSuccess() {
-    local message="${1}"
-    printf "$(tput setab 238)$(tput setaf 002) ok! 🚀  [%s] %s $(tput sgr0)\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
+function printLevels() {
+    local output=""
+    for level in "${levels[@]}"; do
+        output+="${level} "
+    done
+    echo "${output}"
 }
 
-function printError() {
-    local message="${1}"
-    printf "$(tput setab 232)$(tput setaf 160) error! 💣  [%s] %s $(tput sgr0)\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
+function printLevel() {
+    local level="${1}"
+    if [[ -z "${level}" ]]; then
+        echo "Usage: printLevel <level>"
+        return 1
+    fi
+
+    if [[ ! " ${levels[*]} " =~ " ${level} " ]]; then
+        echo "Invalid level: ${level}. Available levels: $(printLevels)"
+        return 1
+    fi
+
+    case "${level}" in
+        info) echo "${info_color}info${reset_color}" ;;
+        error) echo "${error_color}error${reset_color}" ;;
+        debug) echo "${debug_color}debug${reset_color}" ;;
+        *) echo "${reset_color}unknown${reset_color}" ;;
+    esac
 }
 
-function printDebug() {
-    local message="${1}"
-    printf "$(tput setab 238)$(tput setaf 250) debug! 🛠️  [%s] %s $(tput sgr0)\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
-}
 
-function printAttribute() {
-	local key="${1}"
-	local value="${2}"
-	printf "$(tput setab 236)$(tput setaf 002)$(tput bold)%s: $(tput sgr0) $(tput setab 242)$(tput setaf 021)$(tput smul)%s$(tput rmul)$(tput sgr0)\n"	"$key" "$value"
+function printPretty() {
+    local message
+    local level
+    local color
+    local emoji
+    local timestamp
+    local output
+
+    output=""
+
+    # t="$(date +%Y-%d-%m.%H.%M.%S)"
+
+    level="info"  # default level
+    color=0
+    emoji=0
+    timestamp=0
+
+    while getopts ":ectl:" opt; do
+        case ${opt} in
+            e) emoji=1 ;;
+            c) color=1 ;;
+            t) timestamp=1;;
+            l) level="${OPTARG}" ;;
+            \?) echo "Invalid option: -$OPTARG" >&2 ;;
+            :) echo "Option -$OPTARG requires an argument." >&2 ;;
+        esac
+    done
+
+    local message="${*:$OPTIND:1}"
+    if [[ -z "${message}" ]]; then
+        echo "Usage: printPretty [-c] [-e] -l <level> <message>"
+        return 1
+    fi
+
+
+    # if color is enabled
+    if [[ "${color}" -eq 1 ]]; then
+        case "${level}" in
+
+            info)
+                # use timestamp instead of level
+                if [[ "${timestamp}" -eq 1 ]]; then
+                    output+="${info_color}$(date +%Y-%d-%m.%H.%M.%S) "
+                else
+                    output+="${info_color}"
+                fi
+                #output+="${info_color}(info) "
+                ;;
+            error)
+                if [[ "${timestamp}" -eq 1 ]]; then
+                    output+="${error_color}$(date +%Y-%d-%m.%H.%M.%S) "
+                else
+                    output+="${error_color}"
+                fi
+
+                ;;
+            debug)
+                if [[ "${timestamp}" -eq 1 ]]; then
+                    output+="${debug_color}$(date +%Y-%d-%m.%H.%M.%S) "
+                else
+                    output+="${debug_color}"
+                fi
+                #output+="${debug_color}(debug) "
+                ;;
+            *)
+                if [[ "${timestamp}" -eq 1 ]]; then
+                    output+="${reset_color}$(date +%Y-%d-%m.%H.%M.%S) "
+                else
+                    output+="${reset_color}"
+                fi
+                #output+="${reset_color}(unknown) "
+                ;;
+        esac
+    else
+        # we are using timestamps here
+
+        output+="info! "
+    fi
+
+    # if emoji is enabled, we will add it after the timestamp
+
+    if [[ "${emoji}" -eq 1 ]]; then
+        case "${level}" in
+            info) output+=" ${emoji_info} " ;;
+            error) output+=" ${emoji_error} " ;;
+            debug) output+=" ${emoji_debug} " ;;
+            *) output+="❓ " ;;  # default emoji for unknown level
+        esac
+    fi
+
+    # set timestamp
+    if [[ "${timestamp}" -eq 1 ]]; then
+        output+="[$(date +%Y-%d-%m.%H.%M.%S)] "
+    fi
+
+    # set emoji
+    if [[ "${emoji}" -eq 1 ]]; then
+        case "${level}" in
+            info) output+=" ${emoji_info} " ;;
+            error) output+=" ${emoji_error} " ;;
+            debug) output+=" ${emoji_debug} " ;;
+            *) output+="❓ " ;;  # default emoji for unknown level
+        esac
+    fi
+
+
+    # set message
+    output+="${message} "
+
+
+    # reset color
+    if [[ "${color}" -eq 1 ]]; then
+        output+="${reset_color}"
+    fi
+
+    # adds a new line
+    output+="\n"
+
+    # print the output
+    echo -n "${output}"
 }
+# function printSuccess() {
+#     # use getopts to handle options
+#     # the last argument is the message to print
+#     #
+#     local message="${1}"
+#     #local timestamp="$(date +%Y-%d-%m.%H.%M.%S)"
+
+#     if [[ "$level" == "info" ]]; then
+#         # check if we enable color
+#         if [[ "$color" -eq 1 ]]; then
+#             printf "$(tput setab 238)$(tput setaf 250) info! ℹ️  [%s] %s $(tput sgr0)\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
+#             return 0
+
+#         else
+#             printf "info! ℹ️  [%s] %s\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
+#             return 0
+#         fi
+#     fi
+# }
+
+# function printError() {
+#     local message="${1}"
+#     printf "$(tput setab 232)$(tput setaf 160) error! 💣  [%s] %s $(tput sgr0)\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
+# }
+
+# function printDebug() {
+#     local message="${1}"
+#     printf "$(tput setab 238)$(tput setaf 250) debug! 🛠️  [%s] %s $(tput sgr0)\n" "$(date +%Y-%d-%m.%H.%M.%S)" "${message}"
+# }
+
+# function printAttribute() {
+# 	local key="${1}"
+# 	local value="${2}"
+# 	printf "$(tput setab 236)$(tput setaf 002)$(tput bold)%s:$(tput sgr0) $(tput setab 242)$(tput setaf 021)$(tput smul)%s$(tput rmul)$(tput sgr0)\n"	"$key" "$value"
+# }
 
 function termLogo() {
 	# find "${ICLOUD}/dot/shell/images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --term-fit --width="$(( $(terminalWidth) / 2 ))" -b {}
