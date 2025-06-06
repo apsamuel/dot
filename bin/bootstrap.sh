@@ -134,6 +134,7 @@ function deployZsh () {
     # [[ $debug -gt 0 ]] && echo "✅  zshrc is deployed to ${ICLOUD}/dot/shell/zsh/rc"
 
     return 0
+
 }
 
 function bootstrapInfo () {
