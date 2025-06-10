@@ -50,6 +50,7 @@ export DOT_SHELL="${DOT_SHELL:-zsh}"
 export DOT_DEBUG_RC="${DOT_DEBUG_RC:-${DOT_ROOT}/.${DOT_SHELL}rc}"
 export DOT_DIRECTORY="${DOT_DIRECTORY:-${DOT_ROOT}}"
 export DOT_LIBRARY="${DOT_LIBRARY:-${DOT_ROOT}/zlib}"
+export DOT_BIN="${DOT_BIN:-${DOT_ROOT}/bin}"
 export DOT_LIBRARY_FILES=($(find "${DOT_LIBRARY}" -maxdepth 1 -type f -name "*.sh" | sort -d))
 export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/bin/bootstrap.sh}"
 export DOT_BOOTED="${DOT_BOOTED:-false}"
@@ -119,7 +120,7 @@ fi
 )
 
 # load common functions
-(. "${DOT_DIRECTORY}"/bin/common.sh || . "${DOT_DIRECTORY}"/bin/common.sh) || (
+(. "${DOT_BIN}"/common.sh || . "${DOT_BIN}"/common.sh) || (
     echo "Error: unable to load common functions"
     exit 1
 )
