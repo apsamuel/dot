@@ -28,21 +28,21 @@ fi
 
 function deployZsh () {
     local dry_mode=0
-    local handle_data=0
-    local handle_rc=0
+    local handles_config=0
+    local handles_rc=0
     local debug=0
 
     while getopts ":ndhrx" opt; do
         case ${opt} in
-            n)
-                dry_mode=1
-                ;;
+
             d)
-                handle_data=1
+                handles_config=1
                 ;;
             r)
-
-                handle_rc=1
+                handles_rc=1
+                ;;
+            n)
+                dry_mode=1
                 ;;
             x)
                 debug=1
@@ -79,7 +79,7 @@ function deployZsh () {
 
     [[ $debug -gt 0 ]] && echo "deploying rc files to ${ICLOUD}"
 
-    if [[ ${handle_rc} -gt 0 ]]; then
+    if [[ ${handles_rc} -gt 0 ]]; then
         # creates a link to the zshrc file in iCloud
 
         # if dry we only print the command
@@ -105,7 +105,7 @@ function deployZsh () {
         fi
     fi
 
-    if [[ ${handle_data} -gt 0 ]]; then
+    if [[ ${handles_config} -gt 0 ]]; then
 
         # if the source data is newer than the destination data, we copy it
         if [[ -f "${data_dest}" && "${data_source}" -nt "${data_dest}" ]]; then

@@ -6,6 +6,8 @@
 # shellcheck source=/dev/null
 
 
+
+
 directory=$(dirname "$0")
 library=$(basename "$0")
 
@@ -33,8 +35,34 @@ else
 fi
 
 
+function brewInstalledVersion() {
+  local input="$1"
+
+  if [[ -z "$input" ]]; then
+    echo "No package name provided"
+    return 1
+  fi
+  if brew list -1 | grep  "${input}" &> /dev/null; then
+    pkg_version="$(brew info "$input" --json | jq -r '.[0].linked_keg' )"
+    if [[ -z "$pkg_version" ]]; then
+      echo "Package '$1' is installed, but version could not be determined"
+      return 1
+    else
+      echo "$pkg_version"
+      return 0
+    fi
+  else
+    echo "Package '$1' is not installed"
+    return 1
+  fi
+}
+
 function brewCheckInstalled {
   local input="$1"
+  if [[ -z "$input" ]]; then
+    echo "No package name provided"
+    return 1
+  fi
   if brew list -1 | grep  "${input}" &> /dev/null; then
     echo "Package '$1' is installed"
   else
@@ -44,6 +72,10 @@ function brewCheckInstalled {
 }
 
 function brewInstall() {
+  if [[ -z "$input" ]]; then
+    echo "No package name provided"
+    return 1
+  fi
   if brewCheckInstalled "$1"; then
     echo "Reinstalling '$1'"
     brew reinstall "$1"
@@ -54,10 +86,18 @@ function brewInstall() {
 }
 
 function brewInstallArm () {
+  if [[ -z "$input" ]]; then
+    echo "No package name provided"
+    return 1
+  fi
   arch -arm64 brew install "$1"
 }
 
 function brewInstallIntel () {
+  if [[ -z "$input" ]]; then
+    echo "No package name provided"
+    return 1
+  fi
   arch -x86_64 brew install "$1"
 }
 
@@ -70,7 +110,7 @@ function brewUpgrade () {
 }
 
 function brewList () {
-    brew list -1
+    brew list -1 --formula
 }
 
 function brewCaskList () {
@@ -78,6 +118,10 @@ function brewCaskList () {
 }
 
 function brewCheckCask () {
+  if [[ -z "$input" ]]; then
+    echo "No package name provided"
+    return 1
+  fi
   if brew list --cask -1 | grep  "$1" &> /dev/null; then
     echo "Package '$1' is installed"
   else
@@ -147,6 +191,6 @@ function brewLoadCask () {
     brew bundle install --cask --file="${1:-${ICLOUD}/dot/Brewfile.cask}"
 }
 
-function brewQuery () {
+function brewJson () {
     brew info --json "$@"
 }
