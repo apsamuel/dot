@@ -175,6 +175,22 @@ function dot.shell {
             echo "Warning: DOT_LIBS_DIR not found: $DOT_LIBS_DIR"
         fi
     # true
+        # make ZLIB available to shell
+        if [ -d "$DOT_LIBS_DIR" ]; then
+            for lib in $(find "${DOT_LIBS_DIR}" -type f -name "*.sh" | sort -d); do
+                # skip README.md files
+                if [[ "$lib" =~ .*README.md ]]; then
+                    continue
+                fi
+                if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
+                    echo "load source: $lib"
+                fi
+                . "$lib" || true
+            done
+        else
+            echo "Warning: DOT_LIBS_DIR not found: $DOT_LIBS_DIR"
+        fi
+            return 0
     fi
 
 
