@@ -4,10 +4,6 @@
 # set -o nopipefail
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
-
-
-
-
 directory=$(dirname "$0")
 library=$(basename "$0")
 
@@ -24,16 +20,13 @@ fi
 
 if [[ "$OPERATING_SYSTEM" == "linux-gnu"* ]]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-# executing in native arm64 mac
 elif [[ $OPERATING_SYSTEM == "darwin" && "$CPU_ARCHITECTURE" == "arm64" ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
-# executing in rosetta or on an intel mac
 elif [[ $OPERATING_SYSTEM == "darwin" && ("$CPU_ARCHITECTURE" == "i386" || "$CPU_ARCHITECTURE" == "x86_64") ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
 else
     echo "Warning: problem detecting OPERATING_SYSTEM!"
 fi
-
 
 function brewInstalledVersion() {
   local input="$1"

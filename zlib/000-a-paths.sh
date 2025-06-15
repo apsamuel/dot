@@ -20,6 +20,10 @@ if [ -d "${HOME}/Tools/edirect" ] ; then
 fi
 
 
+# source $DOT_DIR/bin
+if [ -d "$DOT_DIR/bin" ] ; then
+  PATH="${DOT_DIR}/bin:${PATH}"
+fi
 
 # scripts in devops dir
 if [ -d "${HOME}/devops/scripts" ] ; then

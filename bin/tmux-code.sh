@@ -25,20 +25,20 @@ function tmuxSessionExists() {
 }
 
 function onDetached() {
-    echo "exiting tmux session ${session}'"
+    echo "exiting tmux session ${session//./_}"
     # when sessions names contain dots (hidden directories, etc) ...
     # tmux will replace them with underscores
     tmux kill-session -t "${session//./_}"
 }
 
 if [[ $(tmuxSessionExists "$session") -eq 0 ]]; then
-    echo "tmux session '${session}' exists, attaching"
-    tmux attach-session -t "${session}"
-    tmuxSetOptions "${session}"
+    echo "tmux session '${session//./_}' exists, attaching (tmux attach -t ${session//./_})"
+    tmux attach-session -t "${session//./_}"
+    # tmuxSetOptions "${session}"
 else
-    echo "tmux session '${session}' does not exist, creating"
-    tmux -2 new-session -s "${session}" -c "$folder"
-    tmuxSetOptions "${session}"
+    echo "tmux session '${session//./_}' does not exist, creating"
+    tmux -2 new-session -s "${session//./_}" -c "$folder"
+    # tmuxSetOptions "${session//./_}"
 fi
 
 
