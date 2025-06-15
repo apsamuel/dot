@@ -42,6 +42,8 @@ export HISTSIZE=${ZSH_HISTSIZE}
 export SAVEHIST=${ZSH_SAVEHIST}
 
 # dot exports
+export DOT_ARCHITECTURE
+DOT_ARCHITECTURE=$(arch)
 export DOT_DEBUG="${DOT_DEBUG:-0}"
 export DOT_SHELL="${DOT_SHELL:-zsh}"
 export DOT_INTERACTIVE="${DOT_INTERACTIVE:-0}"

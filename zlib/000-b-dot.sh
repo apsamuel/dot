@@ -48,6 +48,7 @@ function dot.shell {
         echo "  source-zlib source all zlib modules"
         return 0
     fi
+
     # version
     if [[ "${command}" =~ [Vv]ersion ]]; then
         branch="$(git -C "${DOT_DIR}" rev-parse --abbrev-ref HEAD)"
@@ -157,8 +158,9 @@ function dot.shell {
         fi
 
     fi
+
     # source-zlibs
-    if [[ "${command}" == source-zlib ]]; then
+    if [[ "${command}" == refresh-libs ]]; then
         # make ZLIB available to shell
         if [ -d "$DOT_LIBS_DIR" ]; then
             for lib in $(find "${DOT_LIBS_DIR}" -type f -name "*.sh" | sort -d); do
@@ -192,6 +194,13 @@ function dot.shell {
         fi
             return 0
     fi
+
+
+    if [[ "${command}" == "load-options" ]]; then
+        return 0
+    fi
+
+
 
 
 
