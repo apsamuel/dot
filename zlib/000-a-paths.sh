@@ -25,10 +25,10 @@ if [ -d "$DOT_DIR/bin" ] ; then
   PATH="${DOT_DIR}/bin:${PATH}"
 fi
 
-# scripts in devops dir
-if [ -d "${HOME}/devops/scripts" ] ; then
-  PATH="${HOME}/devops/scripts:${PATH}"
-fi
+# # scripts in devops dir
+# if [ -d "${HOME}/devops/scripts" ] ; then
+#   PATH="${HOME}/devops/scripts:${PATH}"
+# fi
 
 
 

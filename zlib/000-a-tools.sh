@@ -185,11 +185,12 @@ printPath() {
     return 0  # return success if no paths are found
   fi
 
+
   for path in "${path_array[@]}"; do
     if [[ -z "${path}" ]]; then
       continue  # skip empty paths
     fi
-    echo "path: ${path}"  # print each path
+    printf "path: %s%s"  "${path}" "\n" # print each path
   done
 }
 
