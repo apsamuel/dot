@@ -180,12 +180,33 @@ export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
 arch="$(arch)"
 export ARCH="${arch}"
 
+
+# if we are running a privileged SSH session, we need to do a few things to make this work...
+
+# - we need to ensure t
+
 # enable zsh options
-ZSH_OPTIONS=(
-    $(
-        jq -r '.options[]' "$ICLOUD"/dot/shell/zsh/zsh.json | xargs
+# if $ICLOUD is inaccessible, we need to ensure that we can still load the zsh options
+if [[ -f "$ICLOUD"/dot/shell/zsh/zsh.json ]]; then
+    ZSH_OPTIONS=(
+        $(
+            jq -r '.options[]' "$ICLOUD"/dot/shell/zsh/zsh.json | xargs
+        )
     )
-)
+else
+    # we need to get ZSH options from the .dot directory
+    ZSH_OPTIONS=(
+        $(
+            jq -r '.options[]' "$DOT_DIRECTORY"/data/zsh.json | xargs
+        )
+    )
+    # export ZSH_OPTIONS=()
+fi
+# ZSH_OPTIONS=(
+#     $(
+#         jq -r '.options[]' "$ICLOUD"/dot/shell/zsh/zsh.json | xargs
+#     )
+# )
 export ZSH_OPTIONS
 for opt in "${ZSH_OPTIONS[@]}"; do
     if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
@@ -288,6 +309,9 @@ typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 #ZSH_THEME="robbyrussell"
+
+
+# if the icloud theme is not available, fallback to using the file in the dot directory
 ZSH_THEME="$(jq -r '.theme' "$HOME"/.dot/data/zsh.json)"
 export ZSH_THEME
 
