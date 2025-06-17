@@ -200,11 +200,10 @@ function dot.shell {
         return 0
     fi
 
-
-
-
-
-    return 0
+    # anything else is an error
+    echo "Unknown command: ${command}"
+    echo "Use 'dot.shell help' for a list of available commands."
+    return 1
 }
 
 if type -t dot.shell &>/dev/null; then
