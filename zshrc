@@ -200,7 +200,6 @@ else
             jq -r '.options[]' "$DOT_DIRECTORY"/data/zsh.json | xargs
         )
     )
-    # export ZSH_OPTIONS=()
 fi
 # ZSH_OPTIONS=(
 #     $(
