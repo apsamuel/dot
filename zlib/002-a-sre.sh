@@ -12,3 +12,5 @@
 #     TERRAFORM_PATH="${TERRAFORM_PATHS[0]}"
 #     complete -o nospace -C "$TERRAFORM_PATH" terraform
 # fi
+
+# complete -o nospace -C /usr/local/bin/terraform terraform

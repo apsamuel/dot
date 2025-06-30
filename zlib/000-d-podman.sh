@@ -1,2 +1,2 @@
-#shellcheck shell=bash
+# shellcheck shell=bash
 # shellcheck source=/dev/null

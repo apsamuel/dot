@@ -71,129 +71,6 @@ joinList() {
     return 0  # return success
 }
 
-bcSolve() {
-    # given a mathematical expression, solve it using bc
-    if [[ $# -eq 0 ]]; then
-        echo "Usage: bcSolve <expression>"
-        return 1  # return error if no expression is provided
-    fi
-
-    local expression="$1"
-    if [[ -z "${expression}" ]]; then
-        echo "No expression provided"
-        return 0  # return empty string if no expression is provided
-    fi
-
-    # use bc to evaluate the expression
-    result=$(echo "${expression}" | bc -l)
-    echo "${result}"  # print the result
-    return 0
-}
-
-addPath() {
-  if [[ -z "$1" ]]; then
-    echo "Usage: addPath <path1> <path2> ..."
-    return 1  # return error if no path is provided
-  fi
-  path_array=(
-    $(splitString "${PATH}" ":")
-  )
-  for path in "$@"; do
-
-    # skip empty paths
-    if [[ -z "${path}" ]]; then
-      echo "skipping empty path: '${path}'"
-      continue  # skip empty paths
-    fi
-
-    # check if the path is an existing directory
-    if [ -d "${path}" ]; then
-      # check if the path is already in the PATH array
-      if [[ "${path_array[*]}" =~ ${path} ]]; then
-        echo "skipping existing path: '${path}'"
-        continue  # skip if the path is already in the PATH
-      fi
-
-      # skip paths that are not executable
-      if [[ ! -x "${path}" ]]; then
-        echo "skipping inaccessible path: ${path}"
-        continue  # skip if the path does not exist
-      fi
-
-      # skip paths that do not contain any executable files ...
-      if [[ -z "$(find "${path}" -maxdepth 1 -type f -executable)" ]]; then
-        echo "skipping path with no executables: ${path}"
-        continue  # skip if the path does not contain any executable files
-      fi
-
-      echo "adding path: ${path}"
-      # add the path to the array
-      path_array+=("${path}")
-    else
-      echo "skipping non-directory path: ${path}"
-      continue  # skip if the path is not a directory
-    fi
-
-  done
-  # join the array back into a string
-  PATH=$(joinList ":" "${path_array[@]}")
-  export PATH  # export the updated PATH variable
-  return 0
-
-}
-
-deletePath() {
-  # delete one or more paths from the PATH variable
-  if [[ -z "$1" ]]; then
-    echo "Usage: deletePath <path1> <path2> ..."
-    return 1  # return error if no path is provided
-  fi
-  new_path_array=()
-  path_array=(
-    $(splitString "${PATH}" ":")
-  )
-  for path in "${path_array[@]}"; do
-    # skip empty paths
-    if [[ -z "${path}" ]]; then
-      echo "skipping empty path: '${path}'"
-      continue  # skip empty paths
-    fi
-
-    # check if the path is in the arguments to delete
-    if [[ " $* " =~ " ${path} " ]]; then
-      echo "deleting path: ${path}"
-      continue  # skip if the path is in the arguments to delete
-    fi
-
-    # add the path to the new array
-    new_path_array+=("${path}")
-  done
-
-  return_code=$?
-  if [[ ${return_code} -ne 0 ]]; then
-    echo "Error deleting paths"
-    return ${return_code}
-  fi
-}
-
-printPath() {
-  path_array=(
-    $(splitString "${PATH}" ":")
-  )
-  if [[ ${#path_array[@]} -eq 0 ]]; then
-    echo "No paths in PATH variable"
-    return 0  # return success if no paths are found
-  fi
-
-
-  for path in "${path_array[@]}"; do
-    if [[ -z "${path}" ]]; then
-      continue  # skip empty paths
-    fi
-    printf "path: %s%s"  "${path}" "\n" # print each path
-  done
-}
-
 fetchRemote() {
   # cat a remote file using ssh
   if [[ $# -ne 1 ]]; then
@@ -221,8 +98,6 @@ fetchRemote() {
   fi
 }
 
-
-
 sshDiff() {
   # compare remote and local files using ssh
   # compare remote files using ssh
@@ -238,9 +113,23 @@ sshDiff() {
   local a="$1"
   local b="$2"
 
+  # check if a and b are provided
+  if [[ -z "${a}" || -z "${b}" ]]; then
+    echo "Usage: sshDiff <remote_user@remote_host:remote_file> <local_file>"
+    echo "Example: sshDiff user@host:/path/to/remote/file.txt /path/to/local/file.txt"
+    echo "Example: sshDiff user@host:/path/to/remote/file.txt user@host:/path/to/remote/file.txt"
+    return 1  # return error if not enough arguments are provided
+  fi
+
+  # check if both arguments are the same
+  if [[ "${a}" == "${b}" ]]; then
+    echo "Both arguments are the same: ${a}"
+    return 0  # return success if both arguments are the same
+  fi
+
 
   # check if the first argument is a remote file
-  if [[ "$1" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[/].* ]]; then
+  if [[ "${a}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[/].* ]]; then
     a="$1"
   else
     # check if the first argument is a valid local file
@@ -255,7 +144,7 @@ sshDiff() {
 
 
   # check if the second argument is a remote file
-  if [[ "$2" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[/].* ]]; then
+  if [[ "${b}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[/].* ]]; then
     b="$2"
   else
     echo "Second argument is not a valid remote file format: ${2}"

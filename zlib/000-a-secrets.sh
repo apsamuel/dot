@@ -185,11 +185,11 @@ function maskSecrets () {
 function reloadOptions () {
     zsh_options=(
         $(
-            jq -r '. | keys | .[]' "${ICLOUD}"/dot/options.json | xargs
+            jq -r '.options[]' "${ICLOUD}"/dot/data.json | xargs
         )
     )
     for option in "${zsh_options[@]}"; do
-        if [[ "${DOT_DEBUG}x" == "x" || "${DOT_DEBUG}" == true ]]; then
+        if [[ "${DOT_DEBUG}" -gt 0 ]]; then
             echo "setting option: ${option}"
         fi
 
