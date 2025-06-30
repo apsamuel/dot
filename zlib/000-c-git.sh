@@ -69,4 +69,18 @@ gitChanges() {
     git log --pretty="%C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset))%x09 %C(Cyan)%an: %C(reset)%s" --date=short
 }
 
+gitDiff() {
+    preview="git diff $* --color=always -- {-1}"
+    git diff --name-only | fzf -m --ansi --preview "$preview"
+}
+
+gitPreview() {
+    fzf --preview "git show {1} | bat --color=always"
+}
+
+gitLog() {
+    git log --color=always --pretty=format:"%C(yellow)%h %C(reset)%ad (%C(green)%cr%C(reset))%x09%C(cyan)%an%C(reset): %s" --date=short | fzf --ansi --preview "echo {} | cut -d' ' -f1 | xargs git show --color=always" --preview-window=up:30%:wrap
+}
+
+
 export DOT_GIT_DEFAULT_MERGE_BRANCH DOT_GIT_DEFAULT_REBASE_BRANCH DOT_GIT_DEFAULT_STASH_COMMITS DOT_GIT_DEFAULT_SOURCE_BRANCH DOT_GIT_DEFAULT_DESTINATION_BRANCH DOT_GIT_DEFAULT_USER DOT_GIT_DEFAULT_EMAIL

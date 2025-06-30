@@ -1,6 +1,4 @@
 {
-    "theme": "powerlevel10k/powerlevel10k",
-    "path": [],
     "conditions": {
         "network": {
             "home": "192.168.0.1"
@@ -8,9 +6,19 @@
     },
     "languages": {
         "python": {
-            "requirements": [
-                "libtmux==0.36.0"
-            ]
+            "pip": {
+                "requirements": [
+                    "libtmux==0.36.0"
+                ]
+            }
+        },
+        "node": {
+            "npm": {
+                "requirements": [
+                    "@google/gemini-cli",
+                    "@openai/codex"
+                ]
+            }
         }
     },
     "options": [
@@ -32,68 +40,70 @@
         "share_history",
         "sharehistory"
     ],
+    "path": [],
+    "plugins": {
+        "builtin": [
+            "alias-finder",
+            "autopep8",
+            "brew",
+            "colored-man-pages",
+            "colorize",
+            "copybuffer",
+            "copypath",
+            "dash",
+            "direnv",
+            "docker-compose",
+            "docker",
+            "emoji-clock",
+            "emoji",
+            "fzf",
+            "gh",
+            "git-extras",
+            "git",
+            "gitignore",
+            "gnu-utils",
+            "kubectl",
+            "nmap",
+            "node",
+            "npm",
+            "python",
+            "ssh-agent",
+            "thefuck",
+            "vi-mode",
+            "web-search"
+        ],
+        "custom": [
+            {
+                "exec": "",
+                "owner": "conda-incubator",
+                "post": "",
+                "pre": "",
+                "repo": "conda-zsh-completion"
+            },
+            {
+                "exec": "",
+                "owner": "zsh-users",
+                "post": "",
+                "pre": "",
+                "repo": "zsh-autosuggestions"
+            },
+            {
+                "exec": "",
+                "owner": "z-shell",
+                "post": "",
+                "pre": "",
+                "repo": "F-Sy-H"
+            }
+        ]
+    },
+    "theme": "powerlevel10k/powerlevel10k",
     "themes": {
         "builtin": [],
         "custom": [
             {
+                "exec": "",
                 "owner": "",
-                "repo": "",
-                "exec": ""
-            }
-        ]
-    },
-    "plugins": {
-        "builtin": [
-            "brew",
-            "fzf",
-            "alias-finder",
-            "colorize",
-            "colored-man-pages",
-            "copybuffer",
-            "copypath",
-            "direnv",
-            "emoji",
-            "emoji-clock",
-            "dash",
-            "vi-mode",
-            "ssh-agent",
-            "kubectl",
-            "git",
-            "git-extras",
-            "gitignore",
-            "gh",
-            "gnu-utils",
-            "web-search",
-            "node",
-            "npm",
-            "autopep8",
-            "python",
-            "docker",
-            "docker-compose",
-            "thefuck",
-            "nmap"
-        ],
-        "custom": [
-            {
-                "owner": "conda-incubator",
-                "repo": "conda-zsh-completion",
-                "pre": "",
-                "post": "",
-                "exec": ""
-            },
-            {
-                "owner": "zsh-users",
-                "repo": "zsh-autosuggestions",
-                "pre": "",
-                "post": "",
-                "exec": ""
-            },
-            {
-                "owner": "z-shell",
-                "repo": "F-Sy-H",
-                "pre": "",
-                "post": "",
-                "exec": ""
+                "repo": ""
             }
         ]
     }

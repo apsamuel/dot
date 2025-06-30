@@ -26,12 +26,28 @@ if [ "$CPU_ARCHITECTURE" = "arm64" ]; then
     NODE_URL="${NODE_URL:-https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-arm64.tar.xz}"
 fi
 
-# update the path to include the latest node version
+# if node is installed via homebrew, update the PATH and LDFLAGS and CPPFLAGS to include the node binary
 if brew list | grep node >/dev/null 2>&1 ; then
     node=$(brew list |grep node | sort -n | tail -1)
-    export PATH="/usr/local/opt/${node}/bin:${PATH}"
-    export LDFLAGS="${LDFLAGS} -L/usr/local/opt/${node}/lib"
-    export CPPFLAGS="${CPPFLAGS} -I/usr/local/opt/${node}/include"
+    # only update the path to node if it is not already set
+    if [[ "$PATH" != *"/usr/local/opt/${node}/bin"* ]]; then
+        # echo "Updating PATH to include /usr/local/opt/${node}/bin"
+        export PATH="/usr/local/opt/${node}/bin:${PATH}"
+    fi
+
+    # export LDFLAGS="${LDFLAGS} -L/usr/local/opt/${node}/lib"
+    # export CPPFLAGS="${CPPFLAGS} -I/usr/local/opt/${node}/include"
+
+    # if LDFLAGS does not contain /usr/local/opt/${node}/lib
+    if [[ "$LDFLAGS" != *"/usr/local/opt/${node}/lib"* ]]; then
+        export LDFLAGS="${LDFLAGS} -L/usr/local/opt/${node}/lib"
+    fi
+
+    # if CPPFLAGS does not contain /usr/local/opt/${node}/include
+    if [[ "$CPPFLAGS" != *"/usr/local/opt/${node}/include"* ]]; then
+        export CPPFLAGS="${CPPFLAGS} -I/usr/local/opt/${node}/include"
+    fi
+
 fi
 
 function node::tar::install () {

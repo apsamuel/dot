@@ -70,6 +70,8 @@ export DOT_DISABLE_MAC="${DOT_DISABLE_MAC:-0}"
 export DOT_DISABLE_P10K="${DOT_DISABLE_P10K:-0}"
 export DOT_DISABLE_NODE="${DOT_DISABLE_NODE:-0}"
 export DOT_DISABLE_NETWORK="${DOT_DISABLE_NETWORK:-0}"
+export DOT_PYTHON_UV_DEFAULT_VERSION="${DOT_PYTHON_VERSION:-3.13}"
+# export DOT_NODE_DEFAULT_VERSION="${DOT_NODE_VERSION:-20.10.0}"
 export DOT_DIRECTORY DOT_LIBRARY DOT_LIBRARY_FILES DOT_DEBUG DOT_INTERACTIVE DOT_BOOT DOT_BOOTED DOT_ROOT DOT_SHELL DOT_DEBUG_RC DOT_ANACONDA_ENABLED
 
 if [ "$(uname -m)"  = "x86_64" ]; then
@@ -411,15 +413,11 @@ add-zsh-hook chpwd tmux-window-name
 zle -N create_completion
 
 
-# complete -o nospace -C /usr/local/bin/terraform terraform
-
-
-
 # post exports
 DOT_INIT_END_TIME=$(date +%s)
 DOT_LOAD_TIME="$((DOT_INIT_END_TIME - DOT_INIT_START_TIME))"
 export DOT_INIT_DIR DOT_INIT_START_TIME DOT_INIT_END_TIME DOT_LOAD_TIME DOT_LIBS_DIR DOT_DIR DOT_DEBUG DOT_SPLASH_SCREEN DOT_SPLASH_TYPE DOT_CLOUD_DIR DOT_SHELL_DATA DOT_SECRETS_DATA
-export PATH="$PATH:$HOME/.dot/bin"
+# export PATH="$PATH:$HOME/.dot/bin"
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && . "${HOME}/.iterm2_shell_integration.zsh"
 
