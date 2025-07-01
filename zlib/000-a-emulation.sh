@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+# shellcheck disable=SC2317
 DOT_DEBUG="${DOT_DEBUG:-0}"
 
 
@@ -17,6 +18,7 @@ function emulateIntepreter() {
 }
 
 function emulateZsh() {
+
     local code="${1:-echo "Hello World"}"
     command zsh -c "emulate bash; ${code}"
     # return $?
