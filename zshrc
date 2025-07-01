@@ -2,6 +2,13 @@
 # - ignore shellcheck warnings ZSH files, we are loading a ZSH environment
 # shellcheck disable=SC1071
 
+
+# shellcheck disable=SC3054
+# shellcheck disable=SC3030
+# shellcheck disable=SC3010
+# shellcheck disable=SC3024
+# shellcheck disable=SC3044
+
 #% author: Aaron P. Samuel
 #% description: configure the shell environment
 #% usage: chsh -s $(which zsh) , source ~/.zshrc
@@ -53,6 +60,7 @@ export DOT_DEBUG_RC="${DOT_DEBUG_RC:-${DOT_ROOT}/.${DOT_SHELL}rc}"
 export DOT_DIRECTORY="${DOT_DIRECTORY:-${DOT_ROOT}}"
 export DOT_LIBRARY="${DOT_LIBRARY:-${DOT_ROOT}/zlib}"
 export DOT_BIN="${DOT_BIN:-${DOT_ROOT}/bin}"
+# shellcheck disable=SC2046
 export DOT_LIBRARY_FILES=($(find "${DOT_LIBRARY}" -maxdepth 1 -type f -name "*.sh" | sort -d))
 export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/bin/bootstrap.sh}"
 export DOT_BOOTED="${DOT_BOOTED:-false}"
@@ -91,14 +99,6 @@ if [ -f "${DOT_BOOTSTRAP}" ]; then
     )
 fi
 
-
-# TODO: create a bootrapped flag, ensure to not re-bootstrap a system...
-# (source "${DOT_LIBRARY}"/zlib/static/lib/internal.sh || . "${DOT_LIBRARY}"/zlib/static/lib/internal.sh ||
-#     echo "Error: unable to load functions" && exit 1
-# )
-
-
-
 # configure environment variable germaine to your dot environment
 (. "${DOT_LIBRARY}"/static/dotenv.sh || . "${DOT_LIBRARY}"/static/dotenv.sh) || (
     echo "Error: unable to load dotenv"
@@ -127,12 +127,15 @@ fi
 SSH_KEYS=()
 # prepare files in .ssh directory for the ssh-agent
 if [ -d "$HOME"/.ssh ]; then
+
     files=("$HOME"/.ssh/*)
     for file in "${files[@]}"; do
+
         if [[ "$file" =~ (config|deprecated|.*pub|environment.*|known_hosts.*) ]]; then
             continue
         fi
         base=$(basename "$file")
+
         SSH_KEYS+=("$base")
     done
 fi
@@ -163,7 +166,7 @@ export MANPATH="/usr/local/man:$MANPATH"
 export HISTSIZE=1000000000
 export HISTFILESIZE=1000000000
 export SAVEHIST=$HISTSIZE
-export HISTFILE=$HOME/.zsh_history
+export HISTFILE="$HOME"/.zsh_history
 export MANPATH="/usr/local/man:$MANPATH"
 GPG_TTY=$(tty)
 export GPG_TTY
@@ -197,12 +200,9 @@ else
         )
     )
 fi
-# ZSH_OPTIONS=(
-#     $(
-#         jq -r '.options[]' "$ICLOUD"/dot/shell/zsh/zsh.json | xargs
-#     )
-# )
+
 export ZSH_OPTIONS
+
 for opt in "${ZSH_OPTIONS[@]}"; do
     if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
         echo "set option: $opt"
@@ -273,7 +273,7 @@ if [[ -d "$ICLOUD"/dot && -f "$ICLOUD"/dot/secrets.json ]]; then
     done
 
     if [[ -f "$TMPDIR"/.secrets ]]; then
-        source "$TMPDIR"/.secrets
+        . "$TMPDIR"/.secrets
         rm -f "$TMPDIR"/.secrets
     fi
 fi
@@ -296,6 +296,7 @@ export VI_MODE_SET_CURSOR=true
 # fi
 export POWERLEVEL9K_INSTANT_PROMPT=quiet
 export POWERLEVEL9K_INSTANT_PROMPT=off
+
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 
@@ -362,6 +363,7 @@ export HIST_STAMPS="dd.mm.yyyy"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
+# shellcheck disable=SC2046
 export plugins=(
     $(
         jq -r '.plugins.builtin[]' "$HOME"/.dot/data/zsh.json | xargs
@@ -370,7 +372,7 @@ export plugins=(
 
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#E0F40A,bg=black,bold,underline"
 
-source "$ZSH"/oh-my-zsh.sh
+. "$ZSH"/oh-my-zsh.sh
 
 # bind keys
 bindkey -M vicmd v edit-command-line
@@ -403,11 +405,12 @@ export ITERM2_SQUELCH_MARK=1
 
 
 
-function tmux-window-name() {
+
+getTmuxWindowName() {
     ("$TMUX_PLUGIN_MANAGER_PATH"/tmux-window-name/scripts/rename_session_windows.py &)
 }
 
-add-zsh-hook chpwd tmux-window-name
+add-zsh-hook chpwd getTmuxWindowName
 
 # zle
 zle -N create_completion
