@@ -19,5 +19,4 @@ const commands = [
 
 for (const command of commands) {
   process.stdout.write(`executing: ${command}\n`);
-  // await cli.exec(command);
 }
