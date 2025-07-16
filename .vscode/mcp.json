@@ -1,10 +1,37 @@
 {
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "github_mcp_pat",
+      "description": "GitHub Personal Access Token (PAT) for MCP",
+      "password": true
+    }
+  ],
   "servers": {
     "hf-mcp-server": {
       "url": "https://huggingface.co/mcp",
       "headers": {
         "Authorization": "Bearer ${env:HF_TOKEN}"
       }
+    },
+    "github-mcp-server": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${env:GITHUB_TOKEN}"
+      }
+    },
+    "context7-mcp-server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y", "@upstash/context7-mcp"
+      ]
+    },
+    "playwright-mcp-server": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
     }
   }
 }
