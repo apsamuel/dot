@@ -17,6 +17,15 @@
 # - ignore shellcheck warnings about read/mapfile
 # shellcheck disable=SC2207
 
+# configure XDG variables
+# XDG Base Directory Specification
+# https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest
+# https://wiki.archlinux.org/title/XDG_Base_Directory
+XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_CACHE_HOME XDG_CONFIG_HOME XDG_DATA_HOME
+
 DOT_INIT_DIR=$(pwd -P)
 # shell start time
 DOT_INIT_START_TIME=$(date +%s)
@@ -79,6 +88,9 @@ export DOT_DISABLE_P10K="${DOT_DISABLE_P10K:-0}"
 export DOT_DISABLE_NODE="${DOT_DISABLE_NODE:-0}"
 export DOT_DISABLE_NETWORK="${DOT_DISABLE_NETWORK:-0}"
 export DOT_PYTHON_UV_DEFAULT_VERSION="${DOT_PYTHON_VERSION:-3.13}"
+
+# set the Obsidian vault directory
+export DOT_MARKDOWN_VAULT="${HOME}/Library/Mobile Documents/iCloud~md~obsidian/Documents"
 # export DOT_NODE_DEFAULT_VERSION="${DOT_NODE_VERSION:-20.10.0}"
 export DOT_DIRECTORY DOT_LIBRARY DOT_LIBRARY_FILES DOT_DEBUG DOT_INTERACTIVE DOT_BOOT DOT_BOOTED DOT_ROOT DOT_SHELL DOT_DEBUG_RC DOT_ANACONDA_ENABLED
 
@@ -161,7 +173,7 @@ DOT_CLOUD_DIR="${ICLOUD}/dot"
 DOT_SHELL_DATA=${DOT_SHELL_DATA:-$HOME/.dot/data/zsh.json}
 DOT_SECRETS_DATA=${DOT_SECRETS_DATA:-"${DOT_CLOUD_DIR}/secrets.json"}
 
-export TERM=xterm-256color
+# export TERM=xterm-256color
 export MANPATH="/usr/local/man:$MANPATH"
 export HISTSIZE=1000000000
 export HISTFILESIZE=1000000000

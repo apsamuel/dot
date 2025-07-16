@@ -101,59 +101,81 @@ fetchRemote() {
 sshDiff() {
   # compare remote and local files using ssh
   # compare remote files using ssh
+  fileA=$(mktemp /tmp/fileA.XXXXXX)
+  fileB=$(mktemp /tmp/fileB.XXXXXX)
   if [[ $# -ne 2 ]]; then
-    echo "Usages: "
+    echo "we expect two arguments, but got $#"
+    echo "usages: "
     echo "  sshDiff <remote_user@remote_host:remote_file> <local_file>"
     echo "  sshDiff user@host:/path/to/remote/file.txt /path/to/local/file.txt"
     echo "  sshDiff <remote_user@remote_host:remote_file> <remote_user@remote_host:remote_file>"
-    return 1  # return error if not enough arguments are provided
+    return 1
   fi
 
 
   local a="$1"
   local b="$2"
 
-  # check if a and b are provided
+  # check if both files are provided
   if [[ -z "${a}" || -z "${b}" ]]; then
-    echo "Usage: sshDiff <remote_user@remote_host:remote_file> <local_file>"
-    echo "Example: sshDiff user@host:/path/to/remote/file.txt /path/to/local/file.txt"
-    echo "Example: sshDiff user@host:/path/to/remote/file.txt user@host:/path/to/remote/file.txt"
-    return 1  # return error if not enough arguments are provided
+    echo "both arguments are required."
+    echo "usage: sshDiff <remote_user@remote_host:remote_file> <local_file>"
+    echo "example: sshDiff user@host:/path/to/remote/file.txt /path/to/local/file.txt"
+    echo "example: sshDiff user@host:/path/to/remote/file.txt user@host:/path/to/remote/file.txt"
+    return 1
   fi
 
   # check if both arguments are the same
   if [[ "${a}" == "${b}" ]]; then
-    echo "Both arguments are the same: ${a}"
+    echo "both arguments are the same: ${a}"
     return 0  # return success if both arguments are the same
   fi
 
-
   # check if the first argument is a remote file
-  if [[ "${a}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[/].* ]]; then
-    a="$1"
+  if [[ "${a}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[~/].* ]]; then
+    echo "fetching remote file: ${a}"
+    # use scp to copy the remote file to a temporary file
+    if ! scp "${a}" "${fileA}"; then
+      echo "error fetching remote file: ${a}"
+      return 1  # return error if scp command fails
+    fi
   else
-    # check if the first argument is a valid local file
+    echo "checking local file: ${a}"
     if [[ -f "$1" ]]; then
-      echo "First argument is a valid local file: ${1}"
-      a="$1"  # treat it as a local file
+      cat "$1" > "$fileA"
     else
-      echo "First argument is not a valid remote file format or local file: ${1}"
       return 1  # return error if the first argument is not a valid remote file format or local file
     fi
   fi
 
-
-  # check if the second argument is a remote file
-  if [[ "${b}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[/].* ]]; then
-    b="$2"
+  if [[ "${b}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+:[~/].* ]]; then
+    echo "fetching remote file: ${b}"
+    # use scp to copy the remote file to a temporary file
+    if ! scp "${b}" "${fileB}"; then
+      echo "error fetching remote file: ${b}"
+      return 1  # return error if scp command fails
+    fi
   else
-    echo "Second argument is not a valid remote file format: ${2}"
-    return 1  # return error if the second argument is not a valid remote file format
+    # check if the second argument is a valid local file
+    echo "checking local file: ${b}"
+    if [[ -f "$2" ]]; then
+      cat "$2" > "$fileB"
+    else
+      return 1
+    fi
   fi
 
+  echo "comparing files:"
+  echo "  File A: ${fileA}"
+  echo "  File B: ${fileB}"
 
-  echo "Comparing files:"
-  echo "  Remote file: ${a}"
-  echo "  Local file: ${b}"
-  #
+  diff "$fileA" "$fileB"
+
+  return_code=$?
+  # rm -f "${fileA}" "${fileB}"  # remove temporary files
+  if [[ ${return_code} -eq 0 ]]; then
+    echo "files are the same"
+    return ${return_code}  # return error code if diff fails
+  fi
+  return 0  # return success
 }
