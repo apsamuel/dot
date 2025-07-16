@@ -1,7 +1,6 @@
-#!/usr/local/bin/zsh
 # shellcheck shell=bash
-# ZSH=${"/Users/aaronsamuel/.oh-my-zsh:=ZSH"}
-# cd "$ZSH"
+
+
 setopt extendedglob
 
 ##############################
@@ -174,6 +173,10 @@ function display-release {
 
   # Remove commits that were reverted
   local hash rhash
+  # shellcheck disable=SC1072
+  # shellcheck disable=SC1073
+  # shellcheck disable=SC1058
+
   for hash rhash in ${(kv)reverts}; do
     if (( ${+types[$rhash]} )); then
       # Remove revert commit
