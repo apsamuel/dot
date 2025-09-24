@@ -10,7 +10,7 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
 fi
 
 # prepend python to the path $(brew --prefix python)/libexec/bin
-PATH="$(brew --prefix python)/libexec/bin:$PATH"
+# PATH="$(brew --prefix python)/bin:$PATH"
 
 
 export PATH
