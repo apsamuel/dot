@@ -66,10 +66,10 @@ function emulateZsh () {
 
 function spawnArm () {
     local code="${1:-uname}"
-    arch -arm64 zsh -l -c "$code"
+    exec arch -arm64 /opt/homebrew/bin/zsh -l
 }
 
 function spawnIntel () {
     local code="${1:-uname}"
-    command arch -x86_64 zsh -l -c "$code"
+    exec arch -x86_64 /usr/local/bin/zsh -l
 }
