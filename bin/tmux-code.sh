@@ -2,11 +2,12 @@
 
 exec >> /tmp/tmux-code.log 2>&1
 
+architecture="$(uname -m)"
 folder="$(pwd)"
-session="$(basename "${folder}")"
+session="${architecture}-$(basename "${folder}")"
 session_name="${session//./_}"  # replace dots with underscores
 
-printenv
+# printenv
 
 if [[ "$DOT_DEBUG" -gt 0 ]]; then
     set +x
