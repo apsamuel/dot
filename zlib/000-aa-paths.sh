@@ -33,9 +33,10 @@ if [ -d "$DOT_DIR/bin" ] ; then
 fi
 
 # theoretical $HOME/bin
-if [ -d "${HOME}/bin" ] ; then
-  PATH="${HOME}/bin:${PATH}"
+if [ ! -d "${HOME}/bin" ] ; then
+  mkdir -p "${HOME}/bin"
 fi
+PATH="${HOME}/bin:${PATH}"
 
 # read YAML/JSON configuration, find the PATHS property, and add those paths to the PATH variable
 # # scripts in devops dir
