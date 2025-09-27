@@ -124,15 +124,21 @@ function brewCheckCask () {
 }
 
 function brewDump() {
-    brew bundle dump --describe --brews --taps --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile}"
+    local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
+    local file="${1:-${ICLOUD}/dot/Brewfile.${arch}}"
+    brew bundle dump --describe --brews --taps --no-upgrade --force --file="${file}"
 }
 
 function brewDumpMas () {
-    brew bundle dump --describe --mas --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile.mas}"
+  local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
+  local file="${1:-${ICLOUD}/dot/Brewfile.mas.${arch}}"
+  brew bundle dump --describe --mas --no-upgrade --force --file="${file}"
 }
 
 function brewDumpCask () {
-    brew bundle dump --describe --casks --no-upgrade --force --file="${1:-${ICLOUD}/dot/Brewfile.cask}"
+  local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
+  local file="${1:-${ICLOUD}/dot/Brewfile.cask.${arch}}"
+  brew bundle dump --describe --casks --no-upgrade --force --file="${file}"
 }
 
 function brewRecipe () {
@@ -140,7 +146,9 @@ function brewRecipe () {
 }
 
 function brewLoad () {
-    brew bundle install --file="${1:-${ICLOUD}/dot/Brewfile}"
+  local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
+  local file="${1:-${ICLOUD}/dot/Brewfile.${arch}}"
+  brew bundle install --file="${file}"
 }
 
 function parseLine() {
@@ -177,11 +185,15 @@ function brewLoad.v2() {
 }
 
 function brewLoadMas () {
-    brew bundle install --mas --file="${1:-${ICLOUD}/dot/Brewfile.mas}"
+  local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
+  local file="${1:-${ICLOUD}/dot/Brewfile.mas.${arch}}"
+  brew bundle install --mas --file="${file}"
 }
 
 function brewLoadCask () {
-    brew bundle install --cask --file="${1:-${ICLOUD}/dot/Brewfile.cask}"
+  local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
+  local file="${1:-${ICLOUD}/dot/Brewfile.cask.${arch}}"
+  brew bundle install --cask --file="${file}"
 }
 
 function brewJson () {
