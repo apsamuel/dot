@@ -192,6 +192,11 @@ function brewLoadMas () {
 
 function brewLoadCask () {
   local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
+  # casks should only be installed in native architecture (no rosetta)
+  if [[ "$OPERATING_SYSTEM" == "darwin" && "$CPU_ARCHITECTURE" == "i386" ]]; then
+    echo "Skipping cask install on i386 architecture"
+    return
+  fi
   local file="${1:-${ICLOUD}/dot/Brewfile.cask.${arch}}"
   brew bundle install --cask --file="${file}"
 }
