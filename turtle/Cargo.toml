@@ -8,9 +8,9 @@ dirs = "6.0.0"
 regex = "1.12.2"
 serde = { "version" = "1.0.228", features=["derive"]}
 serde_json = "1.0.145"
-uuid = "1.18.1"
+uuid = { "version" = "1.18.1", features=["v4", "v7"]}
 whoami = "1.6.1"
 
 [[bin]]
 name = "turtle"
-path = "turtle.rs"
+path = "main.rs"
