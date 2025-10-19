@@ -5,6 +5,7 @@ mod utils; // utility functions
 mod types; // shared structs/enums
 
 mod builtin; // built-in commands
+mod widgets; // TUI widgets
 
 mod prompt; // prompt handling
 
@@ -105,6 +106,28 @@ fn main() {
 
         if input.trim() == "%(history)" {
             let _ = crate::history::display_history_ui();
+            continue;
+        }
+
+        if input.trim() == "%(clear_history)" {
+            match crate::history::clear_history() {
+                Ok(_) => println!("History cleared."),
+                Err(e) => eprintln!("Error clearing history: {}", e),
+            }
+            continue;
+        }
+
+        if input.trim() == "%(file_browser)" {
+            let _ = crate::widgets::display_file_browser_ui();
+            continue;
+        }
+
+        if input.trim() == "%(text_editor)" {
+            let _ = crate::widgets::display_text_editor_ui();
+            continue;
+        }
+        if input.trim() == "%(terminal)" {
+            let _ = crate::widgets::display_terminal_ui();
             continue;
         }
 
