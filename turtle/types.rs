@@ -1,11 +1,17 @@
 
 use serde::{Serialize, Deserialize};
-use serde_json::json;
 use clap::Parser;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TurtleConfig {
+  pub prompt: Option<String>,
+  pub aliases: Option<std::collections::HashMap<String, String>>,
+
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "turtle", about = "A simple shell implemented in Rust")]
-pub struct Args {
+pub struct TurtleArgs {
     #[arg(short, long, help = "Enable verbose output")]
     pub verbose: bool,
 }

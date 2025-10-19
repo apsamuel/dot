@@ -1,7 +1,6 @@
 use std::fs::{OpenOptions};
 use std::io::{self, Write};
-use serde::{Serialize, Deserialize};
-use serde_json::json;
+use serde::{Serialize};
 
 
 pub fn log_history<T: Serialize>(entry: &T) {
@@ -28,4 +27,15 @@ pub fn load_history() -> io::Result<Vec<serde_json::Value>> {
         }
     }
     Ok(history)
+}
+
+// when a user presses the up arrow, we can load the last command from history
+// but this requires integration with the readline library being used
+// This function is a placeholder for that functionality
+
+
+
+// use ratatui to display history in a nice way
+pub fn display_history_ui() {
+    // Placeholder for future implementation
 }
