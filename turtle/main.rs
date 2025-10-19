@@ -20,26 +20,49 @@ use crate::history::{log_history};
 use crate::utils::{now_unix};
 use crate::types::{CommandRequest, CommandResponse, TurtleArgs };
 use crate::prompt::{expand_prompt_macros};
+use crossterm::event::{self, Event, KeyCode};
 
 
 fn main() {
-    let _prog_args = TurtleArgs::parse();
+    let prog_args = TurtleArgs::parse();
 
     set_shell_vars();
-    let _config = load_config();
+    let config = load_config(
+        prog_args.verbose
+    );
+    // println!("Current config: {:?}", config);
+    println!("Welcome to Turtle Shell! 🐢");
+
+
     let readline_config = Config::builder()
         .edit_mode(EditMode::Vi)
         .build();
 
+
+
     let mut rl = Editor::with_config(readline_config).unwrap();
 
     loop {
-        // TODO - set prompt from env var or config
-        let prompt = expand_prompt_macros("{user}@{host}>>>");
+        let history = crate::history::load_history().unwrap_or_default();
+
+
+        // we need to maintain a plain text history file for rustyline
+        crate::history::export_history_for_rustyline(
+            &format!("{}/.turtle_history.json", dirs::home_dir().unwrap().display()),
+            &format!("{}/.turtle_history.txt", dirs::home_dir().unwrap().display()),
+        ).ok();
+        rl.load_history(&format!("{}/.turtle_history.txt", dirs::home_dir().unwrap().display())).ok();
+        let mut history_index = history.len(); // start at the end of history
+
+        let prompt = expand_prompt_macros(
+            &std::env::var("TURTLE_PROMPT").unwrap_or_else(|_| "turtle> ".to_string())
+        );
         let readline = rl.readline(&prompt);
 
+        // use readline to get user input
         let input = match readline {
             Ok(line) => {
+                // rl.add_history_entry(line.as_str()).unwrap_or(());
                 line
             }
             Err(rustyline::error::ReadlineError::Interrupted) => {
@@ -63,11 +86,9 @@ fn main() {
             continue;
         }
 
-
         // expand env vars and tilde in input
         let input = expand_env_vars(input);
         let input = expand_tilde(&input);
-
 
         // split input into command and args
         let mut parts = input.split_whitespace();
@@ -82,13 +103,10 @@ fn main() {
             expand_tilde(&arg)
         }).collect();
 
-        // each arg also needs to have env vars and tilde expanded
-        // let args: Vec<String> = args.iter()
-        //     .map(|arg| {
-        //         let arg = expand_env_vars(arg);
-        //         expand_tilde(&arg)
-        //     })
-        //     .collect();
+        if input.trim() == "%(history)" {
+            let _ = crate::history::display_history_ui();
+            continue;
+        }
 
         // process built-in commands
         match cmd {
@@ -107,8 +125,6 @@ fn main() {
             }
             _ => {}
         }
-
-
 
 
         let id = Uuid::new_v4().to_string();

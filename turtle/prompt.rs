@@ -16,5 +16,14 @@ pub fn expand_prompt_macros(prompt: &str) -> String {
       .replace("{cwd}", &cwd)
       .replace("{time}", &time)
       .replace("{turtle}", "🐢")
+}
 
+
+pub fn get_default_prompt() -> String {
+  expand_prompt_macros("{user}@{host}:{cwd} {turtle} -->")
+}
+
+pub fn redraw_prompt(prompt: &str) -> String {
+  let prompt = expand_prompt_macros(prompt);
+  prompt
 }
