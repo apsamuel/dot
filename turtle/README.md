@@ -1,10 +1,5 @@
-# POSIX Shell Library
+# Turtle
 
-## Shells
+A blazing fast shell written in Rust
 
-it's a shell, we can handle it
-
-- sh
-- zsh
-- bash
-- fish
+- turtle is not a POSIX compliant shell
