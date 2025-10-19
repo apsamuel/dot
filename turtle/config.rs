@@ -1,22 +1,36 @@
-
 use std::env;
+use crate::types::TurtleConfig;
 
-pub fn load_config() {
+pub fn load_config() -> Option<TurtleConfig> {
     if let Some(home) = dirs::home_dir() {
-        let rc_path = home.join(".turtlerc");
+        let rc_path = home.join(".turtle.yaml");
         if rc_path.exists() {
-            if let Ok(lines) = std::fs::read_to_string(&rc_path) {
-                for line in lines.lines() {
-                    if let Some((k, v)) = line.split_once('=') {
+            println!("Loading config from {:?}", rc_path);
+            if let Ok(contents) = std::fs::read_to_string(&rc_path) {
+
+                if let Ok(config) = serde_yaml::from_str::<crate::types::TurtleConfig>(&contents) {
+                    println!("Loaded config from {:?}", rc_path);
+                    if let Some(prompt) = config.prompt.as_ref() {
                         unsafe {
-                          env::set_var(k.trim(), v.trim());
+                          env::set_var("TURTLE_PROMPT", prompt);
                         }
-                        // env::set_var(k.trim(), v.trim());
                     }
+                    if let Some(aliases) = config.aliases.as_ref() {
+                        for (k, v) in aliases {
+                            unsafe {
+                                env::set_var(format!("TURTLE_ALIAS_{}", k), v);
+                            }
+                        }
+                    }
+
+                    return Some(config);
+                } else {
+                    eprintln!("Failed to parse config file");
                 }
             }
         }
     }
+    None
 }
 
 pub fn set_shell_vars() {
