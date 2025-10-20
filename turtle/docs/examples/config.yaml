@@ -1,0 +1,8 @@
+prompt: "{user}@{host}:{path}$ "
+aliases:
+  ll: "ls -la"
+  gs: "git status"
+  gp: "git pull"
+  gd: "git diff"
+history_size: 1000
+theme: "catppuccino"
