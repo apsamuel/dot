@@ -1,11 +1,11 @@
-use std::fs::{OpenOptions};
-use std::io::{self, Write};
-use serde::{Serialize};
+// use std::fs::{OpenOptieons};
+// use std::io::{self, Write};
+// use serde::{Serialize};
 
 use ratatui::{
     backend::CrosstermBackend,
     Terminal,
-    widgets::{Block, Borders, List, ListItem, ListState},
+    widgets::{Block, Borders},
     layout::{Layout, Constraint, Direction},
     style::{Style, Color},
 };
@@ -50,7 +50,7 @@ pub fn display_terminal_ui() -> std::io::Result<()> {
         let status_line = format!("Turtle Terminal - CWD: {} - Press 'q' to quit", cwd);
 
         terminal.draw(|f| {
-            let size = f.size();
+            let size = f.area();
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(1)

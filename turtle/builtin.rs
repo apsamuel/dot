@@ -10,7 +10,6 @@ pub fn builtin_exit() {
   std::process::exit(0);
 }
 
-
 pub fn builtin_history() {
   match crate::history::load_history() {
     Ok(entries) => {
@@ -21,4 +20,33 @@ pub fn builtin_history() {
     Err(e) => eprintln!("Error loading history: {}", e),
 
   }
+}
+
+pub fn builtin_alias(aliases: &mut std::collections::HashMap<String, String>, args: &[&str]) -> std::collections::HashMap<String, String> {
+  if args.is_empty() {
+    println!("no aliases provided");
+  }
+
+  if args.len() == 1 {
+    if args.contains(&"=") {
+      let parts: Vec<&str> = args[0].splitn(2, '=').collect();
+      if parts.len() == 2 {
+        let name = parts[0];
+        let command = parts[1].trim_matches('"');
+        aliases.insert(name.to_string(), command.to_string());
+        return aliases.clone();
+      }
+    }
+  }
+
+  if args.len() == 2 {
+    let name = args[0];
+    let command = args[1].trim_matches('"');
+    aliases.insert(name.to_string(), command.to_string());
+    return aliases.clone();
+  }
+
+  println!("invalid alias format");
+  aliases.clone()
+
 }

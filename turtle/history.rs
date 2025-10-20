@@ -6,7 +6,7 @@ use ratatui::{
     backend::CrosstermBackend,
     Terminal,
     widgets::{Block, Borders, List, ListItem, ListState},
-    layout::{Layout, Constraint, Direction},
+    // layout::{Layout, Constraint, Direction},
     style::{Style, Color},
 };
 
@@ -58,7 +58,7 @@ pub fn display_history_ui()  -> std::io::Result<()>{
 
     loop {
       terminal.draw(|f| {
-        let size = f.size();
+        let size = f.area();
         let block = Block::default().borders(Borders::ALL).title("Command History");
 
         let items: Vec<ListItem> = history.iter().skip(offset).take((size.height - 2) as usize).map(|entry| {
@@ -107,11 +107,20 @@ pub fn clear_history() -> io::Result<()> {
         .write(true)
         .truncate(true)
         .open(history_path)?;
+
+    // check if the .turtle_history.txt file exists and clear it too
+    let txt_history_path = home.join(".turtle_history.txt");
+    if txt_history_path.exists() {
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(txt_history_path)?;
+    }
     Ok(())
 }
 
 pub async fn handle_key_events() {
-  let mut rl = rustyline::DefaultEditor::new().unwrap();
   let history = load_history().unwrap_or_default();
   let mut history_index = history.len();
   let mut input = String::new();
@@ -155,7 +164,7 @@ pub async fn handle_key_events() {
   }
 }
 
-pub fn export_history_for_rustyline(json_path: &str, txt_path: &str) -> io::Result<()> {
+pub fn export_history_for_rustyline(txt_path: &str) -> io::Result<()> {
     let history = load_history()?;
     let mut file = OpenOptions::new()
         .create(true)

@@ -1,6 +1,5 @@
 
 use chrono::Local;
-// use fallible::hostname;
 
 pub fn expand_prompt_macros(prompt: &str) -> String {
   let username = whoami::username();
