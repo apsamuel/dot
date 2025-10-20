@@ -6,6 +6,7 @@ mod types; // shared structs/enums
 
 mod builtin; // built-in commands
 mod widgets; // TUI widgets
+mod themes; // theme management
 
 mod prompt; // prompt handling
 
@@ -13,57 +14,65 @@ use clap::Parser;
 use std::process::{Command, Stdio};
 use uuid::Uuid;
 use rustyline::config::{Config, EditMode};
-use rustyline::{DefaultEditor as Editor, Result};
+use rustyline::{DefaultEditor as Editor};
 
 use crate::config::{load_config, set_shell_vars};
-use crate::input::{expand_env_vars, expand_tilde};
+use crate::input::{expand_env_vars, expand_tilde, expand_single_dot, expand_double_dot};
 use crate::history::{log_history};
 use crate::utils::{now_unix};
 use crate::types::{CommandRequest, CommandResponse, TurtleArgs };
 use crate::prompt::{expand_prompt_macros};
-use crossterm::event::{self, Event, KeyCode};
 
 
-fn main() {
-    let prog_args = TurtleArgs::parse();
-
-    set_shell_vars();
+#[tokio::main]
+async fn main() {
+    let mut aliases: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+    let _pid = std::process::id();
+    // get start time for timestamps
+    let _start_time = now_unix();
+    let turtle_args = TurtleArgs::parse();
     let config = load_config(
-        prog_args.verbose
+        turtle_args.verbose
     );
-    // println!("Current config: {:?}", config);
+    let turtle_theme = std::env::var("TURTLE_THEME").unwrap_or_else(|_| "solarized_dark".into());
+    let prompt = if let Some(cfg) = &config {
+        cfg.prompt.clone().unwrap_or_else(|| "turtle> ".to_string())
+    } else {
+        "turtle> ".to_string()
+    };
+
+    crate::themes::apply_theme(&mut std::io::stdout(), &turtle_theme).ok();
+    set_shell_vars();
+
+    // println!("Current prompt: {:?}", prompt);
     println!("Welcome to Turtle Shell! 🐢");
 
 
-    let readline_config = Config::builder()
+    let rl_config = Config::builder()
         .edit_mode(EditMode::Vi)
         .build();
+    let mut rl = Editor::with_config(rl_config).unwrap();
 
-
-
-    let mut rl = Editor::with_config(readline_config).unwrap();
-
+    /*
+    // Async key event handling for history navigation
+    */
     loop {
         let history = crate::history::load_history().unwrap_or_default();
-
-
         // we need to maintain a plain text history file for rustyline
         crate::history::export_history_for_rustyline(
-            &format!("{}/.turtle_history.json", dirs::home_dir().unwrap().display()),
             &format!("{}/.turtle_history.txt", dirs::home_dir().unwrap().display()),
         ).ok();
         rl.load_history(&format!("{}/.turtle_history.txt", dirs::home_dir().unwrap().display())).ok();
-        let mut history_index = history.len(); // start at the end of history
+        let mut _history_index = history.len(); // start at the end of history
 
         let prompt = expand_prompt_macros(
-            &std::env::var("TURTLE_PROMPT").unwrap_or_else(|_| "turtle> ".to_string())
+            &prompt,
         );
         let readline = rl.readline(&prompt);
 
         // use readline to get user input
         let input = match readline {
             Ok(line) => {
-                // rl.add_history_entry(line.as_str()).unwrap_or(());
                 line
             }
             Err(rustyline::error::ReadlineError::Interrupted) => {
@@ -90,6 +99,8 @@ fn main() {
         // expand env vars and tilde in input
         let input = expand_env_vars(input);
         let input = expand_tilde(&input);
+        let input: String = expand_double_dot(&input);
+        let input: String = expand_single_dot(&input);
 
         // split input into command and args
         let mut parts = input.split_whitespace();
@@ -103,6 +114,8 @@ fn main() {
             let arg = expand_env_vars(arg);
             expand_tilde(&arg)
         }).collect();
+
+        println!("Executing command: {} with args: {:?}", cmd, args);
 
         if input.trim() == "%(history)" {
             let _ = crate::history::display_history_ui();
@@ -126,15 +139,16 @@ fn main() {
             let _ = crate::widgets::display_text_editor_ui();
             continue;
         }
+
         if input.trim() == "%(terminal)" {
             let _ = crate::widgets::display_terminal_ui();
             continue;
         }
 
-        // process built-in commands
+
+        // process builtin commands
         match cmd {
             "cd" => {
-                // let args: Vec<&str> = parts.collect();
                 let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
                 builtin::builtin_cd(&arg_refs);
                 continue;
@@ -146,9 +160,13 @@ fn main() {
                 builtin::builtin_history();
                 continue;
             }
+            "alias" => {
+                let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+                aliases = builtin::builtin_alias(&mut aliases, &arg_refs);
+                continue;
+            }
             _ => {}
         }
-
 
         let id = Uuid::new_v4().to_string();
         let timestamp = now_unix();

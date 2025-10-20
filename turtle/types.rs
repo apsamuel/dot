@@ -1,12 +1,14 @@
 
 use serde::{Serialize, Deserialize};
 use clap::Parser;
+use crossterm::style::Color;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TurtleConfig {
-  pub prompt: Option<String>,
-  pub aliases: Option<std::collections::HashMap<String, String>>,
-
+    pub prompt: Option<String>,
+    pub aliases: Option<std::collections::HashMap<String, String>>,
+    pub history_size: Option<usize>,
+    pub theme: Option<String>,
 }
 
 #[derive(Parser, Debug)]
@@ -34,4 +36,15 @@ pub struct CommandResponse {
     pub errors: String,
     pub timestamp: u64,
     pub event: &'static str,
+}
+
+
+// #[derive(Debug)]
+pub struct TurtleTheme {
+    pub foreground: Color,
+    pub background: Color,
+    pub text: Color,
+    pub cursor: Color,
+    pub selection: Color,
+    // pub attributes: Vec<&'static str>,
 }
