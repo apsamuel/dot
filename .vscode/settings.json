@@ -1,7 +1,5 @@
 {
   "rust-analyzer.linkedProjects": [
-
     "${workspaceFolder}/turtle/Cargo.toml",
-    "./turtle/Cargo.toml"
   ]
 }
