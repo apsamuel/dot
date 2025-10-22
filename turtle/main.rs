@@ -3,6 +3,7 @@ mod input; // input handling (env var and tilde expansion)
 mod history; // command history logging
 mod utils; // utility functions
 mod types; // shared structs/enums
+mod interpreter; // turtle shell interpreter
 
 mod builtin; // built-in commands
 mod widgets; // TUI widgets
@@ -20,16 +21,31 @@ use crate::config::{load_config, set_shell_vars};
 use crate::input::{expand_env_vars, expand_tilde, expand_single_dot, expand_double_dot};
 use crate::history::{log_history};
 use crate::utils::{now_unix};
-use crate::types::{CommandRequest, CommandResponse, TurtleArgs };
+use crate::types::{CommandRequest, CommandResponse, TurtleArgs};
 use crate::prompt::{expand_prompt_macros};
+use crate::interpreter::{TurtleParser};
 
+
+fn _test_parser() {
+    let input = "a + 42";
+    let tokens = crate::interpreter::lex(input);
+    println!("Tokens: {:?}", tokens);
+
+    let mut parser = TurtleParser::new(tokens);
+    let expr = parser.parse_expr();
+
+    match expr {
+        Some(e) => println!("Parsed expression: {:?}", e),
+        None => println!("Failed t parse expression"),
+    }
+}
 
 #[tokio::main]
 async fn main() {
+    // test_parser();
+    let _start_time = now_unix();
     let mut aliases: std::collections::HashMap<String, String> = std::collections::HashMap::new();
     let _pid = std::process::id();
-    // get start time for timestamps
-    let _start_time = now_unix();
     let turtle_args = TurtleArgs::parse();
     let config = load_config(
         turtle_args.verbose
@@ -41,10 +57,12 @@ async fn main() {
         "turtle> ".to_string()
     };
 
+    crate::config::load_aliases(&mut aliases, &config);
+
     crate::themes::apply_theme(&mut std::io::stdout(), &turtle_theme).ok();
     set_shell_vars();
 
-    // println!("Current prompt: {:?}", prompt);
+    // Welcome message
     println!("Welcome to Turtle Shell! 🐢");
 
 
@@ -53,10 +71,9 @@ async fn main() {
         .build();
     let mut rl = Editor::with_config(rl_config).unwrap();
 
-    /*
-    // Async key event handling for history navigation
-    */
+    // Main REPL loop
     loop {
+
         let history = crate::history::load_history().unwrap_or_default();
         // we need to maintain a plain text history file for rustyline
         crate::history::export_history_for_rustyline(
@@ -102,7 +119,14 @@ async fn main() {
         let input: String = expand_double_dot(&input);
         let input: String = expand_single_dot(&input);
 
-        // split input into command and args
+        let tokens: Vec<crate::types::TurtleToken> = crate::interpreter::lex(&input);
+        println!("Input Tokens: {:?}", tokens);
+        let mut parser = TurtleParser::new(tokens);
+        let expression = parser.parse_expr();
+        println!("Input Expression: {:?}", expression);
+
+        // split input into command and args by whitespace
+        // TODO: replace with shlex to properly handle quoted args and remain POSIX compliant
         let mut parts = input.split_whitespace();
         let cmd = match parts.next() {
             Some(c) => c,
@@ -112,11 +136,14 @@ async fn main() {
         // collect remaining parts as args vector, each arg also needs to have env vars and tilde expanded
         let args: Vec<String> = parts.map(|arg| {
             let arg = expand_env_vars(arg);
-            expand_tilde(&arg)
+            expand_tilde(&arg);
+            expand_double_dot(&arg);
+            expand_single_dot(&arg)
         }).collect();
 
-        println!("Executing command: {} with args: {:?}", cmd, args);
 
+        // handle special commands for widgets
+        // TODO: refactor into builtin commands
         if input.trim() == "%(history)" {
             let _ = crate::history::display_history_ui();
             continue;
@@ -165,8 +192,32 @@ async fn main() {
                 aliases = builtin::builtin_alias(&mut aliases, &arg_refs);
                 continue;
             }
+            "test" => {
+                let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+                let operation = arg_refs.get(0).unwrap_or(&"");
+                let arg_refs = if operation.starts_with('-') {
+                    arg_refs[1..].to_vec()
+                } else {
+                    arg_refs.clone()
+                };
+                let result = builtin::builtin_test(operation.to_string(), arg_refs);
+                // TODO: we need to set the exit code of the last command here
+                println!("{}", if result { "true" } else { "false" });
+                continue;
+            }
             _ => {}
         }
+
+        // translate aliases to their commands
+        let (cmd, args) = if let Some(alias_command) = aliases.get(cmd) {
+            let mut alias_parts = alias_command.split_whitespace();
+            let alias_cmd = alias_parts.next().unwrap_or(cmd);
+            let mut alias_args: Vec<String> = alias_parts.map(|s| s.to_string()).collect();
+            alias_args.extend(args);
+            (alias_cmd, alias_args)
+        } else {
+            (cmd, args)
+        };
 
         let id = Uuid::new_v4().to_string();
         let timestamp = now_unix();
@@ -177,7 +228,7 @@ async fn main() {
             command: cmd.to_string(),
             args: args.iter().map(|s| s.to_string()).collect(),
             timestamp,
-            event: "command_request",
+            event: "command_request".to_string(),
         };
 
 
@@ -185,8 +236,8 @@ async fn main() {
         let status = Command::new(cmd)
             .args(&args)
             .stdin(Stdio::inherit())
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
+            // .stdout(Stdio::inherit())
+            // .stderr(Stdio::inherit())
             .output();
 
         // Build the command response
@@ -201,7 +252,7 @@ async fn main() {
                     output: stdout,
                     errors: stderr,
                     timestamp: now_unix(),
-                    event: "command_response",
+                    event: "command_response".to_string(),
                 }
             }
 
@@ -213,7 +264,7 @@ async fn main() {
                     output: "".to_string(),
                     errors: e.to_string(),
                     timestamp: now_unix(),
-                    event: "command_response",
+                    event: "command_response".to_string(),
                 }
             }
         };
@@ -226,8 +277,8 @@ async fn main() {
         println!("{}", command_response.output);
 
         // Log the command request and response to history
-        log_history(&command_request);
-        log_history(&command_response);
+        log_history(&command_request).await;
+        log_history(&command_response).await;
 
         if let Err(e) = status {
             eprintln!("turtle: command not found: {} ({})", cmd, e);

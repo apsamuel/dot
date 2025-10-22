@@ -58,6 +58,8 @@ static TURTLE_THEMES: Lazy<HashMap<&'static str, &'static crate::types::TurtleTh
 });
 
 // this should now take a string theme name and return the corresponding TurtleTheme struct
+// tokio::main
+// #[tokio::main]
 pub fn apply_theme<W: Write>(writer: &mut W, theme_name: &str) -> io::Result<()> {
     let theme = TURTLE_THEMES.get(theme_name).or_else(|| TURTLE_THEMES.get(DEFAULT_THEME));
     let theme = match theme {

@@ -1,3 +1,6 @@
+/// Functions for logging and displaying command history
+/// Uses a JSON file located at ~/.turtle_history.json
+/// to store command requests and responses
 use std::fs::{OpenOptions};
 use std::io::{self, Write};
 use serde::{Serialize};
@@ -16,7 +19,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-pub fn log_history<T: Serialize>(entry: &T) {
+pub async fn log_history<T: Serialize>(entry: &T) {
     let home = dirs::home_dir().unwrap();
     let history_path = home.join(".turtle_history.json");
     let mut file = OpenOptions::new()
@@ -42,8 +45,6 @@ pub fn load_history() -> io::Result<Vec<serde_json::Value>> {
     Ok(history)
 }
 
-
-
 pub fn display_history_ui()  -> std::io::Result<()>{
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -51,6 +52,21 @@ pub fn display_history_ui()  -> std::io::Result<()>{
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let history = load_history().unwrap_or_default();
+    // collect onlly the CommandRequest entries
+    // let command_requests: Vec<crate::types::CommandRequest> = history.iter().filter_map(|entry| {
+    //     if entry.get("event").and_then(|e| e.as_str()) == Some("command_request") {
+    //         serde_json::from_value(entry.clone()).ok()
+    //     } else {
+    //         None
+    //     }
+    // }).collect();
+    // let command_responses: Vec<crate::types::CommandResponse> = history.iter().filter_map(|entry| {
+    //     if entry.get("event").and_then(|e| e.as_str()) == Some("command_response") {
+    //         serde_json::from_value(entry.clone()).ok()
+    //     } else {
+    //         None
+    //     }
+    // }).collect();
 
     let mut offset = 0;
     let mut state = ListState::default();
@@ -136,7 +152,6 @@ pub async fn handle_key_events() {
                 if let Some(cmd) = entry.get("command") {
                   input = cmd.as_str().unwrap_or("").to_string();
                   println!("Setting input to: {}", input);
-                  // rl.replace_line(&input, 0).unwrap();
                 }
               }
             }
@@ -148,13 +163,12 @@ pub async fn handle_key_events() {
                 if let Some(cmd) = entry.get("command") {
                   input = cmd.as_str().unwrap_or("").to_string();
                   println!("Setting input to: {}", input);
-                  // rl.replace_line(&input, 0).unwrap();
+
                 }
               }
             } else {
               input.clear();
               println!("Setting input to: {}", input);
-              // rl.replace_line(&input, 0).unwrap();
             }
           }
           _ => {}
