@@ -4,6 +4,7 @@ mod history; // command history logging
 mod utils; // utility functions
 mod types; // shared structs/enums
 mod interpreter; // turtle shell interpreter
+mod shell ; // main shell struct
 
 mod builtin; // built-in commands
 mod widgets; // TUI widgets

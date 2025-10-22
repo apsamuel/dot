@@ -156,7 +156,7 @@ pub enum TurtleExpression {
         object: Box<TurtleExpression>,
         property: String,
     },
-    Command {
+    Executable {
         name: String,
         args: Vec<TurtleExpression>,
     },
