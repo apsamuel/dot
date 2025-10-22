@@ -2,7 +2,7 @@ use clap::Parser;
 use crossterm::style::Color;
 use serde::{Deserialize, Serialize};
 
-/// Configuration for the Turtle shell
+/// Represents YAML configuration for the Turtle shell
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TurtleConfig {
     pub prompt: Option<String>,
@@ -11,7 +11,7 @@ pub struct TurtleConfig {
     pub theme: Option<String>,
 }
 
-//// Command line arguments available to the Turtle shell
+/// Represents command line arguments available to the Turtle shell
 #[derive(Parser, Debug)]
 #[command(name = "turtle", about = "A simple shell implemented in Rust")]
 pub struct TurtleArgs {
@@ -93,7 +93,7 @@ pub enum TurtleToken {
 }
 
 #[derive(Debug, Clone)]
-// #[allow(dead_code)]
+#[allow(dead_code)] //mfor now until we use all variants
 pub enum TurtleExpression {
     // Literal values
     Number(f64),
@@ -116,7 +116,7 @@ pub enum TurtleExpression {
         right: Box<TurtleExpression>,
     },
     // If Control Flow - ex: if cond { ... } else { ... } or if cond { ... }
-    IfCond {
+    IfCondition {
         condition: Box<TurtleExpression>,
         then_branch: Box<TurtleExpression>,
         else_branch: Option<Box<TurtleExpression>>,
@@ -131,7 +131,7 @@ pub enum TurtleExpression {
         iterable: Box<TurtleExpression>,
         body: Box<TurtleExpression>,
     },
-    Regex {
+    RegularExpression {
         pattern: String,
         flags: Option<String>,
     },
@@ -154,7 +154,7 @@ pub enum TurtleExpression {
         object: Box<TurtleExpression>,
         property: String,
     },
-    CommandCall {
+    Command {
         name: String,
         args: Vec<TurtleExpression>,
     },
