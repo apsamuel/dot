@@ -12,19 +12,19 @@ mod themes; // theme management
 
 mod prompt; // prompt handling
 
-use clap::Parser;
-use std::process::{Command, Stdio};
-use uuid::Uuid;
-use rustyline::config::{Config, EditMode};
-use rustyline::{DefaultEditor as Editor};
+use clap::Parser; // command line argument parsing
+use std::process::{Command, Stdio}; // command execution
+use uuid::Uuid; // unique ID generation
+use rustyline::config::{Config, EditMode};  // readline configuration
+use rustyline::{DefaultEditor as Editor}; // readline editor configuration
 
-use crate::config::{load_config, set_shell_vars};
-use crate::input::{expand_env_vars, expand_tilde, expand_single_dot, expand_double_dot};
-use crate::history::{log_history};
-use crate::utils::{now_unix};
-use crate::types::{CommandRequest, CommandResponse, TurtleArgs};
-use crate::prompt::{expand_prompt_macros};
-use crate::interpreter::{TurtleParser};
+use crate::config::{load_config, set_shell_vars}; // config functions
+use crate::input::{expand_env_vars, expand_tilde, expand_single_dot, expand_double_dot}; // input expansion
+use crate::history::{log_history}; // history logging
+use crate::utils::{now_unix}; // utility functions
+use crate::types::{CommandRequest, CommandResponse, TurtleArgs};    // shared types
+use crate::prompt::{expand_prompt_macros}; // prompt handling
+use crate::interpreter::{TurtleParser}; // interpreter
 
 
 fn _test_parser() {
@@ -49,7 +49,7 @@ async fn main() {
     let _pid = std::process::id();
     let turtle_args = TurtleArgs::parse();
     let config = load_config(
-        turtle_args.verbose
+        turtle_args.debug
     );
     let turtle_theme = std::env::var("TURTLE_THEME").unwrap_or_else(|_| "solarized_dark".into());
     let prompt = if let Some(cfg) = &config {
