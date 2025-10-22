@@ -112,6 +112,80 @@ impl TurtleParser {
         None
     }
 
+    /// parse arrays
+    /// ex: [expr1, expr2, expr3]
+    fn _parse_array(&mut self) -> Option<crate::types::TurtleExpression> {
+        if let crate::types::TurtleToken::BracketOpen = self.peek() {
+            self.next(); // consume '['
+            let mut elements = Vec::new();
+            while !matches!(
+                self.peek(),
+                crate::types::TurtleToken::BracketClose | crate::types::TurtleToken::Eof
+            ) {
+                if let Some(expr) = self.parse_expr() {
+                    elements.push(expr);
+                }
+                if let crate::types::TurtleToken::Comma = self.peek() {
+                    self.next(); // consume ','
+                } else {
+                    break;
+                }
+            }
+            if let crate::types::TurtleToken::BracketClose = self.peek() {
+                self.next(); // consume ']'
+                return Some(crate::types::TurtleExpression::Array(elements));
+            } else {
+                return None; // expected ']'
+            }
+        }
+        None
+    }
+
+    /// parse objects
+    /// ex: { key1: value1, key2: value2 }
+    fn _parse_object(&mut self) -> Option<crate::types::TurtleExpression> {
+        if let crate::types::TurtleToken::BraceOpen = self.peek() {
+            self.next(); // consume '{'
+            let mut properties = Vec::new();
+            while !matches!(
+                self.peek(),
+                crate::types::TurtleToken::BraceClose | crate::types::TurtleToken::Eof
+            ) {
+                // Get the key as a cloned value
+                let key_token = self.next().clone();
+                let key = if let crate::types::TurtleToken::Identifier(ref k) = key_token {
+                    k.clone()
+                } else {
+                    return None; // expected identifier key
+                };
+
+                if let crate::types::TurtleToken::Colon = self.peek() {
+                    self.next(); // consume ':'
+                    if let Some(value) = self.parse_expr() {
+                        properties.push((key, value));
+                    } else {
+                        return None; // expected value expression
+                    }
+                } else {
+                    return None; // expected ':'
+                }
+
+                if let crate::types::TurtleToken::Comma = self.peek() {
+                    self.next(); // consume ','
+                } else {
+                    break;
+                }
+            }
+            if let crate::types::TurtleToken::BraceClose = self.peek() {
+                self.next(); // consume '}'
+                return Some(crate::types::TurtleExpression::Object(properties));
+            } else {
+                return None; // expected '}'
+            }
+        }
+        None
+    }
+
     /// parse function calls: foo(arg1, arg2, ...)
     fn parse_function_call(&mut self) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::Identifier(func_name) = self.peek() {
