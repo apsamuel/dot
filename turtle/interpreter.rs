@@ -469,166 +469,164 @@ pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
     tokens
 }
 
-
 pub struct TurtleInterpreter {
-  input: String,
-  parser: Option<TurtleParser>,
+    input: String,
+    parser: Option<TurtleParser>,
 }
 
 impl TurtleInterpreter {
-  pub fn new(parser: Option<TurtleParser>, input: String) -> Self {
-    TurtleInterpreter { parser, input }
-  }
+    pub fn new(parser: Option<TurtleParser>, input: String) -> Self {
+        TurtleInterpreter { parser, input }
+    }
 
-  pub fn interpret(&mut self) -> Option<crate::types::TurtleExpression> {
-    let tokens = lex(&self.input);
-    let mut parser = TurtleParser::new(tokens);
-    parser.parse_expr()
-  }
+    pub fn interpret(&mut self) -> Option<crate::types::TurtleExpression> {
+        let tokens = lex(&self.input);
+        let mut parser = TurtleParser::new(tokens);
+        parser.parse_expr()
+    }
 
+    pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
+        let mut tokens = Vec::new();
+        let mut chars = input.chars().peekable();
+        while let Some(&c) = chars.peek() {
+            match c {
+                '(' => {
+                    tokens.push(crate::types::TurtleToken::ParenOpen);
+                    chars.next();
+                }
+                ')' => {
+                    tokens.push(crate::types::TurtleToken::ParenClose);
+                    chars.next();
+                }
+                '{' => {
+                    tokens.push(crate::types::TurtleToken::BraceOpen);
+                    chars.next();
+                }
+                '}' => {
+                    tokens.push(crate::types::TurtleToken::BraceClose);
+                    chars.next();
+                }
+                '[' => {
+                    tokens.push(crate::types::TurtleToken::BracketOpen);
+                    chars.next();
+                }
+                ']' => {
+                    tokens.push(crate::types::TurtleToken::BracketClose);
+                    chars.next();
+                }
+                ':' => {
+                    tokens.push(crate::types::TurtleToken::Colon);
+                    chars.next();
+                }
+                '-' => {
+                    chars.next();
+                    if let Some(&'>') = chars.peek() {
+                        tokens.push(crate::types::TurtleToken::Arrow);
+                        chars.next();
+                    } else {
+                        tokens.push(crate::types::TurtleToken::Operator("-".to_string()));
+                    }
+                }
+                ',' => {
+                    tokens.push(crate::types::TurtleToken::Comma);
+                    chars.next();
+                }
 
-  pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
-      let mut tokens = Vec::new();
-      let mut chars = input.chars().peekable();
-      while let Some(&c) = chars.peek() {
-          match c {
-              '(' => {
-                  tokens.push(crate::types::TurtleToken::ParenOpen);
-                  chars.next();
-              }
-              ')' => {
-                  tokens.push(crate::types::TurtleToken::ParenClose);
-                  chars.next();
-              }
-              '{' => {
-                  tokens.push(crate::types::TurtleToken::BraceOpen);
-                  chars.next();
-              }
-              '}' => {
-                  tokens.push(crate::types::TurtleToken::BraceClose);
-                  chars.next();
-              }
-              '[' => {
-                  tokens.push(crate::types::TurtleToken::BracketOpen);
-                  chars.next();
-              }
-              ']' => {
-                  tokens.push(crate::types::TurtleToken::BracketClose);
-                  chars.next();
-              }
-              ':' => {
-                  tokens.push(crate::types::TurtleToken::Colon);
-                  chars.next();
-              }
-              '-' => {
-                  chars.next();
-                  if let Some(&'>') = chars.peek() {
-                      tokens.push(crate::types::TurtleToken::Arrow);
-                      chars.next();
-                  } else {
-                      tokens.push(crate::types::TurtleToken::Operator("-".to_string()));
-                  }
-              }
-              ',' => {
-                  tokens.push(crate::types::TurtleToken::Comma);
-                  chars.next();
-              }
+                // parens define a function call
+                ' ' | '\t' | '\n' => {
+                    chars.next();
+                }
+                '"' => {
+                    chars.next(); // skip opening quote
+                    let mut s = String::new();
+                    while let Some(&d) = chars.peek() {
+                        if d == '"' {
+                            chars.next();
+                            break;
+                        } else {
+                            s.push(d);
+                            chars.next();
+                        }
+                    }
+                    tokens.push(crate::types::TurtleToken::String(s));
+                }
+                '0'..='9' => {
+                    let mut num = String::new();
+                    while let Some(&d) = chars.peek() {
+                        if d.is_ascii_digit() {
+                            num.push(d);
+                            chars.next();
+                        } else {
+                            break;
+                        }
+                    }
+                    tokens.push(crate::types::TurtleToken::Number(num.parse().unwrap()))
+                }
+                _ if c.is_alphabetic() || c == "_".chars().next().unwrap() => {
+                    let mut ident = String::new();
+                    while let Some(&d) = chars.peek() {
+                        if d.is_alphanumeric() || d == "_".chars().next().unwrap() {
+                            ident.push(d);
+                            chars.next();
+                        } else {
+                            break;
+                        }
+                    }
+                    if ident == "True" {
+                        tokens.push(crate::types::TurtleToken::Boolean(true));
+                    } else if ident == "False" {
+                        tokens.push(crate::types::TurtleToken::Boolean(false));
+                    } else {
+                        // check if ident is a builtin function
+                        // if TURTLE_BUILTIN_FUNCTIONS.contains(&ident.as_str()) {
+                        //   tokens.push(crate::types::TurtleToken::Builtin(ident));
+                        //   continue;
+                        // }
 
-              // parens define a function call
-              ' ' | '\t' | '\n' => {
-                  chars.next();
-              }
-              '"' => {
-                  chars.next(); // skip opening quote
-                  let mut s = String::new();
-                  while let Some(&d) = chars.peek() {
-                      if d == '"' {
-                          chars.next();
-                          break;
-                      } else {
-                          s.push(d);
-                          chars.next();
-                      }
-                  }
-                  tokens.push(crate::types::TurtleToken::String(s));
-              }
-              '0'..='9' => {
-                  let mut num = String::new();
-                  while let Some(&d) = chars.peek() {
-                      if d.is_ascii_digit() {
-                          num.push(d);
-                          chars.next();
-                      } else {
-                          break;
-                      }
-                  }
-                  tokens.push(crate::types::TurtleToken::Number(num.parse().unwrap()))
-              }
-              _ if c.is_alphabetic() || c == "_".chars().next().unwrap() => {
-                  let mut ident = String::new();
-                  while let Some(&d) = chars.peek() {
-                      if d.is_alphanumeric() || d == "_".chars().next().unwrap() {
-                          ident.push(d);
-                          chars.next();
-                      } else {
-                          break;
-                      }
-                  }
-                  if ident == "True" {
-                      tokens.push(crate::types::TurtleToken::Boolean(true));
-                  } else if ident == "False" {
-                      tokens.push(crate::types::TurtleToken::Boolean(false));
-                  } else {
-                      // check if ident is a builtin function
-                      // if TURTLE_BUILTIN_FUNCTIONS.contains(&ident.as_str()) {
-                      //   tokens.push(crate::types::TurtleToken::Builtin(ident));
-                      //   continue;
-                      // }
+                        // if TURTLE_KEYWORDS.contains(&ident.as_str()) {
+                        //   tokens.push(crate::types::TurtleToken::Keyword(ident));
+                        //   continue;
+                        // }
 
-                      // if TURTLE_KEYWORDS.contains(&ident.as_str()) {
-                      //   tokens.push(crate::types::TurtleToken::Keyword(ident));
-                      //   continue;
-                      // }
+                        // check if the ident is a command in the PATH
+                        // we need the first part only (before any spaces)
+                        // split ident by whitespace
+                        // let parts: Vec<&str> = ident.split_whitespace().collect();
+                        // let possible_command = parts[0];
+                        // let possible_args = &parts[1..];
+                        // println!("Possible command: {}", possible_command);
+                        // println!("Possible args: {:?}", possible_args);
+                        // if crate::utils::is_command_in_path(possible_command) {
+                        //   tokens.push(crate::types::TurtleToken::Command {
+                        //     name: possible_command.to_string(),
+                        //     args: possible_args.iter().map(|s| crate::types::TurtleToken::String(s.to_string())).collect(),
+                        //   });
+                        //   continue;
+                        // }
 
-                      // check if the ident is a command in the PATH
-                      // we need the first part only (before any spaces)
-                      // split ident by whitespace
-                      // let parts: Vec<&str> = ident.split_whitespace().collect();
-                      // let possible_command = parts[0];
-                      // let possible_args = &parts[1..];
-                      // println!("Possible command: {}", possible_command);
-                      // println!("Possible args: {:?}", possible_args);
-                      // if crate::utils::is_command_in_path(possible_command) {
-                      //   tokens.push(crate::types::TurtleToken::Command {
-                      //     name: possible_command.to_string(),
-                      //     args: possible_args.iter().map(|s| crate::types::TurtleToken::String(s.to_string())).collect(),
-                      //   });
-                      //   continue;
-                      // }
+                        tokens.push(crate::types::TurtleToken::Identifier(ident));
+                    }
+                }
+                _ if "+-*/=<>&|!".contains(c) => {
+                    let mut op = String::new();
+                    while let Some(&d) = chars.peek() {
+                        if "+-*/=<>&|!".contains(d) {
+                            op.push(d);
+                            chars.next();
+                        } else {
+                            break;
+                        }
+                    }
+                    tokens.push(crate::types::TurtleToken::Operator(op));
+                }
 
-                      tokens.push(crate::types::TurtleToken::Identifier(ident));
-                  }
-              }
-              _ if "+-*/=<>&|!".contains(c) => {
-                  let mut op = String::new();
-                  while let Some(&d) = chars.peek() {
-                      if "+-*/=<>&|!".contains(d) {
-                          op.push(d);
-                          chars.next();
-                      } else {
-                          break;
-                      }
-                  }
-                  tokens.push(crate::types::TurtleToken::Operator(op));
-              }
+                _ => {
+                    chars.next();
+                }
+            }
+        }
 
-              _ => {
-                  chars.next();
-              }
-          }
-      }
-
-      tokens.push(crate::types::TurtleToken::Eof);
-      tokens
-  }
+        tokens.push(crate::types::TurtleToken::Eof);
+        tokens
+    }
 }

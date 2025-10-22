@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 /// Represents YAML configuration for the Turtle shell
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TurtleConfig {
+    pub debug: bool,
     pub prompt: Option<String>,
     pub aliases: Option<std::collections::HashMap<String, String>>,
     pub history_size: Option<usize>,
@@ -15,9 +16,9 @@ pub struct TurtleConfig {
 #[derive(Parser, Clone, Debug)]
 #[command(name = "turtle", about = "A simple shell implemented in Rust")]
 pub struct TurtleArgs {
-    #[arg(short, long, help = "Enable verbose output")]
-    pub verbose: bool,
-    #[arg(long, help = "Returns turtle version")]
+    #[arg(short, long, help = "Enable debug output")]
+    pub debug: bool,
+    #[arg(short, long, help = "Returns turtle version")]
     pub version: bool,
 }
 
@@ -65,33 +66,28 @@ pub struct TurtleTheme {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)] //for now until we use all variants
+// #[allow(dead_code)] //for now until we use all variants
 pub enum TurtleToken {
-    Identifier(String),
-    Operator(String),
-    Number(f64),
-    String(String),
-    // Command{
-    //     name: String,
-    //     args: Vec<TurtleToken>
-    // },
-    Boolean(bool),
-    BracketOpen,
-    BracketClose,
-    BraceOpen,
-    BraceClose,
-    ParenOpen,
-    ParenClose,
-    Colon,
-    Arrow,
-    Keyword(String),
-    Builtin(String),
-    Comma,
-    Eof,
-    // Whitespace,
-    // Comment(String),
-    // Dot,
-    // CommandS
+    Arrow,              // process arrow '->'
+    Boolean(bool),      // True or False
+    BraceClose,         // }/
+    BraceOpen,          // {/
+    BracketClose,       // ]/
+    BracketOpen,        // [/
+    Builtin(String),    // built-in function names
+    Colon,              // :
+    Comma,              // ,
+    Eof,                // end of file/input
+    Identifier(String), // variable names
+    Keyword(String),    // if, else, while, for, func, return, break, continue
+    Number(f64),        // numeric literals
+    Operator(String),   // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, !
+    ParenClose,         // )/
+    ParenOpen,          // (/
+    String(String),     // string literals
+    Comment(String),
+    Dot,       // .
+    Semicolon, // ;
 }
 
 #[derive(Debug, Clone)]
@@ -155,6 +151,10 @@ pub enum TurtleExpression {
     MemberAccess {
         object: Box<TurtleExpression>,
         property: String,
+    },
+    BuiltinCall {
+        name: String,
+        args: Vec<TurtleExpression>,
     },
     Executable {
         name: String,
