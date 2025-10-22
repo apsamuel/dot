@@ -1,7 +1,10 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub fn now_unix() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs()
 }
 
 pub fn is_command_in_path(command: &str) -> bool {
@@ -16,7 +19,10 @@ pub fn is_command_in_path(command: &str) -> bool {
     false
 }
 
-pub fn translate_alias(aliases: &std::collections::HashMap<String, String>, input: &str) -> Option<String> {
+pub fn translate_alias(
+    aliases: &std::collections::HashMap<String, String>,
+    input: &str,
+) -> Option<String> {
     let parts: Vec<&str> = input.split_whitespace().collect();
     if let Some(alias_command) = aliases.get(parts[0]) {
         let mut command = alias_command.clone();

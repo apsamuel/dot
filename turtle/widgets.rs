@@ -4,10 +4,10 @@
 
 use ratatui::{
     backend::CrosstermBackend,
-    Terminal,
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Style},
     widgets::{Block, Borders},
-    layout::{Layout, Constraint, Direction},
-    style::{Style, Color},
+    Terminal,
 };
 
 use crossterm::{
@@ -45,7 +45,6 @@ pub fn display_terminal_ui() -> std::io::Result<()> {
         let cwd = std::env::current_dir()
             .map(|path| path.display().to_string())
             .unwrap_or_else(|_| "?".to_string());
-
 
         let status_line = format!("Turtle Terminal - CWD: {} - Press 'q' to quit", cwd);
 
@@ -88,14 +87,13 @@ pub fn display_terminal_ui() -> std::io::Result<()> {
                 match key.code {
                     KeyCode::Char('q') => break,
                     KeyCode::Char(c) => input.push(c),
-                    KeyCode::Backspace => { input.pop(); },
+                    KeyCode::Backspace => {
+                        input.pop();
+                    }
                     KeyCode::Enter => {
                         // Run the command and capture output
                         if !input.trim().is_empty() {
-                            let result = Command::new("sh")
-                                .arg("-c")
-                                .arg(input.trim())
-                                .output();
+                            let result = Command::new("sh").arg("-c").arg(input.trim()).output();
 
                             match result {
                                 Ok(cmd_out) => {
