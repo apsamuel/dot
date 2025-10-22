@@ -1,7 +1,6 @@
-
-use serde::{Serialize, Deserialize};
 use clap::Parser;
 use crossterm::style::Color;
+use serde::{Deserialize, Serialize};
 
 /// Configuration for the Turtle shell
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,7 +17,7 @@ pub struct TurtleConfig {
 pub struct TurtleArgs {
     #[arg(short, long, help = "Enable verbose output")]
     pub verbose: bool,
-    #[arg(long, help  = "Returns turtle version")]
+    #[arg(long, help = "Returns turtle version")]
     pub version: bool,
 }
 
@@ -53,7 +52,6 @@ pub enum HistoryEvent {
     #[serde(rename = "command_response")]
     CommandResponse(CommandResponse),
 }
-
 
 // #[derive(Debug)]
 pub struct TurtleTheme {
@@ -107,12 +105,12 @@ pub enum TurtleExpression {
     // Variables and operations
     Identifier(String),
     // Unary Operation - ex: -5, !true
-    UnaryOp {
+    UnaryExpression {
         op: String,
-        expr: Box<TurtleExpression>
+        expr: Box<TurtleExpression>,
     },
     // Binary Operation - ex: 1 + 2, x - 3
-    BinaryOp {
+    BinaryExpression {
         left: Box<TurtleExpression>,
         op: String,
         right: Box<TurtleExpression>,
@@ -131,14 +129,14 @@ pub enum TurtleExpression {
     ForLoop {
         iterator: String,
         iterable: Box<TurtleExpression>,
-        body: Box<TurtleExpression>
+        body: Box<TurtleExpression>,
     },
     Regex {
         pattern: String,
-        flags: Option<String>
+        flags: Option<String>,
     },
     InfiniteLoop {
-        body: Box<TurtleExpression>
+        body: Box<TurtleExpression>,
     },
     FuncDef {
         name: String,
@@ -146,14 +144,18 @@ pub enum TurtleExpression {
         body: Box<TurtleExpression>,
     },
     CodeBlock {
-        expressions: Vec<TurtleExpression>
+        expressions: Vec<TurtleExpression>,
     },
     FuncCall {
         func: String,
-        args: Vec<TurtleExpression>
+        args: Vec<TurtleExpression>,
+    },
+    MemberAccess {
+        object: Box<TurtleExpression>,
+        property: String,
     },
     CommandCall {
         name: String,
-        args: Vec<TurtleExpression>
-    }
+        args: Vec<TurtleExpression>,
+    },
 }

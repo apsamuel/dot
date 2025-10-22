@@ -3,10 +3,10 @@ pub struct NeuralNetwork {
 }
 
 impl NeuralNetwork {
-  pub fn forward(&self, mut input: Vec<f32>) -> Vec<f32> {
-    for layer in &self.layers {
-        input = layer.forward(input);
+    pub fn forward(&self, mut input: Vec<f32>) -> Vec<f32> {
+        for layer in &self.layers {
+            input = layer.forward(input);
+        }
+        input
     }
-    input
-  }
 }

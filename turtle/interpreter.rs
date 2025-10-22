@@ -34,40 +34,8 @@ impl TurtleParser {
         tok
     }
 
-    fn parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
-        match self.peek() {
-            crate::types::TurtleToken::Number(_)
-            | crate::types::TurtleToken::String(_)
-            | crate::types::TurtleToken::Boolean(_) => self._parse_literal(),
-            crate::types::TurtleToken::Identifier(name) => {
-                let func_name = name.clone();
-                let mut args = Vec::new();
-                while !matches!(self.peek(), crate::types::TurtleToken::ParenClose | crate::types::TurtleToken::Eof) {
-                    if let Some(arg) = self.parse_expr() {
-                        args.push(arg);
-                    }
-                    if let crate::types::TurtleToken::Comma = self.peek() {
-                        self.next(); // consume ','
-                    } else {
-                        break;
-                    }
-                }
-                if let crate::types::TurtleToken::ParenOpen = self.peek() {
-                  self.next(); // consume ')'
-                  return Some(crate::types::TurtleExpression::FuncCall {
-                      func: func_name,
-                      args,
-                  });
-                } else {
-                  self.pos -= 1; // rewind if not a function call
-                  return Some(crate::types::TurtleExpression::Identifier(func_name));
-                }
-            }
-            _ => None,
-        }
-    }
-
-    fn _parse_literal(&mut self) -> Option<crate::types::TurtleExpression> {
+    /// parse literal values: numbers, strings, booleans
+    fn parse_literal(&mut self) -> Option<crate::types::TurtleExpression> {
         match self.next() {
             crate::types::TurtleToken::Number(n) => {
                 Some(crate::types::TurtleExpression::Number(*n))
@@ -82,13 +50,14 @@ impl TurtleParser {
         }
     }
 
+    /// parse unary expressions: -5, !true, ~false
     fn parse_unary(&mut self) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::Operator(op) = self.peek() {
             if op == "-" || op == "!" || op == "~" {
                 let op = op.clone();
                 self.next(); // consume operator
                 if let Some(expr) = self.parse_expr() {
-                    return Some(crate::types::TurtleExpression::UnaryOp {
+                    return Some(crate::types::TurtleExpression::UnaryExpression {
                         op,
                         expr: Box::new(expr),
                     });
@@ -100,6 +69,7 @@ impl TurtleParser {
         None
     }
 
+    /// parse binary expressions: 1 + 2, x - 3, "hello" + " world"
     fn parse_binary(
         &mut self,
         left: crate::types::TurtleExpression,
@@ -109,7 +79,7 @@ impl TurtleParser {
             self.next(); // consume operator
 
             if let Some(right) = self.parse_expr() {
-                return Some(crate::types::TurtleExpression::BinaryOp {
+                return Some(crate::types::TurtleExpression::BinaryExpression {
                     left: Box::new(left),
                     op,
                     right: Box::new(right),
@@ -121,6 +91,28 @@ impl TurtleParser {
         None
     }
 
+    /// parse member access: object.property
+    fn parse_member_access(
+        &mut self,
+        object: crate::types::TurtleExpression,
+    ) -> Option<crate::types::TurtleExpression> {
+        if let crate::types::TurtleToken::Operator(op) = self.peek() {
+            if op == "." {
+                self.next(); // consume '.'
+                if let crate::types::TurtleToken::Identifier(property) = self.next() {
+                    return Some(crate::types::TurtleExpression::MemberAccess {
+                        object: Box::new(object),
+                        property: property.clone(),
+                    });
+                } else {
+                    return None; // expected identifier after '.'
+                }
+            }
+        }
+        None
+    }
+
+    /// parse function calls: foo(arg1, arg2, ...)
     fn parse_function_call(&mut self) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::Identifier(func_name) = self.peek() {
             let func_name = func_name.clone();
@@ -156,6 +148,52 @@ impl TurtleParser {
             }
         }
         None
+    }
+
+    /// parse primary expressions: literals, identifiers, function calls
+    fn parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
+        match self.peek() {
+            crate::types::TurtleToken::Number(_)
+            | crate::types::TurtleToken::String(_)
+            | crate::types::TurtleToken::Boolean(_) => self.parse_literal(),
+
+            crate::types::TurtleToken::Identifier(name) => {
+                let func_name = name.clone();
+                self.next(); // consume identifier
+
+                // Only parse function call if next token is ParenOpen
+                if let crate::types::TurtleToken::ParenOpen = self.peek() {
+                    self.next(); // consume '('
+                    let mut args = Vec::new();
+                    while !matches!(
+                        self.peek(),
+                        crate::types::TurtleToken::ParenClose | crate::types::TurtleToken::Eof
+                    ) {
+                        if let Some(arg) = self.parse_expr() {
+                            args.push(arg);
+                        }
+                        if let crate::types::TurtleToken::Comma = self.peek() {
+                            self.next(); // consume ','
+                        } else {
+                            break;
+                        }
+                    }
+                    if let crate::types::TurtleToken::ParenClose = self.peek() {
+                        self.next(); // consume ')'
+                        return Some(crate::types::TurtleExpression::FuncCall {
+                            func: func_name,
+                            args,
+                        });
+                    } else {
+                        return None; // expected ')'
+                    }
+                } else {
+                    // Just an identifier
+                    return Some(crate::types::TurtleExpression::Identifier(func_name));
+                }
+            }
+            _ => None,
+        }
     }
 
     pub fn parse_expr(&mut self) -> Option<crate::types::TurtleExpression> {
@@ -239,18 +277,13 @@ impl TurtleParser {
             _ => None,
         };
 
-        // if let Some(expr) = self.parse_binary(left.unwrap()) {
-        //     return Some(expr);
-        // }
-
         if let Some(ref l) = left.clone() {
-          if let Some(expr) = self.parse_binary(l.clone()) {
-              return Some(expr);
-          }
+            if let Some(expr) = self.parse_binary(l.clone()) {
+                return Some(expr);
+            }
         }
 
         left
-
 
         // check for an operator
         // while let crate::types::TurtleToken::Operator(op) = self.peek() {
