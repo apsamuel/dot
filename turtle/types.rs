@@ -3,7 +3,7 @@ use crossterm::style::Color;
 use serde::{Deserialize, Serialize};
 
 /// Represents YAML configuration for the Turtle shell
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TurtleConfig {
     pub prompt: Option<String>,
     pub aliases: Option<std::collections::HashMap<String, String>>,
@@ -12,7 +12,7 @@ pub struct TurtleConfig {
 }
 
 /// Represents command line arguments available to the Turtle shell
-#[derive(Parser, Debug)]
+#[derive(Parser, Clone, Debug)]
 #[command(name = "turtle", about = "A simple shell implemented in Rust")]
 pub struct TurtleArgs {
     #[arg(short, long, help = "Enable verbose output")]
@@ -22,7 +22,7 @@ pub struct TurtleArgs {
 }
 
 /// Commands are sent as CommandRequest structs
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CommandRequest {
     pub id: String,
     pub command: String,
@@ -32,7 +32,7 @@ pub struct CommandRequest {
 }
 
 /// Responses are sent as CommandResponse structs
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CommandResponse {
     pub id: String,
     pub status: String,
@@ -44,7 +44,7 @@ pub struct CommandResponse {
 }
 
 /// Encapsulate both CommandRequest and CommandResponse
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "event")]
 pub enum _HistoryEvent {
     #[serde(rename = "command_request")]
@@ -53,7 +53,7 @@ pub enum _HistoryEvent {
     CommandResponse(CommandResponse),
 }
 
-// #[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)] //for now until we use all variants
 pub struct TurtleTheme {
     pub foreground: Color,
