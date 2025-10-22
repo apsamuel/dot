@@ -7,7 +7,7 @@ pub fn now_unix() -> u64 {
         .as_secs()
 }
 
-pub fn is_command_in_path(command: &str) -> bool {
+pub fn _is_command_in_path(command: &str) -> bool {
     if let Ok(paths) = std::env::var("PATH") {
         for path in paths.split(std::path::MAIN_SEPARATOR) {
             let full_path = std::path::Path::new(path).join(command);
@@ -19,7 +19,7 @@ pub fn is_command_in_path(command: &str) -> bool {
     false
 }
 
-pub fn translate_alias(
+pub fn _translate_alias(
     aliases: &std::collections::HashMap<String, String>,
     input: &str,
 ) -> Option<String> {

@@ -1,10 +1,10 @@
 // mod types;
 
-pub static TURTLE_BUILTIN_FUNCTIONS: &[&str] = &[
+pub static _TURTLE_BUILTIN_FUNCTIONS: &[&str] = &[
     "builtin", "alias", "print", "input", "len", "which", "whereis", "cd", "exit", "help",
 ];
 
-pub static TURTLE_KEYWORDS: &[&str] = &[
+pub static _TURTLE_KEYWORDS: &[&str] = &[
     // if (condition) { ... } else { ... } || if (condition) { ... }
     "if", "else", "while", "for", "fn", "return", "let", "true", "false",
 ];
@@ -92,7 +92,7 @@ impl TurtleParser {
     }
 
     /// parse member access: object.property
-    fn parse_member_access(
+    fn _parse_member_access(
         &mut self,
         object: crate::types::TurtleExpression,
     ) -> Option<crate::types::TurtleExpression> {

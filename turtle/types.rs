@@ -46,7 +46,7 @@ pub struct CommandResponse {
 /// Encapsulate both CommandRequest and CommandResponse
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "event")]
-pub enum HistoryEvent {
+pub enum _HistoryEvent {
     #[serde(rename = "command_request")]
     CommandRequest(CommandRequest),
     #[serde(rename = "command_response")]
@@ -54,6 +54,7 @@ pub enum HistoryEvent {
 }
 
 // #[derive(Debug)]
+#[allow(dead_code)] //for now until we use all variants
 pub struct TurtleTheme {
     pub foreground: Color,
     pub background: Color,
@@ -64,6 +65,7 @@ pub struct TurtleTheme {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)] //for now until we use all variants
 pub enum TurtleToken {
     Identifier(String),
     Operator(String),
@@ -93,7 +95,7 @@ pub enum TurtleToken {
 }
 
 #[derive(Debug, Clone)]
-#[allow(dead_code)] //mfor now until we use all variants
+#[allow(dead_code)] //for now until we use all variants
 pub enum TurtleExpression {
     // Literal values
     Number(f64),

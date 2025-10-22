@@ -136,7 +136,7 @@ pub fn clear_history() -> io::Result<()> {
     Ok(())
 }
 
-pub async fn handle_key_events() {
+pub async fn _handle_key_events() {
   let history = load_history().unwrap_or_default();
   let mut history_index = history.len();
   let mut input = String::new();
