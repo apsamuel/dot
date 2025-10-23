@@ -83,6 +83,20 @@ pub enum TurtleToken {
     Builtin(String),    // built-in function names
     Colon,              // :
     Comma,              // ,
+    Command{
+        name: String,
+        args: Vec<TurtleToken>,
+    },
+    ShortArgs{
+        name: String,
+        values: Vec<TurtleToken>,
+    },
+    LongArgs{
+        name: String,
+        values: Vec<TurtleToken>,
+    },
+    Path(String),
+
     Eof,                // end of file/input
     Identifier(String), // variable names
     Keyword(String),    // if, else, while, for, func, return, break, continue

@@ -92,22 +92,61 @@ impl TurtleParser {
         None
     }
 
+
+    /// parse function calls
+    /// ex: foo(arg1, arg2, ...)
+    fn parse_function_call(
+        &mut self,
+        expr: crate::types::TurtleExpression,
+    ) -> Option<crate::types::TurtleExpression> {
+        if let crate::types::TurtleToken::ParenOpen = self.peek() {
+            self.next(); // consume '('
+            let mut args = Vec::new();
+            while !matches!(
+                self.peek(),
+                crate::types::TurtleToken::ParenClose | crate::types::TurtleToken::Eof
+            ) {
+                if let Some(arg) = self.parse_expr() {
+                    args.push(arg);
+                }
+                if let crate::types::TurtleToken::Comma = self.peek() {
+                    self.next(); // consume ','
+                } else {
+                    break;
+                }
+            }
+            if let crate::types::TurtleToken::ParenClose = self.peek() {
+                self.next(); // consume ')'
+                             // Use expr as the function (can be Identifier or MemberAccess)
+                return Some(crate::types::TurtleExpression::FuncCall {
+                    func: match expr {
+                        crate::types::TurtleExpression::Identifier(ref name) => name.clone(),
+                        crate::types::TurtleExpression::MemberAccess { .. } => {
+                            format!("{:?}", expr)
+                        } // Or handle as needed
+                        _ => return None,
+                    },
+                    args,
+                });
+            }
+        }
+        None
+    }
+
     /// parse member access: object.property
     fn parse_member_access(
         &mut self,
-        object_name: String,
+        expr: crate::types::TurtleExpression,
     ) -> Option<crate::types::TurtleExpression> {
-        if let crate::types::TurtleToken::Operator(op) = self.peek() {
-            if op == "." {
-                self.next(); // consume '.'
-                if let crate::types::TurtleToken::Identifier(property) = self.peek() {
-                    let property = property.clone();
-                    self.next(); // consume property identifier
-                    return Some(crate::types::TurtleExpression::MemberAccess {
-                        object: Box::new(crate::types::TurtleExpression::Identifier(object_name)),
-                        property,
-                    });
-                }
+        if let crate::types::TurtleToken::Dot = self.peek() {
+            self.next(); // consume '.'
+            if let crate::types::TurtleToken::Identifier(property) = self.peek() {
+                let property = property.clone();
+                self.next(); // consume property identifier
+                return Some(crate::types::TurtleExpression::MemberAccess {
+                    object: Box::new(expr),
+                    property,
+                });
             }
         }
         None
@@ -115,7 +154,7 @@ impl TurtleParser {
 
     /// parse arrays
     /// ex: [expr1, expr2, expr3]
-    fn _parse_array(&mut self) -> Option<crate::types::TurtleExpression> {
+    fn parse_array(&mut self) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::BracketOpen = self.peek() {
             self.next(); // consume '['
             let mut elements = Vec::new();
@@ -144,7 +183,7 @@ impl TurtleParser {
 
     /// parse objects
     /// ex: { key1: value1, key2: value2 }
-    fn _parse_object(&mut self) -> Option<crate::types::TurtleExpression> {
+    fn parse_object(&mut self) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::BraceOpen = self.peek() {
             self.next(); // consume '{'
             let mut properties = Vec::new();
@@ -187,108 +226,72 @@ impl TurtleParser {
         None
     }
 
-    /// parse function calls
-    /// ex: foo(arg1, arg2, ...)
-    fn parse_function_call(&mut self, func_name: String) -> Option<crate::types::TurtleExpression> {
-        if let crate::types::TurtleToken::ParenOpen = self.peek() {
-            self.next(); // consume '('
-            let mut args = Vec::new();
-            while !matches!(
-                self.peek(),
-                crate::types::TurtleToken::ParenClose | crate::types::TurtleToken::Eof
-            ) {
-                if let Some(arg) = self.parse_expr() {
-                    args.push(arg);
-                }
-                if let crate::types::TurtleToken::Comma = self.peek() {
-                    self.next(); // consume ','
-                } else {
-                    break;
-                }
-            }
-            if let crate::types::TurtleToken::ParenClose = self.peek() {
-                self.next(); // consume ')'
-                return Some(crate::types::TurtleExpression::FuncCall {
-                    func: func_name,
-                    args,
-                });
-            } else {
-                return None; // expected ')'
-            }
-        }
-        None
-    }
-
-    /// parse primary expressions: literals, identifiers, function calls
-    fn __parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
-        match self.peek() {
-            crate::types::TurtleToken::Number(_)
-            | crate::types::TurtleToken::String(_)
-            | crate::types::TurtleToken::Boolean(_) => self.parse_literal(),
-
-            crate::types::TurtleToken::Identifier(name) => {
-                let func_name = name.clone();
-                self.next(); // consume identifier
-
-                // Only parse function call if next token is ParenOpen
-                if let crate::types::TurtleToken::ParenOpen = self.peek() {
-                    self.next(); // consume '('
-                    let mut args = Vec::new();
-                    while !matches!(
-                        self.peek(),
-                        crate::types::TurtleToken::ParenClose | crate::types::TurtleToken::Eof
-                    ) {
-                        if let Some(arg) = self.parse_expr() {
-                            args.push(arg);
-                        }
-                        if let crate::types::TurtleToken::Comma = self.peek() {
-                            self.next(); // consume ','
-                        } else {
-                            break;
-                        }
-                    }
-                    if let crate::types::TurtleToken::ParenClose = self.peek() {
-                        self.next(); // consume ')'
-                        return Some(crate::types::TurtleExpression::FuncCall {
-                            func: func_name,
-                            args,
-                        });
-                    } else {
-                        return None; // expected ')'
-                    }
-                } else {
-                    // Just an identifier
-                    return Some(crate::types::TurtleExpression::Identifier(func_name));
-                }
-            }
-            _ => None,
-        }
-    }
-
     fn parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
-        match self.peek() {
+        // Parse the initial literal, identifier, array, or object
+        let mut expr = match self.peek() {
+            // literals
             crate::types::TurtleToken::Number(_)
             | crate::types::TurtleToken::String(_)
             | crate::types::TurtleToken::Boolean(_) => self.parse_literal(),
-
+            // arrays & objects
+            crate::types::TurtleToken::BracketOpen => self.parse_array(),
+            crate::types::TurtleToken::BraceOpen => self.parse_object(),
+            // identifiers
             crate::types::TurtleToken::Identifier(name) => {
-                let ident_name = name.clone();
+                let ident = name.clone();
                 self.next(); // consume identifier
-                             // Try to parse as a function call first
-                if let Some(func_call) = self.parse_function_call(ident_name.clone()) {
-                    return Some(func_call);
-                }
-
-                // Try to parse a member access
-                if let Some(member_access) = self.parse_member_access(ident_name.clone()) {
-                    return Some(member_access);
-                }
-
-                // If not a function call, parse as identifier
-                return Some(crate::types::TurtleExpression::Identifier(ident_name));
+                Some(crate::types::TurtleExpression::Identifier(ident))
             }
+
             _ => None,
+        }?;
+
+        // Chain member access and function calls modularly
+        loop {
+            // Try member access
+            if let Some(member_expr) = self.parse_member_access(expr.clone()) {
+                expr = member_expr;
+                continue;
+            }
+            // Try function call
+            if let Some(call_expr) = self.parse_function_call(expr.clone()) {
+                expr = call_expr;
+                continue;
+            }
+            break;
         }
+
+        Some(expr)
+    }
+
+    fn _parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
+        let mut expr = match self.peek() {
+            crate::types::TurtleToken::Number(_)
+            | crate::types::TurtleToken::String(_)
+            | crate::types::TurtleToken::Boolean(_) => self.parse_literal(),
+            crate::types::TurtleToken::Identifier(name) => {
+                let ident = name.clone();
+                self.next();
+                Some(crate::types::TurtleExpression::Identifier(ident))
+            }
+            crate::types::TurtleToken::BracketOpen => self.parse_array(),
+            crate::types::TurtleToken::BraceOpen => self.parse_object(),
+            _ => None,
+        }?;
+
+        // Chain member access and function calls modularly
+        loop {
+            if let Some(member_expr) = self.parse_member_access(expr.clone()) {
+                expr = member_expr;
+                continue;
+            }
+            if let Some(call_expr) = self.parse_function_call(expr.clone()) {
+                expr = call_expr;
+                continue;
+            }
+            break;
+        }
+        Some(expr)
     }
 
     /// implements parsing rules to build TurtleExpression AST
@@ -342,12 +345,16 @@ impl TurtleParser {
     }
 }
 
+
+
 // TODO: move this function definition to TurtleParser implementation
 pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
     let mut tokens = Vec::new();
     let mut chars = input.chars().peekable();
     while let Some(&c) = chars.peek() {
         match c {
+            // handle ( )
+            // these are used for function calls and grouping expressions
             '(' => {
                 tokens.push(crate::types::TurtleToken::ParenOpen);
                 chars.next();
@@ -376,6 +383,10 @@ pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
                 tokens.push(crate::types::TurtleToken::Colon);
                 chars.next();
             }
+            ';' => {
+                tokens.push(crate::types::TurtleToken::Semicolon);
+                chars.next();
+            }
             '-' => {
                 chars.next();
                 if let Some(&'>') = chars.peek() {
@@ -389,7 +400,10 @@ pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
                 tokens.push(crate::types::TurtleToken::Comma);
                 chars.next();
             }
-
+            '.' => {
+                tokens.push(crate::types::TurtleToken::Dot);
+                chars.next();
+            }
             // parens define a function call
             ' ' | '\t' | '\n' => {
                 chars.next();
@@ -435,33 +449,42 @@ pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
                 } else if ident == "False" {
                     tokens.push(crate::types::TurtleToken::Boolean(false));
                 } else {
-                    // check if ident is a builtin function
-                    // if TURTLE_BUILTIN_FUNCTIONS.contains(&ident.as_str()) {
-                    //   tokens.push(crate::types::TurtleToken::Builtin(ident));
-                    //   continue;
-                    // }
 
-                    // if TURTLE_KEYWORDS.contains(&ident.as_str()) {
-                    //   tokens.push(crate::types::TurtleToken::Keyword(ident));
-                    //   continue;
-                    // }
+                    // check if the is an executable, treat as command, else as a path
+                    // /
+                    // ../
+                    // ./
+                    if ident.starts_with("./") || ident.starts_with("/") || ident.starts_with("../") {
+                      if crate::utils::_is_command_in_path(&ident) || std::path::Path::new(&ident).is_file() {
+                          tokens.push(crate::types::TurtleToken::Command { name: ident, args: Vec::new() });
+                          continue;
+                      } else if crate::utils::_is_a_path(&ident) {
+                          tokens.push(crate::types::TurtleToken::Path(ident));
+                          continue;
+                      }
+                    }
 
-                    // check if the ident is a command in the PATH
-                    // we need the first part only (before any spaces)
-                    // split ident by whitespace
-                    // let parts: Vec<&str> = ident.split_whitespace().collect();
-                    // let possible_command = parts[0];
-                    // let possible_args = &parts[1..];
-                    // println!("Possible command: {}", possible_command);
-                    // println!("Possible args: {:?}", possible_args);
-                    // if crate::utils::is_command_in_path(possible_command) {
-                    //   tokens.push(crate::types::TurtleToken::Command {
-                    //     name: possible_command.to_string(),
-                    //     args: possible_args.iter().map(|s| crate::types::TurtleToken::String(s.to_string())).collect(),
-                    //   });
-                    //   continue;
-                    // }
+                    // check if identifier is a keyword
+                    if _TURTLE_KEYWORDS.contains(&ident.as_str()) {
+                        tokens.push(crate::types::TurtleToken::Keyword(ident));
+                        continue;
+                    }
 
+                    // check if identifier is a builtinn function
+                    if _TURTLE_BUILTIN_FUNCTIONS.contains(&ident.as_str()) {
+                        tokens.push(crate::types::TurtleToken::Builtin(ident));
+                        continue;
+                    }
+
+                    // check if the identifier is a command in the PATH
+
+                    if crate::utils::_is_command_in_path(&ident) {
+                        tokens.push(crate::types::TurtleToken::Command { name: ident, args: Vec::new() });
+                        continue;
+                    }
+                    // NOTE: some identifiers are processed during subsequent passes of lexigraphical analysis
+                    // - Path vs Command vs Identifier
+                    // - Builtin vs Keyword vs Identifier
                     tokens.push(crate::types::TurtleToken::Identifier(ident));
                 }
             }
@@ -475,6 +498,7 @@ pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
                         break;
                     }
                 }
+
                 tokens.push(crate::types::TurtleToken::Operator(op));
             }
 
@@ -488,6 +512,216 @@ pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
     tokens
 }
 
+pub fn post_lex_path(tokens: Vec<crate::types::TurtleToken>) -> Vec<crate::types::TurtleToken> {
+    let mut result = Vec::new();
+    let mut i = 0;
+
+    while i < tokens.len() {
+        // Handle absolute path: /foo/bar
+        if let crate::types::TurtleToken::Operator(ref op) = tokens[i] {
+            if op == "/" {
+                let mut path = String::from("/");
+                let mut j = i + 1;
+                while j < tokens.len() {
+                    match &tokens[j] {
+                        crate::types::TurtleToken::Identifier(seg) => {
+                            if path != "/" {
+                                path.push('/');
+                            }
+                            path.push_str(seg);
+                            j += 1;
+                        }
+                        crate::types::TurtleToken::Operator(op2) if op2 == "/" => {
+                            path.push('/');
+                            j += 1;
+                        }
+                        _ => break,
+                    }
+                }
+                result.push(crate::types::TurtleToken::Path(path));
+                i = j;
+                continue;
+            }
+        }
+
+        // Handle relative path: ./foo/bar
+        if i + 1 < tokens.len() {
+            if let (crate::types::TurtleToken::Operator(op1), crate::types::TurtleToken::Operator(op2)) = (&tokens[i], &tokens[i + 1]) {
+                if op1 == "." && op2 == "/" {
+                    let mut path = String::from("./");
+                    let mut j = i + 2;
+                    while j < tokens.len() {
+                        match &tokens[j] {
+                            crate::types::TurtleToken::Identifier(seg) => {
+                                if !path.ends_with('/') {
+                                    path.push('/');
+                                }
+                                path.push_str(seg);
+                                j += 1;
+                            }
+                            crate::types::TurtleToken::Operator(op3) if op3 == "/" => {
+                                path.push('/');
+                                j += 1;
+                            }
+                            _ => break,
+                        }
+                    }
+                    result.push(crate::types::TurtleToken::Path(path));
+                    i = j;
+                    continue;
+                }
+            }
+        }
+
+        // Handle relative path: ../foo/bar
+        if i + 2 < tokens.len() {
+            if let (
+                crate::types::TurtleToken::Operator(op1),
+                crate::types::TurtleToken::Operator(op2),
+                crate::types::TurtleToken::Operator(op3),
+            ) = (&tokens[i], &tokens[i + 1], &tokens[i + 2])
+            {
+                if op1 == "." && op2 == "." && op3 == "/" {
+                    let mut path = String::from("../");
+                    let mut j = i + 3;
+                    while j < tokens.len() {
+                        match &tokens[j] {
+                            crate::types::TurtleToken::Identifier(seg) => {
+                                if !path.ends_with('/') {
+                                    path.push('/');
+                                }
+                                path.push_str(seg);
+                                j += 1;
+                            }
+                            crate::types::TurtleToken::Operator(op4) if op4 == "/" => {
+                                path.push('/');
+                                j += 1;
+                            }
+                            _ => break,
+                        }
+                    }
+                    result.push(crate::types::TurtleToken::Path(path));
+                    i = j;
+                    continue;
+                }
+            }
+        }
+
+        // Default: push token as-is
+        result.push(tokens[i].clone());
+        i += 1;
+    }
+
+    result
+}
+
+pub fn post_lex_command(tokens: Vec<crate::types::TurtleToken>) -> Vec<crate::types::TurtleToken> {
+    let mut processed_tokens = Vec::new();
+    let mut iter = tokens.into_iter().peekable();
+
+    while let Some(token) = iter.next() {
+        match &token {
+            crate::types::TurtleToken::Command { name, args } => {
+                let mut args = Vec::new();
+                while let Some(next_token) = iter.peek() {
+                    match next_token {
+                        crate::types::TurtleToken::Eof
+                        | crate::types::TurtleToken::Semicolon => break,
+                        crate::types::TurtleToken::Operator(op) if op == "-" => {
+                            iter.next(); // consume first '-'
+                            if let Some(crate::types::TurtleToken::Operator(op2)) = iter.peek() {
+                                if op2 == "-" {
+                                    iter.next(); // consume second '-'
+                                    if let Some(crate::types::TurtleToken::Identifier(name)) = iter.peek() {
+                                        let name = name.clone();
+                                        iter.next(); // consume builtin name
+                                        let mut values = Vec::new();
+                                        // Optionally, collect values after long arg
+                                        while let Some(val_token) = iter.peek() {
+                                            match val_token {
+                                                crate::types::TurtleToken::String(_) | crate::types::TurtleToken::Identifier(_) => {
+                                                    values.push(iter.next().unwrap());
+                                                }
+                                                _ => break,
+                                            }
+                                        }
+                                        args.push(crate::types::TurtleToken::LongArgs { name, values });
+                                        continue;
+                                    }
+                                }
+                            }
+                            // Single dash, short arg
+                            if let Some(crate::types::TurtleToken::Identifier(name)) = iter.peek() {
+                                let name = name.clone();
+                                iter.next(); // consume builtin name
+                                let mut values = Vec::new();
+                                // Optionally, collect values after short arg
+                                while let Some(val_token) = iter.peek() {
+                                    match val_token {
+                                        crate::types::TurtleToken::String(_)
+                                        | crate::types::TurtleToken::Identifier(_)
+                                        => {
+                                            if let crate::types::TurtleToken::Operator(op) = val_token {
+                                                if op == "-" {
+                                                    break;
+                                                }
+                                            }
+                                            values.push(iter.next().unwrap());
+                                        }
+                                        _ => break,
+                                    }
+                                }
+                                args.push(crate::types::TurtleToken::ShortArgs { name, values });
+                                continue;
+                            }
+                        }
+                        _ => {
+                            args.push(iter.next().unwrap());
+                        }
+                    }
+                }
+                processed_tokens.push(crate::types::TurtleToken::Command { name: name.clone(), args });
+            }
+            _ => {
+                processed_tokens.push(token);
+            }
+        }
+    }
+
+    processed_tokens
+}
+
+// pub fn post_lex_commands(tokens: Vec<crate::types::TurtleToken>) -> Vec<crate::types::TurtleToken> {
+//     let mut processed_tokens = Vec::new();
+//     let mut iter = tokens.into_iter().peekable();
+
+//     while let Some(token) = iter.next() {
+//         match &token {
+//             crate::types::TurtleToken::Command { name, args } => {
+//                 let mut args = Vec::new();
+//                 while let Some(next_token) = iter.peek() {
+//                     match next_token {
+//                         crate::types::TurtleToken::Eof
+//                         | crate::types::TurtleToken::Semicolon => break,
+//                         _ => {
+
+//                             // df -h or df -h /home/user should be parsed as a ShortArg token
+
+//                             args.push(iter.next().unwrap());
+//                         }
+//                     }
+//                 }
+//                 // Create a Command token with name and args
+//                 processed_tokens.push(crate::types::TurtleToken::Command { name: name.clone(),  args: args.clone() });
+//             }
+//             _ => {
+//                 processed_tokens.push(token);
+//             }
+//         }
+//     }
+
+//     processed_tokens
+// }
 #[derive(Debug, Clone)]
 pub struct TurtleInterpreter {
     // input: String,
@@ -597,33 +831,6 @@ impl TurtleInterpreter {
                     } else if ident == "False" {
                         tokens.push(crate::types::TurtleToken::Boolean(false));
                     } else {
-                        // check if ident is a builtin function
-                        // if TURTLE_BUILTIN_FUNCTIONS.contains(&ident.as_str()) {
-                        //   tokens.push(crate::types::TurtleToken::Builtin(ident));
-                        //   continue;
-                        // }
-
-                        // if TURTLE_KEYWORDS.contains(&ident.as_str()) {
-                        //   tokens.push(crate::types::TurtleToken::Keyword(ident));
-                        //   continue;
-                        // }
-
-                        // check if the ident is a command in the PATH
-                        // we need the first part only (before any spaces)
-                        // split ident by whitespace
-                        // let parts: Vec<&str> = ident.split_whitespace().collect();
-                        // let possible_command = parts[0];
-                        // let possible_args = &parts[1..];
-                        // println!("Possible command: {}", possible_command);
-                        // println!("Possible args: {:?}", possible_args);
-                        // if crate::utils::is_command_in_path(possible_command) {
-                        //   tokens.push(crate::types::TurtleToken::Command {
-                        //     name: possible_command.to_string(),
-                        //     args: possible_args.iter().map(|s| crate::types::TurtleToken::String(s.to_string())).collect(),
-                        //   });
-                        //   continue;
-                        // }
-
                         tokens.push(crate::types::TurtleToken::Identifier(ident));
                     }
                 }
