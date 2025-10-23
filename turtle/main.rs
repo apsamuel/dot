@@ -66,12 +66,11 @@ async fn main() {
     // Welcome message
     println!("Welcome to Turtle Shell! 🐢");
 
-
     let rl_config = Config::builder()
         .edit_mode(EditMode::Vi)
         .build();
-    let mut rl = Editor::with_config(rl_config).unwrap();
 
+    let mut rl = Editor::with_config(rl_config).unwrap();
     // Main REPL loop
     loop {
 

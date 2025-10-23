@@ -20,6 +20,8 @@ pub struct TurtleArgs {
     pub debug: bool,
     #[arg(short, long, help = "Returns turtle version")]
     pub version: bool,
+    #[arg(short, long, help = "Run in non-interactive mode with the provided command")]
+    pub command: Option<String>,
 }
 
 /// Commands are sent as CommandRequest structs
@@ -47,7 +49,7 @@ pub struct CommandResponse {
 /// Encapsulate both CommandRequest and CommandResponse
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "event")]
-pub enum _HistoryEvent {
+pub enum HistoryEvent {
     #[serde(rename = "command_request")]
     CommandRequest(CommandRequest),
     #[serde(rename = "command_response")]
@@ -152,12 +154,15 @@ pub enum TurtleExpression {
         object: Box<TurtleExpression>,
         property: String,
     },
-    BuiltinCall {
+    Builtin {
         name: String,
         args: Vec<TurtleExpression>,
     },
     Executable {
         name: String,
         args: Vec<TurtleExpression>,
+    },
+    Path {
+        segments: Vec<String>,
     },
 }

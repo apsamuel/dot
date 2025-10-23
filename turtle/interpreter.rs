@@ -469,23 +469,24 @@ pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
     tokens
 }
 
+#[derive(Debug, Clone)]
 pub struct TurtleInterpreter {
-    input: String,
+    // input: String,
     parser: Option<TurtleParser>,
 }
 
 impl TurtleInterpreter {
-    pub fn new(parser: Option<TurtleParser>, input: String) -> Self {
-        TurtleInterpreter { parser, input }
+    pub fn new(parser: Option<TurtleParser>) -> Self {
+        TurtleInterpreter { parser, }
     }
 
-    pub fn interpret(&mut self) -> Option<crate::types::TurtleExpression> {
-        let tokens = lex(&self.input);
+    pub fn interpret(&mut self, input: &str) -> Option<crate::types::TurtleExpression> {
+        let tokens = lex(input);
         let mut parser = TurtleParser::new(tokens);
         parser.parse_expr()
     }
 
-    pub fn lex(input: &str) -> Vec<crate::types::TurtleToken> {
+    pub fn tokenize(&mut self, input: &str) -> Vec<crate::types::TurtleToken> {
         let mut tokens = Vec::new();
         let mut chars = input.chars().peekable();
         while let Some(&c) = chars.peek() {
