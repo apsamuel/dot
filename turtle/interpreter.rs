@@ -95,18 +95,22 @@ impl TurtleParser {
     /// parse member access: object.property
     fn _parse_member_access(
         &mut self,
-        object: crate::types::TurtleExpression,
-    ) -> Option<crate::types::TurtleExpression> {
-        if let crate::types::TurtleToken::Operator(op) = self.peek() {
-            if op == "." {
-                self.next(); // consume '.'
-                if let crate::types::TurtleToken::Identifier(property) = self.next() {
-                    return Some(crate::types::TurtleExpression::MemberAccess {
-                        object: Box::new(object),
-                        property: property.clone(),
-                    });
-                } else {
-                    return None; // expected identifier after '.'
+        ) -> Option<crate::types::TurtleExpression> {
+        if let crate::types::TurtleToken::Identifier(object_name) = self.peek() {
+            let object_name = object_name.clone();
+            self.next(); // consume object identifier
+
+            if let crate::types::TurtleToken::Operator(op) = self.peek() {
+                if op == "." {
+                    self.next(); // consume '.'
+                    if let crate::types::TurtleToken::Identifier(property) = self.peek() {
+                        let property = property.clone();
+                        self.next(); // consume property identifier
+                        return Some(crate::types::TurtleExpression::MemberAccess {
+                            object: Box::new(crate::types::TurtleExpression::Identifier(object_name)),
+                            property,
+                        });
+                    }
                 }
             }
         }
@@ -193,6 +197,7 @@ impl TurtleParser {
         if let crate::types::TurtleToken::Identifier(func_name) = self.peek() {
             let func_name = func_name.clone();
             self.next(); // consume identifier
+
             if let crate::types::TurtleToken::ParenOpen = self.peek() {
                 self.next(); // consume '('
                 let mut args = Vec::new();
@@ -209,7 +214,6 @@ impl TurtleParser {
                         break;
                     }
                 }
-
                 if let crate::types::TurtleToken::ParenClose = self.peek() {
                     self.next(); // consume ')'
                     return Some(crate::types::TurtleExpression::FuncCall {
@@ -220,14 +224,15 @@ impl TurtleParser {
                     return None; // expected ')'
                 }
             } else {
-                self.pos -= 1; // rewind if not a function call
+                // Not a function call, rewind position
+                self.pos -= 1;
             }
         }
         None
     }
 
     /// parse primary expressions: literals, identifiers, function calls
-    fn parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
+    fn __parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
         match self.peek() {
             crate::types::TurtleToken::Number(_)
             | crate::types::TurtleToken::String(_)
@@ -267,6 +272,36 @@ impl TurtleParser {
                     // Just an identifier
                     return Some(crate::types::TurtleExpression::Identifier(func_name));
                 }
+            }
+            _ => None,
+        }
+    }
+
+    fn parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
+        match self.peek() {
+            crate::types::TurtleToken::Number(_)
+            | crate::types::TurtleToken::String(_)
+            | crate::types::TurtleToken::Boolean(_) => self.parse_literal(),
+
+            crate::types::TurtleToken::Identifier(_) => {
+                // Try to parse as a function call first
+                if let Some(func_call) = self.parse_function_call() {
+                    return Some(func_call);
+                }
+
+                // // Try to parse a member access
+                // if let Some(member_access) = self._parse_member_access() {
+                //     return Some(member_access);
+                // }
+
+
+                // If not a function call, parse as identifier
+                if let crate::types::TurtleToken::Identifier(name) = self.peek() {
+                    let ident = name.clone();
+                    self.next(); // consume identifier
+                    return Some(crate::types::TurtleExpression::Identifier(ident));
+                }
+                None
             }
             _ => None,
         }
@@ -477,7 +512,7 @@ pub struct TurtleInterpreter {
 
 impl TurtleInterpreter {
     pub fn new(parser: Option<TurtleParser>) -> Self {
-        TurtleInterpreter { parser, }
+        TurtleInterpreter { parser }
     }
 
     pub fn interpret(&mut self, input: &str) -> Option<crate::types::TurtleExpression> {
