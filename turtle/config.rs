@@ -4,40 +4,35 @@ use std::env;
 
 /// Load Turtle shell configuration from ~/.turtle.yaml
 pub fn load_config(debug: bool) -> Option<TurtleConfig> {
-    if let Some(home) = dirs::home_dir() {
-        let rc_path = home.join(".turtle.yaml");
-        if rc_path.exists() {
+    use std::fs;
+    let path = dirs::home_dir()?.join(".turtle.yaml");
+    let content = fs::read_to_string(&path).ok()?;
+    match serde_yaml::from_str::<TurtleConfig>(&content) {
+        Ok(config) => {
             if debug {
-                println!("Loading config from {:?}", rc_path);
+                println!("Loaded config from {:?}", path);
             }
-
-            if let Ok(contents) = std::fs::read_to_string(&rc_path) {
-                if let Ok(config) = serde_yaml::from_str::<crate::types::TurtleConfig>(&contents) {
-                    if debug {
-                        println!("Loaded config from {:?}", rc_path);
-                    }
-                    if let Some(prompt) = config.prompt.as_ref() {
-                        unsafe {
-                            env::set_var("TURTLE_PROMPT", prompt);
-                        }
-                    }
-
-                    if let Some(aliases) = config.aliases.as_ref() {
-                        for (k, v) in aliases {
-                            unsafe {
-                                env::set_var(format!("TURTLE_ALIAS_{}", k), v);
-                            }
-                        }
-                    }
-
-                    return Some(config);
-                } else {
-                    eprintln!("Failed to parse config file");
+            if let Some(prompt) = config.prompt.as_ref() {
+                unsafe {
+                    env::set_var("TURTLE_PROMPT", prompt);
                 }
             }
+
+            if let Some(aliases) = config.aliases.as_ref() {
+                for (k, v) in aliases {
+                    unsafe {
+                        env::set_var(format!("TURTLE_ALIAS_{}", k), v);
+                    }
+                }
+            }
+
+            Some(config)
+        }
+        Err(e) => {
+            eprintln!("Failed to parse config file: {}", e);
+            None
         }
     }
-    None
 }
 
 /// Set default shell environment variables
@@ -50,8 +45,6 @@ pub fn set_shell_vars() {
             }
         }
     }
-
-    // TODO: Set other default shell variables as needed
 }
 
 /// Load aliases from configuration into the provided aliases map
