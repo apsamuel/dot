@@ -291,9 +291,9 @@ impl TurtleParser {
         /*
           - parse function calls like: print("Hello, World!") or len(my_list)
         */
-        if let Some(expr) = self.parse_function_call() {
-            return Some(expr);
-        }
+        // if let Some(expr) = self.parse_function_call() {
+        //     return Some(expr);
+        // }
 
         /*
           - parse simple binary expressions like: 1 + 2, x - 3, "hello" + " world"
