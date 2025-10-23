@@ -120,7 +120,10 @@ async fn main() {
         let input: String = expand_single_dot(&input);
 
         let tokens: Vec<crate::types::TurtleToken> = crate::interpreter::lex(&input);
+        let tokens_post = crate::interpreter::post_lex_command(tokens.clone());
+
         println!("Input Tokens: {:?}", tokens);
+        println!("Post-processed Tokens: {:?}", tokens_post);
         let mut parser = TurtleParser::new(tokens);
         let expression = parser.parse_expr();
         println!("Input Expression: {:?}", expression);
