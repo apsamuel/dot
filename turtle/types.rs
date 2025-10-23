@@ -20,7 +20,11 @@ pub struct TurtleArgs {
     pub debug: bool,
     #[arg(short, long, help = "Returns turtle version")]
     pub version: bool,
-    #[arg(short, long, help = "Run in non-interactive mode with the provided command")]
+    #[arg(
+        short,
+        long,
+        help = "Run in non-interactive mode with the provided command"
+    )]
     pub command: Option<String>,
 }
 

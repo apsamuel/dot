@@ -14,7 +14,6 @@ pub struct TurtleShell {
 }
 
 impl TurtleShell {
-
     fn reload(&self) -> crate::types::TurtleConfig {
         // Load configuration from file or environment variables
         crate::config::load_config(self.config.as_ref().unwrap().debug).unwrap_or_else(|| {
@@ -41,8 +40,6 @@ impl TurtleShell {
         debug: bool,
         // pid: Option<u32>,
     ) -> Self {
-
-
         let debug = config.debug || debug;
         let config = Some(config);
         let args = Some(args);
@@ -78,7 +75,6 @@ impl TurtleShell {
 
             if !self.paused {
                 // Read input, parse, execute commands, etc.
-
             }
             // shell logic here
         }

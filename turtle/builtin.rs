@@ -196,7 +196,6 @@ pub fn builtin_alias(
     aliases: &mut std::collections::HashMap<String, String>,
     args: &[&str],
 ) -> std::collections::HashMap<String, String> {
-
     if args.is_empty() {
         for (name, command) in aliases.iter() {
             println!("alias {}='{}'", name, command);
