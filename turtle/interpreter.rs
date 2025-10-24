@@ -467,22 +467,6 @@ impl TurtleInterpreter {
                     } else if ident == "False" {
                         tokens.push(crate::types::TurtleToken::Boolean(false));
                     } else {
-
-                        // check if the is an executable, treat as command, else as a path
-                        // /
-                        // ../
-                        // ./
-
-                        // if ident.starts_with("./") || ident.starts_with("/") || ident.starts_with("../") {
-                        //   if crate::utils::_is_command_in_path(&ident) || std::path::Path::new(&ident).is_file() {
-                        //       tokens.push(crate::types::TurtleToken::ShellCommand { name: ident, args: Vec::new() });
-                        //       continue;
-                        //   } else if crate::utils::_is_a_path(&ident) {
-                        //       tokens.push(crate::types::TurtleToken::ShellPath { segments: ident.split('/').map(|s| s.to_string()).collect() });
-                        //       continue;
-                        //   }
-                        // }
-
                         // check if identifier is a keyword
                         if _TURTLE_KEYWORDS.contains(&ident.as_str()) {
                             tokens.push(crate::types::TurtleToken::Keyword(ident));
@@ -502,9 +486,6 @@ impl TurtleInterpreter {
                             tokens.push(crate::types::TurtleToken::ShellCommand { name: ident, args: Vec::new() });
                             continue;
                         }
-                        // NOTE: some identifiers are processed during subsequent passes of lexigraphical analysis
-                        // - Path vs Command vs Identifier
-                        // - Builtin vs Keyword vs Identifier
                         tokens.push(crate::types::TurtleToken::Identifier(ident));
                     }
                 }
@@ -695,9 +676,7 @@ impl TurtleInterpreter {
         result
     }
 
-    /// tokenize built-in function calls and their arguments, these typically appear as normal args
-    // we will reuse ShellArg, ShellShortArg and ShellLongArg token types for built-in args
-    // we will use the same flow we use for tokenizing shell commands
+    /// tokenize built-in function calls and their arguments
     pub fn tokenize_builtin_functions(&mut self, tokens: Vec<crate::types::TurtleToken>) -> Vec<crate::types::TurtleToken> {
         let mut result: Vec<crate::types::TurtleToken> = Vec::new();
         let mut iter = tokens.into_iter().peekable();
@@ -867,8 +846,6 @@ impl TurtleInterpreter {
         let tokens = Self::tokenize_primitives(self, input);
         let tokens: Vec<crate::types::TurtleToken> = Self::tokenize_builtin_functions(self, tokens);
         let tokens = Self::tokenize_shell_commands(self, tokens);
-        // let tokens = Self::tokenize_secondary(self, tokens);
-
         self.tokens = tokens.clone();
         self.counter += 1;
         tokens
