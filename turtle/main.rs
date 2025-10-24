@@ -24,26 +24,11 @@ use crate::history::{log_history}; // history logging
 use crate::utils::{now_unix}; // utility functions
 use crate::types::{CommandRequest, CommandResponse, TurtleArgs};    // shared types
 use crate::prompt::{expand_prompt_macros}; // prompt handling
-use crate::interpreter::{TurtleParser}; // interpreter
-
-
-fn _test_parser() {
-    let input = "a + 42";
-    let tokens = crate::interpreter::lex(input);
-    println!("Tokens: {:?}", tokens);
-
-    let mut parser = TurtleParser::new(tokens);
-    let expr = parser.parse_expr();
-
-    match expr {
-        Some(e) => println!("Parsed expression: {:?}", e),
-        None => println!("Failed t parse expression"),
-    }
-}
 
 #[tokio::main]
 async fn main() {
     // test_parser();
+    let mut turtle_intepreter = crate::interpreter::TurtleInterpreter::new();
     let _start_time = now_unix();
     let mut aliases: std::collections::HashMap<String, String> = std::collections::HashMap::new();
     let _pid = std::process::id();
@@ -51,12 +36,83 @@ async fn main() {
     let config = load_config(
         turtle_args.debug
     );
+    let turtle_shell = crate::shell::TurtleShell::new(
+        config.clone().unwrap_or(crate::types::TurtleConfig {
+            debug: false,
+            prompt: None,
+            aliases: None,
+            history_size: None,
+            theme: None,
+        }),
+        turtle_args.clone(),
+        turtle_intepreter.clone(),
+        turtle_args.debug,
+    );
     let turtle_theme = std::env::var("TURTLE_THEME").unwrap_or_else(|_| "solarized_dark".into());
     let prompt = if let Some(cfg) = &config {
         cfg.prompt.clone().unwrap_or_else(|| "turtle> ".to_string())
     } else {
         "turtle> ".to_string()
     };
+
+    // check if a command was provided for non-interactive mode
+    if let Some(cmd) = &turtle_args.command {
+        // non-interactive mode
+        // gather tokens for input
+        turtle_intepreter.reset();
+        let tokens = turtle_intepreter.tokenize(&cmd);
+        let expression = turtle_intepreter.interpret();
+
+        // let tokens = turtle_intepreter.tokenize_shell_tertiary(tokens);
+        // let tokens = turtle_intepreter.tokenize_secondary(tokens);
+        println!("Input Tokens: {:?}", tokens);
+        println!("Interpreted Expression: {:?}", expression);
+
+        let id = Uuid::new_v4().to_string();
+        let request = CommandRequest {
+            id: id.clone(),
+            command: cmd.clone(),
+            args: vec![],
+            timestamp: now_unix(),
+            event: "command_request".to_string(),
+        };
+        let mut command  = Command::new("sh"); // for now we are not using execve to run commands directly
+        command.arg("-c").arg(cmd);
+        command.stdin(Stdio::inherit());
+        let output = command.output().expect("Failed to execute command");
+        let status_code = match output.status.code() {
+            Some(code) => code,
+            None => {
+                eprintln!("Command terminated by signal");
+                1
+            }
+        };
+        let output_status = output.status;
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let status = output.status;
+
+        let response = crate::types::CommandResponse {
+            id: Uuid::new_v4().to_string(),
+            status: "done".to_string(),
+            code: status_code,
+            output: stdout.clone(),
+            errors: stderr.clone(),
+            timestamp: now_unix(),
+            event: "command_response".to_string(),
+        };
+
+        if let Some(output_type) = &turtle_args.format {
+            let result = crate::types::TurtleOutputs::from_command_response(output_type, response);
+            println!("{}", result.unwrap_or(
+                crate::types::TurtleOutputs::from_str("text", "Error formatting output".to_string()).unwrap(),
+            ));
+
+        }
+
+
+        std::process::exit(status_code);
+    }
 
     crate::config::load_aliases(&mut aliases, &config);
 
@@ -119,14 +175,12 @@ async fn main() {
         let input: String = expand_double_dot(&input);
         let input: String = expand_single_dot(&input);
 
-        let tokens: Vec<crate::types::TurtleToken> = crate::interpreter::lex(&input);
-        let tokens_post = crate::interpreter::post_lex_command(tokens.clone());
+        let tokens: Vec<crate::types::TurtleToken> = turtle_intepreter.tokenize(&input);
+        let expression = turtle_intepreter.interpret();
 
         println!("Input Tokens: {:?}", tokens);
-        println!("Post-processed Tokens: {:?}", tokens_post);
-        let mut parser = TurtleParser::new(tokens);
-        let expression = parser.parse_expr();
-        println!("Input Expression: {:?}", expression);
+        println!("Expression: {:?}", expression);
+
 
         // split input into command and args by whitespace
         // TODO: replace with shlex to properly handle quoted args and remain POSIX compliant
