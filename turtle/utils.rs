@@ -10,7 +10,11 @@ pub fn now_unix() -> u64 {
 pub fn _is_path(path: &str) -> bool {
     let p = std::path::Path::new(path);
     p.exists()
-        && (p.is_file() || p.is_dir() || path.starts_with("./") || path.starts_with("../" ) || path.starts_with('/'))
+        && (p.is_file()
+            || p.is_dir()
+            || path.starts_with("./")
+            || path.starts_with("../")
+            || path.starts_with('/'))
 }
 
 pub fn is_command(command: &str) -> bool {
@@ -25,7 +29,11 @@ pub fn is_command(command: &str) -> bool {
     if let Ok(paths) = std::env::var("PATH") {
         for path in std::env::split_paths(&paths) {
             let full_path = path.join(command);
-            if full_path.exists() && full_path.is_file() && full_path.is_executable() && !full_path.is_dir() {
+            if full_path.exists()
+                && full_path.is_file()
+                && full_path.is_executable()
+                && !full_path.is_dir()
+            {
                 return true;
             }
         }
