@@ -2,4 +2,10 @@
 
 # Format Turtle source files
 find . -name "*.rs" -print -exec rustfmt {} \;
-# rustfmt ./src/main.rs
+
+mapfile -t rust_files < <(find . -name "*.rs" -print)
+
+for file in "${rust_files[@]}"; do
+    printf "Formatting %s\n" "$file"
+    rustfmt "$file"
+done
