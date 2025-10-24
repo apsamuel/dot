@@ -1,7 +1,7 @@
-use std::fmt;
 use clap::Parser;
 use crossterm::style::Color;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// turtle shell configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,7 +38,6 @@ pub struct TurtleArgs {
     )]
     /// output format
     pub format: Option<String>,
-
 }
 
 #[derive(Debug, Clone)]
@@ -52,7 +51,6 @@ pub struct TurtleTheme {
     pub selection: Color,
     // pub attributes: Vec<&'static str>,
 }
-
 
 /// CSV compatible output
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -85,7 +83,6 @@ pub struct TurtleOutputAst {
     pub data: String,
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TurtleOutputs {
     Table(TurtleOutputCsv),
@@ -95,7 +92,6 @@ pub enum TurtleOutputs {
     Ast(TurtleOutputAst),
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "event")]
 pub enum _TurleOutputResults {
@@ -103,13 +99,10 @@ pub enum _TurleOutputResults {
     CommandResponse(CommandResponse),
     #[serde(rename = "turtle_expression")]
     TurtleExpression(TurtleExpression),
-
 }
 
 impl fmt::Display for TurtleOutputs {
-
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-
         match self {
             TurtleOutputs::Table(table) => {
                 let mut output = String::new();
@@ -122,7 +115,8 @@ impl fmt::Display for TurtleOutputs {
                 write!(f, "{}", output)
             }
             TurtleOutputs::Json(json) => {
-                let json_string = serde_json::to_string_pretty(&json.data).map_err(|_| fmt::Error)?;
+                let json_string =
+                    serde_json::to_string_pretty(&json.data).map_err(|_| fmt::Error)?;
                 write!(f, "{}", json_string)
             }
             TurtleOutputs::Yaml(yaml) => {
@@ -140,7 +134,6 @@ impl fmt::Display for TurtleOutputs {
 }
 
 impl TurtleOutputs {
-
     pub fn from_command_response(option: &str, response: CommandResponse) -> Option<Self> {
         match option {
             "table" => {
@@ -201,7 +194,6 @@ impl TurtleOutputs {
     }
 
     pub fn from_str(option: &str, data: String) -> Option<Self> {
-
         match option {
             "table" => {
                 // parse CSV data
@@ -276,77 +268,77 @@ pub enum HistoryEvent {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 // #[allow(dead_code)] //for now until we use all variants
 pub enum TurtleToken {
-    Arrow,              // an '->' typically used in function definitions, eg: func foo() -> String {}
+    Arrow, // an '->' typically used in function definitions, eg: func foo() -> String {}
 
-    String(String),     // string literals
-    Number(f64),        // numeric literals
-    Boolean(bool),      // a literal True or False
+    String(String), // string literals
+    Number(f64),    // numeric literals
+    Boolean(bool),  // a literal True or False
 
-    BraceClose,         // a closing brace '}' typically used to complete code blocks or object literals
-    BraceOpen,          // an opening brace '{' typically used to start code blocks or object literals
-    BracketClose,       // a closing bracket ']' typically used to complete array literals
-    BracketOpen,        // an opening bracket '[' typically used to start array literals
-    ParenClose,         // a closing parenthesis ')' typically used to complete function calls or group expressions
-    ParenOpen,          // an opening parenthesis '(' typically used to start function calls or group expressions
-    Colon,              // a colon ':' typically used to separate keys and values in objects
-    Comma,              // a comma ',' typically used to separate items in arrays or parameters in functions
+    BraceClose, // a closing brace '}' typically used to complete code blocks or object literals
+    BraceOpen,  // an opening brace '{' typically used to start code blocks or object literals
+    BracketClose, // a closing bracket ']' typically used to complete array literals
+    BracketOpen, // an opening bracket '[' typically used to start array literals
+    ParenClose, // a closing parenthesis ')' typically used to complete function calls or group expressions
+    ParenOpen, // an opening parenthesis '(' typically used to start function calls or group expressions
+    Colon,     // a colon ':' typically used to separate keys and values in objects
+    Comma,     // a comma ',' typically used to separate items in arrays or parameters in functions
 
-    CodeBlock(Vec<TurtleToken>), // a block of code
-    CodeCommentSingleLine(String), // single line comment
+    CodeBlock(Vec<TurtleToken>),       // a block of code
+    CodeCommentSingleLine(String),     // single line comment
     CodeCommentMultiLineOpen(String),  // multi-line comment
     CodeCommentMultiLineClose(String), // multi-line comment close
-    Identifier(String), // variable names
-    Builtin{
+    Identifier(String),                // variable names
+    Builtin {
         name: String,
         args: Vec<TurtleToken>,
-    },    // built-in function names
-    Keyword(String),    // if, else, while, for, func, return, break, continue
+    }, // built-in function names
+    Keyword(String),                   // if, else, while, for, func, return, break, continue
 
     // Shell command and arguments
-    ShellArg{
-        name: String
+    ShellArg {
+        name: String,
     },
-    ShellShortArg{
+    ShellShortArg {
         name: String,
         values: Vec<TurtleToken>,
     },
-    ShellLongArg{
+    ShellLongArg {
         name: String,
         values: Vec<TurtleToken>,
     },
-    ShellCommand{
+    ShellCommand {
         name: String,
         args: Vec<TurtleToken>,
     },
     ShellComment(String),
     ShellDot,       // represents the current directory '.'
     ShellDoubleDot, // represents the parent directory '..'
-    ShellDirectory{
+    ShellDirectory {
         segments: Vec<String>,
     },
-    ShellFile{
+    ShellFile {
         name: String,
         path: String,
         extension: Option<String>,
     },
 
-    Operator(String),   // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, !
-    AdditionOperator,    // +
-    SubtractionOperator, // -
-    MultiplicationOperator, // *
-    DivisionOperator,     // /
-    ModulusOperator,      // %
-    EqualOperator,        // ==
-    NotEqualOperator,     // !=
-    LessThanOperator,     // <
-    GreaterThanOperator,  // >
-    LessThanOrEqualOperator, // <=
+    Operator(String),           // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, !
+    AdditionOperator,           // +
+    SubtractionOperator,        // -
+    MultiplicationOperator,     // *
+    DivisionOperator,           // /
+    ModulusOperator,            // %
+    EqualOperator,              // ==
+    NotEqualOperator,           // !=
+    LessThanOperator,           // <
+    GreaterThanOperator,        // >
+    LessThanOrEqualOperator,    // <=
     GreaterThanOrEqualOperator, // >=
-    AndOperator,          // &&
-    OrOperator,           // ||
-    NotOperator,          // !
-    Semicolon, // ;
-    Eof,                // end of file/input
+    AndOperator,                // &&
+    OrOperator,                 // ||
+    NotOperator,                // !
+    Semicolon,                  // ;
+    Eof,                        // end of file/input
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
