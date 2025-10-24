@@ -52,21 +52,6 @@ pub fn display_history_ui()  -> std::io::Result<()>{
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let history = load_history().unwrap_or_default();
-    // collect onlly the CommandRequest entries
-    // let command_requests: Vec<crate::types::CommandRequest> = history.iter().filter_map(|entry| {
-    //     if entry.get("event").and_then(|e| e.as_str()) == Some("command_request") {
-    //         serde_json::from_value(entry.clone()).ok()
-    //     } else {
-    //         None
-    //     }
-    // }).collect();
-    // let command_responses: Vec<crate::types::CommandResponse> = history.iter().filter_map(|entry| {
-    //     if entry.get("event").and_then(|e| e.as_str()) == Some("command_response") {
-    //         serde_json::from_value(entry.clone()).ok()
-    //     } else {
-    //         None
-    //     }
-    // }).collect();
 
     let mut offset = 0;
     let mut state = ListState::default();
@@ -187,9 +172,21 @@ pub fn export_history_for_rustyline(txt_path: &str) -> io::Result<()> {
         .open(txt_path)?;
 
     for entry in history {
-        if let Some(cmd) = entry.get("command") {
-            writeln!(file, "{}", cmd.as_str().unwrap_or(""))?;
+        let event = entry.get("event").unwrap();
+
+        if event != "command_request" {
+            continue;
         }
+
+        // when we export our history, we should write the command and its args before writing a new line
+        let mut command = String::new();
+        if let Some(cmd) = entry.get("command") {
+            command.push_str(cmd.as_str().unwrap_or(""));
+        }
+        if let Some(args) = entry.get("args") {
+            command.push_str(&format!(" {}", args.as_str().unwrap_or("")));
+        }
+        writeln!(file, "{}", command)?;
     }
     Ok(())
 }
