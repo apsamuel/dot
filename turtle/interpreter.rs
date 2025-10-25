@@ -1,20 +1,23 @@
-// mod types;
 
-pub static _TURTLE_BUILTIN_FUNCTIONS: &[&str] = &[
+
+/// built-in functions
+pub static TURTLE_BUILTIN_FUNCTIONS: &[&str] = &[
     "builtin", "alias", "print", "input", "len", "which", "whereis", "cd", "exit", "help",
 ];
 
-pub static _TURTLE_KEYWORDS: &[&str] = &[
-    // if (condition) { ... } else { ... } || if (condition) { ... }
+/// keywords
+pub static TURTLE_KEYWORDS: &[&str] = &[
     "if", "else", "while", "for", "fn", "return", "let", "true", "false",
 ];
 
+/// parser struct
 #[derive(Debug, Clone)]
 struct TurtleParser {
     tokens: Vec<crate::types::TurtleToken>,
     pos: usize,
 }
 
+/// parser implementation
 impl TurtleParser {
     pub fn new(tokens: Vec<crate::types::TurtleToken>) -> Self {
         TurtleParser { tokens, pos: 0 }
@@ -71,10 +74,7 @@ impl TurtleParser {
     }
 
     /// parse binary expressions: 1 + 2, x - 3, "hello" + " world"
-    fn parse_binary(
-        &mut self,
-        left: crate::types::TurtleExpression,
-    ) -> Option<crate::types::TurtleExpression> {
+    fn parse_binary(&mut self, left: crate::types::TurtleExpression) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::Operator(op) = self.peek() {
             let op = op.clone();
             self.next(); // consume operator
@@ -93,11 +93,8 @@ impl TurtleParser {
     }
 
     /// parse function calls
-    /// ex: foo(arg1, arg2, ...)
-    fn parse_function_call(
-        &mut self,
-        expr: crate::types::TurtleExpression,
-    ) -> Option<crate::types::TurtleExpression> {
+
+    fn parse_function_call(&mut self, expr: crate::types::TurtleExpression) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::ParenOpen = self.peek() {
             self.next(); // consume '('
             let mut args = Vec::new();
@@ -132,11 +129,10 @@ impl TurtleParser {
         None
     }
 
-    /// parse member access: object.property
-    fn parse_member_access(
-        &mut self,
-        expr: crate::types::TurtleExpression,
-    ) -> Option<crate::types::TurtleExpression> {
+    /// parse member access
+    ///
+    /// e.g., object.property
+    fn parse_member_access(&mut self, expr: crate::types::TurtleExpression) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::ShellDot = self.peek() {
             self.next(); // consume '.'
             if let crate::types::TurtleToken::Identifier(property) = self.peek() {
@@ -152,7 +148,6 @@ impl TurtleParser {
     }
 
     /// parse arrays
-    /// ex: [expr1, expr2, expr3]
     fn parse_array(&mut self) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::BracketOpen = self.peek() {
             self.next(); // consume '['
@@ -164,12 +159,14 @@ impl TurtleParser {
                 if let Some(expr) = self.parse_expr() {
                     elements.push(expr);
                 }
+
                 if let crate::types::TurtleToken::Comma = self.peek() {
                     self.next(); // consume ','
                 } else {
                     break;
                 }
             }
+
             if let crate::types::TurtleToken::BracketClose = self.peek() {
                 self.next(); // consume ']'
                 return Some(crate::types::TurtleExpression::Array(elements));
@@ -181,7 +178,6 @@ impl TurtleParser {
     }
 
     /// parse objects
-    /// ex: { key1: value1, key2: value2 }
     fn parse_object(&mut self) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::BraceOpen = self.peek() {
             self.next(); // consume '{'
@@ -225,6 +221,7 @@ impl TurtleParser {
         None
     }
 
+    /// parse primitive expressions: literals, identifiers, commands
     fn parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
         // Parse the initial literal, identifier, array, or object
         let mut expr = match self.peek() {
@@ -263,62 +260,21 @@ impl TurtleParser {
         Some(expr)
     }
 
-    fn _parse_primary(&mut self) -> Option<crate::types::TurtleExpression> {
-        let mut expr = match self.peek() {
-            crate::types::TurtleToken::Number(_)
-            | crate::types::TurtleToken::String(_)
-            | crate::types::TurtleToken::Boolean(_) => self.parse_literal(),
-            crate::types::TurtleToken::Identifier(name) => {
-                let ident = name.clone();
-                self.next();
-                Some(crate::types::TurtleExpression::Identifier(ident))
-            }
-            crate::types::TurtleToken::BracketOpen => self.parse_array(),
-            crate::types::TurtleToken::BraceOpen => self.parse_object(),
-            _ => None,
-        }?;
-
-        // Chain member access and function calls modularly
-        loop {
-            if let Some(member_expr) = self.parse_member_access(expr.clone()) {
-                expr = member_expr;
-                continue;
-            }
-            if let Some(call_expr) = self.parse_function_call(expr.clone()) {
-                expr = call_expr;
-                continue;
-            }
-            break;
-        }
-        Some(expr)
-    }
-
     /// implements parsing rules to build TurtleExpression AST
     pub fn parse_expr(&mut self) -> Option<crate::types::TurtleExpression> {
         /*
-          - parse unary expressions like: -5, !True, ~False
+            - parse unary expressions like: -5, !True, ~False
         */
         if let Some(expr) = self.parse_unary() {
             return Some(expr);
         }
 
         /*
-          - parse primary expressions: literals, identifiers, function calls
+            - parse primary expressions: literals, identifiers, function calls
         */
         if let Some(expr) = self.parse_primary() {
             return Some(expr);
         }
-
-        /*
-          - parse function calls like: print("Hello, World!") or len(my_list)
-        */
-        // if let Some(expr) = self.parse_function_call() {
-        //     return Some(expr);
-        // }
-
-        /*
-          - parse simple binary expressions like: 1 + 2, x - 3, "hello" + " world"
-        */
 
         // parse the left side
         let left = match self.next() {
@@ -451,10 +407,16 @@ impl TurtleInterpreter {
                     }
                     tokens.push(crate::types::TurtleToken::Number(num.parse().unwrap()))
                 }
-                _ if c.is_alphabetic() || c == "_".chars().next().unwrap() => {
+                _ if c.is_alphanumeric()
+                    || c == "_".chars().next().unwrap()
+                    || c == ".".chars().next().unwrap() =>
+                {
                     let mut ident = String::new();
                     while let Some(&d) = chars.peek() {
-                        if d.is_alphanumeric() || d == "_".chars().next().unwrap() {
+                        if d.is_alphanumeric()
+                            || d == "_".chars().next().unwrap()
+                            || d == ".".chars().next().unwrap()
+                        {
                             ident.push(d);
                             chars.next();
                         } else {
@@ -467,13 +429,13 @@ impl TurtleInterpreter {
                         tokens.push(crate::types::TurtleToken::Boolean(false));
                     } else {
                         // check if identifier is a keyword
-                        if _TURTLE_KEYWORDS.contains(&ident.as_str()) {
+                        if TURTLE_KEYWORDS.contains(&ident.as_str()) {
                             tokens.push(crate::types::TurtleToken::Keyword(ident));
                             continue;
                         }
 
                         // check if identifier is a builtinn function
-                        if _TURTLE_BUILTIN_FUNCTIONS.contains(&ident.as_str()) {
+                        if TURTLE_BUILTIN_FUNCTIONS.contains(&ident.as_str()) {
                             tokens.push(crate::types::TurtleToken::Builtin {
                                 name: ident,
                                 args: Vec::new(),
