@@ -180,7 +180,7 @@ impl TurtleOutputs {
         }
     }
 
-    pub fn from_turtle_expression(expression: TurtleExpression) -> Option<Self> {
+    pub fn _from_turtle_expression(expression: TurtleExpression) -> Option<Self> {
         match expression {
             TurtleExpression::String(s) => Some(TurtleOutputs::Text(TurtleOutputText { data: s })),
             TurtleExpression::Number(n) => Some(TurtleOutputs::Text(TurtleOutputText {
@@ -308,7 +308,9 @@ pub enum TurtleToken {
     },
     ShellCommand {
         name: String,
+        // args: Vec<TurtleToken>,
         args: Vec<TurtleToken>,
+        // args: String,
     },
     ShellComment(String),
     ShellDot,       // represents the current directory '.'

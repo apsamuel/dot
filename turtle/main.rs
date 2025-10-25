@@ -27,7 +27,6 @@ use crate::prompt::{expand_prompt_macros}; // prompt handling
 
 #[tokio::main]
 async fn main() {
-    // test_parser();
     let mut turtle_intepreter = crate::interpreter::TurtleInterpreter::new();
     let _start_time = now_unix();
     let mut aliases: std::collections::HashMap<String, String> = std::collections::HashMap::new();
@@ -36,7 +35,7 @@ async fn main() {
     let config = load_config(
         turtle_args.debug
     );
-    let turtle_shell = crate::shell::TurtleShell::new(
+    let _turtle_shell = crate::shell::TurtleShell::new(
         config.clone().unwrap_or(crate::types::TurtleConfig {
             debug: false,
             prompt: None,
@@ -55,21 +54,16 @@ async fn main() {
         "turtle> ".to_string()
     };
 
-    // check if a command was provided for non-interactive mode
+    // a command was provided via args
     if let Some(cmd) = &turtle_args.command {
-        // non-interactive mode
-        // gather tokens for input
         turtle_intepreter.reset();
         let tokens = turtle_intepreter.tokenize(&cmd);
         let expression = turtle_intepreter.interpret();
-
-        // let tokens = turtle_intepreter.tokenize_shell_tertiary(tokens);
-        // let tokens = turtle_intepreter.tokenize_secondary(tokens);
         println!("Input Tokens: {:?}", tokens);
         println!("Interpreted Expression: {:?}", expression);
 
         let id = Uuid::new_v4().to_string();
-        let request = CommandRequest {
+        let _request = CommandRequest {
             id: id.clone(),
             command: cmd.clone(),
             args: vec![],
@@ -87,10 +81,10 @@ async fn main() {
                 1
             }
         };
-        let output_status = output.status;
+        // let _output_status = output.status;
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-        let status = output.status;
+        // let status = output.status;
 
         let response = crate::types::CommandResponse {
             id: Uuid::new_v4().to_string(),
