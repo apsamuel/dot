@@ -1,29 +1,29 @@
 mod config; // configuration loading and environment setup
-mod input; // input handling (env var and tilde expansion)
 mod history; // command history logging
-mod utils; // utility functions
-mod types; // shared structs/enums
+mod input; // input handling (env var and tilde expansion)
 mod interpreter; // turtle shell interpreter
-mod shell ; // main shell struct
+mod shell;
+mod types; // shared structs/enums
+mod utils; // utility functions // main shell struct
 
 mod builtin; // built-in commands
-mod widgets; // TUI widgets
-mod themes; // theme management
+mod themes;
+mod widgets; // TUI widgets // theme management
 
 mod prompt; // prompt handling
 
 use clap::Parser; // command line argument parsing
+use rustyline::DefaultEditor as Editor;
+use rustyline::config::{Config, EditMode}; // readline configuration
 use std::process::{Command, Stdio}; // command execution
-use uuid::Uuid; // unique ID generation
-use rustyline::config::{Config, EditMode};  // readline configuration
-use rustyline::{DefaultEditor as Editor}; // readline editor configuration
+use uuid::Uuid; // unique ID generation // readline editor configuration
 
 use crate::config::{load_config, set_shell_vars}; // config functions
-use crate::input::{expand_env_vars, expand_tilde, expand_single_dot, expand_double_dot}; // input expansion
-use crate::history::{log_history}; // history logging
-use crate::utils::{now_unix}; // utility functions
-use crate::types::{CommandRequest, CommandResponse, TurtleArgs};    // shared types
-use crate::prompt::{expand_prompt_macros}; // prompt handling
+use crate::history::log_history; // history logging
+use crate::input::{expand_double_dot, expand_env_vars, expand_single_dot, expand_tilde}; // input expansion
+use crate::prompt::expand_prompt_macros;
+use crate::types::{CommandRequest, CommandResponse, TurtleArgs}; // shared types
+use crate::utils::now_unix; // utility functions // prompt handling
 
 #[tokio::main]
 async fn main() {
@@ -32,10 +32,8 @@ async fn main() {
     let mut aliases: std::collections::HashMap<String, String> = std::collections::HashMap::new();
     let _pid = std::process::id();
     let turtle_args = TurtleArgs::parse();
-    let config = load_config(
-        turtle_args.debug
-    );
-    let _turtle_shell = crate::shell::TurtleShell::new(
+    let config = load_config(turtle_args.debug);
+    let mut turtle_shell = crate::shell::TurtleShell::new(
         config.clone().unwrap_or(crate::types::TurtleConfig {
             debug: false,
             prompt: None,
@@ -45,12 +43,14 @@ async fn main() {
         }),
         turtle_args.clone(),
         turtle_intepreter.clone(),
-        turtle_args.debug,
     );
+    turtle_shell.setup();
+
     let turtle_theme = std::env::var("TURTLE_THEME").unwrap_or_else(|_| "solarized_dark".into());
     let prompt = if let Some(cfg) = &config {
         cfg.prompt.clone().unwrap_or_else(|| "turtle> ".to_string())
     } else {
+        // TODO: load from defaults
         "turtle> ".to_string()
     };
 
@@ -70,7 +70,7 @@ async fn main() {
             timestamp: now_unix(),
             event: "command_request".to_string(),
         };
-        let mut command  = Command::new("sh"); // for now we are not using execve to run commands directly
+        let mut command = Command::new("sh"); // for now we are not using execve to run commands directly
         command.arg("-c").arg(cmd);
         command.stdin(Stdio::inherit());
         let output = command.output().expect("Failed to execute command");
@@ -98,12 +98,17 @@ async fn main() {
 
         if let Some(output_type) = &turtle_args.format {
             let result = crate::types::TurtleOutputs::from_command_response(output_type, response);
-            println!("{}", result.unwrap_or(
-                crate::types::TurtleOutputs::from_str("text", "Error formatting output".to_string()).unwrap(),
-            ));
-
+            println!(
+                "{}",
+                result.unwrap_or(
+                    crate::types::TurtleOutputs::from_str(
+                        "text",
+                        "Error formatting output".to_string()
+                    )
+                    .unwrap(),
+                )
+            );
         }
-
 
         std::process::exit(status_code);
     }
@@ -114,34 +119,33 @@ async fn main() {
     set_shell_vars();
 
     // Welcome message
-    println!("Welcome to Turtle Shell! 🐢");
+    println!("Welcome to the Turtle Shell! 🐢");
 
-    let rl_config = Config::builder()
-        .edit_mode(EditMode::Vi)
-        .build();
+    let rl_config = Config::builder().edit_mode(EditMode::Vi).build();
 
     let mut rl = Editor::with_config(rl_config).unwrap();
     // Main REPL loop
     loop {
-
         let history = crate::history::load_history().unwrap_or_default();
         // we need to maintain a plain text history file for rustyline
-        crate::history::export_history_for_rustyline(
-            &format!("{}/.turtle_history.txt", dirs::home_dir().unwrap().display()),
-        ).ok();
-        rl.load_history(&format!("{}/.turtle_history.txt", dirs::home_dir().unwrap().display())).ok();
+        crate::history::export_history_for_rustyline(&format!(
+            "{}/.turtle_history.txt",
+            dirs::home_dir().unwrap().display()
+        ))
+        .ok();
+        rl.load_history(&format!(
+            "{}/.turtle_history.txt",
+            dirs::home_dir().unwrap().display()
+        ))
+        .ok();
         let mut _history_index = history.len(); // start at the end of history
 
-        let prompt = expand_prompt_macros(
-            &prompt,
-        );
+        let prompt = expand_prompt_macros(&prompt);
         let readline = rl.readline(&prompt);
 
         // use readline to get user input
         let input = match readline {
-            Ok(line) => {
-                line
-            }
+            Ok(line) => line,
             Err(rustyline::error::ReadlineError::Interrupted) => {
                 println!("^C");
                 continue;
@@ -175,7 +179,6 @@ async fn main() {
         println!("Input Tokens: {:?}", tokens);
         println!("Expression: {:?}", expression);
 
-
         // split input into command and args by whitespace
         // TODO: replace with shlex to properly handle quoted args and remain POSIX compliant
         let mut parts = input.split_whitespace();
@@ -185,13 +188,14 @@ async fn main() {
         };
 
         // collect remaining parts as args vector, each arg also needs to have env vars and tilde expanded
-        let args: Vec<String> = parts.map(|arg| {
-            let arg = expand_env_vars(arg);
-            expand_tilde(&arg);
-            expand_double_dot(&arg);
-            expand_single_dot(&arg)
-        }).collect();
-
+        let args: Vec<String> = parts
+            .map(|arg| {
+                let arg = expand_env_vars(arg);
+                expand_tilde(&arg);
+                expand_double_dot(&arg);
+                expand_single_dot(&arg)
+            })
+            .collect();
 
         // handle special commands for widgets
         // TODO: refactor into builtin commands
@@ -222,7 +226,6 @@ async fn main() {
             let _ = crate::widgets::display_terminal_ui();
             continue;
         }
-
 
         // process builtin commands
         match cmd {
@@ -282,7 +285,6 @@ async fn main() {
             event: "command_request".to_string(),
         };
 
-
         // Try to execute the command in PATH
         let status = Command::new(cmd)
             .args(&args)
@@ -307,17 +309,15 @@ async fn main() {
                 }
             }
 
-            Err(e) => {
-                CommandResponse {
-                    id: id.clone(),
-                    status: "failed".to_string(),
-                    code: -1,
-                    output: "".to_string(),
-                    errors: e.to_string(),
-                    timestamp: now_unix(),
-                    event: "command_response".to_string(),
-                }
-            }
+            Err(e) => CommandResponse {
+                id: id.clone(),
+                status: "failed".to_string(),
+                code: -1,
+                output: "".to_string(),
+                errors: e.to_string(),
+                timestamp: now_unix(),
+                event: "command_response".to_string(),
+            },
         };
 
         // Ensure output starts on a new line
