@@ -1,4 +1,5 @@
-#! /usr/bin/env bash
+# shellcheck source=/dev/null
+# shellcheck shell=bash
 
 # Format Turtle source files
 find . -name "*.rs" -print -exec rustfmt {} \;

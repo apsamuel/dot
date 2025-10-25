@@ -157,3 +157,9 @@ data/Brewfile.lock.json
 turtle/target
 
 test/*.bin
+
+## Ignore env files
+*.env
+*.env.*
+!.envrc
+!.env.example
