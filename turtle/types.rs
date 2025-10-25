@@ -49,56 +49,6 @@ pub struct TurtleTheme {
     pub text: Color,
     pub cursor: Color,
     pub selection: Color,
-    // pub attributes: Vec<&'static str>,
-}
-
-/// CSV compatible output
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputCsv {
-    pub headers: Vec<String>,
-    pub data: Vec<Vec<String>>,
-}
-
-/// YAML compatible output
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputYaml {
-    pub data: serde_yaml::Value,
-}
-
-/// JSON compatible output
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputJson {
-    pub data: serde_json::Value,
-}
-
-/// Plain text output
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputText {
-    pub data: String,
-}
-
-/// AST output
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputAst {
-    pub data: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum TurtleOutputs {
-    Table(TurtleOutputCsv),
-    Json(TurtleOutputJson),
-    Yaml(TurtleOutputYaml),
-    Text(TurtleOutputText),
-    Ast(TurtleOutputAst),
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(tag = "event")]
-pub enum _TurleOutputResults {
-    #[serde(rename = "command_response")]
-    CommandResponse(CommandResponse),
-    #[serde(rename = "turtle_expression")]
-    TurtleExpression(TurtleExpression),
 }
 
 impl fmt::Display for TurtleOutputs {
@@ -233,7 +183,56 @@ impl TurtleOutputs {
     }
 }
 
-/// Commands are sent as CommandRequest structs
+/// CSV compatible output
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TurtleOutputCsv {
+    pub headers: Vec<String>,
+    pub data: Vec<Vec<String>>,
+}
+
+/// YAML compatible output
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TurtleOutputYaml {
+    pub data: serde_yaml::Value,
+}
+
+/// JSON compatible output
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TurtleOutputJson {
+    pub data: serde_json::Value,
+}
+
+/// Plain text output
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TurtleOutputText {
+    pub data: String,
+}
+
+/// AST output
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TurtleOutputAst {
+    pub data: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum TurtleOutputs {
+    Table(TurtleOutputCsv),
+    Json(TurtleOutputJson),
+    Yaml(TurtleOutputYaml),
+    Text(TurtleOutputText),
+    Ast(TurtleOutputAst),
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(tag = "event")]
+pub enum _TurleOutputResults {
+    #[serde(rename = "command_response")]
+    CommandResponse(CommandResponse),
+    #[serde(rename = "turtle_expression")]
+    TurtleExpression(TurtleExpression),
+}
+
+/// a ShellCommand is a CommandRequest structs
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CommandRequest {
     pub id: String,
