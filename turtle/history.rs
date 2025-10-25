@@ -184,7 +184,18 @@ pub fn export_history_for_rustyline(txt_path: &str) -> io::Result<()> {
             command.push_str(cmd.as_str().unwrap_or(""));
         }
         if let Some(args) = entry.get("args") {
-            command.push_str(&format!(" {}", args.as_str().unwrap_or("")));
+            if let Some(arr) = args.as_array() {
+              for arg in arr {
+                if let Some(s) = arg.as_str() {
+                  command.push_str(&format!(" {}", s));
+                } else {
+                  command.push_str(&format!(" {}", arg));
+                }
+              }
+            } else if let Some(s) = args.as_str() {
+              command.push_str(&format!(" {}", s));
+            }
+            // command.push_str(&format!(" {}", args.as_str().unwrap_or("")));
         }
         writeln!(file, "{}", command)?;
     }
