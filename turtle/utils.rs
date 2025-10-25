@@ -57,3 +57,15 @@ pub fn _translate_alias(
         None
     }
 }
+
+pub fn build_user_environment() -> std::collections::HashMap<String, String> {
+    let mut details = std::collections::HashMap::new();
+    if let Some(username) = users::get_current_username() {
+        details.insert("USER".to_string(), username.to_string_lossy().to_string());
+    }
+
+    if let Some(home_dir) = dirs::home_dir() {
+        details.insert("HOME".to_string(), home_dir.to_string_lossy().to_string());
+    }
+    return details;
+}
