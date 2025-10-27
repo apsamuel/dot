@@ -34,7 +34,7 @@ pub struct TurtleArgs {
     #[arg(
         long,
         help = "Path to configuration file",
-        default_value = "~/.turtlerc.yaml"
+        default_value = "~/.turtle.yaml"
     )]
     pub config: Option<String>,
 
@@ -434,7 +434,7 @@ pub enum TurtleToken {
     Eof,                        // end of file/input
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[allow(dead_code)] //for now until we use all variants
 pub enum TurtleExpression {
     // Literal values
@@ -522,26 +522,57 @@ pub struct ShellCommandResult {
     pub code: i32,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct NumberResult {
+    pub value: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StringResult {
+    pub value: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BooleanResult {
+    pub value: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct AssignmentResult {
+    pub name: String,
+    pub value: TurtleExpression,
+}
+
 /// Enum to encapsulate different types of results
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TurtleResults {
-    ShellCommandResult(ShellCommandResult),
+    CommandResult(ShellCommandResult),
+    NumberResult(NumberResult),
+    StringResult(StringResult),
+    BooleanResult(BooleanResult),
+    AssignmentResult(AssignmentResult),
 }
 
 impl fmt::Display for TurtleResults {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TurtleResults::ShellCommandResult(cmd) => write!(
+            TurtleResults::CommandResult(cmd) => write!(
                 f,
                 "Exit code: {}\nStdout:\n{}\nStderr:\n{}",
                 cmd.code, cmd.stdout, cmd.stderr
             ),
+            TurtleResults::NumberResult(num) => write!(f, "{}", num.value),
+            TurtleResults::StringResult(string) => write!(f, "{}", string.value),
+            TurtleResults::BooleanResult(boolean) => write!(f, "{}", boolean.value),
+            TurtleResults::AssignmentResult(assign) => {
+                write!(f, "Assigned {} to {:?}", assign.name, assign.value)
+            }
         }
     }
 }
 impl TurtleResults {
     pub fn from_shell_command_result(stdout: String, stderr: String, code: i32) -> Self {
-        TurtleResults::ShellCommandResult(ShellCommandResult {
+        TurtleResults::CommandResult(ShellCommandResult {
             stdout,
             stderr,
             code,
