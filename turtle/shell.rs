@@ -16,6 +16,8 @@ pub struct TurtleShell {
     history: Vec<serde_json::Value>,
     env: std::collections::HashMap<String, String>,
     aliases: std::collections::HashMap<String, String>,
+    tokens: Vec<Vec<crate::types::TurtleToken>>,
+    expressions: Vec<crate::types::TurtleExpression>,
 }
 
 impl TurtleShell {
@@ -71,20 +73,33 @@ impl TurtleShell {
     pub fn new(args: crate::types::TurtleArgs) -> Self {
         let defaults = crate::defaults::get_defaults();
         let args = Some(args);
-        let config = crate::config::load_config_from_path(
-            args.as_ref()
-                .and_then(|args| args.config.as_ref())
-                .unwrap_or(&crate::defaults::get_defaults().config_path),
-        );
+
+        let config_path = args
+            .as_ref()
+            .and_then(|args| args.config.as_ref())
+            .unwrap_or(&defaults.config_path);
+
+        let config = crate::config::load_config_from_path(config_path);
+        let debug = args.as_ref().unwrap().debug
+            || config.as_ref().map(|c| c.debug).unwrap_or(false)
+            || defaults.debug;
+
         let history = Vec::new();
         let aliases = std::collections::HashMap::new();
         let env = std::collections::HashMap::new();
         let context = crate::execution::TurtleExecutionContext::new();
         let interpreter = crate::interpreter::TurtleInterpreter::new();
 
+        if debug {
+            println!(
+                "🐢 Initializing TurtleShell with config: {:?} and args {:?}",
+                config, args
+            );
+        }
+
         TurtleShell {
-            debug: args.as_ref().unwrap().debug || config.as_ref().unwrap().debug || defaults.debug,
-            config,
+            debug,
+            config: config.clone(),
             args,
             history,
             env,
@@ -95,6 +110,8 @@ impl TurtleShell {
             uptime: 0,
             paused: false,
             running: true,
+            tokens: Vec::new(),
+            expressions: Vec::new(),
         }
     }
 
@@ -153,37 +170,34 @@ impl TurtleShell {
 
     // Reload the shell configuration
     pub fn reload(&self) -> crate::types::TurtleConfig {
-        // Load configuration from file or environment variables
-
         self.load_config()
-
-        // crate::config::load_config(self.config.as_ref().unwrap().debug).unwrap_or_else(|| {
-        //     crate::types::TurtleConfig {
-        //         // history: None,
-        //         debug: false,
-        //         prompt: None,
-        //         aliases: None,
-        //         history_size: None,
-        //         theme: None,
-        //     }
-        // })
     }
 
     /// Start the shell main loop
     pub fn start(&mut self) {
         // TODO: implement main shell loop here
         self.setup();
-
         let start = crate::utils::this_instant();
         let mut editor = self.get_readline();
         let default_prompt = crate::defaults::get_defaults().prompt;
+        let default_theme = crate::defaults::get_defaults().theme;
+        crate::themes::apply_theme(&mut std::io::stdout(), &default_theme).ok();
 
         loop {
-            // check if command was provided via args
+            // check if a command was provided via args
             if let Some(command) = self.args.as_ref().and_then(|args| args.command.as_ref()) {
-                // Execute the command
                 println!("Executing command from args: {}", command);
-                break;
+                let tokens = self.interpreter.tokenize(command);
+                if self.debug {
+                    println!("Tokens: {:?}", tokens);
+                }
+                let expr = self.interpreter.interpret();
+                let result = self.context.eval(expr.clone());
+                if let Some(res) = result {
+                    if self.debug {
+                        println!("Result: {:?}", res);
+                    }
+                }
             }
 
             // get our prompt from the configuration file, or use the default
@@ -220,23 +234,22 @@ impl TurtleShell {
                 continue;
             }
 
-            // perform expansions here
-
-            // tokenize and interpret input
-
-            // execute ...
-
-            // check if we are calling start again
-            // if !self.running {
-            //     break;
-            // }
-
-            // check if shell is paused
-            // if !self.paused {}
-
-            //
             // shell logic here
             // e.g., read input, interpret commands, manage history, etc.
+            let tokens = self.interpreter.tokenize(input);
+            if self.debug {
+                println!("Tokens: {:?}", tokens);
+            }
+            self.tokens.push(tokens.clone());
+            let expr = self.interpreter.interpret();
+
+            self.expressions.push(expr.clone().unwrap());
+            let result = self.context.eval(expr.clone());
+            if let Some(res) = result {
+                if self.debug {
+                    println!("Result: {:?}", res);
+                }
+            }
         }
         let elapsed = start.elapsed();
         if self.debug {
