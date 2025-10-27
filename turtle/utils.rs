@@ -7,7 +7,14 @@ pub fn now_unix() -> u64 {
         .as_secs()
 }
 
-pub fn _is_path(path: &str) -> bool {
+/// Get the current instant
+pub fn this_instant() -> std::time::Instant {
+    std::time::Instant::now()
+}
+
+/// Check if the given path exists and is a file or directory
+
+pub fn is_path(path: &str) -> bool {
     let p = std::path::Path::new(path);
     p.exists()
         && (p.is_file()
@@ -17,8 +24,10 @@ pub fn _is_path(path: &str) -> bool {
             || path.starts_with('/'))
 }
 
+/// Check if the given command exists in PATH or as an absolute/relative path
 pub fn is_command(command: &str) -> bool {
     use is_executable::IsExecutable;
+    println!("Checking if command exists: {}", command);
     // handle absolute and relative paths to commands first
     if command.starts_with("./") || command.starts_with('/') {
         let path = std::path::Path::new(command);
@@ -41,7 +50,7 @@ pub fn is_command(command: &str) -> bool {
     false
 }
 
-pub fn _translate_alias(
+pub fn translate_alias(
     aliases: &std::collections::HashMap<String, String>,
     input: &str,
 ) -> Option<String> {
