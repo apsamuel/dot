@@ -3,14 +3,149 @@ pub struct TurtleExecutionContext {
     pub env: std::collections::HashMap<String, String>,
     pub vars: std::collections::HashMap<String, crate::types::TurtleExpression>,
     pub functions: std::collections::HashMap<String, crate::types::TurtleExpression>,
-    pub code_stack: Vec<crate::types::TurtleExpression>,
+    pub code: Vec<crate::types::TurtleExpression>,
     // pub
 }
 
 impl TurtleExecutionContext {
-    fn execute_command(&mut self, command: &str, args: &str) {
+    fn eval_binary_operation(
+        &mut self,
+        left: crate::types::TurtleExpression,
+        op: String,
+        right: crate::types::TurtleExpression,
+    ) -> Option<crate::types::TurtleResults> {
+        // Recursively evaluate left and right, handling nested BinaryOperation
+        let left_result = match left {
+            crate::types::TurtleExpression::BinaryOperation { left, op, right } => {
+                self.eval_binary_operation(*left, op, *right)?
+            }
+            _ => self.eval(Some(left))?,
+        };
+
+        let right_result = match right {
+            crate::types::TurtleExpression::BinaryOperation { left, op, right } => {
+                self.eval_binary_operation(*left, op, *right)?
+            }
+            _ => self.eval(Some(right))?,
+        };
+
+        match (left_result, right_result) {
+            (
+                crate::types::TurtleResults::NumberResult(left_num),
+                crate::types::TurtleResults::NumberResult(right_num),
+            ) => {
+                let result = match op.as_str() {
+                    "+" => left_num.value + right_num.value,
+                    "-" => left_num.value - right_num.value,
+                    "*" => left_num.value * right_num.value,
+                    "/" => left_num.value / right_num.value,
+                    "%" => left_num.value % right_num.value,
+                    _ => {
+                        eprintln!("Unsupported operation: {}", op);
+                        return None;
+                    }
+                };
+                Some(crate::types::TurtleResults::NumberResult(
+                    crate::types::NumberResult { value: result },
+                ))
+            }
+            (
+                crate::types::TurtleResults::StringResult(left_str),
+                crate::types::TurtleResults::StringResult(right_str),
+            ) => {
+                if op == "+" {
+                    let result = format!("{}{}", left_str.value, right_str.value);
+                    Some(crate::types::TurtleResults::StringResult(
+                        crate::types::StringResult { value: result },
+                    ))
+                } else {
+                    eprintln!("Unsupported operation for strings: {}", op);
+                    None
+                }
+            }
+            _ => {
+                eprintln!(
+                    "Binary operations are only supported for numbers and string concatenation."
+                );
+                None
+            }
+        }
+    }
+
+    fn eval_assignment(
+        &mut self,
+        name: String,
+        value: crate::types::TurtleExpression,
+    ) -> Option<crate::types::TurtleResults> {
+        // Evaluate the value expression
+        let _evaluated_value = self.eval(Some(value.clone()))?;
+
+        // Store the variable in the context
+        println!("Assigning variable: {} = {:?}", name, value);
+        self.vars.insert(name.clone(), value.clone());
+
+        // Return an AssignmentResult
+        Some(crate::types::TurtleResults::AssignmentResult(
+            crate::types::AssignmentResult { name, value },
+        ))
+    }
+
+    fn _eval_binary_operation_deprecated(
+        &mut self,
+        left: crate::types::TurtleExpression,
+        op: String,
+        right: crate::types::TurtleExpression,
+    ) -> Option<crate::types::TurtleResults> {
+        // we need to handle chained operations
+
+        let left = self.eval(Some(left))?;
+        let operation = op;
+        let right = self.eval(Some(right))?;
+
+        match (left, right) {
+            (
+                crate::types::TurtleResults::NumberResult(left_num),
+                crate::types::TurtleResults::NumberResult(right_num),
+            ) => {
+                let result = match operation.as_str() {
+                    "+" => left_num.value + right_num.value,
+                    "-" => left_num.value - right_num.value,
+                    "*" => left_num.value * right_num.value,
+                    "/" => left_num.value / right_num.value,
+                    "%" => left_num.value % right_num.value,
+                    _ => {
+                        return None;
+                    }
+                };
+                return Some(crate::types::TurtleResults::NumberResult(
+                    crate::types::NumberResult { value: result },
+                ));
+            }
+
+            // support adding strings for concatenation
+            (
+                crate::types::TurtleResults::StringResult(left_str),
+                crate::types::TurtleResults::StringResult(right_str),
+            ) => {
+                if operation == "+" {
+                    let result = format!("{}{}", left_str.value, right_str.value);
+                    return Some(crate::types::TurtleResults::StringResult(
+                        crate::types::StringResult { value: result },
+                    ));
+                } else {
+                    // eprintln!("Unsupported operation for strings: {}", operation);
+                    return None;
+                }
+            }
+            _ => {
+                // eprintln!("Binary operations are only supported for numbers currently.");
+                return None;
+            }
+        }
+    }
+
+    fn eval_command(&mut self, command: &str, args: &str) -> Option<crate::types::TurtleResults> {
         use std::process::Command;
-        println!("Executing command: {} with args: {}", command, args);
         let args_vec: Vec<&str> = args.split_whitespace().collect();
         let exec_result = Command::new(command)
             .args(&args_vec)
@@ -22,16 +157,16 @@ impl TurtleExecutionContext {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 let stderr = String::from_utf8_lossy(&output.stderr);
                 let code = output.status.code().unwrap_or(-1);
-                println!("Command exited with code: {}", code);
-                if !stdout.is_empty() {
-                    println!("Stdout:\n{}", stdout);
-                }
-                if !stderr.is_empty() {
-                    eprintln!("Stderr:\n{}", stderr);
-                }
+                let result = crate::types::ShellCommandResult {
+                    stdout: stdout.to_string(),
+                    stderr: stderr.to_string(),
+                    code,
+                };
+                Some(crate::types::TurtleResults::CommandResult(result))
             }
             Err(e) => {
                 eprintln!("Failed to execute command: {}", e);
+                None
             }
         }
     }
@@ -41,17 +176,62 @@ impl TurtleExecutionContext {
             env: std::collections::HashMap::new(),
             vars: std::collections::HashMap::new(),
             functions: std::collections::HashMap::new(),
-            code_stack: Vec::new(),
+            code: Vec::new(),
         }
     }
 
-    pub fn eval(&mut self, expr: Option<crate::types::TurtleExpression>) {
+    pub fn eval(
+        &mut self,
+        expr: Option<crate::types::TurtleExpression>,
+    ) -> Option<crate::types::TurtleResults> {
+        // self.code.push(expr.unwrap().clone());
+        if let Some(ref e) = expr {
+            self.code.push(e.clone());
+        }
         match expr {
+            // handle literal values
+            Some(crate::types::TurtleExpression::Assignment { name, value }) => {
+                self.eval_assignment(name, value.as_ref().clone())
+            }
+            Some(crate::types::TurtleExpression::BinaryOperation { left, op, right }) => {
+                let result = self.eval_binary_operation(*left, op, *right);
+
+                if let Some(crate::types::TurtleResults::NumberResult(n)) = &result {
+                    println!("{}", n.value);
+                }
+                result
+            }
+            Some(crate::types::TurtleExpression::Number(value)) => Some(
+                crate::types::TurtleResults::NumberResult(crate::types::NumberResult { value }),
+            ),
+            Some(crate::types::TurtleExpression::String(value)) => {
+                println!("evaluated string: {}", value);
+                Some(crate::types::TurtleResults::StringResult(
+                    crate::types::StringResult { value },
+                ))
+            }
+            Some(crate::types::TurtleExpression::Boolean(value)) => Some(
+                crate::types::TurtleResults::BooleanResult(crate::types::BooleanResult { value }),
+            ),
+
             Some(crate::types::TurtleExpression::ShellCommand { name, args }) => {
-                self.execute_command(&name, &args);
+                let result = self.eval_command(&name, &args);
+                // result is an option, we need to unwrap it to access the code
+                // the result is in the CommandResult variant of ShellResults
+                if let Some(crate::types::TurtleResults::CommandResult(cmd)) = &result {
+                    if cmd.code != 0 {
+                        eprintln!("{}", cmd.stderr);
+                    } else {
+                        print!("{}", cmd.stdout);
+                    }
+                }
+
+                // println!("{} executed with result: {:?}", name, result);
+                result
             }
             _ => {
                 println!("Evaluating expression: {:?}", expr);
+                None
             }
         }
     }
