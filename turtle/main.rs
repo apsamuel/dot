@@ -1,4 +1,6 @@
 mod config; // configuration loading and environment setup
+mod defaults; // default configuration values
+mod execution; // execution context
 mod history; // command history logging
 mod input; // input handling (env var and tilde expansion)
 mod interpreter; // turtle shell interpreter
@@ -22,39 +24,24 @@ use crate::config::{load_config, set_shell_vars}; // config functions
 use crate::history::log_history; // history logging
 use crate::input::{expand_double_dot, expand_env_vars, expand_single_dot, expand_tilde}; // input expansion
 use crate::prompt::expand_prompt_macros;
-use crate::types::{CommandRequest, CommandResponse, TurtleArgs}; // shared types
+use crate::types::{TurtleArgs, TurtleCommandRequest, TurtleCommandResponse}; // shared types
 use crate::utils::now_unix; // utility functions // prompt handling
 
 #[tokio::main]
 async fn main() {
     let mut turtle_intepreter = crate::interpreter::TurtleInterpreter::new();
-    let _start_time = now_unix();
+    let mut execution_context = crate::execution::TurtleExecutionContext::new();
     let mut aliases: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-    let _pid = std::process::id();
     let turtle_args = TurtleArgs::parse();
     let config = load_config(turtle_args.debug);
-    let mut turtle_shell = crate::shell::TurtleShell::new(
-        config.clone().unwrap_or(crate::types::TurtleConfig {
-            debug: false,
-            prompt: None,
-            aliases: None,
-            history_size: None,
-            theme: None,
-        }),
-        turtle_args.clone(),
-        turtle_intepreter.clone(),
-    );
-    turtle_shell.setup();
-
+    let mut turtle_shell = crate::shell::TurtleShell::new(turtle_args.clone());
     let turtle_theme = std::env::var("TURTLE_THEME").unwrap_or_else(|_| "solarized_dark".into());
     let prompt = if let Some(cfg) = &config {
         cfg.prompt.clone().unwrap_or_else(|| "turtle> ".to_string())
     } else {
-        // TODO: load from defaults
         "turtle> ".to_string()
     };
 
-    // a command was provided via args
     if let Some(cmd) = &turtle_args.command {
         turtle_intepreter.reset();
         let tokens = turtle_intepreter.tokenize(&cmd);
@@ -63,7 +50,7 @@ async fn main() {
         println!("Interpreted Expression: {:?}", expression);
 
         let id = Uuid::new_v4().to_string();
-        let _request = CommandRequest {
+        let _request = TurtleCommandRequest {
             id: id.clone(),
             command: cmd.clone(),
             args: vec![],
@@ -86,7 +73,7 @@ async fn main() {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         // let status = output.status;
 
-        let response = crate::types::CommandResponse {
+        let response = crate::types::TurtleCommandResponse {
             id: Uuid::new_v4().to_string(),
             status: "done".to_string(),
             code: status_code,
@@ -114,17 +101,12 @@ async fn main() {
     }
 
     crate::config::load_aliases(&mut aliases, &config);
-
     crate::themes::apply_theme(&mut std::io::stdout(), &turtle_theme).ok();
     set_shell_vars();
-
-    // Welcome message
     println!("Welcome to the Turtle Shell! 🐢");
-
     let rl_config = Config::builder().edit_mode(EditMode::Vi).build();
-
     let mut rl = Editor::with_config(rl_config).unwrap();
-    // Main REPL loop
+
     loop {
         let history = crate::history::load_history().unwrap_or_default();
         // we need to maintain a plain text history file for rustyline
@@ -133,6 +115,7 @@ async fn main() {
             dirs::home_dir().unwrap().display()
         ))
         .ok();
+
         rl.load_history(&format!(
             "{}/.turtle_history.txt",
             dirs::home_dir().unwrap().display()
@@ -175,9 +158,10 @@ async fn main() {
 
         let tokens: Vec<crate::types::TurtleToken> = turtle_intepreter.tokenize(&input);
         let expression = turtle_intepreter.interpret();
+        execution_context.eval(expression.clone());
 
         println!("Input Tokens: {:?}", tokens);
-        println!("Expression: {:?}", expression);
+        println!("Expression: {:?}", expression.clone());
 
         // split input into command and args by whitespace
         // TODO: replace with shlex to properly handle quoted args and remain POSIX compliant
@@ -197,8 +181,6 @@ async fn main() {
             })
             .collect();
 
-        // handle special commands for widgets
-        // TODO: refactor into builtin commands
         if input.trim() == "%(history)" {
             let _ = crate::history::display_history_ui();
             continue;
@@ -227,7 +209,7 @@ async fn main() {
             continue;
         }
 
-        // process builtin commands
+        /* Process built-in commands */
         match cmd {
             "cd" => {
                 let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
@@ -262,7 +244,7 @@ async fn main() {
             _ => {}
         }
 
-        // translate aliases to their commands
+        /* expand aliases */
         let (cmd, args) = if let Some(alias_command) = aliases.get(cmd) {
             let mut alias_parts = alias_command.split_whitespace();
             let alias_cmd = alias_parts.next().unwrap_or(cmd);
@@ -277,7 +259,7 @@ async fn main() {
         let timestamp = now_unix();
 
         // Build the command request
-        let command_request = CommandRequest {
+        let command_request = TurtleCommandRequest {
             id: id.clone(),
             command: cmd.to_string(),
             args: args.iter().map(|s| s.to_string()).collect(),
@@ -289,8 +271,6 @@ async fn main() {
         let status = Command::new(cmd)
             .args(&args)
             .stdin(Stdio::inherit())
-            // .stdout(Stdio::inherit())
-            // .stderr(Stdio::inherit())
             .output();
 
         // Build the command response
@@ -298,7 +278,7 @@ async fn main() {
             Ok(s) => {
                 let stdout = String::from_utf8_lossy(&s.stdout).to_string();
                 let stderr = String::from_utf8_lossy(&s.stderr).to_string();
-                CommandResponse {
+                TurtleCommandResponse {
                     id: id.clone(),
                     status: "completed".to_string(),
                     code: 0,
@@ -309,7 +289,7 @@ async fn main() {
                 }
             }
 
-            Err(e) => CommandResponse {
+            Err(e) => TurtleCommandResponse {
                 id: id.clone(),
                 status: "failed".to_string(),
                 code: -1,
