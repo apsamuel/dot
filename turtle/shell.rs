@@ -1,66 +1,100 @@
-// static DEFAULT_ENV_VARS: &[(&str, &str)] = &[
-//     ("PATH", "/usr/local/bin:/usr/bin:/bin"),
-//     ("HOME", "/home/user"),
-//     ("LANG", "en_US.UTF-8"),
-//     ("TERM", "xterm-256color"),
-// ];
+// use crate::utils;
 
 #[derive(Debug, Clone)]
 pub struct TurtleShell {
-    // pub debug: bool,
-    pub config: Option<crate::types::TurtleConfig>,
+    debug: bool,
     pub args: Option<crate::types::TurtleArgs>,
+    pub config: Option<crate::types::TurtleConfig>,
     pub interpreter: crate::interpreter::TurtleInterpreter,
+    pub context: crate::execution::TurtleExecutionContext,
     pub pid: Option<u32>,
     pub uptime: u64,
     pub paused: bool,
     pub running: bool,
-    history: Vec<crate::types::HistoryEvent>,
+    // history: Vec<crate::types::HistoryEvent>,
+    // editor: rustyline::DefaultEditor,
+    history: Vec<serde_json::Value>,
     env: std::collections::HashMap<String, String>,
     aliases: std::collections::HashMap<String, String>,
 }
 
 impl TurtleShell {
-    fn _reload(&self) -> crate::types::TurtleConfig {
-        // Load configuration from file or environment variables
-        crate::config::load_config(self.config.as_ref().unwrap().debug).unwrap_or_else(|| {
-            crate::types::TurtleConfig {
-                // history: None,
-                debug: false,
-                prompt: None,
-                aliases: None,
-                history_size: None,
-                theme: None,
+    fn get_readline(&self) -> rustyline::DefaultEditor {
+        let config = rustyline::config::Config::builder()
+            // .history_ignore_dups(true)
+            // .history_ignore_space(true)
+            // .completion_type(rustyline::config::CompletionType::List)
+            .edit_mode(rustyline::config::EditMode::Vi)
+            .build();
+        let rl = rustyline::DefaultEditor::with_config(config);
+        rl.unwrap()
+    }
+
+    fn load_aliases(&self) -> std::collections::HashMap<String, String> {
+        let mut aliases = std::collections::HashMap::new();
+        if let Some(cfg) = &self.config {
+            if let Some(turtle_aliases) = &cfg.aliases {
+                for (key, value) in turtle_aliases {
+                    aliases.insert(key.clone(), value.clone());
+                }
             }
+        }
+        aliases
+    }
+
+    fn load_config(&self) -> crate::types::TurtleConfig {
+        // Load configuration from file or environment variables
+        crate::config::load_config_from_path(
+            self.args
+                .as_ref()
+                .and_then(|args| args.config.as_ref())
+                .unwrap_or(&crate::defaults::get_defaults().config_path),
+        )
+        .unwrap_or_else(|| crate::types::TurtleConfig {
+            debug: false,
+            prompt: None,
+            aliases: None,
+            history_size: None,
+            theme: None,
         })
     }
 
+    pub fn retrieve_history(&mut self) -> std::io::Result<Vec<serde_json::Value>> {
+        let history = crate::history::load_history()?;
+        Ok(history)
+    }
+
     fn _read_input(&self) -> String {
-        // Read input from user
         String::new() // Placeholder
     }
 
     pub fn new(
-        config: crate::types::TurtleConfig,
+        // config: crate::types::TurtleConfig,
         args: crate::types::TurtleArgs,
         interpreter: crate::interpreter::TurtleInterpreter,
-        // debug: bool,
-        // pid: Option<u32>,
     ) -> Self {
-        // let debug = config.debug || args.debug;
-        let config = Some(config);
+        let defaults = crate::defaults::get_defaults();
         let args = Some(args);
+        // let config = Some(config);
         let history = Vec::new();
         let aliases = std::collections::HashMap::new();
         let env = std::collections::HashMap::new();
+        let context = crate::execution::TurtleExecutionContext::new();
+        let config = crate::config::load_config_from_path(
+            args.as_ref()
+                .and_then(|args| args.config.as_ref())
+                .unwrap_or(&crate::defaults::get_defaults().config_path),
+        );
 
         TurtleShell {
+            debug: args.as_ref().unwrap().debug || config.as_ref().unwrap().debug || defaults.debug,
             config,
             args,
             history,
             env,
             aliases,
             interpreter,
+            context,
             pid: None,
             uptime: 0,
             paused: false,
@@ -68,66 +102,149 @@ impl TurtleShell {
         }
     }
 
-    pub fn _start(&mut self) {
-        // TODO: implement main shell loop here
-        self.setup();
-        let _start = crate::utils::now_unix();
-        loop {
-            if !self.running {
-                break;
-            }
-
-            if !self.paused {
-                // Read input, parse, execute commands, etc.
-            }
-            // shell logic here
-        }
-    }
-
     /// Set up the shell environment variables
-    fn setup_environment(&mut self) -> u64 {
-        let _start = crate::utils::now_unix();
+    fn setup_environment(&mut self) -> u128 {
+        let _start = crate::utils::this_instant();
         let user_env = crate::utils::build_user_environment();
         for (key, value) in user_env {
-            if Some(self.args.as_ref().unwrap().debug) == Some(true) {
-                eprintln!("Setting environment variable: {}={}", key, value);
-            }
-
             self.env.insert(key, value);
         }
-        let _end = crate::utils::now_unix();
-        return _end - _start;
+        let _elapsed = _start.elapsed();
+        return _elapsed.as_millis();
     }
 
     /// Set up aliases for the shell
-    fn setup_aliases(&mut self) -> u64 {
+    fn setup_aliases(&mut self) -> u128 {
         // Load and set up aliases for the shell
-        0
+        let _start = crate::utils::this_instant();
+        self.aliases = self.load_aliases();
+        let _elapsed = _start.elapsed();
+        return _elapsed.as_millis();
     }
 
     /// Set up command history for the shell
-    fn setup_history(&mut self) -> u64 {
+    fn setup_history(&mut self) -> u128 {
         // Load command history for the shell
-        0
+        let _start = crate::utils::this_instant();
+        self.history = self.retrieve_history().unwrap_or_default();
+        let _elapsed = _start.elapsed();
+        return _elapsed.as_millis();
     }
 
     /// Set up the shell
-    pub fn setup(&mut self) -> u64 {
-        let _start = crate::utils::now_unix();
+    pub fn setup(&mut self) -> std::collections::HashMap<String, u128> {
+        let _start = crate::utils::this_instant();
         self.pid = std::process::id().into();
         self.running = true;
         self.paused = false;
-        self.setup_environment();
-        self.setup_aliases();
-        self.setup_history();
-        let _end = crate::utils::now_unix();
-        return _end - _start;
+        let setup_environment_duration = self.setup_environment();
+        let setup_aliases_duration = self.setup_aliases();
+        let setup_history_duration = self.setup_history();
+        let _elapsed = _start.elapsed();
+        if self.debug {
+            println!(
+                "🐢 setup completed in {} milliseconds",
+                _elapsed.as_millis()
+            );
+        }
+        return std::collections::HashMap::from([
+            ("setup_environment".into(), setup_environment_duration),
+            ("setup_aliases".into(), setup_aliases_duration),
+            ("setup_history".into(), setup_history_duration),
+            ("total".into(), _elapsed.as_millis()),
+        ]);
+    }
+
+    // Reload the shell configuration
+    pub fn reload(&self) -> crate::types::TurtleConfig {
+        // Load configuration from file or environment variables
+
+        self.load_config()
+
+        // crate::config::load_config(self.config.as_ref().unwrap().debug).unwrap_or_else(|| {
+        //     crate::types::TurtleConfig {
+        //         // history: None,
+        //         debug: false,
+        //         prompt: None,
+        //         aliases: None,
+        //         history_size: None,
+        //         theme: None,
+        //     }
+        // })
+    }
+
+    /// Start the shell main loop
+    pub fn start(&mut self) {
+        // TODO: implement main shell loop here
+        self.setup();
+
+        let start = crate::utils::this_instant();
+        let mut editor = self.get_readline();
+        let default_prompt = crate::defaults::get_defaults().prompt;
+
+        loop {
+            // check if command was provided via args
+            if let Some(command) = self.args.as_ref().and_then(|args| args.command.as_ref()) {
+                // Execute the command
+                println!("Executing command from args: {}", command);
+                break;
+            }
+
+            // get our prompt from the configuration file, or use the default
+            let prompt = self
+                .config
+                .as_ref()
+                .and_then(|cfg| cfg.prompt.as_ref())
+                .unwrap_or(&default_prompt);
+
+            let readline = editor.readline(prompt);
+
+            let input = match readline {
+                Ok(line) => line,
+                Err(rustyline::error::ReadlineError::Interrupted) => {
+                    println!("^C");
+                    continue;
+                }
+                Err(rustyline::error::ReadlineError::Eof) => {
+                    println!("^D");
+                    break;
+                }
+                Err(err) => {
+                    println!("Error: {:?}", err);
+                    break;
+                }
+            };
+
+            let input = input.trim();
+
+            if input.is_empty() {
+                continue;
+            }
+
+            // perform expansions here
+
+            // tokenize and interpret input
+
+            // execute ...
+
+            // check if we are calling start again
+            // if !self.running {
+            //     break;
+            // }
+
+            // check if shell is paused
+            // if !self.paused {}
+
+            //
+            // shell logic here
+            // e.g., read input, interpret commands, manage history, etc.
+        }
+        let elapsed = start.elapsed();
+        if self.debug {
+            println!(
+                "🐢 shell main loop exited after {} milliseconds",
+                elapsed.as_millis()
+            );
+        }
     }
 }
-
-// static DEFAULT_ENV_VARS: &[(&str, &str)] = &[
-//     ("PATH", "/usr/local/bin:/usr/bin:/bin"),
-//     ("HOME", "/home/user"),
-//     ("LANG", "en_US.UTF-8"),
-//     ("TERM", "xterm-256color"),
-// ];
