@@ -16,20 +16,25 @@ pub static TURTLE_KEYWORDS: &[&str] = &[
 #[derive(Debug, Clone)]
 struct TurtleParser {
     parsed: Vec<crate::types::TurtleToken>,
-    unknown: Vec<crate::types::TurtleToken>,
-    current: usize,
+    // unknown: Vec<crate::types::TurtleToken>,
+    // current: usize,
     pos: usize,
 }
 
 /// parser implementation
 impl TurtleParser {
+    fn get_operator_precedence(&self, op: &str) -> u8 {
+        match op {
+            "*" | "/" | "%" => 2,
+            "+" | "-" => 1,
+            _ => 0,
+        }
+    }
     /// creates a new TurtleParser
     pub fn new(tokens: Vec<crate::types::TurtleToken>) -> Self {
         TurtleParser {
             parsed: tokens,
-            current: 0,
             pos: 0,
-            unknown: Vec::new(),
         }
     }
 
@@ -134,6 +139,44 @@ impl TurtleParser {
             }
         }
         None
+    }
+
+    fn parse_binary_with_precedence(
+        &mut self,
+        min_prec: u8,
+        mut left: crate::types::TurtleExpression,
+    ) -> crate::types::TurtleExpression {
+        loop {
+            let op = match self.peek() {
+                crate::types::TurtleToken::Operator(op) => op.clone(),
+                _ => break,
+            };
+            let prec = self.get_operator_precedence(&op);
+            if prec < min_prec {
+                break;
+            }
+            self.next(); // consume operator
+
+            // Parse the right-hand side with higher precedence
+            let mut right = self
+                .parse_primary()
+                .unwrap_or(crate::types::TurtleExpression::Number(0.0));
+            while let crate::types::TurtleToken::Operator(next_op) = self.peek() {
+                let next_prec = self.get_operator_precedence(next_op);
+                if next_prec > prec {
+                    right = self.parse_binary_with_precedence(next_prec, right);
+                } else {
+                    break;
+                }
+            }
+
+            left = crate::types::TurtleExpression::BinaryOperation {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+            };
+        }
+        left
     }
 
     ///parse function definitions
@@ -374,6 +417,37 @@ impl TurtleParser {
     /// ```
     fn parse_assignment(&mut self) -> Option<crate::types::TurtleExpression> {
         self.skip_whitespace();
+        // handle the let keyword
+        if let crate::types::TurtleToken::Keyword(k) = self.peek() {
+            if k == "let" {
+                self.next(); // consume 'let'
+                self.skip_whitespace();
+                if let crate::types::TurtleToken::Identifier(name) = self.peek() {
+                    let name = name.clone();
+                    self.next(); // consume identifier
+                    self.skip_whitespace();
+
+                    if let crate::types::TurtleToken::Operator(op) = self.peek() {
+                        if op == "=" {
+                            self.next(); // consume '='
+                            self.skip_whitespace();
+                            if let Some(value) = self.parse_expr() {
+                                return Some(crate::types::TurtleExpression::Assignment {
+                                    name,
+                                    value: Box::new(value),
+                                });
+                            } else {
+                                return None; // expected value expression
+                            }
+                        } else {
+                            return None;
+                        }
+                    }
+                }
+            } else {
+                return None;
+            }
+        }
         if let crate::types::TurtleToken::Identifier(name) = self.peek() {
             let name = name.clone();
             self.next(); // consume identifier
@@ -536,16 +610,17 @@ impl TurtleParser {
         if let Some(command) = self.parse_command() {
             return Some(command);
         }
+
+        // TODO: fix assignment parsing
+        if let Some(assignment) = self.parse_assignment() {
+            return Some(assignment);
+        }
+
         // TODO: implement operator precedence and associativity here
         let mut expr = self.parse_primary();
 
         if let Some(func_def) = self.parse_function_def() {
             return Some(func_def);
-        }
-
-        // TODO: fix assignment parsing
-        if let Some(assignment) = self.parse_assignment() {
-            return Some(assignment);
         }
 
         loop {
@@ -567,7 +642,8 @@ impl TurtleParser {
         // parse binary operations (chained)
         while let Some(crate::types::TurtleToken::Operator(_)) = self.peek().clone().into() {
             if let Some(left) = expr {
-                expr = self.parse_binary(left);
+                // expr = self.parse_binary(left);
+                expr = Some(self.parse_binary_with_precedence(1, left));
             } else {
                 break;
             }
@@ -702,19 +778,19 @@ impl TurtleInterpreter {
                     tokens.push(crate::types::TurtleToken::Number(num.parse().unwrap()))
                 }
                 // testing a better PATH detection
-                _ if c.to_string() == "/" || c.to_string() == "." => {
-                    let mut path = String::new();
-                    while let Some(&d) = chars.peek() {
-                        if d == '/' || d == '.' {
-                            path.push(d);
-                            chars.next();
-                        } else {
-                            break;
-                        }
-                    }
-                    println!("Found path: {}", path);
-                    tokens.push(crate::types::TurtleToken::Identifier(path.clone()));
-                }
+                // _ if c.to_string() == "/" || c.to_string() == "." => {
+                //     let mut path = String::new();
+                //     while let Some(&d) = chars.peek() {
+                //         if d == '/' || d == '.' {
+                //             path.push(d);
+                //             chars.next();
+                //         } else {
+                //             break;
+                //         }
+                //     }
+                //     println!("Found path: {}", path);
+                //     tokens.push(crate::types::TurtleToken::Identifier(path.clone()));
+                // }
                 _ if c.is_alphanumeric()
                     || c == "_".chars().next().unwrap()
                     || c == ".".chars().next().unwrap() =>
