@@ -68,23 +68,19 @@ impl TurtleShell {
         String::new() // Placeholder
     }
 
-    pub fn new(
-        // config: crate::types::TurtleConfig,
-        args: crate::types::TurtleArgs,
-        interpreter: crate::interpreter::TurtleInterpreter,
-    ) -> Self {
+    pub fn new(args: crate::types::TurtleArgs) -> Self {
         let defaults = crate::defaults::get_defaults();
         let args = Some(args);
-        // let config = Some(config);
-        let history = Vec::new();
-        let aliases = std::collections::HashMap::new();
-        let env = std::collections::HashMap::new();
-        let context = crate::execution::TurtleExecutionContext::new();
         let config = crate::config::load_config_from_path(
             args.as_ref()
                 .and_then(|args| args.config.as_ref())
                 .unwrap_or(&crate::defaults::get_defaults().config_path),
         );
+        let history = Vec::new();
+        let aliases = std::collections::HashMap::new();
+        let env = std::collections::HashMap::new();
+        let context = crate::execution::TurtleExecutionContext::new();
+        let interpreter = crate::interpreter::TurtleInterpreter::new();
 
         TurtleShell {
             debug: args.as_ref().unwrap().debug || config.as_ref().unwrap().debug || defaults.debug,
@@ -199,6 +195,7 @@ impl TurtleShell {
 
             let readline = editor.readline(prompt);
 
+            // get user input
             let input = match readline {
                 Ok(line) => line,
                 Err(rustyline::error::ReadlineError::Interrupted) => {
@@ -215,8 +212,10 @@ impl TurtleShell {
                 }
             };
 
+            // trim input
             let input = input.trim();
 
+            // skip empty input
             if input.is_empty() {
                 continue;
             }
