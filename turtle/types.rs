@@ -20,23 +20,35 @@ pub struct TurtleArgs {
     /// enable debug output
     #[arg(short, long, help = "Enable debug output")]
     pub debug: bool,
-    #[arg(short, long, help = "Returns turtle version")]
+
     /// show version information
+    #[arg(short, long, help = "Returns turtle version")]
     pub version: bool,
     #[arg(
         short,
         long,
-        help = "Run in non-interactive mode with the provided command"
+        help = "Run in non-interactive mode with the provided command or expression"
     )]
+
+    /// configuration file path
+    #[arg(
+        long,
+        help = "Path to configuration file",
+        default_value = "~/.turtlerc.yaml"
+    )]
+    pub config: Option<String>,
+
     /// command to execute in non-interactive mode
+    #[arg(long, help = "Command to execute in non-interactive mode")]
     pub command: Option<String>,
+
+    /// output format
     #[arg(
         short,
         long,
         help = "format output: table, json, yaml, text, ast",
         default_value = "table"
     )]
-    /// output format
     pub format: Option<String>,
 }
 
@@ -84,7 +96,7 @@ impl fmt::Display for TurtleOutputs {
 }
 
 impl TurtleOutputs {
-    pub fn from_command_response(option: &str, response: CommandResponse) -> Option<Self> {
+    pub fn from_command_response(option: &str, response: TurtleCommandResponse) -> Option<Self> {
         match option {
             "table" => {
                 // parse CSV data
@@ -227,14 +239,14 @@ pub enum TurtleOutputs {
 #[serde(tag = "event")]
 pub enum _TurleOutputResults {
     #[serde(rename = "command_response")]
-    CommandResponse(CommandResponse),
+    CommandResponse(TurtleCommandResponse),
     #[serde(rename = "turtle_expression")]
     TurtleExpression(TurtleExpression),
 }
 
 /// a ShellCommand is a CommandRequest structs
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CommandRequest {
+pub struct TurtleCommandRequest {
     pub id: String,
     pub command: String,
     pub args: Vec<String>,
@@ -244,7 +256,7 @@ pub struct CommandRequest {
 
 /// Responses are sent as CommandResponse structs
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CommandResponse {
+pub struct TurtleCommandResponse {
     pub id: String,
     pub status: String,
     pub code: i32,
@@ -259,9 +271,82 @@ pub struct CommandResponse {
 #[serde(tag = "event")]
 pub enum HistoryEvent {
     #[serde(rename = "command_request")]
-    CommandRequest(CommandRequest),
+    CommandRequest(TurtleCommandRequest),
     #[serde(rename = "command_response")]
-    CommandResponse(CommandResponse),
+    CommandResponse(TurtleCommandResponse),
+}
+
+impl HistoryEvent {
+    pub fn get_event_type(&self) -> &str {
+        match self {
+            HistoryEvent::CommandRequest(_) => "command_request",
+            HistoryEvent::CommandResponse(_) => "command_response",
+        }
+    }
+
+    pub fn get_events_by_type(history: &Vec<HistoryEvent>, event_type: &str) -> Vec<HistoryEvent> {
+        history
+            .iter()
+            .filter(|event| event.get_event_type() == event_type)
+            .cloned()
+            .collect()
+    }
+
+    pub fn to_json(&self) -> serde_json::Value {
+        match self {
+            HistoryEvent::CommandRequest(req) => serde_json::to_value(req).unwrap(),
+            HistoryEvent::CommandResponse(res) => serde_json::to_value(res).unwrap(),
+        }
+    }
+
+    pub fn to_yaml(&self) -> serde_yaml::Value {
+        match self {
+            HistoryEvent::CommandRequest(req) => serde_yaml::to_value(req).unwrap(),
+            HistoryEvent::CommandResponse(res) => serde_yaml::to_value(res).unwrap(),
+        }
+    }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            HistoryEvent::CommandRequest(req) => format!("{:?}", req),
+            HistoryEvent::CommandResponse(res) => format!("{:?}", res),
+        }
+    }
+
+    pub fn to_csv(&self) -> String {
+        match self {
+            HistoryEvent::CommandRequest(req) => {
+                let mut wtr = csv::Writer::from_writer(vec![]);
+                wtr.serialize(req).unwrap();
+                let data = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
+                data
+            }
+            HistoryEvent::CommandResponse(res) => {
+                let mut wtr = csv::Writer::from_writer(vec![]);
+                wtr.serialize(res).unwrap();
+                let data = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
+                data
+            }
+        }
+    }
+
+    pub fn from_json(value: &serde_json::Value) -> Option<Self> {
+        if let Some(event_type) = value.get("event").and_then(|v| v.as_str()) {
+            match event_type {
+                "command_request" => {
+                    let req: TurtleCommandRequest = serde_json::from_value(value.clone()).ok()?;
+                    Some(HistoryEvent::CommandRequest(req))
+                }
+                "command_response" => {
+                    let res: TurtleCommandResponse = serde_json::from_value(value.clone()).ok()?;
+                    Some(HistoryEvent::CommandResponse(res))
+                }
+                _ => None,
+            }
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -286,12 +371,15 @@ pub enum TurtleToken {
     CodeCommentSingleLine(String),     // single line comment
     CodeCommentMultiLineOpen(String),  // multi-line comment
     CodeCommentMultiLineClose(String), // multi-line comment close
+    KeywordOpen(String),               // keywords that open blocks: if, else, while, for, func
+    KeywordClose(String),              // keywords that close blocks: end, done, return
+    Keyword(String),                   // if, else, while, for, func, return, break, continue
     Identifier(String),                // variable names
     Builtin {
         name: String,
         args: Vec<TurtleToken>,
     }, // built-in function names
-    Keyword(String),                   // if, else, while, for, func, return, break, continue
+    // Keyword(String),                   // if, else, while, for, func, return, break, continue
 
     // Shell command and arguments
     ShellArg {
@@ -308,7 +396,8 @@ pub enum TurtleToken {
     ShellCommand {
         name: String,
         // args: Vec<TurtleToken>,
-        args: Vec<TurtleToken>,
+        // instead of using Vec<TurtleToken>, we can use a single String and parse it later using better shell argument parsing
+        args: String,
         // args: String,
     },
     ShellComment(String),
@@ -322,7 +411,10 @@ pub enum TurtleToken {
         path: String,
         extension: Option<String>,
     },
-
+    Space,   // single space
+    Tab,     // tab character
+    Newline, // newline character
+    // Whitespace, // spaces, tabs, newlines
     Operator(String),           // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, !
     AdditionOperator,           // +
     SubtractionOperator,        // -
@@ -352,31 +444,39 @@ pub enum TurtleExpression {
     // Composite values
     Array(Vec<TurtleExpression>),
     Object(Vec<(String, TurtleExpression)>),
+    MemberAccess {
+        object: Box<TurtleExpression>,
+        property: String,
+    },
+    Assignment {
+        name: String,
+        value: Box<TurtleExpression>,
+    },
     // Variables and operations
     Identifier(String),
     // Unary Operation - ex: -5, !true
-    UnaryExpression {
+    UnaryOperation {
         op: String,
         expr: Box<TurtleExpression>,
     },
     // Binary Operation - ex: 1 + 2, x - 3
-    BinaryExpression {
+    BinaryOperation {
         left: Box<TurtleExpression>,
         op: String,
         right: Box<TurtleExpression>,
     },
     // If Control Flow - ex: if cond { ... } else { ... } or if cond { ... }
-    IfCondition {
+    If {
         condition: Box<TurtleExpression>,
         then_branch: Box<TurtleExpression>,
         else_branch: Option<Box<TurtleExpression>>,
     },
     // While Loop Control Flow - ex: while cond { ... }
-    WhileLoop {
+    While {
         condition: Box<TurtleExpression>,
         body: Box<TurtleExpression>,
     },
-    ForLoop {
+    For {
         iterator: String,
         iterable: Box<TurtleExpression>,
         body: Box<TurtleExpression>,
@@ -385,34 +485,66 @@ pub enum TurtleExpression {
         pattern: String,
         flags: Option<String>,
     },
-    InfiniteLoop {
+    Loop {
         body: Box<TurtleExpression>,
     },
-    FuncDef {
+    FunctionDefinition {
         name: String,
         params: Vec<String>,
-        body: Box<TurtleExpression>,
+        body: Box<Vec<TurtleExpression>>,
+    },
+    FunctionCall {
+        func: String,
+        args: Vec<TurtleExpression>,
     },
     CodeBlock {
         expressions: Vec<TurtleExpression>,
     },
-    FuncCall {
-        func: String,
-        args: Vec<TurtleExpression>,
-    },
-    MemberAccess {
-        object: Box<TurtleExpression>,
-        property: String,
-    },
+
     Builtin {
         name: String,
         args: Vec<TurtleExpression>,
     },
-    Executable {
+    ShellCommand {
         name: String,
-        args: Vec<TurtleExpression>,
+        args: String,
     },
     Path {
         segments: Vec<String>,
     },
+}
+
+/// Result of executing a shell command
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct ShellCommandResult {
+    pub stdout: String,
+    pub stderr: String,
+    pub code: i32,
+}
+
+/// Enum to encapsulate different types of results
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum TurtleResults {
+    ShellCommandResult(ShellCommandResult),
+}
+
+impl fmt::Display for TurtleResults {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TurtleResults::ShellCommandResult(cmd) => write!(
+                f,
+                "Exit code: {}\nStdout:\n{}\nStderr:\n{}",
+                cmd.code, cmd.stdout, cmd.stderr
+            ),
+        }
+    }
+}
+impl TurtleResults {
+    pub fn from_shell_command_result(stdout: String, stderr: String, code: i32) -> Self {
+        TurtleResults::ShellCommandResult(ShellCommandResult {
+            stdout,
+            stderr,
+            code,
+        })
+    }
 }
