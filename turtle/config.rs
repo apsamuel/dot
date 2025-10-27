@@ -35,6 +35,19 @@ pub fn load_config(debug: bool) -> Option<TurtleConfig> {
     }
 }
 
+/// Load Turtleshell configuratin from a specified path
+pub fn load_config_from_path(path: &str) -> Option<TurtleConfig> {
+    use std::fs;
+
+    let content = fs::read_to_string(path).ok()?;
+    match serde_yaml::from_str::<TurtleConfig>(&content) {
+        Ok(config) => Some(config),
+        Err(e) => {
+            eprintln!("Failed to parse config file: {}", e);
+            None
+        }
+    }
+}
 /// Set default shell environment variables
 pub fn set_shell_vars() {
     // Set SHELL to the path of the running binary
