@@ -8,6 +8,28 @@ pub struct TurtleExecutionContext {
 }
 
 impl TurtleExecutionContext {
+    pub fn get_var(&self, name: &str) -> Option<crate::types::TurtleExpression> {
+        self.vars.get(name).cloned()
+    }
+
+    pub fn get_env(&self, name: &str) -> Option<String> {
+        self.env.get(name).cloned()
+    }
+
+    pub fn set_env(&mut self, name: String, value: String) {
+        self.env.insert(name, value);
+    }
+
+    fn eval_environment_variable(&mut self, name: &str) -> Option<crate::types::TurtleResults> {
+        let value = self.get_env(name);
+        Some(crate::types::TurtleResults::EnvironmentVariableResult(
+            crate::types::EnvironmentVariableResult {
+                name: name.to_string(),
+                value,
+            },
+        ))
+    }
+
     fn eval_binary_operation(
         &mut self,
         left: crate::types::TurtleExpression,
@@ -144,6 +166,17 @@ impl TurtleExecutionContext {
         }
     }
 
+    fn eval_builtin(&mut self, name: &str, args: &str) -> Option<crate::types::TurtleResults> {
+        let builtin = crate::builtin::TurtleBuiltin::get(name)?;
+        let arg_vec: Vec<String> = args.split_whitespace().map(|s| s.to_string()).collect();
+        let result = (builtin.execute)(arg_vec);
+        Some(crate::types::TurtleResults::BuiltinResult(
+            crate::types::BuiltinResult {
+                output: Some(format!("{:?}", result)),
+            },
+        ))
+    }
+
     fn eval_command(&mut self, command: &str, args: &str) -> Option<crate::types::TurtleResults> {
         use std::process::Command;
         let args_vec: Vec<&str> = args.split_whitespace().collect();
@@ -213,6 +246,41 @@ impl TurtleExecutionContext {
             Some(crate::types::TurtleExpression::Boolean(value)) => Some(
                 crate::types::TurtleResults::BooleanResult(crate::types::BooleanResult { value }),
             ),
+            Some(crate::types::TurtleExpression::Array(values)) => {
+                let evaluated_values: Vec<crate::types::TurtleExpression> = values
+                    .into_iter()
+                    .filter_map(|v| {
+                        self.eval(Some(v.clone())).and_then(|res| match res {
+                            crate::types::TurtleResults::NumberResult(n) => {
+                                Some(crate::types::TurtleExpression::Number(n.value))
+                            }
+                            crate::types::TurtleResults::StringResult(s) => {
+                                Some(crate::types::TurtleExpression::String(s.value))
+                            }
+                            crate::types::TurtleResults::BooleanResult(b) => {
+                                Some(crate::types::TurtleExpression::Boolean(b.value))
+                            }
+                            _ => None,
+                        })
+                    })
+                    .collect();
+
+                Some(crate::types::TurtleResults::ArrayResult(
+                    crate::types::ArrayResult {
+                        value: evaluated_values,
+                    },
+                ))
+            }
+
+            Some(crate::types::TurtleExpression::EnvironmentVariable { name }) => {
+                self.eval_environment_variable(&name)
+            }
+
+            Some(crate::types::TurtleExpression::Builtin { name, args }) => {
+                let result = self.eval_builtin(&name, &args);
+                // println!("Builtin {} executed with result: {:?}", name, result);
+                result
+            }
 
             Some(crate::types::TurtleExpression::ShellCommand { name, args }) => {
                 let result = self.eval_command(&name, &args);
