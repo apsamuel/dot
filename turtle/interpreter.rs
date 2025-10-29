@@ -515,6 +515,74 @@ impl TurtleParser {
         Some(expr)
     }
 
+    fn parse_environment_variable(&mut self) -> Option<crate::types::TurtleExpression> {
+        if let crate::types::TurtleToken::Operator(op) = self.peek() {
+            if op == "$" {
+                self.next(); // consume '$'
+                if let crate::types::TurtleToken::Identifier(name) = self.peek() {
+                    let name = name.clone();
+                    self.next(); // consume identifier
+                    return Some(crate::types::TurtleExpression::EnvironmentVariable { name });
+                }
+            }
+        }
+        None
+    }
+
+    fn parse_builtin(&mut self) -> Option<crate::types::TurtleExpression> {
+        if let crate::types::TurtleToken::Identifier(cmd) = self.peek() {
+            let cmd = cmd.clone();
+
+            if !crate::builtin::TurtleBuiltin::get(&cmd).is_some() {
+                return None;
+            }
+            self.next(); // consume builtin identifier
+
+            let mut args = String::new();
+            while !matches!(
+                self.peek(),
+                crate::types::TurtleToken::Eof | crate::types::TurtleToken::Semicolon
+            ) {
+                match self.peek() {
+                    crate::types::TurtleToken::Space
+                    | crate::types::TurtleToken::Tab
+                    | crate::types::TurtleToken::Newline => {
+                        args.push(' ');
+                        self.next(); // consume whitespace
+                    }
+                    crate::types::TurtleToken::String(s) => {
+                        args.push_str(&format!("\"{}\"", s));
+                        self.next(); // consume string
+                    }
+                    crate::types::TurtleToken::Number(n) => {
+                        args.push_str(&n.to_string());
+                        self.next(); // consume number
+                    }
+                    crate::types::TurtleToken::Identifier(id) => {
+                        args.push_str(id);
+                        self.next(); // consume identifier
+                    }
+                    crate::types::TurtleToken::Operator(op) => {
+                        args.push_str(op);
+                        self.next(); // consume operator
+                    }
+                    _ => {
+                        self.next(); // consume unknown token
+                    }
+                }
+            }
+
+            if let crate::types::TurtleToken::Semicolon = self.peek() {
+                self.next(); // consume ';'
+            }
+            return Some(crate::types::TurtleExpression::Builtin {
+                name: cmd,
+                args: args.trim().to_string(),
+            });
+        }
+        None
+    }
+
     fn parse_command(&mut self) -> Option<crate::types::TurtleExpression> {
         if let crate::types::TurtleToken::Identifier(cmd) = self.peek() {
             let cmd = cmd.clone();
@@ -606,17 +674,24 @@ impl TurtleParser {
 
     /// implements parsing rules to build TurtleExpression AST
     pub fn parse_expr(&mut self) -> Option<crate::types::TurtleExpression> {
+        // parse  built-in functions
+        if let Some(builtin) = self.parse_builtin() {
+            return Some(builtin);
+        }
         // parse shell commands
         if let Some(command) = self.parse_command() {
             return Some(command);
         }
 
-        // TODO: fix assignment parsing
         if let Some(assignment) = self.parse_assignment() {
             return Some(assignment);
         }
 
-        // TODO: implement operator precedence and associativity here
+        // parse environment variables
+        if let Some(env_var) = self.parse_environment_variable() {
+            return Some(env_var);
+        }
+
         let mut expr = self.parse_primary();
 
         if let Some(func_def) = self.parse_function_def() {
@@ -776,6 +851,10 @@ impl TurtleInterpreter {
                         }
                     }
                     tokens.push(crate::types::TurtleToken::Number(num.parse().unwrap()))
+                }
+                '$' => {
+                    tokens.push(crate::types::TurtleToken::Operator("$".to_string()));
+                    chars.next();
                 }
                 // testing a better PATH detection
                 // _ if c.to_string() == "/" || c.to_string() == "." => {
