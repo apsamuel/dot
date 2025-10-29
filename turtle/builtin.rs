@@ -1,8 +1,66 @@
-/// Built-in command implementations for the Turtle shell
-///
-/// This module provides functions for built-in commands such as `cd`, `exit`, `test`, `history`, and `alias`.
+pub struct TurtleBuiltin {
+    pub name: &'static str,
+    pub description: &'static str,
+    // pub help: &'static str,
+    pub execute: fn(args: Vec<String>) -> (),
+}
 
-/// Change the current working directory
+pub static BUILTINS: &[TurtleBuiltin] = &[
+    TurtleBuiltin {
+        name: "test",
+        description: "Evaluate file and string tests",
+
+        execute: |args: Vec<String>| {
+            let operation = args.get(0).map(|s| s.as_str()).unwrap_or("");
+            let arg_refs: Vec<&str> = args.iter().skip(1).map(|s| s.as_str()).collect();
+            let result = builtin_test(operation.to_string(), arg_refs);
+            println!("{}", if result { "true" } else { "false" });
+        },
+    },
+    TurtleBuiltin {
+        name: "alias",
+        description: "Manage command aliases",
+        execute: |args: Vec<String>| {
+            let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+            let mut aliases = std::collections::HashMap::new();
+            builtin_alias(&mut aliases, &arg_refs);
+        },
+    },
+    TurtleBuiltin {
+        name: "cd",
+        description: "Change the current directory",
+        execute: |args: Vec<String>| {
+            let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+            builtin_cd(&arg_refs);
+        },
+    },
+    TurtleBuiltin {
+        name: "exit",
+        description: "Exit the Turtle shell",
+        execute: |_: Vec<String>| {
+            builtin_exit();
+        },
+    },
+    TurtleBuiltin {
+        name: "history",
+        description: "Display command history",
+        execute: |_: Vec<String>| {
+            builtin_history();
+        },
+    },
+];
+
+impl TurtleBuiltin {
+    pub fn get(name: &str) -> Option<&'static TurtleBuiltin> {
+        for builtin in BUILTINS {
+            if builtin.name == name {
+                return Some(builtin);
+            }
+        }
+        None
+    }
+}
+
 pub fn builtin_cd(args: &[&str]) {
     let home = std::env::var("HOME").unwrap();
     let dest = args.get(0).map(|s| *s).unwrap_or(home.as_str());
@@ -196,6 +254,7 @@ pub fn builtin_alias(
     aliases: &mut std::collections::HashMap<String, String>,
     args: &[&str],
 ) -> std::collections::HashMap<String, String> {
+    println!("builtin_alias called with args: {:?}", args);
     if args.is_empty() {
         for (name, command) in aliases.iter() {
             println!("alias {}='{}'", name, command);
