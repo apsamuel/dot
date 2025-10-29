@@ -3,7 +3,7 @@ use crossterm::style::Color;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-/// turtle shell configuration
+/// shell configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TurtleConfig {
     pub debug: bool,
@@ -13,17 +13,19 @@ pub struct TurtleConfig {
     pub theme: Option<String>,
 }
 
-/// turtle shell command line arguments
+/// command line arguments
 #[derive(Parser, Clone, Debug, Serialize, Deserialize)]
 #[command(name = "turtle", about = "A simple shell implemented in Rust")]
 pub struct TurtleArgs {
-    /// enable debug output
-    #[arg(short, long, help = "Enable debug output")]
+    /// enable debugging for the shell
+    #[arg(short, long, help = "Enable debugging for the shell")]
     pub debug: bool,
 
     /// show version information
-    #[arg(short, long, help = "Returns turtle version")]
+    #[arg(short, long, help = "Show version information")]
     pub version: bool,
+
+    /// run in non-interactive mode with the provided command or expression
     #[arg(
         short,
         long,
@@ -52,9 +54,9 @@ pub struct TurtleArgs {
     pub format: Option<String>,
 }
 
+/// shell theme
 #[derive(Debug, Clone)]
-// #[serde(default)]
-#[allow(dead_code)] //for now until we use all variants
+// #[allow(dead_code)]
 pub struct TurtleTheme {
     pub foreground: Color,
     pub background: Color,
@@ -95,11 +97,11 @@ impl fmt::Display for TurtleOutputs {
     }
 }
 
+/// shell output formats
 impl TurtleOutputs {
     pub fn from_command_response(option: &str, response: TurtleCommandResponse) -> Option<Self> {
         match option {
             "table" => {
-                // parse CSV data
                 let mut rdr = csv::Reader::from_reader(response.output.as_bytes());
                 let headers = rdr
                     .headers()
@@ -244,7 +246,7 @@ pub enum _TurleOutputResults {
     TurtleExpression(TurtleExpression),
 }
 
-/// a ShellCommand is a CommandRequest structs
+/// represents a command request sent to the shell
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TurtleCommandRequest {
     pub id: String,
@@ -254,7 +256,7 @@ pub struct TurtleCommandRequest {
     pub event: String,
 }
 
-/// Responses are sent as CommandResponse structs
+/// represents a command response from the shell
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TurtleCommandResponse {
     pub id: String,
@@ -437,17 +439,22 @@ pub enum TurtleToken {
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[allow(dead_code)] //for now until we use all variants
 pub enum TurtleExpression {
-    // Literal values
+    // 1, 2, 3, ...
     Number(f64),
+    // "hello", 'world', ...
     String(String),
+    // true, false
     Boolean(bool),
-    // Composite values
+    // [1, 2, 3]
     Array(Vec<TurtleExpression>),
+    // { "key": value, ... }
     Object(Vec<(String, TurtleExpression)>),
+    // obj.property
     MemberAccess {
         object: Box<TurtleExpression>,
         property: String,
     },
+    // var = value, let var = value
     Assignment {
         name: String,
         value: Box<TurtleExpression>,
@@ -503,7 +510,10 @@ pub enum TurtleExpression {
 
     Builtin {
         name: String,
-        args: Vec<TurtleExpression>,
+        args: String,
+    },
+    EnvironmentVariable {
+        name: String,
     },
     ShellCommand {
         name: String,
@@ -522,6 +532,11 @@ pub struct ShellCommandResult {
     pub code: i32,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct BuiltinResult {
+    pub output: Option<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NumberResult {
     pub value: f64,
@@ -538,19 +553,38 @@ pub struct BooleanResult {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ObjectResult {
+    pub value: std::collections::HashMap<String, TurtleExpression>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ArrayResult {
+    pub value: Vec<TurtleExpression>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AssignmentResult {
     pub name: String,
     pub value: TurtleExpression,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EnvironmentVariableResult {
+    pub name: String,
+    pub value: Option<String>, // value can be None if the variable is not set
+}
 /// Enum to encapsulate different types of results
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum TurtleResults {
     CommandResult(ShellCommandResult),
+    BuiltinResult(BuiltinResult),
     NumberResult(NumberResult),
     StringResult(StringResult),
     BooleanResult(BooleanResult),
+    ObjectResult(ObjectResult),
+    ArrayResult(ArrayResult),
     AssignmentResult(AssignmentResult),
+    EnvironmentVariableResult(EnvironmentVariableResult),
 }
 
 impl fmt::Display for TurtleResults {
@@ -567,6 +601,30 @@ impl fmt::Display for TurtleResults {
             TurtleResults::AssignmentResult(assign) => {
                 write!(f, "Assigned {} to {:?}", assign.name, assign.value)
             }
+            TurtleResults::ObjectResult(obj) => {
+                let mut output = String::from("{\n");
+                for (key, value) in &obj.value {
+                    output.push_str(&format!("  {}: {:?}\n", key, value));
+                }
+                output.push('}');
+                write!(f, "{}", output)
+            }
+            TurtleResults::ArrayResult(arr) => {
+                let mut output = String::from("[\n");
+                for value in &arr.value {
+                    output.push_str(&format!("  {:?}\n", value));
+                }
+                output.push(']');
+                write!(f, "{}", output)
+            }
+            TurtleResults::EnvironmentVariableResult(env) => match &env.value {
+                Some(val) => write!(f, "{}", val),
+                None => write!(f, "{} is not set", env.name),
+            },
+            TurtleResults::BuiltinResult(builtin) => match &builtin.output {
+                Some(val) => write!(f, "{}", val),
+                None => write!(f, "No output"),
+            },
         }
     }
 }
@@ -577,5 +635,57 @@ impl TurtleResults {
             stderr,
             code,
         })
+    }
+}
+
+// #[derive(Clone, PartialEq)]
+pub struct TurtleBuiltin<'a> {
+    pub name: &'static str,
+    pub description: &'static str,
+    pub help: &'static str,
+    // pub execute: fn(args: Vec<String>) -> (),
+    pub execute: Box<dyn Fn(Vec<String>) + Send + Sync + 'a>,
+}
+
+impl<'a> TurtleBuiltin<'a> {
+    pub fn get(name: &str, builtins: &'a [TurtleBuiltin<'a>]) -> Option<&'a TurtleBuiltin<'a>> {
+        for builtin in builtins {
+            if builtin.name == name {
+                return Some(builtin);
+            }
+        }
+        None
+    }
+}
+
+impl std::fmt::Debug for TurtleBuiltin<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TurtleBuiltin")
+            .field("name", &self.name)
+            .field("description", &self.description)
+            .field("help", &self.help)
+            .finish()
+    }
+}
+
+pub struct TurtleBuiltins<'a> {
+    pub items: Vec<TurtleBuiltin<'a>>,
+}
+
+impl<'a> TurtleBuiltins<'a> {
+    pub fn new(builtins: Vec<TurtleBuiltin<'a>>) -> Self {
+        TurtleBuiltins { items: builtins }
+    }
+
+    pub fn get(&self, name: &str) -> Option<&TurtleBuiltin> {
+        TurtleBuiltin::get(name, &self.items)
+    }
+
+    pub fn exec(&self, name: &str, args: Vec<String>) {
+        if let Some(builtin) = self.get(name) {
+            (builtin.execute)(args);
+        } else {
+            println!("Builtin command '{}' not found", name);
+        }
     }
 }
