@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::env;
 
+#[allow(dead_code)]
 pub fn expand_env_vars(input: &str) -> String {
     let re = Regex::new(r"\$([A-Za-z_][A-Za-z0-9_]*)").unwrap();
     re.replace_all(input, |caps: &regex::Captures| {
@@ -10,6 +11,7 @@ pub fn expand_env_vars(input: &str) -> String {
     .to_string()
 }
 
+#[allow(dead_code)]
 pub fn expand_tilde(input: &str) -> String {
     if input.starts_with("~") {
         if let Some(home) = dirs::home_dir() {
@@ -19,6 +21,7 @@ pub fn expand_tilde(input: &str) -> String {
     input.to_string()
 }
 
+#[allow(dead_code)]
 pub fn expand_single_dot(input: &str) -> String {
     if input.starts_with("./") || input == "." {
         if let Ok(current_dir) = env::current_dir() {
@@ -28,6 +31,7 @@ pub fn expand_single_dot(input: &str) -> String {
     input.to_string()
 }
 
+#[allow(dead_code)]
 pub fn expand_double_dot(input: &str) -> String {
     if input.starts_with("../") || input == ".." {
         if let Ok(current_dir) = env::current_dir() {
