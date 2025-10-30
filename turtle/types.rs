@@ -5,7 +5,7 @@ use std::fmt;
 
 /// shell configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TurtleConfig {
+pub struct Config {
     pub debug: bool,
     pub prompt: Option<String>,
     pub aliases: Option<std::collections::HashMap<String, String>>,
@@ -13,35 +13,24 @@ pub struct TurtleConfig {
     pub theme: Option<String>,
 }
 
-/// command line arguments
+/// shell arguments
 #[derive(Parser, Clone, Debug, Serialize, Deserialize)]
 #[command(name = "turtle", about = "A simple shell implemented in Rust")]
-pub struct TurtleArgs {
+pub struct Arguments {
     /// enable debugging for the shell
-    #[arg(short, long, help = "Enable debugging for the shell")]
+    #[arg(short, long, help = "Enable debugging")]
     pub debug: bool,
 
     /// show version information
-    #[arg(short, long, help = "Show version information")]
+    #[arg(short, long, help = "Show version and exit")]
     pub version: bool,
 
-    /// run in non-interactive mode with the provided command or expression
-    #[arg(
-        short,
-        long,
-        help = "Run in non-interactive mode with the provided command or expression"
-    )]
-
     /// configuration file path
-    #[arg(
-        long,
-        help = "Path to configuration file",
-        default_value = "~/.turtle.yaml"
-    )]
+    #[arg(long, help = "Config File", default_value = "~/.turtle.yaml")]
     pub config: Option<String>,
 
     /// command to execute in non-interactive mode
-    #[arg(long, help = "Command to execute in non-interactive mode")]
+    #[arg(long, help = "Non-Interactive Command")]
     pub command: Option<String>,
 
     /// output format
@@ -56,8 +45,7 @@ pub struct TurtleArgs {
 
 /// shell theme
 #[derive(Debug, Clone)]
-// #[allow(dead_code)]
-pub struct TurtleTheme {
+pub struct Theme {
     pub foreground: Color,
     pub background: Color,
     pub text: Color,
@@ -65,10 +53,53 @@ pub struct TurtleTheme {
     pub selection: Color,
 }
 
-impl fmt::Display for TurtleOutputs {
+/// shell prompt
+pub struct Prompt<'a> {
+    template: &'a str,
+}
+
+/// defines the context for rendering the prompt
+#[derive(Serialize, Deserialize)]
+pub struct PromptContext {
+    pub user: String,
+    pub host: String,
+    pub cwd: String,
+    pub time: String,
+    pub turtle: String,
+}
+
+impl<'a> Prompt<'a> {
+    pub fn new(template: &'a str) -> Self {
+        Prompt { template }
+    }
+
+    pub fn context(&self) -> PromptContext {
+        PromptContext {
+            user: whoami::username(),
+            host: whoami::fallible::hostname().unwrap_or_else(|_| "?".into()),
+            cwd: std::env::current_dir()
+                .map(|path| path.display().to_string())
+                .unwrap_or_else(|_| "?".to_string()),
+            time: chrono::Local::now().format("%H:%M:%S").to_string(),
+            turtle: "🐢".into(),
+        }
+    }
+
+    pub fn render(&mut self) -> String {
+        let context = self.context();
+        let mut engine = tinytemplate::TinyTemplate::new();
+        let template = self.template;
+        engine.add_template("prompt", template);
+        engine
+            .render("prompt", &context)
+            .unwrap_or_else(|_| template.to_string())
+    }
+}
+
+impl fmt::Display for Outputs {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TurtleOutputs::Table(table) => {
+            Outputs::Table(table) => {
                 let mut output = String::new();
                 output.push_str(&table.headers.join("\t"));
                 output.push('\n');
@@ -78,19 +109,19 @@ impl fmt::Display for TurtleOutputs {
                 }
                 write!(f, "{}", output)
             }
-            TurtleOutputs::Json(json) => {
+            Outputs::Json(json) => {
                 let json_string =
                     serde_json::to_string_pretty(&json.data).map_err(|_| fmt::Error)?;
                 write!(f, "{}", json_string)
             }
-            TurtleOutputs::Yaml(yaml) => {
+            Outputs::Yaml(yaml) => {
                 let yaml_string = serde_yaml::to_string(&yaml.data).map_err(|_| fmt::Error)?;
                 write!(f, "{}", yaml_string)
             }
-            TurtleOutputs::Text(text) => {
+            Outputs::Text(text) => {
                 write!(f, "{}", text.data)
             }
-            TurtleOutputs::Ast(ast) => {
+            Outputs::Ast(ast) => {
                 write!(f, "{}", ast.data)
             }
         }
@@ -98,8 +129,8 @@ impl fmt::Display for TurtleOutputs {
 }
 
 /// shell output formats
-impl TurtleOutputs {
-    pub fn from_command_response(option: &str, response: TurtleCommandResponse) -> Option<Self> {
+impl Outputs {
+    pub fn from_command_response(option: &str, response: CommandResponse) -> Option<Self> {
         match option {
             "table" => {
                 let mut rdr = csv::Reader::from_reader(response.output.as_bytes());
@@ -115,7 +146,7 @@ impl TurtleOutputs {
                     let row = record.iter().map(|s| s.to_string()).collect();
                     rows.push(row);
                 }
-                Some(TurtleOutputs::Table(TurtleOutputCsv {
+                Some(Outputs::Table(OutputCsv {
                     headers,
                     data: rows,
                 }))
@@ -127,30 +158,30 @@ impl TurtleOutputs {
                 // use serde to serialize the response object to json
                 let json_data = serde_json::to_string(&response).ok()?;
                 let json_data: serde_json::Value = serde_json::from_str(&json_data).ok()?;
-                Some(TurtleOutputs::Json(TurtleOutputJson { data: json_data }))
+                Some(Outputs::Json(OutputJson { data: json_data }))
             }
             "yaml" => {
                 let yaml_data = serde_yaml::to_string(&response).ok()?;
                 let yaml_data: serde_yaml::Value = serde_yaml::from_str(&yaml_data).ok()?;
-                Some(TurtleOutputs::Yaml(TurtleOutputYaml { data: yaml_data }))
+                Some(Outputs::Yaml(OutputYaml { data: yaml_data }))
             }
-            "text" => Some(TurtleOutputs::Text(TurtleOutputText {
+            "text" => Some(Outputs::Text(OutputText {
                 data: response.output,
             })),
-            "ast" => Some(TurtleOutputs::Ast(TurtleOutputAst {
+            "ast" => Some(Outputs::Ast(OutAst {
                 data: response.output,
             })),
             _ => None,
         }
     }
 
-    pub fn _from_turtle_expression(expression: TurtleExpression) -> Option<Self> {
+    pub fn _from_turtle_expression(expression: Expressions) -> Option<Self> {
         match expression {
-            TurtleExpression::String(s) => Some(TurtleOutputs::Text(TurtleOutputText { data: s })),
-            TurtleExpression::Number(n) => Some(TurtleOutputs::Text(TurtleOutputText {
+            Expressions::String(s) => Some(Outputs::Text(OutputText { data: s })),
+            Expressions::Number(n) => Some(Outputs::Text(OutputText {
                 data: n.to_string(),
             })),
-            TurtleExpression::Boolean(b) => Some(TurtleOutputs::Text(TurtleOutputText {
+            Expressions::Boolean(b) => Some(Outputs::Text(OutputText {
                 data: b.to_string(),
             })),
             _ => None,
@@ -174,7 +205,7 @@ impl TurtleOutputs {
                     let row = record.iter().map(|s| s.to_string()).collect();
                     rows.push(row);
                 }
-                Some(TurtleOutputs::Table(TurtleOutputCsv {
+                Some(Outputs::Table(OutputCsv {
                     headers,
                     data: rows,
                 }))
@@ -184,14 +215,14 @@ impl TurtleOutputs {
                 println!("Option: {}", option);
                 println!("Data: {}", data);
                 let json_data: serde_json::Value = serde_json::from_str(&data).ok()?;
-                Some(TurtleOutputs::Json(TurtleOutputJson { data: json_data }))
+                Some(Outputs::Json(OutputJson { data: json_data }))
             }
             "yaml" => {
                 let yaml_data: serde_yaml::Value = serde_yaml::from_str(&data).ok()?;
-                Some(TurtleOutputs::Yaml(TurtleOutputYaml { data: yaml_data }))
+                Some(Outputs::Yaml(OutputYaml { data: yaml_data }))
             }
-            "text" => Some(TurtleOutputs::Text(TurtleOutputText { data })),
-            "ast" => Some(TurtleOutputs::Ast(TurtleOutputAst { data })),
+            "text" => Some(Outputs::Text(OutputText { data })),
+            "ast" => Some(Outputs::Ast(OutAst { data })),
             _ => None,
         }
     }
@@ -199,56 +230,57 @@ impl TurtleOutputs {
 
 /// CSV compatible output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputCsv {
+pub struct OutputCsv {
     pub headers: Vec<String>,
     pub data: Vec<Vec<String>>,
 }
 
 /// YAML compatible output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputYaml {
+pub struct OutputYaml {
     pub data: serde_yaml::Value,
 }
 
 /// JSON compatible output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputJson {
+pub struct OutputJson {
     pub data: serde_json::Value,
 }
 
 /// Plain text output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputText {
+pub struct OutputText {
     pub data: String,
 }
 
 /// AST output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleOutputAst {
+pub struct OutAst {
     pub data: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum TurtleOutputs {
-    Table(TurtleOutputCsv),
-    Json(TurtleOutputJson),
-    Yaml(TurtleOutputYaml),
-    Text(TurtleOutputText),
-    Ast(TurtleOutputAst),
+pub enum Outputs {
+    Table(OutputCsv),
+    Json(OutputJson),
+    Yaml(OutputYaml),
+    Text(OutputText),
+    Ast(OutAst),
 }
 
+/// outputs for expression results
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "event")]
-pub enum _TurleOutputResults {
+pub enum OutputResults {
     #[serde(rename = "command_response")]
-    CommandResponse(TurtleCommandResponse),
+    CommandResponse(CommandResponse),
     #[serde(rename = "turtle_expression")]
-    TurtleExpression(TurtleExpression),
+    TurtleExpression(Expressions),
 }
 
 /// represents a command request sent to the shell
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleCommandRequest {
+pub struct CommandRequest {
     pub id: String,
     pub command: String,
     pub args: Vec<String>,
@@ -258,7 +290,7 @@ pub struct TurtleCommandRequest {
 
 /// represents a command response from the shell
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TurtleCommandResponse {
+pub struct CommandResponse {
     pub id: String,
     pub status: String,
     pub code: i32,
@@ -268,17 +300,50 @@ pub struct TurtleCommandResponse {
     pub event: String,
 }
 
-/// Encapsulate both CommandRequest and CommandResponse
+/// history event types
+///
+/// `command_request`: constructed when a command is issued
+///
+/// `command_response`: constructed when a command returns
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "event")]
 pub enum HistoryEvent {
     #[serde(rename = "command_request")]
-    CommandRequest(TurtleCommandRequest),
+    CommandRequest(CommandRequest),
     #[serde(rename = "command_response")]
-    CommandResponse(TurtleCommandResponse),
+    CommandResponse(CommandResponse),
 }
 
+/// implement Display for HistoryEvent
+impl fmt::Display for HistoryEvent {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            HistoryEvent::CommandRequest(req) => write!(
+                f,
+                "[{}] Command Request: {} {:?}",
+                req.timestamp, req.command, req.args
+            ),
+            HistoryEvent::CommandResponse(res) => write!(
+                f,
+                "[{}] Command Response: {} (code: {})",
+                res.timestamp, res.output, res.code
+            ),
+        }
+    }
+}
+
+/// helper methods for HistoryEvent
 impl HistoryEvent {
+    pub fn get_events(&self, path: &str) -> Option<Vec<HistoryEvent>> {
+        let data = std::fs::read_to_string(path).ok()?;
+        let mut events = Vec::new();
+        for line in data.lines() {
+            let event: HistoryEvent = serde_json::from_str(line).ok()?;
+            events.push(event);
+        }
+        Some(events)
+    }
+
     pub fn get_event_type(&self) -> &str {
         match self {
             HistoryEvent::CommandRequest(_) => "command_request",
@@ -336,11 +401,11 @@ impl HistoryEvent {
         if let Some(event_type) = value.get("event").and_then(|v| v.as_str()) {
             match event_type {
                 "command_request" => {
-                    let req: TurtleCommandRequest = serde_json::from_value(value.clone()).ok()?;
+                    let req: CommandRequest = serde_json::from_value(value.clone()).ok()?;
                     Some(HistoryEvent::CommandRequest(req))
                 }
                 "command_response" => {
-                    let res: TurtleCommandResponse = serde_json::from_value(value.clone()).ok()?;
+                    let res: CommandResponse = serde_json::from_value(value.clone()).ok()?;
                     Some(HistoryEvent::CommandResponse(res))
                 }
                 _ => None,
@@ -353,7 +418,7 @@ impl HistoryEvent {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 // #[allow(dead_code)] //for now until we use all variants
-pub enum TurtleToken {
+pub enum Token {
     Arrow, // an '->' typically used in function definitions, eg: func foo() -> String {}
 
     String(String), // string literals
@@ -369,7 +434,7 @@ pub enum TurtleToken {
     Colon,     // a colon ':' typically used to separate keys and values in objects
     Comma,     // a comma ',' typically used to separate items in arrays or parameters in functions
 
-    CodeBlock(Vec<TurtleToken>),       // a block of code
+    CodeBlock(Vec<Token>),             // a block of code
     CodeCommentSingleLine(String),     // single line comment
     CodeCommentMultiLineOpen(String),  // multi-line comment
     CodeCommentMultiLineClose(String), // multi-line comment close
@@ -379,7 +444,7 @@ pub enum TurtleToken {
     Identifier(String),                // variable names
     Builtin {
         name: String,
-        args: Vec<TurtleToken>,
+        args: Vec<Token>,
     }, // built-in function names
     // Keyword(String),                   // if, else, while, for, func, return, break, continue
 
@@ -389,11 +454,11 @@ pub enum TurtleToken {
     },
     ShellShortArg {
         name: String,
-        values: Vec<TurtleToken>,
+        values: Vec<Token>,
     },
     ShellLongArg {
         name: String,
-        values: Vec<TurtleToken>,
+        values: Vec<Token>,
     },
     ShellCommand {
         name: String,
@@ -438,7 +503,7 @@ pub enum TurtleToken {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[allow(dead_code)] //for now until we use all variants
-pub enum TurtleExpression {
+pub enum Expressions {
     // 1, 2, 3, ...
     Number(f64),
     // "hello", 'world', ...
@@ -446,66 +511,66 @@ pub enum TurtleExpression {
     // true, false
     Boolean(bool),
     // [1, 2, 3]
-    Array(Vec<TurtleExpression>),
+    Array(Vec<Expressions>),
     // { "key": value, ... }
-    Object(Vec<(String, TurtleExpression)>),
+    Object(Vec<(String, Expressions)>),
     // obj.property
     MemberAccess {
-        object: Box<TurtleExpression>,
+        object: Box<Expressions>,
         property: String,
     },
     // var = value, let var = value
     Assignment {
         name: String,
-        value: Box<TurtleExpression>,
+        value: Box<Expressions>,
     },
     // Variables and operations
     Identifier(String),
     // Unary Operation - ex: -5, !true
     UnaryOperation {
         op: String,
-        expr: Box<TurtleExpression>,
+        expr: Box<Expressions>,
     },
     // Binary Operation - ex: 1 + 2, x - 3
     BinaryOperation {
-        left: Box<TurtleExpression>,
+        left: Box<Expressions>,
         op: String,
-        right: Box<TurtleExpression>,
+        right: Box<Expressions>,
     },
     // If Control Flow - ex: if cond { ... } else { ... } or if cond { ... }
     If {
-        condition: Box<TurtleExpression>,
-        then_branch: Box<TurtleExpression>,
-        else_branch: Option<Box<TurtleExpression>>,
+        condition: Box<Expressions>,
+        then_branch: Box<Expressions>,
+        else_branch: Option<Box<Expressions>>,
     },
     // While Loop Control Flow - ex: while cond { ... }
     While {
-        condition: Box<TurtleExpression>,
-        body: Box<TurtleExpression>,
+        condition: Box<Expressions>,
+        body: Box<Expressions>,
     },
     For {
         iterator: String,
-        iterable: Box<TurtleExpression>,
-        body: Box<TurtleExpression>,
+        iterable: Box<Expressions>,
+        body: Box<Expressions>,
     },
     RegularExpression {
         pattern: String,
         flags: Option<String>,
     },
     Loop {
-        body: Box<TurtleExpression>,
+        body: Box<Expressions>,
     },
     FunctionDefinition {
         name: String,
         params: Vec<String>,
-        body: Box<Vec<TurtleExpression>>,
+        body: Box<Vec<Expressions>>,
     },
     FunctionCall {
         func: String,
-        args: Vec<TurtleExpression>,
+        args: Vec<Expressions>,
     },
     CodeBlock {
-        expressions: Vec<TurtleExpression>,
+        expressions: Vec<Expressions>,
     },
 
     Builtin {
@@ -514,6 +579,10 @@ pub enum TurtleExpression {
     },
     EnvironmentVariable {
         name: String,
+    },
+    TurtleVariable {
+        name: String,
+        value: Box<Expressions>,
     },
     ShellCommand {
         name: String,
@@ -524,84 +593,96 @@ pub enum TurtleExpression {
     },
 }
 
-/// Result of executing a shell command
+/// Result of evaluating a shell command
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct ShellCommandResult {
+pub struct CommandExpressionResult {
     pub stdout: String,
     pub stderr: String,
     pub code: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct BuiltinResult {
+pub struct BuiltinExpressionResult {
     pub output: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct NumberResult {
+pub struct NumberExpressionResult {
     pub value: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct StringResult {
+pub struct StringExpressionResult {
     pub value: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct BooleanResult {
+pub struct BooleanExpressionResult {
     pub value: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ObjectResult {
-    pub value: std::collections::HashMap<String, TurtleExpression>,
+pub struct ObjectExpressionResult {
+    pub value: std::collections::HashMap<String, Expressions>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ArrayResult {
-    pub value: Vec<TurtleExpression>,
+pub struct ArrayExpressionResult {
+    pub value: Vec<Expressions>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct AssignmentResult {
+pub struct AssignmentExpressionResult {
     pub name: String,
-    pub value: TurtleExpression,
+    pub value: Expressions,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct EnvironmentVariableResult {
+pub struct EnvironmentVariableExpressionResult {
     pub name: String,
     pub value: Option<String>, // value can be None if the variable is not set
 }
-/// Enum to encapsulate different types of results
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum TurtleResults {
-    CommandResult(ShellCommandResult),
-    BuiltinResult(BuiltinResult),
-    NumberResult(NumberResult),
-    StringResult(StringResult),
-    BooleanResult(BooleanResult),
-    ObjectResult(ObjectResult),
-    ArrayResult(ArrayResult),
-    AssignmentResult(AssignmentResult),
-    EnvironmentVariableResult(EnvironmentVariableResult),
+pub struct TurtleVariableExpressionResult {
+    pub name: String,
+    pub value: Expressions,
 }
 
-impl fmt::Display for TurtleResults {
+/// Expression result enum
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum ExpressionResults {
+    CommandExpressionResult(CommandExpressionResult),
+    BuiltinExpressionResult(BuiltinExpressionResult),
+    NumberExpressionResult(NumberExpressionResult),
+    StringExpressionResult(StringExpressionResult),
+    BooleanExpressionResult(BooleanExpressionResult),
+    ObjectExpressionResult(ObjectExpressionResult),
+    ArrayExpressionResult(ArrayExpressionResult),
+    AssignmentExpressionResult(AssignmentExpressionResult),
+    EnvironmentVariableExpressionResult(EnvironmentVariableExpressionResult),
+    TurtleVariableExpressionResult(TurtleVariableExpressionResult),
+}
+
+impl fmt::Display for ExpressionResults {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TurtleResults::CommandResult(cmd) => write!(
+            ExpressionResults::CommandExpressionResult(cmd) => write!(
                 f,
                 "Exit code: {}\nStdout:\n{}\nStderr:\n{}",
                 cmd.code, cmd.stdout, cmd.stderr
             ),
-            TurtleResults::NumberResult(num) => write!(f, "{}", num.value),
-            TurtleResults::StringResult(string) => write!(f, "{}", string.value),
-            TurtleResults::BooleanResult(boolean) => write!(f, "{}", boolean.value),
-            TurtleResults::AssignmentResult(assign) => {
+            ExpressionResults::NumberExpressionResult(num) => write!(f, "{}", num.value),
+            ExpressionResults::StringExpressionResult(string) => {
+                write!(f, "{}", string.value)
+            }
+            ExpressionResults::BooleanExpressionResult(boolean) => {
+                write!(f, "{}", boolean.value)
+            }
+            ExpressionResults::AssignmentExpressionResult(assign) => {
                 write!(f, "Assigned {} to {:?}", assign.name, assign.value)
             }
-            TurtleResults::ObjectResult(obj) => {
+            ExpressionResults::ObjectExpressionResult(obj) => {
                 let mut output = String::from("{\n");
                 for (key, value) in &obj.value {
                     output.push_str(&format!("  {}: {:?}\n", key, value));
@@ -609,7 +690,7 @@ impl fmt::Display for TurtleResults {
                 output.push('}');
                 write!(f, "{}", output)
             }
-            TurtleResults::ArrayResult(arr) => {
+            ExpressionResults::ArrayExpressionResult(arr) => {
                 let mut output = String::from("[\n");
                 for value in &arr.value {
                     output.push_str(&format!("  {:?}\n", value));
@@ -617,20 +698,24 @@ impl fmt::Display for TurtleResults {
                 output.push(']');
                 write!(f, "{}", output)
             }
-            TurtleResults::EnvironmentVariableResult(env) => match &env.value {
+            ExpressionResults::EnvironmentVariableExpressionResult(env) => match &env.value {
                 Some(val) => write!(f, "{}", val),
                 None => write!(f, "{} is not set", env.name),
             },
-            TurtleResults::BuiltinResult(builtin) => match &builtin.output {
+            ExpressionResults::BuiltinExpressionResult(builtin) => match &builtin.output {
                 Some(val) => write!(f, "{}", val),
                 None => write!(f, "No output"),
             },
+            ExpressionResults::TurtleVariableExpressionResult(var) => {
+                write!(f, "{:?}", var.value)
+            }
         }
     }
 }
-impl TurtleResults {
+
+impl ExpressionResults {
     pub fn from_shell_command_result(stdout: String, stderr: String, code: i32) -> Self {
-        TurtleResults::CommandResult(ShellCommandResult {
+        ExpressionResults::CommandExpressionResult(CommandExpressionResult {
             stdout,
             stderr,
             code,
@@ -638,17 +723,32 @@ impl TurtleResults {
     }
 }
 
-// #[derive(Clone, PartialEq)]
-pub struct TurtleBuiltin<'a> {
-    pub name: &'static str,
-    pub description: &'static str,
-    pub help: &'static str,
-    // pub execute: fn(args: Vec<String>) -> (),
-    pub execute: Box<dyn Fn(Vec<String>) + Send + Sync + 'a>,
+/// shell builtin command
+pub struct Builtin {
+    pub name: String,
+    pub description: String,
+    pub help: String,
+    pub execute: Box<
+        dyn Fn(
+                std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>, // env
+                std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>, // aliases
+                std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, Expressions>>>, // vars
+                std::sync::Arc<std::sync::Mutex<Vec<HistoryEvent>>>, // history
+                Vec<String>,                                         // available builtin names
+                Vec<String>,                                         // args
+                                                                     // TODO: consider adding history and the implications of that...
+            ) + Send
+            + Sync
+            + 'static,
+    >,
 }
 
-impl<'a> TurtleBuiltin<'a> {
-    pub fn get(name: &str, builtins: &'a [TurtleBuiltin<'a>]) -> Option<&'a TurtleBuiltin<'a>> {
+impl Builtin {
+    pub fn get<'a>(name: &str, builtins: &'a [Builtin]) -> Option<&'a Builtin> {
+        builtins.iter().find(|builtin| builtin.name == name)
+    }
+
+    pub fn get_builtin(name: &str, builtins: Vec<Builtin>) -> Option<Builtin> {
         for builtin in builtins {
             if builtin.name == name {
                 return Some(builtin);
@@ -658,7 +758,7 @@ impl<'a> TurtleBuiltin<'a> {
     }
 }
 
-impl std::fmt::Debug for TurtleBuiltin<'_> {
+impl std::fmt::Debug for Builtin {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("TurtleBuiltin")
             .field("name", &self.name)
@@ -668,22 +768,57 @@ impl std::fmt::Debug for TurtleBuiltin<'_> {
     }
 }
 
-pub struct TurtleBuiltins<'a> {
-    pub items: Vec<TurtleBuiltin<'a>>,
+// #[derive(Debug, Clone)]
+pub struct Builtins {
+    pub builtins: Vec<Builtin>,
+    pub env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+    pub aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+    pub vars: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, Expressions>>>,
 }
 
-impl<'a> TurtleBuiltins<'a> {
-    pub fn new(builtins: Vec<TurtleBuiltin<'a>>) -> Self {
-        TurtleBuiltins { items: builtins }
+impl std::fmt::Debug for Builtins {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TurtleBuiltins")
+            .field("builtins", &self.builtins)
+            .finish()
+    }
+}
+
+impl Builtins {
+    pub fn new(
+        builtins: Vec<Builtin>,
+        env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+        aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+        vars: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, Expressions>>>,
+    ) -> Self {
+        Builtins {
+            builtins,
+            env,
+            aliases,
+            vars,
+        }
     }
 
-    pub fn get(&self, name: &str) -> Option<&TurtleBuiltin> {
-        TurtleBuiltin::get(name, &self.items)
+    pub fn get(&self, name: &str) -> Option<&Builtin> {
+        self.builtins.iter().find(|b| b.name == name)
     }
 
-    pub fn exec(&self, name: &str, args: Vec<String>) {
+    pub fn list(&self) -> Vec<String> {
+        self.builtins.iter().map(|b| b.name.clone()).collect()
+    }
+
+    pub fn exec(
+        &self,
+        name: &str,
+        vars: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, Expressions>>>,
+        env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+        aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+        history: std::sync::Arc<std::sync::Mutex<Vec<HistoryEvent>>>,
+        builtin_names: Vec<String>,
+        args: Vec<String>,
+    ) {
         if let Some(builtin) = self.get(name) {
-            (builtin.execute)(args);
+            (builtin.execute)(env, aliases, vars, history, builtin_names, args);
         } else {
             println!("Builtin command '{}' not found", name);
         }
