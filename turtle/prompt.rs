@@ -1,4 +1,5 @@
 use chrono::Local;
+use serde::{Deserialize, Serialize};
 
 pub fn expand_prompt_macros(prompt: &str) -> String {
     let username = whoami::username();
