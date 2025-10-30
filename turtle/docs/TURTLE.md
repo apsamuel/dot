@@ -1,25 +1,37 @@
 # Turtle Language Specification
 
-Turtle is a simple scripting language designed for automating tasks in a shell-like environment. It supports variables, functions, control flow, and built-in commands.
+Turtle is an interpreted language derived from rust and designed for automating tasks in a shell-like environment. It supports variables, functions, control flow, and built-in commands.
 
 ## Syntax
 
-Turtle's syntax is inspired by popular scripting languages, with a focus on simplicity and ease of use. Here are some key aspects of the syntax:
+Turtle's syntax is inspired by `rust` and `python`, making it easy to learn for users familiar with those languages. Here are some of the key syntax elements:
 
-- **Variables**: Variables are declared using the `let` keyword and can hold values of different types.
+- **Variables**: Variables are declared using the `let` and `set` keywords and can hold values of different types.
+  - the `let` keyword declares a new turtle variable, once set, the turtle interpreter will substitute occurrences of the variable name with its value. Declared using `let VAR_NAME = VALUE`
+  - the `set` keyword assigns a new environment variable, which can be accessed by subprocesses. Set using `set VAR_NAME = VALUE`
+- **Data Types**: Turtle supports core data types
+  - Number
+  - String
+  - Boolean
+  - Object
+  - Array
 - **Functions**: Functions are defined using the `fn` keyword and can take parameters and return values.
+  - ```rust
+    fn function_name(param1, param2) {
+        // function body
+        return value;
+    }
+    ```
 - **Control Flow**: Turtle supports `if`, `else`, `while`, and `for` statements for controlling the flow of execution.
 - **Built-in Commands**: Turtle includes a set of built-in commands for common tasks, such as `print`, `input`, and `len`.
 
 ## Example
 
-Here is a simple example of a Turtle script:
+Here is a hello world script in Turtle:
 
-```javascript
-let x = 5;
-let y = 10;
-let z = x + y;
-print(z);
+```rust
+let message = "Hello, world!";
+print(message);
 ```
 
 This script declares three variables, adds them together, and prints the result.
