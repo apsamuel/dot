@@ -12,7 +12,7 @@ use std::io::{self, Write};
 
 static DEFAULT_THEME: &str = "catppuccino";
 
-static SOLARIZED_DARK: crate::types::TurtleTheme = crate::types::TurtleTheme {
+static SOLARIZED_DARK: crate::types::Theme = crate::types::Theme {
     foreground: Color::Rgb {
         r: 131,
         g: 148,
@@ -33,7 +33,7 @@ static SOLARIZED_DARK: crate::types::TurtleTheme = crate::types::TurtleTheme {
     // attributes: &["bold", "italic"],
 };
 
-static SOLARIZED_LIGHT: crate::types::TurtleTheme = crate::types::TurtleTheme {
+static SOLARIZED_LIGHT: crate::types::Theme = crate::types::Theme {
     foreground: Color::Rgb {
         r: 101,
         g: 123,
@@ -62,7 +62,7 @@ static SOLARIZED_LIGHT: crate::types::TurtleTheme = crate::types::TurtleTheme {
     // attributes: &["bold", "italic"],
 };
 
-static MONOKAI: crate::types::TurtleTheme = crate::types::TurtleTheme {
+static MONOKAI: crate::types::Theme = crate::types::Theme {
     foreground: Color::Rgb {
         r: 248,
         g: 248,
@@ -91,7 +91,7 @@ static MONOKAI: crate::types::TurtleTheme = crate::types::TurtleTheme {
     // attributes: &["bold"],
 };
 
-static CATPPUCCINO: crate::types::TurtleTheme = crate::types::TurtleTheme {
+static CATPPUCCINO: crate::types::Theme = crate::types::Theme {
     foreground: Color::Rgb {
         r: 75,
         g: 56,
@@ -120,23 +120,17 @@ static CATPPUCCINO: crate::types::TurtleTheme = crate::types::TurtleTheme {
     // attributes: &["italic"],
 };
 
-static TURTLE_THEMES: Lazy<HashMap<&'static str, &'static crate::types::TurtleTheme>> =
-    Lazy::new(|| {
-        let mut m = HashMap::new();
-        m.insert("solarized_dark", &SOLARIZED_DARK);
-        m.insert("solarized_light", &SOLARIZED_LIGHT);
-        m.insert("monokai", &MONOKAI);
-        m.insert("catppuccino", &CATPPUCCINO);
-        m
-    });
+static THEMES: Lazy<HashMap<&'static str, &'static crate::types::Theme>> = Lazy::new(|| {
+    let mut m = HashMap::new();
+    m.insert("solarized_dark", &SOLARIZED_DARK);
+    m.insert("solarized_light", &SOLARIZED_LIGHT);
+    m.insert("monokai", &MONOKAI);
+    m.insert("catppuccino", &CATPPUCCINO);
+    m
+});
 
-// this should now take a string theme name and return the corresponding TurtleTheme struct
-// tokio::main
-// #[tokio::main]
 pub fn apply_theme<W: Write>(writer: &mut W, theme_name: &str) -> io::Result<()> {
-    let theme = TURTLE_THEMES
-        .get(theme_name)
-        .or_else(|| TURTLE_THEMES.get(DEFAULT_THEME));
+    let theme = THEMES.get(theme_name).or_else(|| THEMES.get(DEFAULT_THEME));
     let theme = match theme {
         Some(theme) => theme,
         None => return Err(io::Error::new(io::ErrorKind::NotFound, "Theme not found")),
@@ -148,8 +142,5 @@ pub fn apply_theme<W: Write>(writer: &mut W, theme_name: &str) -> io::Result<()>
         SetForegroundColor(theme.foreground),
         SetBackgroundColor(theme.background),
     )?;
-    // for attr in &theme.attributes {
-    //     execute!(writer, Attribute::from_str(attr)?)?;
-    // }
     Ok(())
 }
