@@ -207,3 +207,17 @@ pub fn export_history_for_rustyline(txt_path: &str) -> io::Result<()> {
     }
     Ok(())
 }
+
+pub fn load_history_from_path(path: &str) -> Option<Vec<crate::types::HistoryEvent>> {
+    println!("Loading history events from: {}", path);
+    let data = std::fs::read_to_string(path).ok()?;
+    let mut events = Vec::new();
+    for line in data.lines() {
+        println!("Parsing line: {}", line);
+        let event: crate::types::HistoryEvent = serde_json::from_str(line).ok()?;
+        events.push(event);
+    }
+    print!("Loaded {} history events", events.len());
+
+    Some(events)
+}
