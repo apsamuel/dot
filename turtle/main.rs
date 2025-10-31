@@ -1,15 +1,12 @@
-mod configuration; // configuration loading and environment setup
-mod defaults; // default configuration values
+// mod _configuration; // configuration loading and environment setup
+mod _defaults; // default configuration values
 mod execution; // execution context
-// mod history; // command history logging
-// mod input; // input handling (env var and tilde expansion)
+mod history; // command history logging
 mod interpreter; // turtle shell interpreter
 mod shell;
+mod themes;
 mod types; // shared structs/enums
 mod utils; // utility functions // main shell struct
-
-// mod _builtin; // built-in commands
-mod themes;
 mod widgets; // TUI widgets // theme management
 
 mod prompt; // prompt handling
