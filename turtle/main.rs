@@ -1,5 +1,3 @@
-// mod _history; // command history logging
-// mod shell;
 mod types; // shared structs/enums
 mod utils; // utility functions // main shell struct
 
