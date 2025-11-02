@@ -1,3 +1,4 @@
+debug: false
 prompt: "{user}@{host}:{path}$ "
 aliases:
   ll: "ls -la"
