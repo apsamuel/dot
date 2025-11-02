@@ -45,6 +45,35 @@ pub fn load_history() -> io::Result<Vec<serde_json::Value>> {
     Ok(history)
 }
 
+pub fn load_history_from_path(path: &str) -> Option<Vec<crate::types::Event>> {
+    // convert ~ to home directory
+    let expanded_path = if path.starts_with("~") {
+        if let Some(home) = dirs::home_dir() {
+            let without_tilde = path.trim_start_matches("~");
+            home.join(without_tilde).to_str()?.to_string()
+        } else {
+            path.to_string()
+        }
+    } else {
+        path.to_string()
+    };
+
+    let content = std::fs::read_to_string(expanded_path).ok()?;
+    let mut history = Vec::new();
+    for line in content.lines() {
+        match serde_json::from_str::<crate::types::Event>(line) {
+            Ok(event) => {
+                history.push(event);
+            }
+            Err(_e) => {
+                continue;
+            }
+        }
+    }
+
+    Some(history)
+}
+
 pub fn display_history_ui() -> std::io::Result<()> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -128,7 +157,7 @@ pub fn clear_history() -> io::Result<()> {
     Ok(())
 }
 
-pub async fn _handle_key_events() {
+pub async fn handle_key_events() {
     let history = load_history().unwrap_or_default();
     let mut history_index = history.len();
     let mut input = String::new();
@@ -206,18 +235,4 @@ pub fn export_history_for_rustyline(txt_path: &str) -> io::Result<()> {
         writeln!(file, "{}", command)?;
     }
     Ok(())
-}
-
-pub fn load_history_from_path(path: &str) -> Option<Vec<crate::types::HistoryEvent>> {
-    println!("Loading history events from: {}", path);
-    let data = std::fs::read_to_string(path).ok()?;
-    let mut events = Vec::new();
-    for line in data.lines() {
-        println!("Parsing line: {}", line);
-        let event: crate::types::HistoryEvent = serde_json::from_str(line).ok()?;
-        events.push(event);
-    }
-    print!("Loaded {} history events", events.len());
-
-    Some(events)
 }

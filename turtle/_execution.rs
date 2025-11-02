@@ -1,6 +1,4 @@
-use serde::de::value;
-
-/// execution context for Turtle shell
+/// execution context
 pub struct Context {
     pub builtins: Option<crate::types::Builtins>,
     pub env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
@@ -59,7 +57,7 @@ impl Context {
                 name: "eval".to_string(),
                 description: "Evaluate a string as Turtle code".to_string(),
                 help: "Usage: eval <code>".to_string(),
-                execute: Box::new(|env, aliases, vars, _, builtin_names, args| {
+                execute: Box::new(|env, aliases, vars, history, builtin_names, args| {
                     if args.is_empty() {
                         eprintln!("Usage: eval <code>");
                         return;
@@ -74,11 +72,11 @@ impl Context {
                         vars.clone(),
                         builtin_names,
                     );
-                    let mut context = crate::execution::Context::new(
+                    let mut context = crate::context::Context::new(
                         env.clone(),
                         aliases.clone(),
                         vars.clone(),
-                        std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
+                        history.clone(),
                     );
                     context.setup();
                     let _tokens = interpreter.tokenize(&code.as_str());
@@ -221,11 +219,11 @@ impl Context {
     }
 
     /// Evaluate environment variables: $```<Identifier>```
-    fn eval_environment_variable(&mut self, name: &str) -> Option<crate::types::ExpressionResults> {
+    fn eval_environment_variable(&mut self, name: &str) -> Option<crate::types::EvalResults> {
         let value = self.get_env(name);
         Some(
-            crate::types::ExpressionResults::EnvironmentVariableExpressionResult(
-                crate::types::EnvironmentVariableExpressionResult {
+            crate::types::EvalResults::EnvironmentVariableExpressionResult(
+                crate::types::EnvironmentVariableEvalResult {
                     name: name.to_string(),
                     value,
                 },
@@ -239,7 +237,7 @@ impl Context {
         left: crate::types::Expressions,
         op: String,
         right: crate::types::Expressions,
-    ) -> Option<crate::types::ExpressionResults> {
+    ) -> Option<crate::types::EvalResults> {
         // Recursively evaluate left and right, handling nested BinaryOperation
         let left_result = match left {
             crate::types::Expressions::BinaryOperation { left, op, right } => {
@@ -257,8 +255,8 @@ impl Context {
 
         match (left_result, right_result) {
             (
-                crate::types::ExpressionResults::NumberExpressionResult(left_num),
-                crate::types::ExpressionResults::NumberExpressionResult(right_num),
+                crate::types::EvalResults::NumberExpressionResult(left_num),
+                crate::types::EvalResults::NumberExpressionResult(right_num),
             ) => {
                 let result = match op.as_str() {
                     "+" => left_num.value + right_num.value,
@@ -271,18 +269,18 @@ impl Context {
                         return None;
                     }
                 };
-                Some(crate::types::ExpressionResults::NumberExpressionResult(
-                    crate::types::NumberExpressionResult { value: result },
+                Some(crate::types::EvalResults::NumberExpressionResult(
+                    crate::types::NumberEvalResult { value: result },
                 ))
             }
             (
-                crate::types::ExpressionResults::StringExpressionResult(left_str),
-                crate::types::ExpressionResults::StringExpressionResult(right_str),
+                crate::types::EvalResults::StringExpressionResult(left_str),
+                crate::types::EvalResults::StringExpressionResult(right_str),
             ) => {
                 if op == "+" {
                     let result = format!("{}{}", left_str.value, right_str.value);
-                    Some(crate::types::ExpressionResults::StringExpressionResult(
-                        crate::types::StringExpressionResult { value: result },
+                    Some(crate::types::EvalResults::StringExpressionResult(
+                        crate::types::StringEvalResult { value: result },
                     ))
                 } else {
                     eprintln!("Unsupported operation for strings: {}", op);
@@ -303,7 +301,7 @@ impl Context {
         &mut self,
         name: String,
         value: crate::types::Expressions,
-    ) -> Option<crate::types::ExpressionResults> {
+    ) -> Option<crate::types::EvalResults> {
         let _evaluated_value = self.eval(Some(value.clone()))?;
 
         // Store the variable in the context
@@ -314,8 +312,8 @@ impl Context {
             .insert(name.clone(), value.clone());
 
         // Return an AssignmentResult
-        Some(crate::types::ExpressionResults::AssignmentExpressionResult(
-            crate::types::AssignmentExpressionResult { name, value },
+        Some(crate::types::EvalResults::AssignmentExpressionResult(
+            crate::types::AssignmentEvalResult { name, value },
         ))
     }
 
@@ -323,7 +321,7 @@ impl Context {
         &mut self,
         name: &str,
         value: Box<crate::types::Expressions>,
-    ) -> Option<crate::types::ExpressionResults> {
+    ) -> Option<crate::types::EvalResults> {
         // get the variables values - this is an expression
         let var = {
             let vars = self.vars.lock().unwrap();
@@ -344,7 +342,7 @@ impl Context {
         left: crate::types::Expressions,
         op: String,
         right: crate::types::Expressions,
-    ) -> Option<crate::types::ExpressionResults> {
+    ) -> Option<crate::types::EvalResults> {
         // we need to handle chained operations
 
         let left = self.eval(Some(left))?;
@@ -353,8 +351,8 @@ impl Context {
 
         match (left, right) {
             (
-                crate::types::ExpressionResults::NumberExpressionResult(left_num),
-                crate::types::ExpressionResults::NumberExpressionResult(right_num),
+                crate::types::EvalResults::NumberExpressionResult(left_num),
+                crate::types::EvalResults::NumberExpressionResult(right_num),
             ) => {
                 let result = match operation.as_str() {
                     "+" => left_num.value + right_num.value,
@@ -366,20 +364,20 @@ impl Context {
                         return None;
                     }
                 };
-                return Some(crate::types::ExpressionResults::NumberExpressionResult(
-                    crate::types::NumberExpressionResult { value: result },
+                return Some(crate::types::EvalResults::NumberExpressionResult(
+                    crate::types::NumberEvalResult { value: result },
                 ));
             }
 
             // support adding strings for concatenation
             (
-                crate::types::ExpressionResults::StringExpressionResult(left_str),
-                crate::types::ExpressionResults::StringExpressionResult(right_str),
+                crate::types::EvalResults::StringExpressionResult(left_str),
+                crate::types::EvalResults::StringExpressionResult(right_str),
             ) => {
                 if operation == "+" {
                     let result = format!("{}{}", left_str.value, right_str.value);
-                    return Some(crate::types::ExpressionResults::StringExpressionResult(
-                        crate::types::StringExpressionResult { value: result },
+                    return Some(crate::types::EvalResults::StringExpressionResult(
+                        crate::types::StringEvalResult { value: result },
                     ));
                 } else {
                     // eprintln!("Unsupported operation for strings: {}", operation);
@@ -393,42 +391,27 @@ impl Context {
         }
     }
 
-    fn eval_builtin(&mut self, name: &str, args: &str) -> Option<crate::types::ExpressionResults> {
+    fn eval_builtin(&mut self, name: &str, args: &str) -> Option<crate::types::EvalResults> {
         let env = self.env.clone();
         let aliases = self.aliases.clone();
         let vars = self.vars.clone();
         let history = self.history.clone();
-        // let builtin_list = self.builtins.unwrap().list();
 
         if let Some(ref builtins) = self.builtins {
             let builtin_names = builtins.list();
             let builtin = builtins.get(name)?;
             let arg_vec: Vec<String> = args.split_whitespace().map(|s| s.to_string()).collect();
             let result = (builtin.execute)(env, aliases, vars, history, builtin_names, arg_vec);
-            return Some(crate::types::ExpressionResults::BuiltinExpressionResult(
-                crate::types::BuiltinExpressionResult {
+            return Some(crate::types::EvalResults::BuiltinExpressionResult(
+                crate::types::BuiltinEvalResult {
                     output: Some(format!("{:?}", result)),
                 },
             ));
         }
         None
-
-        // old pattern
-        // let builtin = crate::builtin::TurtleBuiltin::get(name)?;
-        // let arg_vec: Vec<String> = args.split_whitespace().map(|s| s.to_string()).collect();
-        // let result = (builtin.execute)(arg_vec);
-        // Some(crate::types::TurtleResults::BuiltinResult(
-        //     crate::types::BuiltinResult {
-        //         output: Some(format!("{:?}", result)),
-        //     },
-        // ))
     }
 
-    fn eval_command(
-        &mut self,
-        command: &str,
-        args: &str,
-    ) -> Option<crate::types::ExpressionResults> {
+    fn eval_command(&mut self, command: &str, args: &str) -> Option<crate::types::EvalResults> {
         use std::process::Command;
         let args_vec: Vec<&str> = args.split_whitespace().collect();
 
@@ -439,7 +422,7 @@ impl Context {
             command: command.to_string(),
             args: args_vec.iter().map(|s| s.to_string()).collect(),
             timestamp: crate::utils::now_unix(),
-            event: "command_request".to_string(),
+            // event: "command_request".to_string(),
         };
 
         self.history
@@ -457,7 +440,7 @@ impl Context {
                 let stdout = String::from_utf8_lossy(&output.stdout);
                 let stderr = String::from_utf8_lossy(&output.stderr);
                 let code = output.status.code().unwrap_or(-1);
-                let result = crate::types::CommandExpressionResult {
+                let result = crate::types::CommandEvalResult {
                     stdout: stdout.to_string(),
                     stderr: stderr.to_string(),
                     code,
@@ -469,7 +452,6 @@ impl Context {
                     output: stdout.to_string(),
                     errors: stderr.to_string(),
                     timestamp: crate::utils::now_unix(),
-                    event: "command_response".to_string(),
                 };
                 self.history
                     .lock()
@@ -477,9 +459,7 @@ impl Context {
                     .push(crate::types::HistoryEvent::CommandResponse(
                         command_response,
                     ));
-                Some(crate::types::ExpressionResults::CommandExpressionResult(
-                    result,
-                ))
+                Some(crate::types::EvalResults::CommandExpressionResult(result))
             }
             Err(e) => {
                 eprintln!("Failed to execute command: {}", e);
@@ -510,7 +490,7 @@ impl Context {
     pub fn eval(
         &mut self,
         expr: Option<crate::types::Expressions>,
-    ) -> Option<crate::types::ExpressionResults> {
+    ) -> Option<crate::types::EvalResults> {
         // self.code.push(expr.unwrap().clone());
         if let Some(ref e) = expr {
             self.code.push(e.clone());
@@ -529,24 +509,24 @@ impl Context {
             Some(crate::types::Expressions::BinaryOperation { left, op, right }) => {
                 let result = self.eval_binary_operation(*left, op, *right);
 
-                if let Some(crate::types::ExpressionResults::NumberExpressionResult(n)) = &result {
+                if let Some(crate::types::EvalResults::NumberExpressionResult(n)) = &result {
                     println!("{}", n.value);
                 }
                 result
             }
             Some(crate::types::Expressions::Number(value)) => {
-                Some(crate::types::ExpressionResults::NumberExpressionResult(
-                    crate::types::NumberExpressionResult { value },
+                Some(crate::types::EvalResults::NumberExpressionResult(
+                    crate::types::NumberEvalResult { value },
                 ))
             }
             Some(crate::types::Expressions::String(value)) => {
-                Some(crate::types::ExpressionResults::StringExpressionResult(
-                    crate::types::StringExpressionResult { value },
+                Some(crate::types::EvalResults::StringExpressionResult(
+                    crate::types::StringEvalResult { value },
                 ))
             }
             Some(crate::types::Expressions::Boolean(value)) => {
-                Some(crate::types::ExpressionResults::BooleanExpressionResult(
-                    crate::types::BooleanExpressionResult { value },
+                Some(crate::types::EvalResults::BooleanExpressionResult(
+                    crate::types::BooleanEvalResult { value },
                 ))
             }
             Some(crate::types::Expressions::Array(values)) => {
@@ -554,13 +534,13 @@ impl Context {
                     .into_iter()
                     .filter_map(|v| {
                         self.eval(Some(v.clone())).and_then(|res| match res {
-                            crate::types::ExpressionResults::NumberExpressionResult(n) => {
+                            crate::types::EvalResults::NumberExpressionResult(n) => {
                                 Some(crate::types::Expressions::Number(n.value))
                             }
-                            crate::types::ExpressionResults::StringExpressionResult(s) => {
+                            crate::types::EvalResults::StringExpressionResult(s) => {
                                 Some(crate::types::Expressions::String(s.value))
                             }
-                            crate::types::ExpressionResults::BooleanExpressionResult(b) => {
+                            crate::types::EvalResults::BooleanExpressionResult(b) => {
                                 Some(crate::types::Expressions::Boolean(b.value))
                             }
                             _ => None,
@@ -568,8 +548,8 @@ impl Context {
                     })
                     .collect();
 
-                Some(crate::types::ExpressionResults::ArrayExpressionResult(
-                    crate::types::ArrayExpressionResult {
+                Some(crate::types::EvalResults::ArrayExpressionResult(
+                    crate::types::ArrayEvalResult {
                         value: evaluated_values,
                     },
                 ))
@@ -586,12 +566,10 @@ impl Context {
             }
 
             Some(crate::types::Expressions::ShellCommand { name, args }) => {
-                print!("Executing command: {} with args: {}\n", name, args);
                 let result = self.eval_command(&name, &args);
                 // result is an option, we need to unwrap it to access the code
                 // the result is in the CommandResult variant of ShellResults
-                if let Some(crate::types::ExpressionResults::CommandExpressionResult(cmd)) = &result
-                {
+                if let Some(crate::types::EvalResults::CommandExpressionResult(cmd)) = &result {
                     if cmd.code != 0 {
                         eprintln!("{}", cmd.stderr);
                     } else {

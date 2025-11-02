@@ -1,4 +1,4 @@
-use chrono::Local;
+/* use chrono::Local;
 use serde::{Deserialize, Serialize};
 
 pub fn expand_prompt_macros(prompt: &str) -> String {
@@ -25,3 +25,4 @@ pub fn _redraw_prompt(prompt: &str) -> String {
     let prompt = expand_prompt_macros(prompt);
     prompt
 }
+ */
