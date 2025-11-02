@@ -4,28 +4,30 @@ use notify::Watcher;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-/// Keywords: reserved words in the Turtle shell language
+/// Reserved words in Turtle
 static KEYWORDS: &[&str] = &[
     "if", "else", "then", "while", "for", "fn", "return", "let", "true", "false",
 ];
 
-/// Intervals
-pub static SAVE_INTERVAL_SECS: u64 = 60;
-
-/// Default Prompt
-pub static DEFAULT_PROMPT: &str = "<< 🐢 >> ";
-/// History Size
+/// default interval for non-event driven threads (in seconds)
+pub static DEFAULT_INTERVAL_SECS: u64 = 60;
+/// prompt
+pub static DEFAULT_PROMPT: &str = "<+ 🐢 +> ";
+/// continuation prompt
+pub static DEFAULT_CONTINUATION_PROMPT: &str = "⏭️ ";
+/// error prompt
+pub static DEFAULT_ERROR_PROMPT: &str = "<<< ❌❌❌ >>>";
+/// history size
 pub static DEFAULT_HISTORY_SIZE: usize = 1000;
-/// Default Theme
-pub static DEFAULT_THEME: &str = "catppuccino";
-/// Debug Mode
+/// theme
+pub static DEFAULT_THEME: &str = "monokai";
+/// debug mode
 pub static DEFAULT_DEBUG: bool = false;
-/// Default Continuation Prompt
-pub static DEFAULT_CONTINUATION_PROMPT: &str = "...... ";
 
 /// Turtle AST and parser
 #[derive(Debug, Clone)]
 struct AbstractSyntaxTree {
+    debug: bool,
     env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     vars: std::sync::Arc<
@@ -57,7 +59,11 @@ impl AbstractSyntaxTree {
         vars: std::sync::Arc<
             std::sync::Mutex<std::collections::HashMap<String, crate::types::Expressions>>,
         >,
+        debug: bool,
     ) -> Self {
+        if debug {
+            println!("Creating new AbstractSyntaxTree with tokens: {:?}", tokens);
+        }
         AbstractSyntaxTree {
             parsed: tokens,
             pos: 0,
@@ -65,11 +71,19 @@ impl AbstractSyntaxTree {
             env,
             aliases,
             vars,
+            debug,
         }
     }
 
     /// peek at the current token
     pub fn peek(&self) -> &crate::types::Token {
+        if self.debug {
+            println!(
+                "Peeking at token position {}: {:?}",
+                self.pos,
+                self.parsed.get(self.pos)
+            );
+        }
         self.parsed
             .get(self.pos)
             .unwrap_or(&crate::types::Token::Eof)
@@ -77,6 +91,13 @@ impl AbstractSyntaxTree {
 
     /// get the next token
     pub fn next(&mut self) -> &crate::types::Token {
+        if self.debug {
+            println!(
+                "Getting next token at position {}: {:?}",
+                self.pos,
+                self.parsed.get(self.pos)
+            );
+        }
         let tok = self
             .parsed
             .get(self.pos)
@@ -726,6 +747,13 @@ impl AbstractSyntaxTree {
 
     /// implements parsing rules to build TurtleExpression AST
     pub fn parse_expr(&mut self) -> Option<crate::types::Expressions> {
+        if self.debug {
+            println!(
+                "Parsing expression at token position {}: {:?}",
+                self.pos,
+                self.peek()
+            );
+        }
         // parse  built-in functions
         if let Some(builtin) = self.parse_builtin() {
             return Some(builtin);
@@ -788,7 +816,7 @@ impl AbstractSyntaxTree {
 /// Tokenize & Interpret Turtle code
 #[derive(Debug, Clone)]
 pub struct Interpreter {
-    // env: std::sync::Ar
+    debug: bool,
     env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     vars: std::sync::Arc<
@@ -808,7 +836,11 @@ impl Interpreter {
             std::sync::Mutex<std::collections::HashMap<String, crate::types::Expressions>>,
         >,
         builtins: Vec<String>,
+        debug: bool,
     ) -> Self {
+        if debug {
+            println!("Creating new Interpreter");
+        }
         Interpreter {
             env,
             aliases,
@@ -816,6 +848,7 @@ impl Interpreter {
             builtins,
             counter: 0,
             tokens: Vec::new(),
+            debug,
         }
     }
 
@@ -1330,6 +1363,7 @@ impl Interpreter {
             self.env.clone(),
             self.aliases.clone(),
             self.vars.clone(),
+            self.debug,
         );
         parser.parse_expr()
     }
@@ -1341,14 +1375,18 @@ pub struct Shell {
     defaults: crate::types::Defaults,
     watcher: Option<notify::RecommendedWatcher>,
     thememanager: crate::types::ThemeManager,
-    pub args: Option<crate::types::Arguments>,
-    pub config: Option<crate::types::Config>,
+    // pub args: Option<crate::types::Arguments>,
+    // pub config: Option<crate::types::Config>,
+    pub config: Option<std::sync::Arc<std::sync::Mutex<crate::types::Config>>>,
+    pub args: Option<std::sync::Arc<std::sync::Mutex<crate::types::Arguments>>>,
+
     pub interpreter: crate::types::Interpreter,
     pub context: crate::types::Context,
     pub pid: Option<u32>,
-    // pub uptime: Option<u64>,
     pub paused: bool,
     pub running: bool,
+    // replace events with history manager
+    history: std::sync::Arc<std::sync::Mutex<crate::types::History>>,
     events: std::sync::Arc<std::sync::Mutex<Vec<crate::types::Event>>>,
     env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
@@ -1372,14 +1410,16 @@ impl Shell {
         let config_path = args
             .as_ref()
             .and_then(|args| args.config_path.as_ref())
-            .unwrap_or(&defaults.config_path);
+            .unwrap_or(&defaults.config_path)
+            .clone();
 
-        // let config = crate::configuration::load_config_from_path(config_path);
-        let config = crate::types::Config::load(config_path);
+        let config = crate::types::Config::load(config_path.as_str()).unwrap();
+        let config = Some(std::sync::Arc::new(std::sync::Mutex::new(config)));
 
         let mut _aliases_ = std::collections::HashMap::new();
+
         if let Some(cfg) = &config {
-            if let Some(turtle_aliases) = &cfg.aliases {
+            if let Some(turtle_aliases) = &cfg.lock().unwrap().aliases {
                 for (key, value) in turtle_aliases {
                     _aliases_.insert(key.clone(), value.clone());
                 }
@@ -1387,7 +1427,10 @@ impl Shell {
         }
 
         let debug = args.as_ref().unwrap().debug
-            || config.as_ref().map(|c| c.debug).unwrap_or(false)
+            || config
+                .as_ref()
+                .map(|c| c.lock().unwrap().debug)
+                .unwrap_or(false)
             || defaults.debug;
 
         let aliases = std::sync::Arc::new(std::sync::Mutex::new(_aliases_));
@@ -1398,28 +1441,33 @@ impl Shell {
             crate::types::Expressions,
         >::new()));
 
+        let args = Some(std::sync::Arc::new(std::sync::Mutex::new(args.unwrap())));
+
         let history_path = args
             .as_ref()
-            .and_then(|args| args.history_path.as_ref())
-            .unwrap_or(&defaults.history_path);
+            .and_then(|args| args.lock().unwrap().history_path.clone())
+            .unwrap_or(defaults.history_path.clone());
 
-        // let history =
-        //     crate::_history::load_history_from_path(history_path.as_str()).unwrap_or_default();
-
-        let mut history = crate::types::History::new(
+        let history = crate::types::History::new(
             Some(history_path.clone()),
             Some(defaults.save_interval),
             debug,
         );
 
+        let history = std::sync::Arc::new(std::sync::Mutex::new(history));
+
         // history.setup();
 
-        let events = history.load();
+        let events = history.lock().unwrap().load().unwrap();
+        let events = std::sync::Arc::new(std::sync::Mutex::new(events));
 
-        let history = std::sync::Arc::new(std::sync::Mutex::new(events.unwrap()));
-
-        let mut context =
-            crate::types::Context::new(env.clone(), aliases.clone(), vars.clone(), history.clone());
+        let mut context = crate::types::Context::new(
+            env.clone(),
+            aliases.clone(),
+            vars.clone(),
+            events.clone(),
+            debug,
+        );
         context.setup();
         let mut builtin_names: Vec<String> = Vec::new();
         if let Some(builtins) = &context.builtins {
@@ -1432,6 +1480,7 @@ impl Shell {
             aliases.clone(),
             vars.clone(),
             builtin_names.clone(),
+            debug,
         );
 
         if debug {
@@ -1443,6 +1492,9 @@ impl Shell {
 
         let thememanager = crate::types::ThemeManager::new();
 
+        if debug {
+            println!("🐢 TurtleShell initialized");
+        }
         Shell {
             debug,
             defaults,
@@ -1450,14 +1502,15 @@ impl Shell {
             config: config.clone(),
             args,
             thememanager,
-            events: history,
+            history,
+            events,
             env,
             aliases,
             interpreter,
             context,
             pid: None,
             paused: false,
-            running: true,
+            running: false,
             tokens: Vec::new(),
             expressions: Vec::new(),
         }
@@ -1486,19 +1539,48 @@ impl Shell {
 
     /// Start the shell main loop
     pub fn start(&mut self) {
+        if self.debug {
+            println!("🐢 Starting Turtle Shell...");
+        }
         self.setup();
 
-        // Set up config file watcher if enabled
-        // this is not working
-        if let Some(watch_config) = self.args.as_ref().and_then(|a| Some(a.watch_config)) {
-            let config_path = self
-                .args
-                .as_ref()
-                .and_then(|args| args.config_path.as_ref())
-                .unwrap_or(&self.defaults.config_path);
+        // get default settings
+        let default_config_path = self.defaults.config_path.clone();
+        let default_history_path = self.defaults.history_path.clone();
+        let default_prompt = self.defaults.prompt.clone();
+        let default_theme = self.defaults.theme.clone();
+
+        // lock & process args and config
+
+        let args = self
+            .args
+            .as_ref()
+            .and_then(|a| Some(a.lock().unwrap().clone()));
+
+        let config = self
+            .config
+            .as_ref()
+            .and_then(|c| Some(c.lock().unwrap().clone()));
+
+        let user_prompt = config
+            .clone()
+            .and_then(|cfg| cfg.prompt)
+            .unwrap_or(default_prompt.clone());
+
+        let user_theme = config
+            .clone()
+            .and_then(|cfg| cfg.theme)
+            .unwrap_or(default_theme.clone());
+
+        // --watch-config flag
+        if let Some(watch_config) = args.as_ref().and_then(|a| Some(a.watch_config)) {
+            let config_path = args
+                // .as_ref()
+                .and_then(|args| args.config_path)
+                .unwrap_or(default_config_path.clone());
             if watch_config {
                 if let Some(cfg) = &self.config {
-                    match cfg.watch(config_path.as_str()) {
+                    match cfg.lock().unwrap().watch(config_path.as_str()) {
                         Ok(watcher) => {
                             self.watcher = Some(watcher);
                             if self.debug {
@@ -1520,10 +1602,12 @@ impl Shell {
 
         let start = crate::utils::this_instant();
         let mut editor = self.get_readline();
-        let default_prompt = crate::types::Defaults::default().prompt;
-        let default_theme = crate::types::Defaults::default().theme;
 
-        if let Some(list_themes) = self.args.as_ref().and_then(|a| Some(a.list_themes)) {
+        if let Some(list_themes) = self
+            .args
+            .as_ref()
+            .and_then(|a| Some(a.lock().unwrap().list_themes))
+        {
             if list_themes {
                 println!("Available Themes:");
                 self.thememanager.list().iter().for_each(|theme_name| {
@@ -1534,21 +1618,26 @@ impl Shell {
         }
 
         self.thememanager
-            .apply(&mut std::io::stdout(), &default_theme)
+            .apply(&mut std::io::stdout(), &user_theme)
             .ok();
 
         // get our prompt from the configuration file, or use the default
         let user_prompt = self
             .config
             .as_ref()
-            .and_then(|cfg| cfg.prompt.as_ref())
-            .unwrap_or(&default_prompt);
+            .and_then(|cfg| cfg.lock().unwrap().prompt.clone())
+            .unwrap_or(default_prompt.clone());
 
         let rendered_prompt = user_prompt.clone();
         let mut turtle_prompt = crate::types::Prompt::new(rendered_prompt.as_str());
 
-        if let Some(command) = self.args.as_ref().and_then(|args| args.command.as_ref()) {
-            let tokens = self.interpreter.tokenize(command);
+        if let Some(command) = self
+            .args
+            .as_ref()
+            .and_then(|args| args.lock().unwrap().command.clone())
+        // .as_str()
+        {
+            let tokens = self.interpreter.tokenize(command.as_str());
 
             let expr = self.interpreter.interpret();
             let result = self.context.eval(expr.clone());
@@ -1594,7 +1683,7 @@ impl Shell {
 
             let tokens = self.interpreter.tokenize(input);
             if self.debug {
-                println!("Tokens: {:?}", tokens);
+                println!("turtle tokens: {:?}", tokens);
             }
             self.tokens.push(tokens.clone());
             let expr = self.interpreter.interpret();
@@ -1652,7 +1741,7 @@ impl Default for Defaults {
             history_size: DEFAULT_HISTORY_SIZE,
             theme: DEFAULT_THEME.to_string(),
             debug: DEFAULT_DEBUG,
-            save_interval: SAVE_INTERVAL_SECS,
+            save_interval: DEFAULT_INTERVAL_SECS,
         }
     }
 }
@@ -2288,8 +2377,8 @@ impl fmt::Display for Event {
 impl Event {
     pub fn category(&self) -> &str {
         match self {
-            Event::CommandRequest(_) => "command_request",
-            Event::CommandResponse(_) => "command_response",
+            Event::CommandRequest(_) => "CommandRequest",
+            Event::CommandResponse(_) => "CommandResponse",
         }
     }
 
@@ -2332,6 +2421,7 @@ impl Event {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct History {
     pub debug: bool,
     pub interval: Option<u64>,
@@ -2360,6 +2450,7 @@ impl History {
         }
     }
 
+    /// load history from file
     pub fn load(&mut self) -> Option<Vec<crate::types::Event>> {
         if self.path.is_none() {
             println!("❌ History path is not set.");
@@ -2388,6 +2479,7 @@ impl History {
         None
     }
 
+    /// set up history and load existing events
     pub fn setup(&mut self) {
         if self.events.is_none() {
             self.events = Some(Vec::new());
@@ -2396,15 +2488,42 @@ impl History {
         self.events = self.load();
     }
 
+    /// add an event to history
     pub fn add(&mut self, event: Event) {
         if let Some(events) = &mut self.events {
             events.push(event);
         }
     }
 
-    pub fn save(&self, path: &str) -> std::io::Result<()> {
+    /// flush events to file periodically
+    pub fn flush(&self) -> std::io::Result<()> {
         use std::io::Write;
-        let expanded_path = crate::utils::expand_path(path);
+        let duration = std::time::Duration::from_secs(self.interval.unwrap_or(60));
+        let path = self.path.clone().unwrap();
+        let events = self.events.clone().unwrap_or(Vec::new());
+
+        std::thread::spawn(move || {
+            loop {
+                std::thread::sleep(duration);
+                let mut file = std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(&path)
+                    .unwrap();
+                for event in &events {
+                    let json = serde_json::to_string(event).unwrap();
+
+                    writeln!(file, "{}", json).unwrap();
+                }
+            }
+        });
+        Ok(())
+    }
+
+    /// serialize and save history to file
+    pub fn save(&self) -> std::io::Result<()> {
+        use std::io::Write;
+        let expanded_path = crate::utils::expand_path(self.path.as_ref().unwrap());
         let mut file = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
@@ -2420,29 +2539,47 @@ impl History {
         }
     }
 
+    /// start periodic flushing of history to file
     pub fn start(&mut self) {
         self.setup();
-        //
+        if let Some(interval) = self.interval {
+            self.flush().ok();
+            if self.debug {
+                println!("✅ History flushing started every {} seconds", interval);
+            }
+        }
     }
 }
 
 /// shell token types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Token {
-    Arrow, // an '->' typically used in function definitions, eg: func foo() -> String {}
+    /// used in function definitions to define their return types, eg: `func foo() -> String { ... }`
+    Arrow,
 
-    String(String), // string literals
-    Number(f64),    // numeric literals
-    Boolean(bool),  // a literal True or False
+    /// string literals, eg: `"hello"`, `'world'`
+    String(String),
+    /// numeric literals, eg: `42`, `3.14`
+    Number(f64),
+    /// a literal `True` or `False`
+    Boolean(bool),
 
-    BraceClose, // a closing brace '}' typically used to complete code blocks or object literals
-    BraceOpen,  // an opening brace '{' typically used to start code blocks or object literals
-    BracketClose, // a closing bracket ']' typically used to complete array literals
-    BracketOpen, // an opening bracket '[' typically used to start array literals
-    ParenClose, // a closing parenthesis ')' typically used to complete function calls or group expressions
-    ParenOpen, // an opening parenthesis '(' typically used to start function calls or group expressions
-    Colon,     // a colon ':' typically used to separate keys and values in objects
-    Comma,     // a comma ',' typically used to separate items in arrays or parameters in functions
+    /// a closing brace '}' typically used to complete code blocks or object literals
+    BraceClose,
+    /// an opening brace '{' typically used to start code blocks or object literals
+    BraceOpen,
+    /// a closing bracket ']' typically used to complete array literals
+    BracketClose,
+    /// an opening bracket '[' typically used to start array literals
+    BracketOpen,
+    /// a closing parenthesis ')' typically used to complete function calls or group expressions
+    ParenClose,
+    /// an opening parenthesis '(' typically used to start function calls or group expressions
+    ParenOpen,
+    /// a colon ':' typically used to separate keys and values in objects
+    Colon,
+    /// a comma ',' typically useseparate items in arrays or parameters in functions
+    Comma,
 
     CodeBlock(Vec<Token>),             // a block of code
     CodeCommentSingleLine(String),     // single line comment
@@ -2472,10 +2609,7 @@ pub enum Token {
     },
     ShellCommand {
         name: String,
-        // args: Vec<TurtleToken>,
-        // instead of using Vec<TurtleToken>, we can use a single String and parse it later using better shell argument parsing
         args: String,
-        // args: String,
     },
     ShellComment(String),
     ShellDot,       // represents the current directory '.'
@@ -2748,9 +2882,10 @@ pub struct Builtin {
                 std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>, // env
                 std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>, // aliases
                 std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, Expressions>>>, // vars
-                std::sync::Arc<std::sync::Mutex<Vec<Event>>>, // history
+                std::sync::Arc<std::sync::Mutex<Vec<Event>>>, // history TODO: replace this with history manager (Just pass History  reference)
                 Vec<String>,                                  // available builtin names
                 Vec<String>,                                  // args
+                bool,                                         // debug
                                                               // TODO: consider adding history and the implications of that...
             ) + Send
             + Sync
@@ -2789,6 +2924,7 @@ pub struct Builtins {
     pub env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     pub aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     pub vars: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, Expressions>>>,
+    pub debug: bool,
 }
 
 impl std::fmt::Debug for Builtins {
@@ -2805,12 +2941,14 @@ impl Builtins {
         env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         vars: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, Expressions>>>,
+        debug: bool,
     ) -> Self {
         Builtins {
             builtins,
             env,
             aliases,
             vars,
+            debug,
         }
     }
 
@@ -2832,8 +2970,9 @@ impl Builtins {
         builtin_names: Vec<String>,
         args: Vec<String>,
     ) {
+        let debug = self.debug;
         if let Some(builtin) = self.get(name) {
-            (builtin.execute)(env, aliases, vars, history, builtin_names, args);
+            (builtin.execute)(env, aliases, vars, history, builtin_names, args, debug);
         } else {
             println!("Builtin command '{}' not found", name);
         }
@@ -2842,6 +2981,7 @@ impl Builtins {
 
 /// execution context for Turtle shell
 pub struct Context {
+    pub debug: bool,
     pub builtins: Option<crate::types::Builtins>,
     pub env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     pub vars: std::sync::Arc<
@@ -2861,7 +3001,7 @@ impl Context {
                 name: "ast".to_string(),
                 description: "Translate a string to Turtle AST".to_string(),
                 help: "Usage: ast <code>".to_string(),
-                execute: Box::new(|env, aliases, vars, _, builtin_names, args| {
+                execute: Box::new(|env, aliases, vars, _, builtin_names, args, debug| {
                     let code = args.join(" ");
                     // Evaluate the code
                     let mut interpreter = crate::types::Interpreter::new(
@@ -2869,18 +3009,19 @@ impl Context {
                         aliases.clone(),
                         vars.clone(),
                         builtin_names,
+                        debug,
                     );
 
                     let _tokens = interpreter.tokenize(&code.as_str());
                     let expr = interpreter.interpret();
-                    println!("ast: {:?}", expr);
+                    println!("turtle ast: {:?}", expr);
                 }),
             },
             crate::types::Builtin {
                 name: "tokenize".to_string(),
                 description: "Tokenize a string as Turtle code".to_string(),
                 help: "Usage: tokenize <code>".to_string(),
-                execute: Box::new(|env, aliases, vars, _, builtin_names, args| {
+                execute: Box::new(|env, aliases, vars, _, builtin_names, args, debug| {
                     let code = args.join(" ");
 
                     // Evaluate the code
@@ -2889,36 +3030,36 @@ impl Context {
                         aliases.clone(),
                         vars.clone(),
                         builtin_names,
+                        debug,
                     );
 
                     let tokens = interpreter.tokenize(&code.as_str());
-                    println!("tokens: {:?}", tokens);
+                    println!("turtle tokens: {:?}", tokens);
                 }),
             },
             crate::types::Builtin {
                 name: "eval".to_string(),
                 description: "Evaluate a string as Turtle code".to_string(),
                 help: "Usage: eval <code>".to_string(),
-                execute: Box::new(|env, aliases, vars, history, builtin_names, args| {
+                execute: Box::new(|env, aliases, vars, history, builtin_names, args, debug| {
                     if args.is_empty() {
-                        eprintln!("Usage: eval <code>");
+                        eprintln!("eval <code>");
                         return;
                     }
-
-                    // we need to collect the arguments into a single code string
                     let code = args.join(" ");
-                    // Evaluate the code
                     let mut interpreter = crate::types::Interpreter::new(
                         env.clone(),
                         aliases.clone(),
                         vars.clone(),
                         builtin_names,
+                        debug,
                     );
                     let mut context = crate::types::Context::new(
                         env.clone(),
                         aliases.clone(),
                         vars.clone(),
                         history.clone(),
+                        debug,
                     );
                     context.setup();
                     let _tokens = interpreter.tokenize(&code.as_str());
@@ -2930,7 +3071,7 @@ impl Context {
                 name: "history".to_string(),
                 description: "Get and Manage command history".to_string(),
                 help: "Usage: history".to_string(),
-                execute: Box::new(|_, _, _, history, _, args| {
+                execute: Box::new(|_, _, _, history, _, args, _| {
                     if args.is_empty() {
                         let history_lock = history.lock().unwrap();
 
@@ -2949,13 +3090,13 @@ impl Context {
                 name: "noop".to_string(),
                 description: "No operation builtin".to_string(),
                 help: "Usage: noop".to_string(),
-                execute: Box::new(|_, _, _, _, _, _| ()),
+                execute: Box::new(|_, _, _, _, _, _, _| ()),
             },
             crate::types::Builtin {
                 name: "exit".to_string(),
                 description: "Exit the turtle shell".to_string(),
                 help: "Usage: exit".to_string(),
-                execute: Box::new(|_, _, _, _, _, _| {
+                execute: Box::new(|_, _, _, _, _, _, _| {
                     let _farewell_messages = vec![
                         "Goodbye!",
                         "See you later!",
@@ -2972,7 +3113,7 @@ impl Context {
                 name: "cd".to_string(),
                 description: "Change the current directory".to_string(),
                 help: "Usage: cd [directory]".to_string(),
-                execute: Box::new(|_, _, _, _, _, args| {
+                execute: Box::new(|_, _, _, _, _, args, _| {
                     let home = std::env::var("HOME").unwrap();
                     let dest = args.get(0).map(|s| s.as_str()).unwrap_or(home.as_str());
 
@@ -2991,10 +3132,10 @@ impl Context {
                 name: "alias".to_string(),
                 description: "Manage command aliases".to_string(),
                 help: "Usage: alias [name='command']".to_string(),
-                execute: Box::new(|_, aliases, _, _, _, args| {
+                execute: Box::new(|_, aliases, _, _, _, args, _| {
                     let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
 
-                    // if no args, list aliases
+                    // if no args are provided, list all aliases
                     if args.is_empty() {
                         let aliases_lock = aliases.lock().unwrap();
                         for (name, command) in aliases_lock.iter() {
@@ -3003,15 +3144,15 @@ impl Context {
                         return;
                     }
 
-                    // args contains '-h' or '--help'
+                    // user requested args contains '-h' or '--help'
                     if arg_refs.contains(&"-h") || arg_refs.contains(&"--help") {
-                        println!("Usage: alias [name='command']");
+                        println!("alias [name='command']");
                         println!("Create or display command aliases.");
                         println!("If no arguments are provided, lists all aliases.");
                         return;
                     }
 
-                    // mock bash/zsh alias behavior
+                    // backwards compatibility: support single assignment only
                     if arg_refs.len() == 1 {
                         let assignment = arg_refs[0];
                         if let Some(eq_pos) = assignment.find('=') {
@@ -3038,6 +3179,7 @@ impl Context {
             aliases: self.aliases.clone(),
             vars: self.vars.clone(),
             builtins,
+            debug: self.debug,
         });
     }
 
@@ -3243,7 +3385,9 @@ impl Context {
             let builtin_names = builtins.list();
             let builtin = builtins.get(name)?;
             let arg_vec: Vec<String> = args.split_whitespace().map(|s| s.to_string()).collect();
-            let result = (builtin.execute)(env, aliases, vars, history, builtin_names, arg_vec);
+            let debug = self.debug;
+            let result =
+                (builtin.execute)(env, aliases, vars, history, builtin_names, arg_vec, debug);
             return Some(crate::types::EvalResults::BuiltinExpressionResult(
                 crate::types::BuiltinEvalResult {
                     output: Some(format!("{:?}", result)),
@@ -3315,6 +3459,7 @@ impl Context {
             std::sync::Mutex<std::collections::HashMap<String, crate::types::Expressions>>,
         >,
         history: std::sync::Arc<std::sync::Mutex<Vec<crate::types::Event>>>,
+        debug: bool,
     ) -> Self {
         Context {
             builtins: None,
@@ -3324,6 +3469,7 @@ impl Context {
             history,
             functions: std::collections::HashMap::new(),
             code: Vec::new(),
+            debug,
         }
     }
 
