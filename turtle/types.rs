@@ -9,20 +9,41 @@ static KEYWORDS: &[&str] = &[
     "if", "else", "then", "while", "for", "fn", "return", "let", "true", "false",
 ];
 
-/// default interval for non-event driven threads (in seconds)
+/// interval for threads
 pub static DEFAULT_INTERVAL_SECS: u64 = 60;
-/// prompt
+/// default prompt
 pub static DEFAULT_PROMPT: &str = "<+ 🐢 +> ";
-/// continuation prompt
+/// default continuation prompt
 pub static DEFAULT_CONTINUATION_PROMPT: &str = "⏭️ ";
-/// error prompt
+/// default format
+pub static DEFAULT_FORMAT: &str = "table";
+/// default error prompt
 pub static DEFAULT_ERROR_PROMPT: &str = "<<< ❌❌❌ >>>";
-/// history size
+/// default history size
 pub static DEFAULT_HISTORY_SIZE: usize = 1000;
-/// theme
+/// default theme
 pub static DEFAULT_THEME: &str = "monokai";
-/// debug mode
+/// default debug
 pub static DEFAULT_DEBUG: bool = false;
+/// default config
+pub static DEFAULT_CONFIG: &str = r#"
+# Default Turtle configuration file
+debug: false
+prompt: "<+ 🐢 +> "
+continuation_prompt: "⏭️ "
+error_prompt: "<<< ❌❌❌ >>>"
+history_size: 1000
+theme: "monokai"
+"#;
+
+#[test]
+fn test_default_config() {
+    assert!(DEFAULT_CONFIG.contains("debug: false"));
+    assert!(DEFAULT_CONFIG.contains("prompt: \"<+ 🐢 +> \""));
+    assert!(DEFAULT_CONFIG.contains("history_size: 1000"));
+    assert!(DEFAULT_CONFIG.contains("theme: \"monokai\""));
+    // let mut confif
+}
 
 /// Turtle AST and parser
 #[derive(Debug, Clone)]
@@ -41,7 +62,7 @@ struct AbstractSyntaxTree {
     pos: usize,
 }
 
-/// Parse Turtle tokens ts into an AST
+/// Parse Turtle tokens ts into an executable AST expression
 impl AbstractSyntaxTree {
     fn get_operator_precedence(&self, op: &str) -> u8 {
         match op {
@@ -50,6 +71,7 @@ impl AbstractSyntaxTree {
             _ => 0,
         }
     }
+
     /// creates a new TurtleParser
     pub fn new(
         tokens: Vec<crate::types::Token>,
@@ -79,7 +101,7 @@ impl AbstractSyntaxTree {
     pub fn peek(&self) -> &crate::types::Token {
         if self.debug {
             println!(
-                "Peeking at token position {}: {:?}",
+                "peeking at token position {}: {:?}",
                 self.pos,
                 self.parsed.get(self.pos)
             );
@@ -604,10 +626,6 @@ impl AbstractSyntaxTree {
             if !self.builtins.contains(&cmd) {
                 return None;
             }
-            // if !crate::builtin::TurtleBuiltin::get(&cmd).is_some() {
-            //     println!("Not a builtin: {}", cmd);
-            //     return None;
-            // }
             self.next(); // consume builtin identifier
 
             let mut args = String::new();
@@ -839,7 +857,7 @@ impl Interpreter {
         debug: bool,
     ) -> Self {
         if debug {
-            println!("Creating new Interpreter");
+            println!("creating new Interpreter");
         }
         Interpreter {
             env,
@@ -1369,6 +1387,38 @@ impl Interpreter {
     }
 }
 
+#[test]
+fn test_tokenize_primitives() {
+    let mut interpreter = Interpreter::new(
+        std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
+        std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
+        std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
+        vec![],
+        false,
+    );
+    let input = r#"echo "Hello, World!" -a /path/to/dir"#;
+    let tokens = interpreter.tokenize_primitives(input);
+    assert_eq!(
+        tokens,
+        vec![
+            crate::types::Token::Identifier("echo".to_string()),
+            crate::types::Token::Space,
+            crate::types::Token::String("Hello, World!".to_string()),
+            crate::types::Token::Space,
+            crate::types::Token::Operator("-".to_string()),
+            crate::types::Token::Identifier("a".to_string()),
+            crate::types::Token::Space,
+            crate::types::Token::Operator("/".to_string()),
+            crate::types::Token::Identifier("path".to_string()),
+            crate::types::Token::Operator("/".to_string()),
+            crate::types::Token::Identifier("to".to_string()),
+            crate::types::Token::Operator("/".to_string()),
+            crate::types::Token::Identifier("dir".to_string()),
+            crate::types::Token::Eof,
+        ]
+    );
+}
+
 #[derive(Debug)]
 pub struct Shell {
     debug: bool,
@@ -1403,6 +1453,21 @@ impl Shell {
         rl.unwrap()
     }
 
+    pub fn get_config(args: Option<Arguments>) -> crate::types::Config {
+        let defaults = crate::types::Defaults::default();
+        let config_path = args
+            .as_ref()
+            .and_then(|args| args.config_path.as_ref())
+            .unwrap_or(&defaults.config_path)
+            .clone();
+        let config = if std::path::Path::new(config_path.as_str()).exists() {
+            crate::types::Config::load(config_path.as_str()).unwrap()
+        } else {
+            crate::types::Config::loads(&defaults.config).unwrap()
+        };
+        config
+    }
+
     pub fn new(args: crate::types::Arguments) -> Self {
         let defaults = crate::types::Defaults::default();
         let args = Some(args);
@@ -1413,9 +1478,16 @@ impl Shell {
             .unwrap_or(&defaults.config_path)
             .clone();
 
-        let config = crate::types::Config::load(config_path.as_str()).unwrap();
+        // let config = crate::types::Config::load(config_path.as_str()).unwrap();
+        let config = Self::get_config(args.as_ref().map(|a| a.clone()));
         let config = Some(std::sync::Arc::new(std::sync::Mutex::new(config)));
 
+        let debug = args.as_ref().unwrap().debug
+            || config
+                .as_ref()
+                .map(|c| c.lock().unwrap().debug)
+                .unwrap_or(false)
+            || defaults.debug;
         let mut _aliases_ = std::collections::HashMap::new();
 
         if let Some(cfg) = &config {
@@ -1425,13 +1497,6 @@ impl Shell {
                 }
             }
         }
-
-        let debug = args.as_ref().unwrap().debug
-            || config
-                .as_ref()
-                .map(|c| c.lock().unwrap().debug)
-                .unwrap_or(false)
-            || defaults.debug;
 
         let aliases = std::sync::Arc::new(std::sync::Mutex::new(_aliases_));
         let user_env = crate::utils::build_user_environment();
@@ -1448,15 +1513,14 @@ impl Shell {
             .and_then(|args| args.lock().unwrap().history_path.clone())
             .unwrap_or(defaults.history_path.clone());
 
-        let history = crate::types::History::new(
+        let mut history = crate::types::History::new(
             Some(history_path.clone()),
             Some(defaults.save_interval),
             debug,
         );
 
+        history.setup();
         let history = std::sync::Arc::new(std::sync::Mutex::new(history));
-
-        // history.setup();
 
         let events = history.lock().unwrap().load().unwrap();
         let events = std::sync::Arc::new(std::sync::Mutex::new(events));
@@ -1518,7 +1582,7 @@ impl Shell {
 
     /// Set up the shell
     pub fn setup(&mut self) -> std::collections::HashMap<String, u128> {
-        let _start = crate::utils::this_instant();
+        let _start = crate::utils::now();
         self.pid = std::process::id().into();
         self.running = true;
         self.paused = false;
@@ -1600,7 +1664,7 @@ impl Shell {
             }
         }
 
-        let start = crate::utils::this_instant();
+        let start = crate::utils::now();
         let mut editor = self.get_readline();
 
         if let Some(list_themes) = self
@@ -1609,7 +1673,6 @@ impl Shell {
             .and_then(|a| Some(a.lock().unwrap().list_themes))
         {
             if list_themes {
-                println!("Available Themes:");
                 self.thememanager.list().iter().for_each(|theme_name| {
                     println!("- {}", theme_name);
                 });
@@ -1644,7 +1707,7 @@ impl Shell {
             if let Some(res) = result {
                 // res.
                 if self.debug {
-                    println!("Result: {:?}", res);
+                    println!("result: {:?}", res);
                 }
                 // if result.
                 std::process::exit(0);
@@ -1668,7 +1731,7 @@ impl Shell {
                     // exit the shell on EOF
                 }
                 Err(err) => {
-                    println!("Error: {:?}", err);
+                    println!("input error: {:?}", err);
                     break;
                 }
             };
@@ -1683,13 +1746,13 @@ impl Shell {
 
             let tokens = self.interpreter.tokenize(input);
             if self.debug {
-                println!("turtle tokens: {:?}", tokens);
+                println!("tokens: {:?}", tokens);
             }
             self.tokens.push(tokens.clone());
             let expr = self.interpreter.interpret();
 
             if self.debug {
-                println!("Expression: {:?}", expr);
+                println!("expression: {:?}", expr);
             }
 
             if expr.is_none() {
@@ -1701,7 +1764,7 @@ impl Shell {
             let result = self.context.eval(expr.clone());
             if let Some(res) = result {
                 if self.debug {
-                    println!("Result: {:?}", res);
+                    println!("result: {:?}", res);
                 }
             }
         }
@@ -1718,14 +1781,17 @@ impl Shell {
 /// shell default settings
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Defaults {
+    pub config: String,
     pub config_path: String,
     pub history_path: String,
     pub prompt: String,
     pub continuation_prompt: String,
+    pub error_prompt: String,
     pub history_size: usize,
     pub theme: String,
     pub debug: bool,
     pub save_interval: u64,
+    pub format: String,
 }
 
 impl Default for Defaults {
@@ -1734,14 +1800,17 @@ impl Default for Defaults {
         let config_path = home.join(".turtlerc.yaml");
         let history_path = home.join(".turtle_history.json");
         Defaults {
+            config: DEFAULT_CONFIG.to_string(),
             config_path: config_path.to_string_lossy().to_string(),
             history_path: history_path.to_string_lossy().to_string(),
             prompt: DEFAULT_PROMPT.to_string(),
             continuation_prompt: DEFAULT_CONTINUATION_PROMPT.to_string(),
+            error_prompt: DEFAULT_ERROR_PROMPT.to_string(),
             history_size: DEFAULT_HISTORY_SIZE,
             theme: DEFAULT_THEME.to_string(),
             debug: DEFAULT_DEBUG,
             save_interval: DEFAULT_INTERVAL_SECS,
+            format: DEFAULT_FORMAT.to_string(),
         }
     }
 }
@@ -1770,20 +1839,27 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn load(path: &str) -> Option<Self> {
-        // expand path if it starts with ~
-        let expanded_path = if path.starts_with("~") {
+    pub fn load(yaml: &str) -> Option<Self> {
+        let expanded_path = if yaml.starts_with("~") {
             if let Some(home) = dirs::home_dir() {
-                let without_tilde = path.trim_start_matches("~");
+                let without_tilde = yaml.trim_start_matches("~");
                 home.join(without_tilde).to_string_lossy().to_string()
             } else {
-                path.to_string()
+                yaml.to_string()
             }
         } else {
-            path.to_string()
+            yaml.to_string()
         };
         let contents = std::fs::read_to_string(expanded_path).ok()?;
         serde_yaml::from_str::<Config>(&contents).ok()
+    }
+
+    pub fn as_mutex(&self) -> std::sync::Arc<std::sync::Mutex<Self>> {
+        std::sync::Arc::new(std::sync::Mutex::new(self.clone()))
+    }
+
+    pub fn loads(yaml_content: &str) -> Option<Self> {
+        serde_yaml::from_str::<Config>(yaml_content).ok()
     }
 
     pub fn watch(&self, path: &str) -> std::io::Result<notify::RecommendedWatcher> {
@@ -1832,79 +1908,190 @@ impl Config {
         let yaml = serde_yaml::to_string(self).unwrap();
         std::fs::write(expanded_path, yaml)
     }
+
+    pub fn validate(&self) -> bool {
+        true
+    }
+}
+
+#[test]
+fn test_config_loads() {
+    let yaml_content = r#"
+    debug: true
+    prompt: ">"
+    aliases:
+        ll: "ls -la"
+    history_size: 1000
+    theme: "dark"
+    "#;
+
+    let config = Config::loads(yaml_content);
+    assert!(config.is_some());
+    let config = config.unwrap();
+    assert_eq!(config.debug, true);
+    assert_eq!(config.prompt, Some(">".into()));
+    assert_eq!(
+        config.aliases,
+        Some(vec![("ll".into(), "ls -la".into())].into_iter().collect())
+    );
+    assert_eq!(config.history_size, Some(1000));
+    assert_eq!(config.theme, Some("dark".into()));
+}
+
+#[test]
+fn test_config_load() {
+    let home = dirs::home_dir().unwrap();
+    let test_config_path = home.join(".turtle_test_config.yaml");
+    let yaml_content = r#"
+    debug: true
+    prompt: ">"
+    aliases:
+        ll: "ls -la"
+    history_size: 1000
+    theme: "dark"
+    "#;
+    std::fs::write(&test_config_path, yaml_content).unwrap();
+
+    let config = Config::load(test_config_path.to_str().unwrap());
+    assert!(config.is_some());
+    let config = config.unwrap();
+    assert_eq!(config.debug, true);
+    assert_eq!(config.prompt, Some(">".into()));
+    assert_eq!(
+        config.aliases,
+        Some(vec![("ll".into(), "ls -la".into())].into_iter().collect())
+    );
+    assert_eq!(config.history_size, Some(1000));
+    assert_eq!(config.theme, Some("dark".into()));
+
+    std::fs::remove_file(test_config_path).unwrap();
 }
 
 /// process arguments for the shell
-#[derive(clap::Parser, Clone, Debug, Serialize, Deserialize)]
+#[derive(clap::Parser, Clone, Default, Debug, Serialize, Deserialize)]
 #[command(name = "turtle", about = "An interpreted Rust shell")]
 pub struct Arguments {
-    /// enable debugging for the shell
+    /// enable debugging
     #[arg(short, long, help = "Enable Debugging", default_value_t = false)]
     pub debug: bool,
 
-    /// show version information
+    /// show version and exit
     #[arg(short, long, help = "Show Version and Exit", default_value_t = false)]
     pub version: bool,
 
-    /// configuration file path
+    /// configuration file
     #[arg(long, help = "Config File", default_value = "~/.turtle.yaml")]
     pub config_path: Option<String>,
+
+    /// history file
+    #[arg(long, help = "History File", default_value = "~/.turtle_history.json")]
+    pub history_path: Option<String>,
 
     /// command to execute in non-interactive mode
     #[arg(long, help = "Evaluate Command", default_value = None)]
     pub command: Option<String>,
 
-    /// output format
+    /// set output format
     #[arg(short, long, help = "Output Format", default_value = "table")]
     pub format: Option<String>,
 
-    /// path to history file
-    #[arg(long, help = "History File", default_value = "~/.turtle_history.json")]
-    pub history_path: Option<String>,
-
     /// skip history loading
-    #[arg(long, help = "Skip History")]
+    #[arg(long, help = "Skip History", default_value_t = false)]
     pub skip_history: bool,
+
     // skip alias loading
-    #[arg(long, help = "Skip Aliases")]
+    #[arg(long, help = "Skip Aliases", default_value_t = false)]
     pub skip_aliases: bool,
+
     /// list available themes
     #[arg(long, help = "List Available Themes", default_value_t = false)]
     pub list_themes: bool,
+
     /// enable config file watching
     #[arg(long, help = "Watch Config File for Changes", default_value_t = false)]
     pub watch_config: bool,
 }
 
-impl Default for Arguments {
-    fn default() -> Self {
-        Arguments {
-            debug: DEFAULT_DEBUG,
-            version: false,
-            config_path: Some("~/.turtle.yaml".to_string()),
-            command: None,
-            format: Some("table".to_string()),
-            history_path: Some("~/.turtle_history.json".to_string()),
-            skip_history: false,
-            skip_aliases: false,
-            list_themes: false,
-            watch_config: false,
-        }
-    }
-}
-
 impl Arguments {
     pub fn new() -> Self {
-        Arguments::parse()
+        return Arguments::parse();
     }
 
     pub fn from() -> Self {
-        Arguments::parse()
+        return Arguments::parse();
     }
 
     pub fn validate(&self) -> bool {
         true
     }
+}
+
+#[test]
+fn test_arguments() {
+    let args = Arguments::new();
+    assert!(args.validate());
+}
+
+/// manage shell environment variables
+#[derive(Debug, Clone)]
+pub struct Environment {
+    pub vars: std::collections::HashMap<String, String>,
+}
+
+impl Environment {
+    pub fn new() -> Self {
+        Environment {
+            vars: std::collections::HashMap::new(),
+        }
+    }
+
+    fn default() -> std::collections::HashMap<String, String> {
+        let mut details = std::collections::HashMap::new();
+        if let Some(username) = users::get_current_username() {
+            details.insert("USER".to_string(), username.to_string_lossy().to_string());
+        }
+
+        if let Some(home_dir) = dirs::home_dir() {
+            details.insert("HOME".to_string(), home_dir.to_string_lossy().to_string());
+        }
+        return details;
+    }
+
+    pub fn setup(&mut self) {
+        self.vars = Self::default();
+        for (key, value) in std::env::vars() {
+            if key.starts_with("TURTLE_") {
+                let var_name = key.trim_start_matches("TURTLE_").to_string();
+                self.vars.insert(var_name, value);
+            }
+        }
+    }
+
+    pub fn set(&mut self, key: &str, value: &str) {
+        self.vars.insert(key.to_string(), value.to_string());
+    }
+
+    pub fn unset(&mut self, key: &str) {
+        self.vars.remove(key);
+    }
+
+    pub fn get(&self, key: &str) -> Option<&String> {
+        self.vars.get(key)
+    }
+
+    pub fn list(&self) -> Vec<(&String, &String)> {
+        self.vars.iter().collect()
+    }
+}
+
+#[test]
+fn test_environment() {
+    let mut env = Environment::new();
+    env.setup();
+    env.set("TEST_VAR", "test_value");
+    assert_eq!(env.get("TEST_VAR"), Some(&"test_value".to_string()));
+    env.unset("TEST_VAR");
+    assert_eq!(env.get("TEST_VAR"), None);
 }
 
 /// Theme definition
@@ -2068,13 +2255,19 @@ impl ThemeManager {
                 ));
             }
         };
-        // this.cu
 
         crossterm::execute!(
             writer,
             crossterm::style::ResetColor,
             crossterm::style::SetForegroundColor(theme.foreground),
             crossterm::style::SetBackgroundColor(theme.background),
+            crossterm::style::SetStyle(crossterm::style::ContentStyle {
+                foreground_color: Some(theme.text),
+                background_color: Some(theme.background),
+                underline_color: None,
+                attributes: crossterm::style::Attributes::default(),
+            }),
+            // crossterm::style::SetSelectionColor(theme.selection),
         )?;
         Ok(())
     }
@@ -2102,10 +2295,6 @@ impl<'a> Prompt<'a> {
         }
     }
 
-    // pub fn print_macros(&self) {
-    //     let context = self.context();
-
-    // }
     pub fn render(&mut self) -> String {
         let context = self.context();
         let mut engine = tinytemplate::TinyTemplate::new();
@@ -2173,6 +2362,15 @@ impl fmt::Display for Outputs {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum Outputs {
+    Table(OutputCsv),
+    Json(OutputJson),
+    Yaml(OutputYaml),
+    Text(OutputText),
+    Ast(OutAst),
+}
+
 /// shell output formats
 impl Outputs {
     pub fn from_command_response(option: &str, response: CommandResponse) -> Option<Self> {
@@ -2197,9 +2395,6 @@ impl Outputs {
                 }))
             }
             "json" => {
-                // println!("Parsing JSON data...");
-                // println!("Option: {}", option);
-                // println!("Data: {:?}", response);
                 // use serde to serialize the response object to json
                 let json_data = serde_json::to_string(&response).ok()?;
                 let json_data: serde_json::Value = serde_json::from_str(&json_data).ok()?;
@@ -2302,15 +2497,6 @@ pub struct OutputText {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct OutAst {
     pub data: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum Outputs {
-    Table(OutputCsv),
-    Json(OutputJson),
-    Yaml(OutputYaml),
-    Text(OutputText),
-    Ast(OutAst),
 }
 
 /// outputs for expression results
@@ -3187,17 +3373,14 @@ impl Context {
         self.vars.lock().unwrap().get(name).cloned()
     }
 
-    #[allow(dead_code)]
     pub fn set_var(&mut self, name: String, value: crate::types::Expressions) {
         self.vars.lock().unwrap().insert(name, value);
     }
 
-    #[allow(dead_code)]
     pub fn get_env(&self, name: &str) -> Option<String> {
         self.env.lock().unwrap().get(name).cloned()
     }
 
-    #[allow(dead_code)]
     pub fn set_env(&mut self, name: String, value: String) {
         self.env.lock().unwrap().insert(name, value);
     }
@@ -3301,6 +3484,7 @@ impl Context {
         ))
     }
 
+    /// Evaluate variable access: ```<Identifier>```
     fn eval_variable_access(
         &mut self,
         name: &str,
@@ -3364,12 +3548,10 @@ impl Context {
                         crate::types::StringEvalResult { value: result },
                     ));
                 } else {
-                    // eprintln!("Unsupported operation for strings: {}", operation);
                     return None;
                 }
             }
             _ => {
-                // eprintln!("Binary operations are only supported for numbers currently.");
                 return None;
             }
         }
@@ -3477,7 +3659,6 @@ impl Context {
         &mut self,
         expr: Option<crate::types::Expressions>,
     ) -> Option<crate::types::EvalResults> {
-        // self.code.push(expr.unwrap().clone());
         if let Some(ref e) = expr {
             self.code.push(e.clone());
         }
@@ -3547,7 +3728,6 @@ impl Context {
 
             Some(crate::types::Expressions::Builtin { name, args }) => {
                 let result = self.eval_builtin(&name, &args);
-                // println!("Builtin {} executed with result: {:?}", name, result);
                 result
             }
 
