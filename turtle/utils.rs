@@ -7,13 +7,38 @@ pub fn now_unix() -> u64 {
         .as_secs()
 }
 
+#[test]
+fn test_now_unix() {
+    let unix_time = now_unix();
+    assert!(unix_time > 0);
+}
+
 /// Get the current instant
-pub fn this_instant() -> std::time::Instant {
+pub fn now() -> std::time::Instant {
     std::time::Instant::now()
 }
 
+#[test]
+fn test_this_instant() {
+    let instant = now();
+    assert!(instant.elapsed().as_secs() >= 0);
+}
+
+/// Get the elapsed time
+pub fn elapsed_millis(start: std::time::Instant) -> u128 {
+    start.elapsed().as_millis()
+}
+
+#[test]
+fn test_elapsed_millis() {
+    let start = now();
+    std::thread::sleep(std::time::Duration::from_millis(100));
+    let elapsed = elapsed_millis(start);
+    assert!(elapsed >= 100);
+}
+
+/// Expands path modifiers (~, etc.) in a given path string
 pub fn expand_path(path: &str) -> String {
-    // Expand ~ to home directory
     if path.starts_with("~/") {
         if let Some(home) = dirs::home_dir() {
             let without_tilde = &path[2..]; // Remove "~/"
@@ -27,6 +52,15 @@ pub fn expand_path(path: &str) -> String {
     path.to_string()
 }
 
+#[test]
+fn test_expand_path() {
+    let home = dirs::home_dir().unwrap().to_string_lossy().to_string();
+    assert_eq!(expand_path("~/documents"), format!("{}/documents", home));
+    assert_eq!(expand_path("~"), home);
+    assert_eq!(expand_path("/usr/bin"), "/usr/bin".to_string());
+    assert_eq!(expand_path("relative/path"), "relative/path".to_string());
+}
+
 /// Check if the given path exists and is a file or directory
 pub fn is_path(path: &str) -> bool {
     let p = std::path::Path::new(path);
@@ -38,10 +72,21 @@ pub fn is_path(path: &str) -> bool {
             || path.starts_with('/'))
 }
 
-/// Check if the given command exists in PATH or as an absolute/relative path
+#[test]
+fn test_is_path() {
+    assert!(is_path("/etc/passwd"));
+    assert!(is_path("/usr/bin"));
+    assert!(is_path("./main.rs")); // assuming this file exists
+    assert!(!is_path("/non/existent/path"));
+    assert!(!is_path("alias")); // assuming 'alias' is not a file or directory
+    //confirm
+}
+
+/// Check if the given command exists in PATH or is an executable file
 pub fn is_command(command: &str) -> bool {
     use is_executable::IsExecutable;
     // handle absolute and relative paths to commands first
+
     if command.starts_with("./") || command.starts_with('/') {
         let path = std::path::Path::new(command);
         return path.exists() && path.is_file() && path.is_executable() && !path.is_dir();
@@ -63,23 +108,13 @@ pub fn is_command(command: &str) -> bool {
     false
 }
 
-// pub fn translate_alias(
-//     aliases: &std::collections::HashMap<String, String>,
-//     input: &str,
-// ) -> Option<String> {
-//     let parts: Vec<&str> = input.split_whitespace().collect();
-//     if let Some(alias_command) = aliases.get(parts[0]) {
-//         let mut command = alias_command.clone();
-//         if parts.len() > 1 {
-//             command.push(' ');
-//             command.push_str(&parts[1..].join(" "));
-//         }
-//         Some(command)
-//     } else {
-//         None
-//     }
-// }
+#[test]
+fn test_is_command() {
+    assert!(is_command("ls")); // assuming 'ls' is in PATH
+    assert!(!is_command("nonexistentcommand"));
+}
 
+/// Build a user environment details map
 pub fn build_user_environment() -> std::collections::HashMap<String, String> {
     let mut details = std::collections::HashMap::new();
     if let Some(username) = users::get_current_username() {
@@ -92,44 +127,11 @@ pub fn build_user_environment() -> std::collections::HashMap<String, String> {
     return details;
 }
 
-pub fn load_history_events(path: &str) -> Option<Vec<crate::types::Event>> {
-    println!("Loading history events from: {}", path);
-    let data = std::fs::read_to_string(path).ok()?;
-    let mut events = Vec::new();
-    for line in data.lines() {
-        let event: crate::types::Event = serde_json::from_str(line).ok()?;
-        events.push(event);
-    }
-    print!("Loaded {} history events", events.len());
-
-    Some(events)
-}
-
-/// Set default shell environment variables
-pub fn set_shell_vars() {
-    // Set SHELL to the path of the running binary
-    if let Ok(exe_path) = std::env::current_exe() {
-        if let Some(path_str) = exe_path.to_str() {
-            unsafe {
-                std::env::set_var("SHELL", path_str);
-            }
-        }
-    }
-}
-
-/// Load aliases from configuration into the provided aliases map
-pub fn load_aliases(
-    aliases: &mut std::collections::HashMap<String, String>,
-    config: &Option<crate::types::Config>,
-) -> std::collections::HashMap<String, String> {
-    let turtle_aliases = if let Some(cfg) = config {
-        cfg.aliases.clone().unwrap_or_default()
-    } else {
-        std::collections::HashMap::new()
-    };
-    for (key, value) in turtle_aliases {
-        aliases.insert(key, value);
-    }
-
-    aliases.clone()
+#[test]
+fn test_build_user_environment() {
+    let env = build_user_environment();
+    assert!(env.contains_key("USER"));
+    assert!(env.contains_key("HOME"));
+    assert_ne!(env.get("USER").unwrap(), "testuser");
+    assert_ne!(env.get("HOME").unwrap(), "/home/testuser");
 }
