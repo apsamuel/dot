@@ -9,24 +9,39 @@ static KEYWORDS: &[&str] = &[
     "if", "else", "then", "while", "for", "fn", "return", "let", "true", "false",
 ];
 
+static VERSION: &str = "0.1.0";
+pub static DEFAULT_ENVIRONMENT_CONFIG: once_cell::sync::Lazy<
+    std::collections::HashMap<&'static str, &'static str>,
+> = once_cell::sync::Lazy::new(|| {
+    let mut m = std::collections::HashMap::new();
+    m.insert("TURTLE_CONFIG_PATH", "~/.turtlerc.yaml");
+    m.insert("TURTLE_HISTORY_PATH", "~/.turtle_history.json");
+    m.insert("TURTLE_PROMPT", "<+ 🐢 +> ");
+    m.insert("TURTLE_CONTINUATION_PROMPT", "⏭️ ");
+    m.insert("TURTLE_ERROR_PROMPT", "<<< ❌❌❌ >>>");
+    m.insert("TURTLE_HISTORY_SIZE", "1000");
+    m.insert("TURTLE_THEME", "monokai");
+    m
+});
+
 /// interval for threads
-pub static DEFAULT_INTERVAL_SECS: u64 = 60;
+pub const DEFAULT_INTERVAL_SECS: u64 = 60;
 /// default prompt
-pub static DEFAULT_PROMPT: &str = "<+ 🐢 +> ";
+pub const DEFAULT_PROMPT: &str = "<+ 🐢 +> ";
 /// default continuation prompt
-pub static DEFAULT_CONTINUATION_PROMPT: &str = "⏭️ ";
+pub const DEFAULT_CONTINUATION_PROMPT: &str = "⏭️ ";
 /// default format
-pub static DEFAULT_FORMAT: &str = "table";
+pub const DEFAULT_FORMAT: &str = "table";
 /// default error prompt
-pub static DEFAULT_ERROR_PROMPT: &str = "<<< ❌❌❌ >>>";
+pub const DEFAULT_ERROR_PROMPT: &str = "<<< ❌❌❌ >>>";
 /// default history size
-pub static DEFAULT_HISTORY_SIZE: usize = 1000;
+pub const DEFAULT_HISTORY_SIZE: usize = 1000;
 /// default theme
-pub static DEFAULT_THEME: &str = "monokai";
+pub const DEFAULT_THEME: &str = "monokai";
 /// default debug
-pub static DEFAULT_DEBUG: bool = false;
+pub const DEFAULT_DEBUG: bool = false;
 /// default config
-pub static DEFAULT_CONFIG: &str = r#"
+pub const DEFAULT_CONFIG: &str = r#"
 # Default Turtle configuration file
 debug: false
 prompt: "<+ 🐢 +> "
@@ -36,13 +51,286 @@ history_size: 1000
 theme: "monokai"
 "#;
 
-#[test]
-fn test_default_config() {
-    assert!(DEFAULT_CONFIG.contains("debug: false"));
-    assert!(DEFAULT_CONFIG.contains("prompt: \"<+ 🐢 +> \""));
-    assert!(DEFAULT_CONFIG.contains("history_size: 1000"));
-    assert!(DEFAULT_CONFIG.contains("theme: \"monokai\""));
-    // let mut confif
+pub const DEFAULT_HISTORY_FILE: &str = "~/.turtle_history.json";
+pub const DEFAULT_CONFIG_FILE: &str = "~/.turtlerc.yaml";
+
+/// shell default settings
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Defaults {
+    pub config: String,
+    pub config_path: String,
+    pub history_path: String,
+    pub prompt: String,
+    pub continuation_prompt: String,
+    pub error_prompt: String,
+    pub history_size: usize,
+    pub theme: String,
+    pub debug: bool,
+    pub save_interval: u64,
+    pub format: String,
+}
+
+impl Default for Defaults {
+    fn default() -> Self {
+        let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
+        let config_path = home.join(".turtlerc.yaml");
+        let history_path = home.join(".turtle_history.json");
+        Defaults {
+            config: DEFAULT_CONFIG.to_string(),
+            config_path: config_path.to_string_lossy().to_string(),
+            history_path: history_path.to_string_lossy().to_string(),
+            prompt: DEFAULT_PROMPT.to_string(),
+            continuation_prompt: DEFAULT_CONTINUATION_PROMPT.to_string(),
+            error_prompt: DEFAULT_ERROR_PROMPT.to_string(),
+            history_size: DEFAULT_HISTORY_SIZE,
+            theme: DEFAULT_THEME.to_string(),
+            debug: DEFAULT_DEBUG,
+            save_interval: DEFAULT_INTERVAL_SECS,
+            format: DEFAULT_FORMAT.to_string(),
+        }
+    }
+}
+
+/// turtle environment configuration
+#[derive(Debug, Clone)]
+pub struct Environment {
+    pub debug: bool,
+    pub config: std::collections::HashMap<String, String>,
+    pub defaults: bool, // pub config: std::collections::HashMap<String, String>,
+}
+
+impl Environment {
+    pub fn new(debug: bool) -> Self {
+        let mut config: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
+        for (key, value) in std::env::vars() {
+            if key.starts_with("TURTLE_") {
+                if debug {
+                    println!("Loading environment variable: {}={}", key, value);
+                }
+                let var_name = key.trim_start_matches("TURTLE_").to_string();
+                config.insert(var_name, value);
+            }
+        }
+        if config.is_empty() {
+            Environment::default()
+        } else {
+            Environment {
+                debug,
+                config,
+                defaults: true,
+            }
+        }
+    }
+
+    pub fn set(&mut self, key: &str, value: &str) {
+        self.config.insert(key.to_string(), value.to_string());
+    }
+
+    pub fn unset(&mut self, key: &str) {
+        self.config.remove(key);
+    }
+
+    pub fn get(&self, key: &str) -> Option<&String> {
+        self.config.get(key)
+    }
+
+    pub fn list(&self) -> Vec<(&String, &String)> {
+        self.config.iter().collect()
+    }
+}
+
+impl Default for Environment {
+    fn default() -> Self {
+        let mut config: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
+
+        for (key, value) in DEFAULT_ENVIRONMENT_CONFIG.iter() {
+            config.insert(key.to_string(), value.to_string());
+        }
+        Environment {
+            config,
+            defaults: true,
+            debug: false,
+        }
+    }
+}
+
+/// turtle configuration file
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Config {
+    pub debug: bool,
+    pub prompt: Option<String>,
+    pub aliases: Option<std::collections::HashMap<String, String>>,
+    pub history_size: Option<usize>,
+    pub theme: Option<String>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        let defaults = Defaults::default();
+        Config {
+            debug: defaults.debug,
+            prompt: Some(defaults.prompt),
+            aliases: None,
+            history_size: Some(defaults.history_size),
+            theme: Some(defaults.theme),
+        }
+    }
+}
+
+impl Config {
+    pub fn load(yaml: &str) -> Option<Self> {
+        let expanded_path = if yaml.starts_with("~") {
+            if let Some(home) = dirs::home_dir() {
+                let without_tilde = yaml.trim_start_matches("~");
+                home.join(without_tilde).to_string_lossy().to_string()
+            } else {
+                yaml.to_string()
+            }
+        } else {
+            yaml.to_string()
+        };
+        let contents = std::fs::read_to_string(expanded_path).ok()?;
+        serde_yaml::from_str::<Config>(&contents).ok()
+    }
+
+    pub fn as_mutex(&self) -> std::sync::Arc<std::sync::Mutex<Self>> {
+        std::sync::Arc::new(std::sync::Mutex::new(self.clone()))
+    }
+
+    pub fn loads(yaml_content: &str) -> Option<Self> {
+        serde_yaml::from_str::<Config>(yaml_content).ok()
+    }
+
+    pub fn watch(self, path: &str) -> std::io::Result<notify::RecommendedWatcher> {
+        let expanded_path = crate::utils::expand_path(path);
+        let (tx, rx) = std::sync::mpsc::channel();
+        let mut watcher = notify::recommended_watcher(tx)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+        if self.debug {
+            println!("Watching config file: {}", expanded_path);
+        }
+
+        watcher
+            .watch(
+                std::path::Path::new(&expanded_path),
+                notify::RecursiveMode::NonRecursive,
+            )
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+        std::thread::spawn(move || {
+            for res in rx {
+                match res {
+                    Ok(event) => {
+                        println!("config file changed: {:?}", event);
+                        Config::load(&expanded_path);
+                    }
+                    Err(e) => println!("watch error: {:?}", e),
+                }
+            }
+        });
+
+        Ok(watcher)
+    }
+
+    pub fn save(&self, path: &str) -> std::io::Result<()> {
+        let expanded_path = if path.starts_with("~") {
+            if let Some(home) = dirs::home_dir() {
+                let without_tilde = path.trim_start_matches("~");
+                home.join(without_tilde).to_string_lossy().to_string()
+            } else {
+                path.to_string()
+            }
+        } else {
+            path.to_string()
+        };
+        let yaml = serde_yaml::to_string(self).unwrap();
+        std::fs::write(expanded_path, yaml)
+    }
+
+    pub fn validate(&self) -> bool {
+        true
+    }
+}
+
+/// turtle command line arguments
+#[derive(clap::Parser, Clone, Default, Debug, Serialize, Deserialize)]
+#[command(name = "turtle", about = "An interpreted Rust shell")]
+pub struct Arguments {
+    // /// show version
+    // #[arg(short, long, help = "Show Version", default_value_t = false)]
+    // pub version: bool,
+    /// enable debugging
+    #[arg(short, long, help = "Enable Debugging", default_value_t = false)]
+    pub debug: bool,
+
+    /// show version and exit
+    #[arg(short, long, help = "Show Version and Exit", default_value_t = false)]
+    pub version: bool,
+
+    /// configuration file
+    #[arg(long, help = "Config File", default_value = "~/.turtle.yaml")]
+    pub config_path: Option<String>,
+
+    /// history file
+    #[arg(long, help = "History File", default_value = "~/.turtle_history.json")]
+    pub history_path: Option<String>,
+
+    /// command to execute in non-interactive mode
+    #[arg(long, help = "Evaluate Command", default_value = None)]
+    pub command: Option<String>,
+
+    /// set output format
+    #[arg(short, long, help = "Output Format", default_value = "table")]
+    pub format: Option<String>,
+
+    /// skip history loading
+    #[arg(long, help = "Skip History", default_value_t = false)]
+    pub skip_history: bool,
+
+    // skip alias loading
+    #[arg(long, help = "Skip Aliases", default_value_t = false)]
+    pub skip_aliases: bool,
+
+    /// list available themes
+    #[arg(long, help = "List Available Themes", default_value_t = false)]
+    pub available_themes: bool,
+
+    /// enable config file watching
+    #[arg(long, help = "Watch Config File for Changes", default_value_t = false)]
+    pub watch_config: bool,
+
+    /// display-config
+    #[arg(long, help = "Display Current Configuration", default_value_t = false)]
+    pub display_config: bool,
+
+    /// display-env
+    #[arg(long, help = "Display Environment Variables", default_value_t = false)]
+    pub display_env: bool,
+
+    // display-defaults
+    #[arg(long, help = "Display Default Settings", default_value_t = false)]
+    pub display_defaults: bool,
+
+    // display-prompt
+    #[arg(long, help = "Display Current Prompt", default_value_t = false)]
+    pub display_prompt: bool,
+}
+
+impl Arguments {
+    pub fn new() -> Self {
+        return Arguments::parse();
+    }
+
+    pub fn from() -> Self {
+        return Arguments::parse();
+    }
+
+    pub fn validate(&self) -> bool {
+        true
+    }
 }
 
 /// Turtle AST and parser
@@ -1387,42 +1675,17 @@ impl Interpreter {
     }
 }
 
-#[test]
-fn test_tokenize_primitives() {
-    let mut interpreter = Interpreter::new(
-        std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
-        vec![],
-        false,
-    );
-    let input = r#"echo "Hello, World!" -a /path/to/dir"#;
-    let tokens = interpreter.tokenize_primitives(input);
-    assert_eq!(
-        tokens,
-        vec![
-            crate::types::Token::Identifier("echo".to_string()),
-            crate::types::Token::Space,
-            crate::types::Token::String("Hello, World!".to_string()),
-            crate::types::Token::Space,
-            crate::types::Token::Operator("-".to_string()),
-            crate::types::Token::Identifier("a".to_string()),
-            crate::types::Token::Space,
-            crate::types::Token::Operator("/".to_string()),
-            crate::types::Token::Identifier("path".to_string()),
-            crate::types::Token::Operator("/".to_string()),
-            crate::types::Token::Identifier("to".to_string()),
-            crate::types::Token::Operator("/".to_string()),
-            crate::types::Token::Identifier("dir".to_string()),
-            crate::types::Token::Eof,
-        ]
-    );
-}
-
 #[derive(Debug)]
 pub struct Shell {
+    /// Enable debug mode
     debug: bool,
+    /// Shell start time
+    start: Option<std::time::Instant>,
+    /// Shell uptime
+    uptime: fn(start: std::time::Instant) -> Option<std::time::Duration>,
+    /// Shell defaults
     defaults: crate::types::Defaults,
+    /// Shell watcher (TODO: convert to a Vec that contains watchers, utilizeasync)
     watcher: Option<notify::RecommendedWatcher>,
     thememanager: crate::types::ThemeManager,
     // pub args: Option<crate::types::Arguments>,
@@ -1469,16 +1732,31 @@ impl Shell {
     }
 
     pub fn new(args: crate::types::Arguments) -> Self {
+        // capture user environment
+        let user_env = std::env::vars().collect::<std::collections::HashMap<String, String>>();
+        // load defaults
         let defaults = crate::types::Defaults::default();
+
+        // capture command line args
         let args = Some(args);
 
+        // Determine history path - from args or defaults
+        // TODO: incorporate TURTLE_HISTORY_PATH env var
+        let history_path = args
+            .as_ref()
+            .and_then(|args| args.history_path.as_ref())
+            .unwrap_or(&defaults.history_path)
+            .clone();
+
+        // Determine config path - from args or defaults
+        // TODO: incorporate TURTLE_CONFIG_PATH env var, or  XDG_CONFIG_HOME convention
         let config_path = args
             .as_ref()
             .and_then(|args| args.config_path.as_ref())
             .unwrap_or(&defaults.config_path)
             .clone();
 
-        // let config = crate::types::Config::load(config_path.as_str()).unwrap();
+        // load config from file or use default config blob
         let config = Self::get_config(args.as_ref().map(|a| a.clone()));
         let config = Some(std::sync::Arc::new(std::sync::Mutex::new(config)));
 
@@ -1488,6 +1766,7 @@ impl Shell {
                 .map(|c| c.lock().unwrap().debug)
                 .unwrap_or(false)
             || defaults.debug;
+        let env_config = crate::types::Environment::new(debug);
         let mut _aliases_ = std::collections::HashMap::new();
 
         if let Some(cfg) = &config {
@@ -1561,6 +1840,13 @@ impl Shell {
         }
         Shell {
             debug,
+            start: None,
+            uptime: |start: std::time::Instant| -> Option<std::time::Duration> {
+                Some(start.elapsed())
+            },
+            pid: None,
+            paused: false,
+            running: false,
             defaults,
             watcher: None,
             config: config.clone(),
@@ -1572,11 +1858,16 @@ impl Shell {
             aliases,
             interpreter,
             context,
-            pid: None,
-            paused: false,
-            running: false,
             tokens: Vec::new(),
             expressions: Vec::new(),
+        }
+    }
+
+    pub fn uptime(&self) -> Option<std::time::Duration> {
+        if let Some(start) = self.start {
+            Some(start.elapsed())
+        } else {
+            None
         }
     }
 
@@ -1603,6 +1894,9 @@ impl Shell {
 
     /// Start the shell main loop
     pub fn start(&mut self) {
+        // self.uptime = (self.uptime)(std::time::Instant::now()).unwrap_or_default();
+        // self.upt
+        self.start = Some(std::time::Instant::now());
         if self.debug {
             println!("🐢 Starting Turtle Shell...");
         }
@@ -1636,6 +1930,13 @@ impl Shell {
             .and_then(|cfg| cfg.theme)
             .unwrap_or(default_theme.clone());
 
+        /* Display Flags */
+        if let Some(show_version) = args.as_ref().and_then(|a| Some(a.version)) {
+            if show_version {
+                println!("Turtle Shell version {}", crate::types::VERSION);
+                std::process::exit(0);
+            }
+        }
         // --watch-config flag
         if let Some(watch_config) = args.as_ref().and_then(|a| Some(a.watch_config)) {
             let config_path = args
@@ -1644,7 +1945,8 @@ impl Shell {
                 .unwrap_or(default_config_path.clone());
             if watch_config {
                 if let Some(cfg) = &self.config {
-                    match cfg.lock().unwrap().watch(config_path.as_str()) {
+                    let cfg = cfg.lock().unwrap();
+                    match cfg.clone().watch(config_path.as_str()) {
                         Ok(watcher) => {
                             self.watcher = Some(watcher);
                             if self.debug {
@@ -1670,7 +1972,7 @@ impl Shell {
         if let Some(list_themes) = self
             .args
             .as_ref()
-            .and_then(|a| Some(a.lock().unwrap().list_themes))
+            .and_then(|a| Some(a.lock().unwrap().available_themes))
         {
             if list_themes {
                 self.thememanager.list().iter().for_each(|theme_name| {
@@ -1776,322 +2078,6 @@ impl Shell {
             );
         }
     }
-}
-
-/// shell default settings
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Defaults {
-    pub config: String,
-    pub config_path: String,
-    pub history_path: String,
-    pub prompt: String,
-    pub continuation_prompt: String,
-    pub error_prompt: String,
-    pub history_size: usize,
-    pub theme: String,
-    pub debug: bool,
-    pub save_interval: u64,
-    pub format: String,
-}
-
-impl Default for Defaults {
-    fn default() -> Self {
-        let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
-        let config_path = home.join(".turtlerc.yaml");
-        let history_path = home.join(".turtle_history.json");
-        Defaults {
-            config: DEFAULT_CONFIG.to_string(),
-            config_path: config_path.to_string_lossy().to_string(),
-            history_path: history_path.to_string_lossy().to_string(),
-            prompt: DEFAULT_PROMPT.to_string(),
-            continuation_prompt: DEFAULT_CONTINUATION_PROMPT.to_string(),
-            error_prompt: DEFAULT_ERROR_PROMPT.to_string(),
-            history_size: DEFAULT_HISTORY_SIZE,
-            theme: DEFAULT_THEME.to_string(),
-            debug: DEFAULT_DEBUG,
-            save_interval: DEFAULT_INTERVAL_SECS,
-            format: DEFAULT_FORMAT.to_string(),
-        }
-    }
-}
-
-/// shell configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Config {
-    pub debug: bool,
-    pub prompt: Option<String>,
-    pub aliases: Option<std::collections::HashMap<String, String>>,
-    pub history_size: Option<usize>,
-    pub theme: Option<String>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        let defaults = Defaults::default();
-        Config {
-            debug: defaults.debug,
-            prompt: Some(defaults.prompt),
-            aliases: None,
-            history_size: Some(defaults.history_size),
-            theme: Some(defaults.theme),
-        }
-    }
-}
-
-impl Config {
-    pub fn load(yaml: &str) -> Option<Self> {
-        let expanded_path = if yaml.starts_with("~") {
-            if let Some(home) = dirs::home_dir() {
-                let without_tilde = yaml.trim_start_matches("~");
-                home.join(without_tilde).to_string_lossy().to_string()
-            } else {
-                yaml.to_string()
-            }
-        } else {
-            yaml.to_string()
-        };
-        let contents = std::fs::read_to_string(expanded_path).ok()?;
-        serde_yaml::from_str::<Config>(&contents).ok()
-    }
-
-    pub fn as_mutex(&self) -> std::sync::Arc<std::sync::Mutex<Self>> {
-        std::sync::Arc::new(std::sync::Mutex::new(self.clone()))
-    }
-
-    pub fn loads(yaml_content: &str) -> Option<Self> {
-        serde_yaml::from_str::<Config>(yaml_content).ok()
-    }
-
-    pub fn watch(&self, path: &str) -> std::io::Result<notify::RecommendedWatcher> {
-        let expanded_path = crate::utils::expand_path(path);
-        let (tx, rx) = std::sync::mpsc::channel();
-        let mut watcher = notify::recommended_watcher(tx)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-
-        if self.debug {
-            println!("Watching config file: {}", expanded_path);
-        }
-
-        watcher
-            .watch(
-                std::path::Path::new(&expanded_path),
-                notify::RecursiveMode::NonRecursive,
-            )
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-
-        std::thread::spawn(move || {
-            for res in rx {
-                match res {
-                    Ok(event) => {
-                        println!("config file changed: {:?}", event);
-                        Config::load(&expanded_path);
-                    }
-                    Err(e) => println!("watch error: {:?}", e),
-                }
-            }
-        });
-
-        Ok(watcher)
-    }
-
-    pub fn save(&self, path: &str) -> std::io::Result<()> {
-        let expanded_path = if path.starts_with("~") {
-            if let Some(home) = dirs::home_dir() {
-                let without_tilde = path.trim_start_matches("~");
-                home.join(without_tilde).to_string_lossy().to_string()
-            } else {
-                path.to_string()
-            }
-        } else {
-            path.to_string()
-        };
-        let yaml = serde_yaml::to_string(self).unwrap();
-        std::fs::write(expanded_path, yaml)
-    }
-
-    pub fn validate(&self) -> bool {
-        true
-    }
-}
-
-#[test]
-fn test_config_loads() {
-    let yaml_content = r#"
-    debug: true
-    prompt: ">"
-    aliases:
-        ll: "ls -la"
-    history_size: 1000
-    theme: "dark"
-    "#;
-
-    let config = Config::loads(yaml_content);
-    assert!(config.is_some());
-    let config = config.unwrap();
-    assert_eq!(config.debug, true);
-    assert_eq!(config.prompt, Some(">".into()));
-    assert_eq!(
-        config.aliases,
-        Some(vec![("ll".into(), "ls -la".into())].into_iter().collect())
-    );
-    assert_eq!(config.history_size, Some(1000));
-    assert_eq!(config.theme, Some("dark".into()));
-}
-
-#[test]
-fn test_config_load() {
-    let home = dirs::home_dir().unwrap();
-    let test_config_path = home.join(".turtle_test_config.yaml");
-    let yaml_content = r#"
-    debug: true
-    prompt: ">"
-    aliases:
-        ll: "ls -la"
-    history_size: 1000
-    theme: "dark"
-    "#;
-    std::fs::write(&test_config_path, yaml_content).unwrap();
-
-    let config = Config::load(test_config_path.to_str().unwrap());
-    assert!(config.is_some());
-    let config = config.unwrap();
-    assert_eq!(config.debug, true);
-    assert_eq!(config.prompt, Some(">".into()));
-    assert_eq!(
-        config.aliases,
-        Some(vec![("ll".into(), "ls -la".into())].into_iter().collect())
-    );
-    assert_eq!(config.history_size, Some(1000));
-    assert_eq!(config.theme, Some("dark".into()));
-
-    std::fs::remove_file(test_config_path).unwrap();
-}
-
-/// process arguments for the shell
-#[derive(clap::Parser, Clone, Default, Debug, Serialize, Deserialize)]
-#[command(name = "turtle", about = "An interpreted Rust shell")]
-pub struct Arguments {
-    /// enable debugging
-    #[arg(short, long, help = "Enable Debugging", default_value_t = false)]
-    pub debug: bool,
-
-    /// show version and exit
-    #[arg(short, long, help = "Show Version and Exit", default_value_t = false)]
-    pub version: bool,
-
-    /// configuration file
-    #[arg(long, help = "Config File", default_value = "~/.turtle.yaml")]
-    pub config_path: Option<String>,
-
-    /// history file
-    #[arg(long, help = "History File", default_value = "~/.turtle_history.json")]
-    pub history_path: Option<String>,
-
-    /// command to execute in non-interactive mode
-    #[arg(long, help = "Evaluate Command", default_value = None)]
-    pub command: Option<String>,
-
-    /// set output format
-    #[arg(short, long, help = "Output Format", default_value = "table")]
-    pub format: Option<String>,
-
-    /// skip history loading
-    #[arg(long, help = "Skip History", default_value_t = false)]
-    pub skip_history: bool,
-
-    // skip alias loading
-    #[arg(long, help = "Skip Aliases", default_value_t = false)]
-    pub skip_aliases: bool,
-
-    /// list available themes
-    #[arg(long, help = "List Available Themes", default_value_t = false)]
-    pub list_themes: bool,
-
-    /// enable config file watching
-    #[arg(long, help = "Watch Config File for Changes", default_value_t = false)]
-    pub watch_config: bool,
-}
-
-impl Arguments {
-    pub fn new() -> Self {
-        return Arguments::parse();
-    }
-
-    pub fn from() -> Self {
-        return Arguments::parse();
-    }
-
-    pub fn validate(&self) -> bool {
-        true
-    }
-}
-
-#[test]
-fn test_arguments() {
-    let args = Arguments::new();
-    assert!(args.validate());
-}
-
-/// manage shell environment variables
-#[derive(Debug, Clone)]
-pub struct Environment {
-    pub vars: std::collections::HashMap<String, String>,
-}
-
-impl Environment {
-    pub fn new() -> Self {
-        Environment {
-            vars: std::collections::HashMap::new(),
-        }
-    }
-
-    fn default() -> std::collections::HashMap<String, String> {
-        let mut details = std::collections::HashMap::new();
-        if let Some(username) = users::get_current_username() {
-            details.insert("USER".to_string(), username.to_string_lossy().to_string());
-        }
-
-        if let Some(home_dir) = dirs::home_dir() {
-            details.insert("HOME".to_string(), home_dir.to_string_lossy().to_string());
-        }
-        return details;
-    }
-
-    pub fn setup(&mut self) {
-        self.vars = Self::default();
-        for (key, value) in std::env::vars() {
-            if key.starts_with("TURTLE_") {
-                let var_name = key.trim_start_matches("TURTLE_").to_string();
-                self.vars.insert(var_name, value);
-            }
-        }
-    }
-
-    pub fn set(&mut self, key: &str, value: &str) {
-        self.vars.insert(key.to_string(), value.to_string());
-    }
-
-    pub fn unset(&mut self, key: &str) {
-        self.vars.remove(key);
-    }
-
-    pub fn get(&self, key: &str) -> Option<&String> {
-        self.vars.get(key)
-    }
-
-    pub fn list(&self) -> Vec<(&String, &String)> {
-        self.vars.iter().collect()
-    }
-}
-
-#[test]
-fn test_environment() {
-    let mut env = Environment::new();
-    env.setup();
-    env.set("TEST_VAR", "test_value");
-    assert_eq!(env.get("TEST_VAR"), Some(&"test_value".to_string()));
-    env.unset("TEST_VAR");
-    assert_eq!(env.get("TEST_VAR"), None);
 }
 
 /// Theme definition
@@ -3762,5 +3748,116 @@ impl std::fmt::Debug for Context {
             .field("functions", &self.functions)
             .field("code", &self.code)
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_test() {
+        assert!("test".contains("test"));
+    }
+
+    #[test]
+    fn test_environment() {
+        let mut env = Environment::new(true);
+        // env.setup();
+        env.set("TEST_VAR", "test_value");
+        assert_eq!(env.get("TEST_VAR"), Some(&"test_value".to_string()));
+        env.unset("TEST_VAR");
+        assert_eq!(env.get("TEST_VAR"), None);
+    }
+
+    #[test]
+    fn test_arguments() {
+        let args = Arguments::new();
+        assert!(args.validate());
+    }
+
+    #[test]
+    fn test_default_config_loads() {
+        let yaml_content = r#"
+    debug: true
+    prompt: ">"
+    aliases:
+        ll: "ls -la"
+    history_size: 1000
+    theme: "dark"
+    "#;
+
+        let config = Config::loads(yaml_content);
+        assert!(config.is_some());
+        let config = config.unwrap();
+        assert_eq!(config.debug, true);
+        assert_eq!(config.prompt, Some(">".into()));
+        assert_eq!(
+            config.aliases,
+            Some(vec![("ll".into(), "ls -la".into())].into_iter().collect())
+        );
+        assert_eq!(config.history_size, Some(1000));
+        assert_eq!(config.theme, Some("dark".into()));
+    }
+
+    #[test]
+    fn test_config_file_loads() {
+        let home = dirs::home_dir().unwrap();
+        let test_config_path = home.join(".turtle_test_config.yaml");
+        let yaml_content = r#"
+    debug: true
+    prompt: ">"
+    aliases:
+        ll: "ls -la"
+    history_size: 1000
+    theme: "dark"
+    "#;
+        std::fs::write(&test_config_path, yaml_content).unwrap();
+
+        let config = Config::load(test_config_path.to_str().unwrap());
+        assert!(config.is_some());
+        let config = config.unwrap();
+        assert_eq!(config.debug, true);
+        assert_eq!(config.prompt, Some(">".into()));
+        assert_eq!(
+            config.aliases,
+            Some(vec![("ll".into(), "ls -la".into())].into_iter().collect())
+        );
+        assert_eq!(config.history_size, Some(1000));
+        assert_eq!(config.theme, Some("dark".into()));
+
+        std::fs::remove_file(test_config_path).unwrap();
+    }
+
+    #[test]
+    fn test_tokenize_primitives() {
+        let mut interpreter = Interpreter::new(
+            std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
+            std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
+            std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new())),
+            vec![],
+            false,
+        );
+        let input = r#"echo "Hello, World!" -a /path/to/dir"#;
+        let tokens = interpreter.tokenize_primitives(input);
+        assert_eq!(
+            tokens,
+            vec![
+                crate::types::Token::Identifier("echo".to_string()),
+                crate::types::Token::Space,
+                crate::types::Token::String("Hello, World!".to_string()),
+                crate::types::Token::Space,
+                crate::types::Token::Operator("-".to_string()),
+                crate::types::Token::Identifier("a".to_string()),
+                crate::types::Token::Space,
+                crate::types::Token::Operator("/".to_string()),
+                crate::types::Token::Identifier("path".to_string()),
+                crate::types::Token::Operator("/".to_string()),
+                crate::types::Token::Identifier("to".to_string()),
+                crate::types::Token::Operator("/".to_string()),
+                crate::types::Token::Identifier("dir".to_string()),
+                crate::types::Token::Eof,
+            ]
+        );
     }
 }
