@@ -1,3 +1,10 @@
+/// Utility functions for Turtle
+///
+/// Copyright (c) 2025 Aaron P. Samuel
+///
+/// Licensed under the MIT License <LICENSE-MIT or http://opensource.org/licenses/MIT>
+///
+/// **SPDX-License-Identifier**: MIT
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub fn now_unix() -> u64 {
