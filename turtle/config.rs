@@ -252,7 +252,8 @@ impl std::fmt::Display for Config {
 }
 
 impl Config {
-    pub fn list_fields() -> Vec<String> {
+    /// Return a list of fields in the Config struct
+    fn list_fields() -> Vec<String> {
         let json = serde_json::to_value(Config::default()).unwrap_or_default();
         json.as_object()
             .unwrap()
@@ -261,6 +262,7 @@ impl Config {
             .collect::<Vec<String>>()
     }
 
+    /// create a new Config from a yaml file path or yaml content string
     pub fn new(yaml: &str, args: Option<crate::config::Arguments>) -> Option<Self> {
         Self::load(
             yaml,
@@ -488,29 +490,55 @@ impl Config {
         self,
         path: &str,
         args: Option<crate::config::Arguments>,
+        config_sender: Option<std::sync::mpsc::Sender<crate::config::ConfigSignal>>,
     ) -> std::io::Result<notify::RecommendedWatcher> {
-        let expanded_path = crate::utils::expand_path(path);
+        let watch_path = crate::utils::expand_path(path);
         let (tx, rx) = std::sync::mpsc::channel();
         let mut watcher = notify::recommended_watcher(tx)
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
 
-        if self.debug {
-            println!("Watching config file: {}", expanded_path);
-        }
-
         watcher
             .watch(
-                std::path::Path::new(&expanded_path),
+                std::path::Path::new(&watch_path),
                 notify::RecursiveMode::NonRecursive,
             )
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
 
+        let current_config = self.clone();
         std::thread::spawn(move || {
             for res in rx {
                 match res {
                     Ok(event) => {
-                        println!("config file changed: {:?}", event);
-                        Config::new(&expanded_path, args.clone());
+                        let config_updated = event.kind.is_modify()
+                            && matches!(
+                                event.kind,
+                                notify::EventKind::Modify(notify::event::ModifyKind::Data(_))
+                            );
+
+                        if config_updated {
+                            let new_config = Config::load(
+                                &watch_path,
+                                args.as_ref()
+                                    .unwrap_or(&crate::config::Arguments::default()),
+                            );
+
+                            match new_config {
+                                Some(cfg) => {
+                                    if let Some(sender) = &config_sender {
+                                        let _ =
+                                            sender.send(crate::config::ConfigSignal::Reloaded(cfg));
+                                    }
+                                }
+                                None => {
+                                    if let Some(sender) = &config_sender {
+                                        let _ = sender.send(crate::config::ConfigSignal::Error(
+                                            format!("Failed to reload config from {}", watch_path),
+                                        ));
+                                    }
+                                }
+                            }
+                            // Config::new(&watch_path, args.clone());
+                        }
                     }
                     Err(e) => println!("watch error: {:?}", e),
                 }
@@ -542,6 +570,13 @@ impl Config {
     pub fn to_json(&self) -> Option<String> {
         serde_json::to_string_pretty(self).ok()
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum ConfigSignal {
+    Updated(Config),
+    Error(String),
+    Reloaded(Config),
 }
 
 // impl From<String> for Config {
@@ -612,6 +647,14 @@ pub struct Arguments {
     #[arg(short, long, help = "Enable Debugging", default_value_t = false)]
     pub debug: bool,
 
+    /// enable debugging
+    #[arg(long, help = "Enable Expression Debugging", default_value_t = false)]
+    pub debug_expressions: bool,
+
+    /// enable debugging
+    #[arg(long, help = "Enable Tokenization Debugging", default_value_t = false)]
+    pub debug_tokenization: bool,
+
     /// show version and exit
     #[arg(short, long, help = "Show Version and Exit", default_value_t = false)]
     pub version: bool,
@@ -678,24 +721,3 @@ impl Arguments {
         true
     }
 }
-
-// impl Default for Arguments {
-//     fn default() -> Self {
-//         Arguments {
-//             debug: false,
-//             version: false,
-//             config_path: Some("~/.turtle.yaml".to_string()),
-//             history_path: Some("~/.turtle_history.json".to_string()),
-//             command: None,
-//             format: Some("table".to_string()),
-//             skip_history: false,
-//             skip_aliases: false,
-//             available_themes: false,
-//             watch_config: false,
-//             display_config: false,
-//             display_env: false,
-//             display_defaults: false,
-//             display_prompt: false,
-//         }
-//     }
-// }
