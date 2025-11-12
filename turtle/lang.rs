@@ -18,6 +18,8 @@ static KEYWORDS: &[&str] = &[
 struct AbstractSyntaxTree {
     /// Debugging information
     debug: bool,
+    /// config
+    // config: Option<std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>>,
     /// environment variables
     env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     /// command aliases

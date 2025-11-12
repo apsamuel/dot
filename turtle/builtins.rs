@@ -1,3 +1,5 @@
+// use rustyline::config;
+
 /// shell builtin commands
 ///
 /// builtins are functions available in a shell session
@@ -7,6 +9,8 @@ pub struct Builtin {
     pub help: String,
     pub execute: Box<
         dyn Fn(
+                std::sync::Arc<std::sync::Mutex<crate::config::Config>>, // config
+                std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>, // args
                 std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>, // env
                 std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>, // aliases
                 std::sync::Arc<
@@ -17,8 +21,8 @@ pub struct Builtin {
                 std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>, // history TODO: replace this with history manager (Just pass History  reference)
                 Vec<String>, // available builtin names
                 Vec<String>, // args
-                bool,        // debug
-                             // TODO: consider adding history and the implications of that...
+                // TODO: consider passing context back into builtins instead of individual components
+                bool, // debug
             ) + Send
             + Sync
             + 'static,
@@ -102,6 +106,9 @@ impl Builtins {
         vars: std::sync::Arc<
             std::sync::Mutex<std::collections::HashMap<String, crate::expressions::Expressions>>,
         >,
+
+        config: std::sync::Arc<std::sync::Mutex<crate::config::Config>>,
+        turtle_args: std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>,
         env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         history: std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>,
@@ -110,7 +117,17 @@ impl Builtins {
     ) {
         let debug = self.debug;
         if let Some(builtin) = self.get(name) {
-            (builtin.execute)(env, aliases, vars, history, builtin_names, args, debug);
+            (builtin.execute)(
+                config,
+                turtle_args,
+                env,
+                aliases,
+                vars,
+                history,
+                builtin_names,
+                args,
+                debug,
+            );
         } else {
             println!("Builtin command '{}' not found", name);
         }

@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 
 pub struct Context {
     pub debug: bool,
+    pub config: Option<std::sync::Arc<std::sync::Mutex<crate::config::Config>>>,
+    pub args: Option<std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>>,
     pub builtins: Option<crate::builtins::Builtins>,
     pub env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     pub vars: std::sync::Arc<
@@ -21,7 +23,7 @@ impl Context {
                 name: "ast".to_string(),
                 description: "Translate a string to Turtle AST".to_string(),
                 help: "Usage: ast <code>".to_string(),
-                execute: Box::new(|env, aliases, vars, _, builtin_names, args, debug| {
+                execute: Box::new(|_, _, env, aliases, vars, _, builtin_names, args, debug| {
                     let code = args.join(" ");
                     // Evaluate the code
                     let mut interpreter = crate::lang::Interpreter::new(
@@ -41,7 +43,7 @@ impl Context {
                 name: "tokenize".to_string(),
                 description: "Tokenize a string as Turtle code".to_string(),
                 help: "Usage: tokenize <code>".to_string(),
-                execute: Box::new(|env, aliases, vars, _, builtin_names, args, debug| {
+                execute: Box::new(|_, _, env, aliases, vars, _, builtin_names, args, debug| {
                     let code = args.join(" ");
 
                     // Evaluate the code
@@ -61,37 +63,49 @@ impl Context {
                 name: "eval".to_string(),
                 description: "Evaluate a string as Turtle code".to_string(),
                 help: "Usage: eval <code>".to_string(),
-                execute: Box::new(|env, aliases, vars, history, builtin_names, args, debug| {
-                    if args.is_empty() {
-                        eprintln!("eval <code>");
-                        return;
-                    }
-                    let code = args.join(" ");
-                    let mut interpreter = crate::lang::Interpreter::new(
-                        env.clone(),
-                        aliases.clone(),
-                        vars.clone(),
-                        builtin_names,
-                        debug,
-                    );
-                    let mut context = crate::context::Context::new(
-                        env.clone(),
-                        aliases.clone(),
-                        vars.clone(),
-                        history.clone(),
-                        debug,
-                    );
-                    context.setup();
-                    let _tokens = interpreter.tokenize(&code.as_str());
-                    let expr = interpreter.interpret();
-                    context.eval(expr);
-                }),
+                execute: Box::new(
+                    |config,
+                     turtle_args,
+                     env,
+                     aliases,
+                     vars,
+                     history,
+                     builtin_names,
+                     args,
+                     debug| {
+                        if args.is_empty() {
+                            eprintln!("eval <code>");
+                            return;
+                        }
+                        let code = args.join(" ");
+                        let mut interpreter = crate::lang::Interpreter::new(
+                            env.clone(),
+                            aliases.clone(),
+                            vars.clone(),
+                            builtin_names,
+                            debug,
+                        );
+                        let mut context = crate::context::Context::new(
+                            Some(config.clone()),
+                            Some(turtle_args.clone()),
+                            env.clone(),
+                            aliases.clone(),
+                            vars.clone(),
+                            history.clone(),
+                            debug,
+                        );
+                        context.setup();
+                        let _tokens = interpreter.tokenize(&code.as_str());
+                        let expr = interpreter.interpret();
+                        context.eval(expr);
+                    },
+                ),
             },
             crate::builtins::Builtin {
                 name: "history".to_string(),
                 description: "Get and Manage command history".to_string(),
                 help: "Usage: history".to_string(),
-                execute: Box::new(|_, _, _, history, _, args, _| {
+                execute: Box::new(|_, _, _, _, _, history, _, args, _| {
                     if args.is_empty() {
                         let history_lock = history.lock().unwrap();
 
@@ -110,13 +124,13 @@ impl Context {
                 name: "noop".to_string(),
                 description: "No operation builtin".to_string(),
                 help: "Usage: noop".to_string(),
-                execute: Box::new(|_, _, _, _, _, _, _| ()),
+                execute: Box::new(|_, _, _, _, _, _, _, _, _| ()),
             },
             crate::builtins::Builtin {
                 name: "exit".to_string(),
                 description: "Exit the turtle shell".to_string(),
                 help: "Usage: exit".to_string(),
-                execute: Box::new(|_, _, _, _, _, _, _| {
+                execute: Box::new(|_, _, _, _, _, _, _, _, _| {
                     let _farewell_messages = vec![
                         "Goodbye!",
                         "See you later!",
@@ -133,7 +147,7 @@ impl Context {
                 name: "cd".to_string(),
                 description: "Change the current directory".to_string(),
                 help: "Usage: cd [directory]".to_string(),
-                execute: Box::new(|_, _, _, _, _, args, _| {
+                execute: Box::new(|_, _, _, _, _, _, _, args, _| {
                     let home = std::env::var("HOME").unwrap();
                     let dest = args.get(0).map(|s| s.as_str()).unwrap_or(home.as_str());
 
@@ -152,7 +166,7 @@ impl Context {
                 name: "alias".to_string(),
                 description: "Manage command aliases".to_string(),
                 help: "Usage: alias [name='command']".to_string(),
-                execute: Box::new(|_, aliases, _, _, _, args, _| {
+                execute: Box::new(|_, _, _, aliases, _, _, _, args, _| {
                     let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
 
                     // if no args are provided, list all aliases
@@ -397,8 +411,17 @@ impl Context {
             let builtin = builtins.get(name)?;
             let arg_vec: Vec<String> = args.split_whitespace().map(|s| s.to_string()).collect();
             let debug = self.debug;
-            let result =
-                (builtin.execute)(env, aliases, vars, history, builtin_names, arg_vec, debug);
+            let result = (builtin.execute)(
+                self.config.clone().unwrap(),
+                self.args.clone().unwrap(),
+                env,
+                aliases,
+                vars,
+                history,
+                builtin_names,
+                arg_vec,
+                debug,
+            );
             return Some(crate::context::EvalResults::BuiltinExpressionResult(
                 crate::context::BuiltinEvalResult {
                     output: Some(format!("{:?}", result)),
@@ -408,7 +431,81 @@ impl Context {
         None
     }
 
-    fn eval_command(&mut self, command: &str, args: &str) -> Option<crate::context::EvalResults> {
+    fn eval_spawn_command(
+        &mut self,
+        command: &str,
+        args: &str,
+    ) -> Option<crate::context::EvalResults> {
+        use std::process::Command;
+        let args_vec: Vec<&str> = args.split_whitespace().collect();
+
+        // construct a command request
+        let id = uuid::Uuid::new_v4().to_string();
+        let command_request = crate::history::CommandRequest {
+            id: id.clone(),
+            command: command.to_string(),
+            args: args_vec.iter().map(|s| s.to_string()).collect(),
+            timestamp: crate::utils::now_unix(),
+            // event: "command_request".to_string(),
+        };
+
+        self.history
+            .lock()
+            .unwrap()
+            .push(crate::history::Event::CommandRequest(command_request));
+
+        let mut child = Command::new(command)
+            .args(&args_vec)
+            .stdin(std::process::Stdio::inherit())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .ok()?;
+
+        let mut stdout = String::new();
+        if let Some(mut out) = child.stdout.take() {
+            use std::io::Read;
+            let _ = out.read_to_string(&mut stdout).ok();
+        }
+
+        let mut stderr = String::new();
+        if let Some(mut err) = child.stderr.take() {
+            use std::io::Read;
+            let _ = err.read_to_string(&mut stderr).ok();
+        }
+
+        let code = child.wait().ok()?.code().unwrap_or(-1);
+        let output = stdout;
+        let errors = stderr;
+
+        let command_response = crate::history::CommandResponse {
+            id: id.clone(),
+            status: "completed".to_string(),
+            code,
+            output: output.clone(),
+            errors: errors.clone(),
+            timestamp: crate::utils::now_unix(),
+        };
+
+        self.history
+            .lock()
+            .unwrap()
+            .push(crate::history::Event::CommandResponse(command_response));
+
+        Some(crate::context::EvalResults::CommandExpressionResult(
+            crate::context::CommandEvalResult {
+                stdout: output,
+                stderr: errors,
+                code,
+            },
+        ))
+    }
+
+    fn eval_exec_command(
+        &mut self,
+        command: &str,
+        args: &str,
+    ) -> Option<crate::context::EvalResults> {
         use std::process::Command;
         let args_vec: Vec<&str> = args.split_whitespace().collect();
 
@@ -431,6 +528,11 @@ impl Context {
             .args(&args_vec)
             .stdin(std::process::Stdio::inherit())
             .output();
+
+        // let spawn_result = Command::new(command)
+        //     .args(&args_vec)
+        //     .stdin(std::process::Stdio::inherit())
+        //     .spawn();
 
         match exec_result {
             Ok(output) => {
@@ -464,6 +566,8 @@ impl Context {
     }
 
     pub fn new(
+        config: Option<std::sync::Arc<std::sync::Mutex<crate::config::Config>>>,
+        args: Option<std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>>,
         env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         vars: std::sync::Arc<
@@ -478,6 +582,8 @@ impl Context {
         }
         Context {
             builtins: None,
+            config,
+            args,
             env,
             vars,
             aliases,
@@ -565,7 +671,7 @@ impl Context {
             }
 
             Some(crate::expressions::Expressions::ShellCommand { name, args }) => {
-                let result = self.eval_command(&name, &args);
+                let result = self.eval_exec_command(&name, &args);
                 // result is an option, we need to unwrap it to access the code
                 // the result is in the CommandResult variant of ShellResults
                 if let Some(crate::context::EvalResults::CommandExpressionResult(cmd)) = &result {
