@@ -1,0 +1,10 @@
+{
+  "rust-analyzer.linkedProjects": [
+    "${workspaceFolder}/turtle/Cargo.toml",
+  ],
+  // format rust files on save
+  "[rust]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  }
+}
