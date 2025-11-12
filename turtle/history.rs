@@ -29,10 +29,10 @@ impl History {
         }
     }
 
-    /// load history from file
+    /// loads history from file
     pub fn load(&mut self) -> Option<Vec<crate::history::Event>> {
         if self.path.is_none() {
-            println!("❌ History path is not set.");
+            println!("❌ history path is not set.");
             return None;
         }
 
@@ -45,7 +45,7 @@ impl History {
                         history.push(event);
                     }
                     Err(_e) => {
-                        println!("❌ Failed to parse event from line: {}", line);
+                        println!("❌ failed to parse event from line: {}", line);
                         continue;
                     }
                 }
@@ -124,7 +124,7 @@ impl History {
         if let Some(interval) = self.interval {
             self.flush().ok();
             if self.debug {
-                println!("✅ History flushing started every {} seconds", interval);
+                println!("✅ history flushing started every {} seconds", interval);
             }
         }
     }

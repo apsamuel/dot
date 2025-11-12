@@ -197,7 +197,39 @@ function dot.shell {
 
 
     if [[ "${command}" == "load-options" ]]; then
+        echo "Loading zsh options..."
         return 0
+    fi
+
+    if [[ "${command}" == "add-plugin" ]]; then
+        if [[ -z "${2}" ]]; then
+            echo "Usage: dot.shell add-plugin <git-repo-url>"
+            return 1
+        fi
+
+        git_url="${2}"
+        plugin_name="$(basename -s .git "${git_url}")"
+        plugins_dir="${DOT_DIR}/zsh/custom/plugins"
+
+
+        # adds the submodule in the $ZSH repos custom plugins directory
+        git -C "${ZSH}" submodule add "${git_url}" "${plugins_dir}/${plugin_name}"
+        return $?
+    fi
+
+    if [[ "${command}" == "add-theme" ]]; then
+        if [[ -z "${2}" ]]; then
+            echo "Usage: dot.shell add-theme <git-repo-url>"
+            return 1
+        fi
+
+        git_url="${2}"
+        theme_name="$(basename -s .git "${git_url}")"
+        themes_dir="${DOT_DIR}/zsh/custom/themes"
+
+        # adds the submodule in the $ZSH repos custom themes director
+        git -C "${ZSH}" submodule add "${git_url}" "${themes_dir}/${theme_name}"
+        return $?
     fi
 
     # anything else is an error

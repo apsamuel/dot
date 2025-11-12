@@ -4,7 +4,7 @@
 
 ## About
 
-**`dot`** is shell configuration automation that turns a default shell into a ***productivity powerhouse*** in seconds.
+**`dot`** is configuration automation that turns some default shell into a ***productivity powerhouse*** in seconds.
 
 ## Features
 
@@ -32,3 +32,11 @@ source ~/.zshrc        # Let the magic begin
 - A Unix-like operating system (Linux, macOS, BSD)
 - ZSH installed (version 5.8 or higher recommended)
 - A sense of humor (optional, but highly recommended)
+
+## Installation
+
+```bash
+git clone https://github.com/apsamuel/dot.git ~/.dot
+pushd ~/.dot
+source ./bin/bootstrap.sh
+```
