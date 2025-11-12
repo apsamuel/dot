@@ -185,6 +185,8 @@ impl Shell {
         let events = std::sync::Arc::new(std::sync::Mutex::new(events));
 
         let mut context = crate::context::Context::new(
+            config.clone(),
+            args.clone(),
             env.clone(),
             aliases.clone(),
             vars.clone(),
