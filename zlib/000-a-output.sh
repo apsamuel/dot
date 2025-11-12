@@ -211,8 +211,8 @@ function termLogo() {
 function termImage () {
     local image="${1}"
 
-    if ! command -v imgcat &> /dev/null; then
-        echo "imgcat is not available, please install it to use this function."
+    if ! command -v kitty &> /dev/null; then
+        echo "kitty is not available, please install it to use this function."
         return 1
     fi
 
@@ -221,11 +221,18 @@ function termImage () {
         return 1
     fi
 
-
-    TERM=screen-256color "$HOME"/.iterm2/imgcat "${image}"
-    sleep 5
-    export TERM=xterm-256color
+    local window_size
+    window_size="$(kitty +kitten icat --print-window-size)"
+    local px_width="${window_size%%x*}"
+    local px_height="${window_size##*x}"
+    kitty +kitten icat --transfer-mode=stream "${image}"
     return 0
+
+
+    # TERM=screen-256color "$HOME"/.iterm2/imgcat "${image}"
+    # sleep 5
+    # export TERM=xterm-256color
+    # return 0
 }
 
 

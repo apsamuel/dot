@@ -498,3 +498,33 @@ impl Shell {
         }
     }
 }
+
+pub enum ShellError {
+    /// Generic shell error
+    GenericError(String),
+    /// Command not found error
+    CommandNotFound(String),
+    /// Execution error
+    ExecutionError(String),
+}
+
+impl std::fmt::Display for ShellError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ShellError::GenericError(msg) => write!(f, "Shell Error: {}", msg),
+            ShellError::CommandNotFound(cmd) => write!(f, "Command Not Found: {}", cmd),
+            ShellError::ExecutionError(msg) => write!(f, "Execution Error: {}", msg),
+        }
+    }
+}
+
+pub enum ShellSignal {
+    //// Signal to exit the shell
+    ExitShell,
+    /// Signal to terminate the shell
+    TerminateShell,
+    /// Signal to pause the shell
+    PauseShell,
+    /// Signal to resume the shell
+    ResumeShell,
+}

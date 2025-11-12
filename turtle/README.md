@@ -1,4 +1,4 @@
-# Turtle
+# Turtle 🐢
 
 > 🐢: a powershell shell application and scripting language designed to provide an enhanced command-line experience on macOS.
 

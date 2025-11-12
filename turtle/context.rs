@@ -180,9 +180,9 @@ impl Context {
                             let command = &assignment[eq_pos + 1..].trim_matches('\'');
                             let mut aliases_lock = aliases.lock().unwrap();
                             aliases_lock.insert(name.to_string(), command.to_string());
-                            println!("Alias set: {}='{}'", name, command);
+                            println!("alias set: {}='{}'", name, command);
                         } else {
-                            eprintln!("Invalid alias format. Use name='command'");
+                            eprintln!("invalid alias format. Use name='command'");
                         }
                         return;
                     }
@@ -266,7 +266,7 @@ impl Context {
                     "/" => left_num.value / right_num.value,
                     "%" => left_num.value % right_num.value,
                     _ => {
-                        eprintln!("Unsupported operation: {}", op);
+                        eprintln!("unsupported operation: {}", op);
                         return None;
                     }
                 };
@@ -284,7 +284,7 @@ impl Context {
                         crate::context::StringEvalResult { value: result },
                     ))
                 } else {
-                    eprintln!("Unsupported operation for strings: {}", op);
+                    eprintln!("unsupported operation for strings: {}", op);
                     None
                 }
             }
@@ -306,7 +306,6 @@ impl Context {
         let _evaluated_value = self.eval(Some(value.clone()))?;
 
         // Store the variable in the context
-        println!("Assigning variable: {} = {:?}", name, value);
         self.vars
             .lock()
             .unwrap()
@@ -332,10 +331,6 @@ impl Context {
 
         let results = self.eval(Some(var.clone()))?;
 
-        println!(
-            "Variable access: {} = {:?}, evaluated to {:?}",
-            name, var, results
-        );
         return Some(results);
     }
 
@@ -462,7 +457,7 @@ impl Context {
                 Some(crate::context::EvalResults::CommandExpressionResult(result))
             }
             Err(e) => {
-                eprintln!("Failed to execute command: {}", e);
+                eprintln!("failed to execute command: {}", e);
                 None
             }
         }
@@ -583,7 +578,7 @@ impl Context {
                 result
             }
             _ => {
-                println!("Evaluating expression: {:?}", expr);
+                println!("evaluating expression: {:?}", expr);
                 None
             }
         }
