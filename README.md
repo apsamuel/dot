@@ -1,19 +1,17 @@
-# 🐢 dot - Your Shell's Personal Trainer
+# ⚫️ Shell Initialization Framework
 
-> Because your terminal deserves better than dad jokes and plain defaults
+> Because a shell deserves better than dad jokes, plain defaults and endless plugins.
 
-## What is this?
+## About
 
-`dot` is a ridiculously over-engineered shell configuration framework that turns your boring terminal into a productivity powerhouse. It's like giving your shell a PhD in computer science, but with more emojis.
+**`dot`** is configuration automation that turns some default shell into a ***productivity powerhouse*** in seconds.
 
 ## Features
 
-- 🚀 **Zero to Hero**: Goes from "command not found" to "I am become death, destroyer of bugs" in seconds
-- ☁️ **Cloud-Savvy**: Syncs your secrets and settings via iCloud, because losing your aliases is so 2022
-- 🎨 **Pretty Things**: Configurable splash screens (quotes or ASCII art, because why not both?)
-- 🧠 **Smart History**: Remembers your last million commands, because you'll totally need that one-liner from 2021
-- 🔐 **Secure**: Manages your SSH keys and secrets like a paranoid security guard
-- 🎯 **Plugin Power**: Plays nice with oh-my-zsh plugins without the bloat
+- 🔋 **Batteries Included**: We know what shell users want, and we include it out of the box.
+- 🎨 **Sleek & Modern**: A terminal experience so smooth, you'll think you're in a sci-fi movie 🎬
+- ⚙️ **Highly Customizable**: Tweak it, bend it, make it yours. Your terminal, your rules 🛠️
+- 🚀 **Performance Optimized**: Because nobody likes a slow shell
 
 ## Quick Start
 
@@ -29,27 +27,16 @@ source ~/.zshrc        # Let the magic begin
 - 🔧 Tools integration (bat, fzf, tmux) because raw terminal output is so 1970
 - 🤖 Auto-completions that finish your commands before you even think of them
 
-## Not Just Another Framework
-
-Unlike other shell frameworks that try to be everything to everyone, `dot` is like a bespoke suit - it's tailored to fit perfectly while making you look fancy.
-
 ## Requirements
 
-- A Mac (because we're fancy like that)
-- ZSH (because bash is so yesterday)
+- A Unix-like operating system (Linux, macOS, BSD)
+- ZSH installed (version 5.8 or higher recommended)
 - A sense of humor (optional, but highly recommended)
 
-## Warning
+## Installation
 
-May cause:
-
-- Excessive productivity
-- Terminal envy from coworkers
-- Uncontrollable urge to customize everything
-- Inability to use default shell configurations ever again
-
----
-
-*Remember: With great shell power comes great responsibility. Use your newfound powers wisely.*
-
-Made with 🍵 and too many late-night coding sessions.
+```bash
+git clone https://github.com/apsamuel/dot.git ~/.dot
+pushd ~/.dot
+source ./bin/bootstrap.sh
+```

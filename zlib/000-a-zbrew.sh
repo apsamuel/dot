@@ -166,24 +166,6 @@ function parseLine() {
   echo "$operation" "$target"
 }
 
-function brewLoad.v2() {
-  ## list each line of the Brewfile
-  ## either configure a tap, or install a package
-  ## configure an exclude for the brewfile
-
-
-  parseLine "$@"
-  while IFS= read -r line; do
-    if [[ "$line" == *"tap"* ]]; then
-      echo "tapping: $line"
-      eval "$line"
-    elif [[ "$line" == *"brew"* ]]; then
-      echo "installing: $line"
-      eval "$line"
-    fi
-  done < "${1:-${ICLOUD}/dot/Brewfile}"
-}
-
 function brewLoadMas () {
   local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
   local file="${1:-${ICLOUD}/dot/Brewfile.mas.${arch}}"
