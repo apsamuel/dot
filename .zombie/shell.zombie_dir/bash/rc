@@ -1,0 +1,96 @@
+# Created Date: Friday, October 15th 2021, 11:06:06 pm
+# shellcheck shell=sh
+#% author: Aaron Samuel
+#% description: POSIX entrypoint for shell initialization
+#% usage: chsh -s $(which zsh) , source ~/.zshrc
+# - ignore shellcheck warnings about source statements
+# shellcheck source=/dev/null
+# - ignore shellcheck warnings about read/mapfile
+# shellcheck disable=SC2207
+# set -x
+if [ ! -d "$HOME"/.dot ]; then
+    echo "ERROR: $HOME/.dot does not exist. Please clone the dotfiles repository."
+    exit 1
+fi
+export PS1='[\u@\h \W]\$ '
+
+# build ssh keys
+SSH_KEYS=""
+if [ -d "$HOME"/.ssh ]; then
+    files=$(
+        find "$HOME"/.ssh -type f -maxdepth 1 -exec basename {} \;
+    )
+    for file in $files; do
+        # (config|deprecated|.*pub|environment.*|known_hosts.*)
+        if [ "$file" = "config" ] || [ "$file" = "deprecated" ] || [ "$file" = "environment" ] || [ "$file" = "known_hosts" ] || [ "$file" = "environment-$(hostname)" ] || [ "$file" = "environment-$(hostname -s)" ] ; then
+            continue
+        fi
+        base=$(basename "$file")
+        echo "Adding SSH key: $base"
+        SSH_KEYS="$SSH_KEYS $base"
+    done
+fi
+
+export SSH_KEYS
+
+
+__compile_terminfo() {
+    command infocmp -x xterm-256color
+    printf '\t%s\n' 'ncv@,'
+} >/tmp/t && tic -x /tmp/t
+
+__compile_terminfo
+
+# make ICLOUD directory available to shell
+ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
+ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
+ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
+ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
+export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
+
+# set dot variables or use defaults
+DOT_SHELL=${DOT_SHELL:-bash}
+DOT_DEBUG=${DOT_DEBUG:-false}
+DOT_SPLASH_SCREEN=${DOT_SPLASH_SCREEN:-true}
+DOT_SPLASH_TYPE="${DOT_SPLASH_TYPE:-quote}"
+DOT_DIR="${DOT_DIR:-$HOME/.dot}"
+DOT_LIBS_DIR="${DOT_LIBS_DIR:-$DOT_DIR/shellx}"
+DOT_CLOUD_DIR="${ICLOUD}/dot"
+DOT_SHELL_DATA=${DOT_SHELL_DATA:-$HOME/.dot/data/zsh.json}
+DOT_SECRETS_DATA=${DOT_SECRETS_DATA:-"${DOT_CLOUD_DIR}/secrets.json"}
+
+# load shell data
+SHELL_INIT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd ) # where are we? https://stackoverflow.com/a/246128/1235074
+SHELL_INIT_START=$(date +%s)
+
+export SHELL_INIT_DIR SHELL_INIT_START
+
+export TERM=xterm-256color
+export MANPATH="/usr/local/man:$MANPATH"
+export HISTSIZE=1000000000
+export HISTFILESIZE=1000000000
+export SAVEHIST=$HISTSIZE
+export HISTFILE="$HOME"/.bash_history
+export MANPATH="/usr/local/man:$MANPATH"
+GPG_TTY=$(tty)
+export GPG_TTY
+export LANG=en_US.UTF-8
+export EDITOR=vim
+export ZSH_COLORIZE_TOOL=pygmentize
+export PAGER='bat '
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
+arch="$(arch)"
+export ARCH="${arch}"
+
+# load library definitions
+if [ -d "$DOT_LIBS_DIR" ]; then
+    for lib in "${DOT_LIBS_DIR}"/* ; do
+        if [ ! "${DOT_DEBUG}x" = "x" ] && [ "${DOT_DEBUG}" = true ]; then
+            echo "loading: $lib"
+        fi
+        . "$lib" || true
+    done
+else
+    echo "Warning: DOT_LIBS_DIR not found: $DOT_LIBS_DIR"
+fi
