@@ -1,6 +1,8 @@
-# Turtle 🐢
+# Turtle
 
-> 🐢: a powershell shell application and scripting language designed to provide an enhanced command-line experience on macOS.
+![Turtle Logo](./docs/assets/turtle.jpg)
+
+> 🐢: a powerful command interpreter and scripting language.
 
 - is not **POSIX** compliant
 
