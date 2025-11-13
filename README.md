@@ -1,14 +1,21 @@
-# ⚫️ Shell Initialization Framework
+# Dot
+
+![dot](./data/images/black-sun.jpg)
 
 > Because a shell deserves better than dad jokes, plain defaults and endless plugins.
 
 ## About
 
-**`dot`** is configuration automation that turns some default shell into a ***productivity powerhouse*** in seconds.
+**`dot`** is a config automation framework that turns a default shell into your ***productivity powerhouse*** in seconds.
 
 ## Features
 
 - 🔋 **Batteries Included**: We know what shell users want, and we include it out of the box.
+  - `zsh` & `oh-my-zsh` for that sweet, sweet plugin ecosystem
+  - `tmux` & `oh-my-tmux` for terminal multiplexing like a pro
+  - `bat` for syntax-highlighted file viewing
+  - `fzf` for fuzzy finding everything
+  - `powerlevel10k` for a prompt that tells you more than just the time
 - 🎨 **Sleek & Modern**: A terminal experience so smooth, you'll think you're in a sci-fi movie 🎬
 - ⚙️ **Highly Customizable**: Tweak it, bend it, make it yours. Your terminal, your rules 🛠️
 - 🚀 **Performance Optimized**: Because nobody likes a slow shell
