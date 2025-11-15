@@ -9,8 +9,9 @@
 /// See LICENSE for details.
 
 /// Turtle language keywords
-static KEYWORDS: &[&str] = &[
-    "if", "else", "then", "while", "for", "fn", "return", "let", "true", "false",
+pub static KEYWORDS: &[&str] = &[
+    "New", "If", "Elseif", "Else", "While", "For", "Break", "Fn", "Return", "Let", "True", "False",
+    "Null",
 ];
 
 /// Abstract Syntax Tree
@@ -18,8 +19,6 @@ static KEYWORDS: &[&str] = &[
 struct AbstractSyntaxTree {
     /// Debugging information
     debug: bool,
-    /// config
-    // config: Option<std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>>,
     /// environment variables
     env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     /// command aliases
@@ -56,9 +55,6 @@ impl AbstractSyntaxTree {
         >,
         debug: bool,
     ) -> Self {
-        // if debug {
-        //     println!("Creating new AbstractSyntaxTree with tokens: {:?}", tokens);
-        // }
         AbstractSyntaxTree {
             parsed: tokens,
             pos: 0,
@@ -368,7 +364,7 @@ impl AbstractSyntaxTree {
     /// ```
     /// [1, 2, 3]
     /// ```
-    fn parse_array(&mut self) -> Option<crate::expressions::Expressions> {
+    fn parse_literal_array(&mut self) -> Option<crate::expressions::Expressions> {
         if let crate::tokens::Token::BracketOpen = self.peek() {
             self.next(); // consume '['
             let mut elements = Vec::new();
@@ -396,6 +392,14 @@ impl AbstractSyntaxTree {
         }
         None
     }
+
+    // fn parse_new_array(&mut self) -> Option<crate::expressions::Expressions> {
+    //     //
+    //     if let crate::tokens::Token::Keyword("new") = self.peek() {
+    //         self.next(); // consume 'new'
+    //         self.skip_whitespace();
+    //     }
+    // }
 
     /// parse objects
     /// ```
@@ -459,7 +463,7 @@ impl AbstractSyntaxTree {
         self.skip_whitespace();
         // handle assignments prefixed with the let keyword
         if let crate::tokens::Token::Keyword(k) = self.peek() {
-            if k == "let" {
+            if k == "Let" {
                 self.next(); // consume 'let'
                 self.skip_whitespace();
                 if let crate::tokens::Token::Identifier(name) = self.peek() {
@@ -550,7 +554,7 @@ impl AbstractSyntaxTree {
             | crate::tokens::Token::String(_)
             | crate::tokens::Token::Boolean(_) => self.parse_literal(),
             // arrays & objects
-            crate::tokens::Token::BracketOpen => self.parse_array(),
+            crate::tokens::Token::BracketOpen => self.parse_literal_array(),
             crate::tokens::Token::BraceOpen => self.parse_object(),
             // identifiers
             crate::tokens::Token::Identifier(name) => {
@@ -756,13 +760,14 @@ impl AbstractSyntaxTree {
             return Some(command);
         }
 
+        // parse assignments
+        if let Some(assignment) = self.parse_assignment() {
+            return Some(assignment);
+        }
+
         // parse variable access - experimental
         if let Some(var_expr) = self.parse_variable() {
             return Some(var_expr);
-        }
-
-        if let Some(assignment) = self.parse_assignment() {
-            return Some(assignment);
         }
 
         // parse environment variables
@@ -851,8 +856,7 @@ impl Interpreter {
         let mut chars = input.chars().peekable();
         while let Some(&c) = chars.peek() {
             match c {
-                // handle ( )
-                // these are used for function calls and grouping expressions
+                // parentheses for grouping expressions and function calls
                 '(' => {
                     tokens.push(crate::tokens::Token::ParenOpen);
                     chars.next();
@@ -861,6 +865,7 @@ impl Interpreter {
                     tokens.push(crate::tokens::Token::ParenClose);
                     chars.next();
                 }
+                // braces for objects, blocks and scopes
                 '{' => {
                     tokens.push(crate::tokens::Token::BraceOpen);
                     chars.next();
@@ -869,6 +874,7 @@ impl Interpreter {
                     tokens.push(crate::tokens::Token::BraceClose);
                     chars.next();
                 }
+                // brackets for arrays
                 '[' => {
                     tokens.push(crate::tokens::Token::BracketOpen);
                     chars.next();
@@ -877,14 +883,17 @@ impl Interpreter {
                     tokens.push(crate::tokens::Token::BracketClose);
                     chars.next();
                 }
+                // colon for key-value pairs and type annotations
                 ':' => {
                     tokens.push(crate::tokens::Token::Colon);
                     chars.next();
                 }
+                // semicolon for statement termination
                 ';' => {
                     tokens.push(crate::tokens::Token::Semicolon);
                     chars.next();
                 }
+                // arrow operator for function return types and lambdas
                 '-' => {
                     chars.next();
                     if let Some(&'>') = chars.peek() {
@@ -894,10 +903,12 @@ impl Interpreter {
                         tokens.push(crate::tokens::Token::Operator("-".to_string()));
                     }
                 }
+                // comma for separating items in lists and function arguments
                 ',' => {
                     tokens.push(crate::tokens::Token::Comma);
                     chars.next();
                 }
+                // dots for relative paths and identifiers
                 '.' => {
                     // let's handle the case of a double dot '..' for relative paths
                     // dots can be parts of an identifier
@@ -950,6 +961,7 @@ impl Interpreter {
                     }
                     // chars.next();
                 }
+                // string literals
                 '"' => {
                     chars.next(); // skip opening quote
                     let mut s = String::new();
@@ -964,32 +976,30 @@ impl Interpreter {
                     }
                     tokens.push(crate::tokens::Token::String(s));
                 }
+                // number literals
                 '0'..='9' => {
                     let mut num = String::new();
                     while let Some(&d) = chars.peek() {
-                        if d.is_ascii_digit() {
+                        if d.is_ascii_digit() || d == '.' {
                             num.push(d);
                             chars.next();
                         } else {
-                            break;
+                            break; // stop parsing number at any non-digit/dot character
                         }
                     }
                     tokens.push(crate::tokens::Token::Number(num.parse().unwrap()))
                 }
+                // global env var indicator
                 '$' => {
                     tokens.push(crate::tokens::Token::Operator("$".to_string()));
                     chars.next();
                 }
-                _ if c.is_alphanumeric()
-                    || c == "_".chars().next().unwrap()
-                    || c == ".".chars().next().unwrap() =>
-                {
+                // identifiers and keywords
+                _ if c.is_alphanumeric() || c == '_' || c == '.' => {
                     let mut identifier = String::new();
                     while let Some(&d) = chars.peek() {
-                        if d.is_alphanumeric()
-                            || d == "_".chars().next().unwrap()
-                            || d == ".".chars().next().unwrap()
-                        {
+                        println!("char in identifier: {}", d);
+                        if d.is_alphanumeric() || d == '_' || d == '.' {
                             identifier.push(d);
                             chars.next();
                         } else {
@@ -998,8 +1008,9 @@ impl Interpreter {
                     }
 
                     // check for boolean literals
-                    if KEYWORDS.contains(&identifier.as_str()) {
-                        tokens.push(crate::tokens::Token::Keyword(identifier));
+                    let canonical = identifier[..1].to_ascii_uppercase() + &identifier[1..];
+                    if KEYWORDS.contains(&canonical.as_str()) {
+                        tokens.push(crate::tokens::Token::Keyword(canonical));
                         continue;
                     } else if identifier == "True" {
                         tokens.push(crate::tokens::Token::Boolean(true));
@@ -1009,6 +1020,7 @@ impl Interpreter {
                         tokens.push(crate::tokens::Token::Identifier(identifier));
                     }
                 }
+                // operators
                 _ if "+-*/=<>&|!^".contains(c) => {
                     let mut op = String::new();
                     while let Some(&d) = chars.peek() {
@@ -1019,9 +1031,9 @@ impl Interpreter {
                             break;
                         }
                     }
-
                     tokens.push(crate::tokens::Token::Operator(op));
                 }
+                // unrecognized characters
                 _ => {
                     chars.next();
                 }
