@@ -308,42 +308,48 @@ Examples:
                 name: "ast".to_string(),
                 description: "Translate a string to Turtle AST".to_string(),
                 help: "Usage: ast <code>".to_string(),
-                execute: Box::new(|_, _, env, aliases, vars, _, builtin_names, args, debug| {
-                    let code = args.join(" ");
-                    // Evaluate the code
-                    let mut interpreter = crate::lang::Interpreter::new(
-                        env.clone(),
-                        aliases.clone(),
-                        vars.clone(),
-                        builtin_names,
-                        debug,
-                    );
+                execute: Box::new(
+                    |_, turtle_args, env, aliases, vars, _, builtin_names, args, debug| {
+                        let code = args.join(" ");
+                        // Evaluate the code
+                        let mut interpreter = crate::lang::Interpreter::new(
+                            Some(turtle_args.clone()),
+                            env.clone(),
+                            aliases.clone(),
+                            vars.clone(),
+                            builtin_names,
+                            debug,
+                        );
 
-                    let _tokens = interpreter.tokenize(&code.as_str());
-                    let expr = interpreter.interpret();
-                    println!("turtle ast: {:?}", expr);
-                }),
+                        let _tokens = interpreter.tokenize(&code.as_str());
+                        let expr = interpreter.interpret();
+                        println!("turtle ast: {:?}", expr);
+                    },
+                ),
             },
             // tokenize
             crate::builtins::Builtin {
                 name: "tokenize".to_string(),
                 description: "Tokenize a string as Turtle code".to_string(),
                 help: "Usage: tokenize <code>".to_string(),
-                execute: Box::new(|_, _, env, aliases, vars, _, builtin_names, args, debug| {
-                    let code = args.join(" ");
+                execute: Box::new(
+                    |_, turtle_args, env, aliases, vars, _, builtin_names, args, debug| {
+                        let code = args.join(" ");
 
-                    // Evaluate the code
-                    let mut interpreter = crate::lang::Interpreter::new(
-                        env.clone(),
-                        aliases.clone(),
-                        vars.clone(),
-                        builtin_names,
-                        debug,
-                    );
+                        // Evaluate the code
+                        let mut interpreter = crate::lang::Interpreter::new(
+                            Some(turtle_args.clone()),
+                            env.clone(),
+                            aliases.clone(),
+                            vars.clone(),
+                            builtin_names,
+                            debug,
+                        );
 
-                    let tokens = interpreter.tokenize(&code.as_str());
-                    println!("turtle tokens: {:?}", tokens);
-                }),
+                        let tokens = interpreter.tokenize(&code.as_str());
+                        println!("turtle tokens: {:?}", tokens);
+                    },
+                ),
             },
             // eval
             crate::builtins::Builtin {
@@ -366,6 +372,7 @@ Examples:
                         }
                         let code = args.join(" ");
                         let mut interpreter = crate::lang::Interpreter::new(
+                            Some(turtle_args.clone()),
                             env.clone(),
                             aliases.clone(),
                             vars.clone(),
