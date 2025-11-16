@@ -1,5 +1,11 @@
 # Shells
 
+The text in this document primarily comes from the Linux Shells publication by [IBM®](https://developer.ibm.com/tutorials/l-linux-shells/).
+
+## Shells as little languages
+
+Shells are specialized, domain-specific languages ( little languages) that implement a specific use model — in this case, providing an interface to an operating system. In addition to text-based operating system shells, you can find graphical user interface shells as well as shells for languages (such as the Python shell or Ruby's irb). The shell idea has also been applied to Web searching through a web front end called goosh. This shell over Google permits command-line searching with Google using commands such as search, more, and go.
+
 Ken Thompson (of Bell Labs) developed the first shell for UNIX called the V6 shell in 1971. Similar to its predecessor in Multics, this shell (/bin/sh) was an independent user program that executed outside of the kernel. Concepts like globbing (pattern matching for parameter expansion, such as *.txt) were implemented in a separate utility called glob, as was the if command to evaluate conditional expressions.
 
 The shell introduced a compact syntax for redirection (`<` `>` and `>>`) and piping (`|` or `^`) that has survived into modern shells.
@@ -175,9 +181,22 @@ echo "$count executable files found."
 exit 0
 ```
 
-### Citation
+### Citations
 
-If you use Turtle in your research, please cite it as:
+- This document was adapted from the Linux Shells publication by IBM®.
+
+```bibtex
+@misc{ibm_linux_shells,
+  author = {IBM Corporation},
+  title = {Linux Shells},
+  year = {2024},
+  publisher = {IBM},
+  howpublished = {\url{https://developer.ibm.com/tutorials/l-linux-shells/}},
+  note = {Accessed: 2024-06-15}
+}
+```
+
+- `If you use Turtle in your research, please cite it as:
 
 ```bibtex
 @misc{turtle_shell,

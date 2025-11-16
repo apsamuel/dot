@@ -179,21 +179,24 @@ impl Shell {
         );
 
         history.setup();
+
         let history = std::sync::Arc::new(std::sync::Mutex::new(history));
 
+        // TODO: we need to pass history around and not the events
         let events = history.lock().unwrap().load().unwrap();
         let events = std::sync::Arc::new(std::sync::Mutex::new(events));
-
         let mut context = crate::context::Context::new(
             config.clone(),
             args.clone(),
             env.clone(),
             aliases.clone(),
             vars.clone(),
-            events.clone(),
+            history.clone(),
             debug,
         );
+
         context.setup();
+
         let mut builtin_names: Vec<String> = Vec::new();
         if let Some(builtins) = &context.builtins {
             let names = builtins.list();
@@ -227,7 +230,6 @@ impl Shell {
             paused: false,
             running: false,
             defaults,
-            config_watcher: None,
             config: config.clone(),
             args,
             thememanager,
@@ -239,6 +241,7 @@ impl Shell {
             context,
             tokens: Vec::new(),
             expressions: Vec::new(),
+            config_watcher: None,
             config_receiver: Some(signal_receiver),
             config_sender: Some(signal_sender),
         }
@@ -247,6 +250,16 @@ impl Shell {
     /// Set up the shell
     fn setup(&mut self) -> std::collections::HashMap<String, u128> {
         let start = crate::utils::now();
+        // start history flusher
+        // TODO: file flushing is currently broken
+        // it was appending all events, over and over, need to fix that
+        // the correct approach is to only append new events since last flush or overwrite the file
+        // when started, it reads all events from the file anyway
+        // when commands are executed, they are added to the events list
+        // so we need to only write new events to the file
+
+        self.history.lock().unwrap().start();
+
         self.pid = std::process::id().into();
         self.running = true;
         self.paused = false;

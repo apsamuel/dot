@@ -1,5 +1,136 @@
 use serde::{Deserialize, Serialize};
 
+/// Format a floating-point number according to format specifier
+fn format_number(num: f64, spec: &str) -> String {
+    if spec.is_empty() {
+        return format!("{}", num);
+    }
+
+    // Parse format spec
+    let spec = spec.trim_start_matches(':');
+
+    // Check for precision (.N)
+    if let Some(dot_pos) = spec.find('.') {
+        if let Ok(precision) = spec[dot_pos + 1..].parse::<usize>() {
+            return format!("{:.prec$}", num, prec = precision);
+        }
+    }
+
+    // Check for width and alignment
+    if let Some(first_char) = spec.chars().next() {
+        let (align, rest) = match first_char {
+            '<' => ("left", &spec[1..]),
+            '^' => ("center", &spec[1..]),
+            '0' => {
+                // Zero-padded
+                if let Ok(width) = spec[1..].parse::<usize>() {
+                    return format!("{:0width$}", num, width = width);
+                }
+                ("right", spec)
+            }
+            _ => ("right", spec),
+        };
+
+        if let Ok(width) = rest.parse::<usize>() {
+            let s = format!("{}", num);
+            return match align {
+                "left" => format!("{:<width$}", s, width = width),
+                "center" => format!("{:^width$}", s, width = width),
+                _ => format!("{:>width$}", s, width = width),
+            };
+        }
+    }
+
+    format!("{}", num)
+}
+
+/// Format an integer according to format specifier
+fn format_integer(num: i64, spec: &str) -> String {
+    if spec.is_empty() {
+        return format!("{}", num);
+    }
+
+    let spec = spec.trim_start_matches(':');
+
+    // Check for number base
+    match spec.chars().next() {
+        Some('x') => return format!("{:x}", num),
+        Some('X') => return format!("{:X}", num),
+        Some('b') => return format!("{:b}", num),
+        Some('o') => return format!("{:o}", num),
+        Some('?') => {
+            if spec == "#?" {
+                return format!("{:#?}", num);
+            }
+            return format!("{:?}", num);
+        }
+        _ => {}
+    }
+
+    // Check for width and zero-padding
+    if let Some('0') = spec.chars().next() {
+        if let Ok(width) = spec[1..].parse::<usize>() {
+            return format!("{:0width$}", num, width = width);
+        }
+    }
+
+    // Check for alignment and width
+    if let Some(first_char) = spec.chars().next() {
+        let (align, rest) = match first_char {
+            '<' => ("left", &spec[1..]),
+            '^' => ("center", &spec[1..]),
+            _ => ("right", spec),
+        };
+
+        if let Ok(width) = rest.parse::<usize>() {
+            let s = format!("{}", num);
+            return match align {
+                "left" => format!("{:<width$}", s, width = width),
+                "center" => format!("{:^width$}", s, width = width),
+                _ => format!("{:>width$}", s, width = width),
+            };
+        }
+    }
+
+    format!("{}", num)
+}
+
+/// Format a string according to format specifier
+fn format_string(s: &str, spec: &str) -> String {
+    if spec.is_empty() {
+        return s.to_string();
+    }
+
+    let spec = spec.trim_start_matches(':');
+
+    // Check for debug formatting
+    if spec == "?" {
+        return format!("{:?}", s);
+    } else if spec == "#?" {
+        return format!("{:#?}", s);
+    }
+
+    // Check for alignment and width
+    if let Some(first_char) = spec.chars().next() {
+        let (align, rest) = match first_char {
+            '<' => ("left", &spec[1..]),
+            '^' => ("center", &spec[1..]),
+            _ => ("right", spec),
+        };
+
+        if let Ok(width) = rest.parse::<usize>() {
+            return match align {
+                "left" => format!("{:<width$}", s, width = width),
+                "center" => format!("{:^width$}", s, width = width),
+                _ => format!("{:>width$}", s, width = width),
+            };
+        }
+    }
+
+    s.to_string()
+}
+
+/// Evaluate the execution context
 pub struct Context {
     pub debug: bool,
     pub config: Option<std::sync::Arc<std::sync::Mutex<crate::config::Config>>>,
@@ -10,7 +141,8 @@ pub struct Context {
         std::sync::Mutex<std::collections::HashMap<String, crate::expressions::Expressions>>,
     >,
     pub aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
-    pub history: std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>,
+    pub history: std::sync::Arc<std::sync::Mutex<crate::history::History>>,
+
     pub functions: std::collections::HashMap<String, crate::expressions::Expressions>,
     pub code: Vec<crate::expressions::Expressions>,
 }
@@ -19,6 +151,159 @@ impl Context {
     /// return available builtins
     fn get_builtins(&self) -> Vec<crate::builtins::Builtin> {
         vec![
+            // help
+            crate::builtins::Builtin {
+                name: "help".to_string(),
+                description: "Display help information".to_string(),
+                help: "Usage: help".to_string(),
+                execute: Box::new(|_, _, _, _, _, _, builtin_names, _, _| {
+                    println!("🐢 builtins:");
+                    for name in builtin_names {
+                        println!(" - {}", name);
+                    }
+                }),
+            },
+            crate::builtins::Builtin {
+                name: "printf".to_string(),
+                description: "Print formatted output to the console".to_string(),
+                help: r#"Usage: printf <format_string> [args...]
+Format specifiers:
+  {}       - default formatting
+  {:?}     - debug formatting
+  {:#?}    - pretty debug formatting
+  {:x}     - lowercase hex
+  {:X}     - uppercase hex
+  {:b}     - binary
+  {:o}     - octal
+  {:.N}    - precision (N decimal places)
+  {:N}     - minimum width (right-aligned)
+  {:<N}    - left-aligned width
+  {:^N}    - center-aligned width
+  {:0N}    - zero-padded width
+Examples:
+  printf "Hello, {}!" "World"
+  printf "Number: {:.2}" 3.14159
+  printf "Hex: {:x}" 255
+  printf "Binary: {:b}" 42"#
+                    .to_string(),
+                execute: Box::new(|_, _, _, _, _, _, _, args, _| {
+                    if args.is_empty() {
+                        eprintln!("printf: missing format string");
+                        eprintln!("Usage: printf <format_string> [args...]");
+                        return;
+                    }
+
+                    let format_str = &args[0];
+                    let format_args = &args[1..];
+
+                    // Parse format string and find placeholders
+                    let mut result = String::new();
+                    let mut chars = format_str.chars().peekable();
+                    let mut arg_idx = 0;
+
+                    while let Some(c) = chars.next() {
+                        if c == '{' {
+                            if let Some(&next_c) = chars.peek() {
+                                if next_c == '{' {
+                                    // Escaped brace: {{
+                                    result.push('{');
+                                    chars.next();
+                                    continue;
+                                }
+                            }
+
+                            // Parse format specifier
+                            let mut spec = String::new();
+                            while let Some(&c) = chars.peek() {
+                                if c == '}' {
+                                    chars.next();
+                                    break;
+                                }
+                                spec.push(c);
+                                chars.next();
+                            }
+
+                            // Get the argument
+                            if arg_idx >= format_args.len() {
+                                eprintln!("printf: not enough arguments for format string");
+                                return;
+                            }
+
+                            let arg = &format_args[arg_idx];
+                            arg_idx += 1;
+
+                            // Try to parse as number first
+                            let formatted = if let Ok(num) = arg.parse::<f64>() {
+                                format_number(num, &spec)
+                            } else if let Ok(num) = arg.parse::<i64>() {
+                                format_integer(num, &spec)
+                            } else {
+                                format_string(arg, &spec)
+                            };
+
+                            result.push_str(&formatted);
+                        } else if c == '}' {
+                            if let Some(&next_c) = chars.peek() {
+                                if next_c == '}' {
+                                    // Escaped brace: }}
+                                    result.push('}');
+                                    chars.next();
+                                    continue;
+                                }
+                            }
+                            result.push(c);
+                        } else {
+                            result.push(c);
+                        }
+                    }
+
+                    print!("{}\n", result);
+                }),
+            },
+            // keywords
+            crate::builtins::Builtin {
+                name: "keywords".to_string(),
+                description: "Display keywords".to_string(),
+                help: "Usage: keywords".to_string(),
+                execute: Box::new(|_, _, _, _, _, _, builtin_names, _, _| {
+                    println!("🐢 keywords:");
+                    for keyword in crate::lang::KEYWORDS {
+                        println!(" - {}", keyword);
+                    }
+                }),
+            },
+            // timestamp
+            crate::builtins::Builtin {
+                name: "timestamp".to_string(),
+                description: "Convert a timestamp to a date".to_string(),
+                help: "Usage: timestamp <timestamp>".to_string(),
+                execute: Box::new(|_, _, _, _, _, _, builtin_names, args, _| {
+                    if args.is_empty() {
+                        eprintln!("timestamp <timestamp>");
+                        return;
+                    }
+                    let timestamp = &args[0];
+                    let duration =
+                        std::time::Duration::from_secs(timestamp.parse::<u64>().unwrap_or(0));
+                    let datetime = std::time::UNIX_EPOCH + duration;
+                    println!("DateTime: {:?}", datetime);
+                }),
+            },
+            // imgcat
+            crate::builtins::Builtin {
+                name: "imgcat".to_string(),
+                description: "display images".to_string(),
+                help: "Usage: imgcat <image_path>".to_string(),
+                execute: Box::new(|_, _, _, _, _, _, builtin_names, args, _| {
+                    if args.is_empty() {
+                        eprintln!("imgcat <image_path>");
+                        return;
+                    }
+                    let image_path = &args[0];
+                    // TODO: implement image display logic
+                }),
+            },
+            // ast
             crate::builtins::Builtin {
                 name: "ast".to_string(),
                 description: "Translate a string to Turtle AST".to_string(),
@@ -39,6 +324,7 @@ impl Context {
                     println!("turtle ast: {:?}", expr);
                 }),
             },
+            // tokenize
             crate::builtins::Builtin {
                 name: "tokenize".to_string(),
                 description: "Tokenize a string as Turtle code".to_string(),
@@ -59,6 +345,7 @@ impl Context {
                     println!("turtle tokens: {:?}", tokens);
                 }),
             },
+            // eval
             crate::builtins::Builtin {
                 name: "eval".to_string(),
                 description: "Evaluate a string as Turtle code".to_string(),
@@ -101,31 +388,45 @@ impl Context {
                     },
                 ),
             },
+            // history
             crate::builtins::Builtin {
                 name: "history".to_string(),
                 description: "Get and Manage command history".to_string(),
                 help: "Usage: history".to_string(),
                 execute: Box::new(|_, _, _, _, _, history, _, args, _| {
                     if args.is_empty() {
-                        let history_lock = history.lock().unwrap();
-
-                        if history_lock.is_empty() {
+                        if let Some(events) = history.lock().unwrap().events.as_ref() {
+                            for (i, event) in events.iter().enumerate() {
+                                println!("{}: {:?}", i + 1, event);
+                            }
+                        } else {
                             println!("No history available.");
-                            return;
                         }
-                        for (i, event) in history_lock.iter().enumerate() {
-                            println!("{}: {:?}", i + 1, event);
-                        }
+                    }
+                    let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+
+                    if arg_refs.contains(&"-h") || arg_refs.contains(&"--help") {
+                        println!("history");
+                        println!("Display command history.");
+                        println!("Options:");
+                        println!("  -c, --clear    Clear the command history.");
                         return;
+                    }
+
+                    if arg_refs.contains(&"-c") || arg_refs.contains(&"--clear") {
+                        history.lock().unwrap().events = Some(vec![]);
+                        println!("Command history cleared.");
                     }
                 }),
             },
+            // noop
             crate::builtins::Builtin {
                 name: "noop".to_string(),
                 description: "No operation builtin".to_string(),
                 help: "Usage: noop".to_string(),
                 execute: Box::new(|_, _, _, _, _, _, _, _, _| ()),
             },
+            // exit
             crate::builtins::Builtin {
                 name: "exit".to_string(),
                 description: "Exit the turtle shell".to_string(),
@@ -253,6 +554,13 @@ impl Context {
         op: String,
         right: crate::expressions::Expressions,
     ) -> Option<crate::context::EvalResults> {
+        if self.debug {
+            println!(
+                "🔢 Evaluating binary operation: {:?} {} {:?}",
+                left, op, right
+            );
+        }
+
         // Recursively evaluate left and right, handling nested BinaryOperation
         let left_result = match left {
             crate::expressions::Expressions::BinaryOperation { left, op, right } => {
@@ -267,6 +575,13 @@ impl Context {
             }
             _ => self.eval(Some(right))?,
         };
+
+        if self.debug {
+            println!(
+                "🔢 Left result: {:?}, Right result: {:?}",
+                left_result, right_result
+            );
+        }
 
         match (left_result, right_result) {
             (
@@ -317,6 +632,32 @@ impl Context {
         name: String,
         value: crate::expressions::Expressions,
     ) -> Option<crate::context::EvalResults> {
+        // Check if the variable name conflicts with a builtin
+        if let Some(ref builtins) = self.builtins {
+            if builtins.list().contains(&name) {
+                let warning = format!(
+                    "Warning: Variable '{}' shadows builtin command. Use a different name.",
+                    name
+                );
+                eprintln!("{}", warning);
+                return Some(crate::context::EvalResults::StringExpressionResult(
+                    crate::context::StringEvalResult { value: warning },
+                ));
+            }
+        }
+
+        // Check if the variable name conflicts with a shell command
+        if crate::utils::is_command(&name) {
+            let warning = format!(
+                "Warning: Variable '{}' shadows shell command. Use a different name.",
+                name
+            );
+            eprintln!("{}", warning);
+            return Some(crate::context::EvalResults::StringExpressionResult(
+                crate::context::StringEvalResult { value: warning },
+            ));
+        }
+
         let _evaluated_value = self.eval(Some(value.clone()))?;
 
         // Store the variable in the context
@@ -449,10 +790,20 @@ impl Context {
             // event: "command_request".to_string(),
         };
 
-        self.history
-            .lock()
-            .unwrap()
-            .push(crate::history::Event::CommandRequest(command_request));
+        let mut gaurd = self.history.lock().unwrap();
+
+        let events = gaurd.events.as_mut();
+
+        if let Some(events) = events {
+            events.push(crate::history::Event::CommandRequest(command_request));
+        }
+
+        // self.history
+        //     .lock()
+        //     .unwrap()
+        //     .events
+        //     .as_mut()
+        //     .push(crate::history::Event::CommandRequest(command_request));
 
         let mut child = Command::new(command)
             .args(&args_vec)
@@ -487,10 +838,17 @@ impl Context {
             timestamp: crate::utils::now_unix(),
         };
 
-        self.history
-            .lock()
-            .unwrap()
-            .push(crate::history::Event::CommandResponse(command_response));
+        let mut gaurd = self.history.lock().unwrap();
+        if let Some(event) = gaurd.events.as_mut() {
+            event.push(crate::history::Event::CommandResponse(command_response));
+        }
+
+        // self.history
+        //     .lock()
+        //     .unwrap()
+        //     .events
+        //     .unwrap()
+        //     .push(crate::history::Event::CommandResponse(command_response));
 
         Some(crate::context::EvalResults::CommandExpressionResult(
             crate::context::CommandEvalResult {
@@ -516,23 +874,28 @@ impl Context {
             command: command.to_string(),
             args: args_vec.iter().map(|s| s.to_string()).collect(),
             timestamp: crate::utils::now_unix(),
-            // event: "command_request".to_string(),
         };
 
-        self.history
-            .lock()
-            .unwrap()
-            .push(crate::history::Event::CommandRequest(command_request));
+        // if let Some(history) = self.history.lock().unwrap() {
+        //     history.add(crate::history::Event::CommandRequest(command_request));
+        // }
+
+        if let Some(gaurd) = self.history.lock().ok() {
+            let mut history = gaurd;
+
+            history.add(crate::history::Event::CommandRequest(
+                command_request.clone(),
+            ));
+        }
+
+        // if let Some(events) = self.history.lock().unwrap().events.as_mut() {
+        //     events.push(crate::history::Event::CommandRequest(command_request));
+        // }
 
         let exec_result = Command::new(command)
             .args(&args_vec)
             .stdin(std::process::Stdio::inherit())
             .output();
-
-        // let spawn_result = Command::new(command)
-        //     .args(&args_vec)
-        //     .stdin(std::process::Stdio::inherit())
-        //     .spawn();
 
         match exec_result {
             Ok(output) => {
@@ -552,10 +915,20 @@ impl Context {
                     errors: stderr.to_string(),
                     timestamp: crate::utils::now_unix(),
                 };
+
+                // self.history.add
+                // append to history
                 self.history
                     .lock()
                     .unwrap()
+                    .events
+                    .as_mut()
+                    .unwrap()
                     .push(crate::history::Event::CommandResponse(command_response));
+
+                // write to history
+
+                // returns the command result
                 Some(crate::context::EvalResults::CommandExpressionResult(result))
             }
             Err(e) => {
@@ -573,7 +946,7 @@ impl Context {
         vars: std::sync::Arc<
             std::sync::Mutex<std::collections::HashMap<String, crate::expressions::Expressions>>,
         >,
-        history: std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>,
+        history: std::sync::Arc<std::sync::Mutex<crate::history::History>>,
         debug: bool,
     ) -> Self {
         if debug {
@@ -602,6 +975,8 @@ impl Context {
             self.code.push(e.clone());
         }
         match expr {
+            // check if the expression is an Identifier and the identifier exists in vars
+
             // handle literal values
             Some(crate::expressions::Expressions::Assignment { name, value }) => {
                 self.eval_assignment(name, value.as_ref().clone())
@@ -649,6 +1024,10 @@ impl Context {
                             crate::context::EvalResults::BooleanExpressionResult(b) => {
                                 Some(crate::expressions::Expressions::Boolean(b.value))
                             }
+                            // // allow objects
+                            // crate::context::EvalResults::ObjectExpressionResult(o) => {
+                            //     Some(crate::expressions::Expressions::Object(o.value))
+                            // }
                             _ => None,
                         })
                     })
@@ -659,6 +1038,50 @@ impl Context {
                         value: evaluated_values,
                     },
                 ))
+            }
+
+            Some(crate::expressions::Expressions::Identifier(name)) => {
+                // Check if it's a variable in the vars store
+                let var_value = {
+                    let vars = self.vars.lock().unwrap();
+                    if self.debug {
+                        println!("🔍 Looking up variable '{}' in vars", name);
+                        println!("🔍 Current vars: {:?}", vars);
+                    }
+                    vars.get(&name).cloned()
+                };
+
+                if let Some(var_value) = var_value {
+                    // Return the variable's value by evaluating it
+                    if self.debug {
+                        println!("🛠️ Variable '{}' found with value: {:?}", name, var_value);
+                    }
+                    let result = self.eval(Some(var_value.clone()));
+                    if self.debug {
+                        println!("🛠️ Variable '{}' evaluated to: {:?}", name, result);
+                    }
+                    result
+                } else {
+                    // Variable not found - return an error message instead of None
+                    eprintln!("Error: Variable '{}' not defined", name);
+                    Some(crate::context::EvalResults::StringExpressionResult(
+                        crate::context::StringEvalResult {
+                            value: format!("Error: Variable '{}' not defined", name),
+                        },
+                    ))
+                }
+
+                // let vars = self.vars.lock().unwrap();
+
+                // if let Some(var_value) = vars.get(&name) {
+                //     // Return the variable's value by evaluating it
+                //     drop(vars); // Release the lock before recursive eval
+                //     self.eval(Some(var_value.clone()))
+                // } else {
+                //     // Variable not found
+                //     eprintln!("Error: Variable '{}' not defined", name);
+                //     None
+                // }
             }
 
             Some(crate::expressions::Expressions::EnvironmentVariable { name }) => {

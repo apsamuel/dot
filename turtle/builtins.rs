@@ -18,7 +18,8 @@ pub struct Builtin {
                         std::collections::HashMap<String, crate::expressions::Expressions>,
                     >,
                 >, // vars
-                std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>, // history TODO: replace this with history manager (Just pass History  reference)
+                // std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>, // history TODO: replace this with history manager (Just pass History  reference)
+                std::sync::Arc<std::sync::Mutex<crate::history::History>>, // history manager
                 Vec<String>, // available builtin names
                 Vec<String>, // args
                 // TODO: consider passing context back into builtins instead of individual components
@@ -111,7 +112,7 @@ impl Builtins {
         turtle_args: std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>,
         env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
-        history: std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>,
+        history: std::sync::Arc<std::sync::Mutex<crate::history::History>>,
         builtin_names: Vec<String>,
         args: Vec<String>,
     ) {

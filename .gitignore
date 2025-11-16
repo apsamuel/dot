@@ -177,3 +177,7 @@ turtle/debug/
 # Flycheck temp files
 test/flycheck*/stderr
 test/flycheck*/stdout
+
+# Added by cargo
+
+/target
