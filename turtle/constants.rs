@@ -1,1 +1,1 @@
-pub static VERSION: &str = "0.1.0";
+pub static VERSION: &str = git_version::git_version!();
