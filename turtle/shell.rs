@@ -204,6 +204,7 @@ impl Shell {
         }
 
         let interpreter = crate::lang::Interpreter::new(
+            args.clone(),
             env.clone(),
             aliases.clone(),
             vars.clone(),
