@@ -9,10 +9,10 @@ pub struct History {
 }
 
 impl History {
+    /// create a new History instance
     pub fn new(path: Option<String>, interval: Option<u64>, debug: bool) -> Self {
         if let Some(p) = &path {
             let expanded_path = crate::utils::expand_path(p);
-            // Self::load(debug, Some(expanded_path.clone()), interval);
             return History {
                 debug,
                 path: Some(expanded_path),
@@ -92,7 +92,7 @@ impl History {
                 std::thread::sleep(duration);
                 let mut file = std::fs::OpenOptions::new()
                     .create(true)
-                    // .append(true)
+                    .append(true)
                     .open(&path)
                     .unwrap();
                 for event in &events {
@@ -124,7 +124,10 @@ impl History {
         }
     }
 
-    /// start periodic flushing of history to file
+    /// starts history
+    ///
+    /// - if interval is set, starts periodic flushing
+    ///
     pub fn start(&mut self) {
         self.setup();
         if let Some(interval) = self.interval {
