@@ -7,6 +7,7 @@
 /// **SPDX-License-Identifier**: MIT
 ///
 /// See LICENSE for details.
+///
 
 /// Turtle language keywords
 pub static KEYWORDS: &[&str] = &[
@@ -131,8 +132,22 @@ impl AbstractSyntaxTree {
         if let crate::tokens::Token::Operator(op) = self.peek() {
             if op == "-" || op == "!" || op == "~" {
                 let op = op.clone();
+                if self.debug {
+                    println!(
+                        "🔧 parse_unary: after consuming op, pos={}, token={:?}",
+                        self.pos,
+                        self.peek()
+                    );
+                }
                 self.next(); // consume operator
                 self.skip_whitespace();
+                if self.debug {
+                    println!(
+                        "🔧 parse_unary: after skip_whitespace, pos={}, token={:?}",
+                        self.pos,
+                        self.peek()
+                    );
+                }
                 if let Some(expr) = self.parse_expr() {
                     return Some(crate::expressions::Expressions::UnaryOperation {
                         op,
@@ -978,9 +993,34 @@ impl AbstractSyntaxTree {
             break;
         }
 
+        if self.debug {
+            println!(
+                "🔍 Before unary check - expr: {:?}, current token: {:?}",
+                expr,
+                self.peek()
+            );
+        }
+        // parse unary operations
+        if expr.is_none() {
+            if self.debug {
+                println!("🔍 Expr is None, attempting to parse unary operation");
+            }
+        } else {
+            if self.debug {
+                println!(
+                    "🔍 Expr is Some({:?}), skipping unary operation parsing",
+                    expr
+                );
+            }
+        }
         if let Some(unary) = self.parse_unary() {
+            println!("🔍 Parsed unary operation: {:?}", unary);
             return Some(unary);
         }
+        // if expr.is_none() {}
+
+        // skip whitespace before checking for binary operations
+        self.skip_whitespace();
 
         // parse binary operations (chained)
         while let Some(crate::tokens::Token::Operator(_)) = self.peek().clone().into() {
@@ -1000,6 +1040,7 @@ impl AbstractSyntaxTree {
 #[derive(Debug, Clone)]
 pub struct Interpreter {
     debug: bool,
+    args: Option<std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>>,
     env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     vars: std::sync::Arc<
@@ -1013,6 +1054,7 @@ pub struct Interpreter {
 impl Interpreter {
     /// initialize the interpreter
     pub fn new(
+        args: Option<std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>>,
         env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         vars: std::sync::Arc<
@@ -1025,6 +1067,7 @@ impl Interpreter {
             println!("🚛 initializing Interpreter");
         }
         Interpreter {
+            args,
             env,
             aliases,
             vars,
