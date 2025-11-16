@@ -111,8 +111,27 @@ mod tests {
         let aliases = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let builtins: Vec<String> = vec![];
+        let args = std::sync::Arc::new(std::sync::Mutex::new(crate::config::Arguments {
+            version: false,
+            debug: false,
+            debug_expressions: false,
+            debug_tokenization: false,
+            available_themes: false,
+            command: None,
+            format: None,
+            config_path: None,
+            history_path: None,
+            display_defaults: false,
+            display_config: false,
+            display_env: false,
+            display_prompt: false,
+            skip_aliases: false,
+            skip_history: false,
+            watch_config: false,
+        }));
 
-        let mut interp = crate::lang::Interpreter::new(env, aliases, vars, builtins, false);
+        let mut interp =
+            crate::lang::Interpreter::new(Some(args.clone()), env, aliases, vars, builtins, false);
         let tokens = interp.tokenize_primitives("1+1");
 
         let expected = vec![
@@ -131,8 +150,30 @@ mod tests {
         let aliases = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let builtins: Vec<String> = vec![];
+        let args = std::sync::Arc::new(std::sync::Mutex::new(crate::config::Arguments {
+            // args: vec![],
+            version: false,
+            debug: false,
+            debug_expressions: false,
+            debug_tokenization: false,
+            available_themes: false,
+            command: None,
+            format: None,
+            config_path: None,
+            history_path: None,
+            display_defaults: false,
+            display_config: false,
+            display_env: false,
+            display_prompt: false,
+            skip_aliases: false,
+            skip_history: false,
+            watch_config: false,
+            // interactive: false,
+            // script: None,
+        }));
 
-        let mut interp = crate::lang::Interpreter::new(env, aliases, vars, builtins, false);
+        let mut interp =
+            crate::lang::Interpreter::new(Some(args.clone()), env, aliases, vars, builtins, false);
         let tokens = interp.tokenize_primitives("1 + 1");
 
         let expected = vec![
@@ -153,8 +194,30 @@ mod tests {
         let aliases = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let builtins: Vec<String> = vec![];
+        let args = std::sync::Arc::new(std::sync::Mutex::new(crate::config::Arguments {
+            // args: vec![],
+            version: false,
+            debug: false,
+            debug_expressions: false,
+            debug_tokenization: false,
+            available_themes: false,
+            command: None,
+            format: None,
+            config_path: None,
+            history_path: None,
+            display_defaults: false,
+            display_config: false,
+            display_env: false,
+            display_prompt: false,
+            skip_aliases: false,
+            skip_history: false,
+            watch_config: false,
+            // interactive: false,
+            // script: None,
+        }));
 
-        let mut interp = crate::lang::Interpreter::new(env, aliases, vars, builtins, false);
+        let mut interp =
+            crate::lang::Interpreter::new(Some(args.clone()), env, aliases, vars, builtins, false);
         let tokens = interp.tokenize_primitives(r#""hello " + "world""#);
         let expected = vec![
             Token::String("hello ".to_string()),
@@ -174,8 +237,30 @@ mod tests {
         let aliases = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let builtins: Vec<String> = vec![];
+        let args = std::sync::Arc::new(std::sync::Mutex::new(crate::config::Arguments {
+            // args: vec![],
+            version: false,
+            debug: false,
+            debug_expressions: false,
+            debug_tokenization: false,
+            available_themes: false,
+            command: None,
+            format: None,
+            config_path: None,
+            history_path: None,
+            display_defaults: false,
+            display_config: false,
+            display_env: false,
+            display_prompt: false,
+            skip_aliases: false,
+            skip_history: false,
+            watch_config: false,
+            // interactive: false,
+            // script: None,
+        }));
 
-        let mut interp = crate::lang::Interpreter::new(env, aliases, vars, builtins, false);
+        let mut interp =
+            crate::lang::Interpreter::new(Some(args.clone()), env, aliases, vars, builtins, false);
         let tokens = interp.tokenize_primitives("True && False");
         let expected = vec![
             Token::Keyword("True".to_string()),
@@ -188,9 +273,4 @@ mod tests {
 
         assert_eq!(tokens, expected);
     }
-
-    // #[test]
-    // fn tokenize_mixed_expression() {
-
-    // }
 }
