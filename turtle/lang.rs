@@ -183,6 +183,7 @@ impl AbstractSyntaxTree {
         mut left: crate::expressions::Expressions,
     ) -> crate::expressions::Expressions {
         loop {
+            self.skip_whitespace(); // skip spaces before operator
             let op = match self.peek() {
                 crate::tokens::Token::Operator(op) => op.clone(),
                 _ => break,
@@ -192,11 +193,13 @@ impl AbstractSyntaxTree {
                 break;
             }
             self.next(); // consume operator
+            self.skip_whitespace(); // skip any spaces after the operator
 
             // Parse the right-hand side with higher precedence
             let mut right = self
                 .parse_primary()
                 .unwrap_or(crate::expressions::Expressions::Number(0.0));
+            self.skip_whitespace(); // skip spaces before checking for next operator
             while let crate::tokens::Token::Operator(next_op) = self.peek() {
                 let next_prec = self.get_operator_precedence(next_op);
                 if next_prec > prec {
@@ -367,6 +370,7 @@ impl AbstractSyntaxTree {
     fn parse_literal_array(&mut self) -> Option<crate::expressions::Expressions> {
         if let crate::tokens::Token::BracketOpen = self.peek() {
             self.next(); // consume '['
+            self.skip_whitespace(); // skip whitespace after opening bracket
             let mut elements = Vec::new();
             while !matches!(
                 self.peek(),
@@ -376,8 +380,10 @@ impl AbstractSyntaxTree {
                     elements.push(expr);
                 }
 
+                self.skip_whitespace(); // skip whitespace before comma or closing bracket
                 if let crate::tokens::Token::Comma = self.peek() {
                     self.next(); // consume ','
+                    self.skip_whitespace(); // skip whitespace after comma
                 } else {
                     break;
                 }
@@ -393,13 +399,135 @@ impl AbstractSyntaxTree {
         None
     }
 
-    // fn parse_new_array(&mut self) -> Option<crate::expressions::Expressions> {
-    //     //
-    //     if let crate::tokens::Token::Keyword("new") = self.peek() {
-    //         self.next(); // consume 'new'
-    //         self.skip_whitespace();
-    //     }
-    // }
+    /// parse new array constructor
+    /// ```
+    /// new Array()
+    /// new Array([1, 2, 3])
+    /// ```
+    fn parse_new_array(&mut self) -> Option<crate::expressions::Expressions> {
+        // Save position for backtracking
+        let start_pos = self.pos;
+
+        // Check for 'New' keyword
+        if let crate::tokens::Token::Keyword(k) = self.peek() {
+            if k != "New" {
+                return None;
+            }
+            self.next(); // consume 'New'
+            self.skip_whitespace();
+
+            // Check for 'Array' identifier
+            if let crate::tokens::Token::Identifier(name) = self.peek() {
+                if name != "Array" {
+                    self.pos = start_pos; // restore position
+                    return None;
+                }
+                self.next(); // consume 'Array'
+                self.skip_whitespace();
+
+                // Check for '('
+                if let crate::tokens::Token::ParenOpen = self.peek() {
+                    self.next(); // consume '('
+                    self.skip_whitespace();
+
+                    // Check for optional array literal argument
+                    if let crate::tokens::Token::BracketOpen = self.peek() {
+                        // Parse the array literal
+                        let array_expr = self.parse_literal_array()?;
+                        self.skip_whitespace();
+
+                        // Check for ')'
+                        if let crate::tokens::Token::ParenClose = self.peek() {
+                            self.next(); // consume ')'
+                            return Some(array_expr);
+                        } else {
+                            self.pos = start_pos; // restore position
+                            return None;
+                        }
+                    } else if let crate::tokens::Token::ParenClose = self.peek() {
+                        // Empty constructor: new Array()
+                        self.next(); // consume ')'
+                        return Some(crate::expressions::Expressions::Array(Vec::new()));
+                    } else {
+                        self.pos = start_pos; // restore position
+                        return None;
+                    }
+                } else {
+                    self.pos = start_pos; // restore position
+                    return None;
+                }
+            } else {
+                self.pos = start_pos; // restore position
+                return None;
+            }
+        }
+        None
+    }
+
+    /// parse new object constructor
+    /// ```
+    /// new Object()
+    /// new Object({foo: 1, bar: 2})
+    /// ```
+    fn parse_new_object(&mut self) -> Option<crate::expressions::Expressions> {
+        // Save position for backtracking
+        let start_pos = self.pos;
+
+        // Check for 'New' keyword
+        if let crate::tokens::Token::Keyword(k) = self.peek() {
+            if k != "New" {
+                return None;
+            }
+            self.next(); // consume 'New'
+            self.skip_whitespace();
+
+            // Check for 'Object' identifier
+            if let crate::tokens::Token::Identifier(name) = self.peek() {
+                if name != "Object" {
+                    self.pos = start_pos; // restore position
+                    return None;
+                }
+                self.next(); // consume 'Object'
+                self.skip_whitespace();
+
+                // Check for '('
+                if let crate::tokens::Token::ParenOpen = self.peek() {
+                    self.next(); // consume '('
+                    self.skip_whitespace();
+
+                    // Check for optional object literal argument
+                    if let crate::tokens::Token::BraceOpen = self.peek() {
+                        // Parse the object literal
+                        let object_expr = self.parse_object()?;
+                        self.skip_whitespace();
+
+                        // Check for ')'
+                        if let crate::tokens::Token::ParenClose = self.peek() {
+                            self.next(); // consume ')'
+                            return Some(object_expr);
+                        } else {
+                            self.pos = start_pos; // restore position
+                            return None;
+                        }
+                    } else if let crate::tokens::Token::ParenClose = self.peek() {
+                        // Empty constructor: new Object()
+                        self.next(); // consume ')'
+                        return Some(crate::expressions::Expressions::Object(Vec::new()));
+                    } else {
+                        self.pos = start_pos; // restore position
+                        return None;
+                    }
+                } else {
+                    self.pos = start_pos; // restore position
+                    return None;
+                }
+            } else {
+                self.pos = start_pos; // restore position
+                return None;
+            }
+        }
+        None
+    }
 
     /// parse objects
     /// ```
@@ -411,6 +539,7 @@ impl AbstractSyntaxTree {
     fn parse_object(&mut self) -> Option<crate::expressions::Expressions> {
         if let crate::tokens::Token::BraceOpen = self.peek() {
             self.next(); // consume '{'
+            self.skip_whitespace(); // skip whitespace after opening brace
             let mut properties = Vec::new();
             while !matches!(
                 self.peek(),
@@ -424,8 +553,10 @@ impl AbstractSyntaxTree {
                     return None; // expected identifier key
                 };
 
+                self.skip_whitespace(); // skip whitespace before colon
                 if let crate::tokens::Token::Colon = self.peek() {
                     self.next(); // consume ':'
+                    self.skip_whitespace(); // skip whitespace after colon
                     if let Some(value) = self.parse_expr() {
                         properties.push((key, value));
                     } else {
@@ -435,8 +566,10 @@ impl AbstractSyntaxTree {
                     return None; // expected ':'
                 }
 
+                self.skip_whitespace(); // skip whitespace before comma or closing brace
                 if let crate::tokens::Token::Comma = self.peek() {
                     self.next(); // consume ','
+                    self.skip_whitespace(); // skip whitespace after comma
                 } else {
                     break;
                 }
@@ -495,6 +628,7 @@ impl AbstractSyntaxTree {
 
         // handle assignments without the let keyword
         if let crate::tokens::Token::Identifier(name) = self.peek() {
+            let start_pos = self.pos; // Save position for backtracking
             let name = name.clone();
             self.next(); // consume identifier
             self.skip_whitespace();
@@ -512,8 +646,13 @@ impl AbstractSyntaxTree {
                         return None; // expected value expression
                     }
                 } else {
+                    // Not an assignment operator, restore position
+                    self.pos = start_pos;
                     return None;
                 }
+            } else {
+                // No operator after identifier, restore position
+                self.pos = start_pos;
             }
         }
 
@@ -526,27 +665,38 @@ impl AbstractSyntaxTree {
 
     /// parse variable access
     ///
-    fn parse_variable(&mut self) -> Option<crate::expressions::Expressions> {
-        if let crate::tokens::Token::Identifier(name) = self.peek() {
-            let name = name.clone();
-            let vars = self.vars.lock().unwrap();
-            if let Some(var) = vars.get(&name) {
-                return Some(crate::expressions::Expressions::TurtleVariable {
-                    name: name.clone(),
-                    value: Box::new(var.clone()),
-                });
-            } else {
-                return None;
-            }
-        }
-        None
-    }
+    // fn parse_variable(&mut self) -> Option<crate::expressions::Expressions> {
+    //     if let crate::tokens::Token::Identifier(name) = self.peek() {
+    //         let name = name.clone();
+    //         let vars = self.vars.lock().unwrap();
+    //         if let Some(var) = vars.get(&name) {
+    //             self.eval(var.clone());
+    //             // return Some(crate::expressions::Expressions::TurtleVariable {
+    //             //     name: name.clone(),
+    //             //     value: Box::new(var.clone()),
+    //             // });
+    //         } else {
+    //             return None;
+    //         }
+    //     }
+    //     None
+    // }
     /// parse primitive expressions
     ///
     /// 1
     /// "hello"
     /// [1, 2, 3]
     fn parse_primary(&mut self) -> Option<crate::expressions::Expressions> {
+        // Check for Array.new() constructor syntax first
+        if let Some(array_expr) = self.parse_new_array() {
+            return Some(array_expr);
+        }
+
+        // Check for Object.new() constructor syntax
+        if let Some(object_expr) = self.parse_new_object() {
+            return Some(object_expr);
+        }
+
         // Parse the initial literal, identifier, array, or object
         let mut expr = match self.peek() {
             // literals
@@ -554,7 +704,9 @@ impl AbstractSyntaxTree {
             | crate::tokens::Token::String(_)
             | crate::tokens::Token::Boolean(_) => self.parse_literal(),
             // arrays & objects
+            // crate::tokens::Token::ShellDot => self.parse_new_array(),
             crate::tokens::Token::BracketOpen => self.parse_literal_array(),
+            // adds parsing
             crate::tokens::Token::BraceOpen => self.parse_object(),
             // identifiers
             crate::tokens::Token::Identifier(name) => {
@@ -608,10 +760,16 @@ impl AbstractSyntaxTree {
             self.next(); // consume builtin identifier
 
             let mut args = String::new();
+            if self.debug {
+                println!("parse_builtin: collecting args for builtin '{}'", cmd);
+            }
             while !matches!(
                 self.peek(),
                 crate::tokens::Token::Eof | crate::tokens::Token::Semicolon
             ) {
+                if self.debug {
+                    println!("parse_builtin: current token: {:?}", self.peek());
+                }
                 match self.peek() {
                     crate::tokens::Token::Space
                     | crate::tokens::Token::Tab
@@ -635,6 +793,30 @@ impl AbstractSyntaxTree {
                         args.push_str(op);
                         self.next(); // consume operator
                     }
+                    crate::tokens::Token::BracketOpen => {
+                        args.push('[');
+                        self.next(); // consume bracket
+                    }
+                    crate::tokens::Token::BracketClose => {
+                        args.push(']');
+                        self.next(); // consume bracket
+                    }
+                    crate::tokens::Token::BraceOpen => {
+                        args.push('{');
+                        self.next(); // consume brace
+                    }
+                    crate::tokens::Token::BraceClose => {
+                        args.push('}');
+                        self.next(); // consume brace
+                    }
+                    crate::tokens::Token::Comma => {
+                        args.push(',');
+                        self.next(); // consume comma
+                    }
+                    crate::tokens::Token::Colon => {
+                        args.push(':');
+                        self.next(); // consume colon
+                    }
                     _ => {
                         self.next(); // consume unknown token
                     }
@@ -643,6 +825,9 @@ impl AbstractSyntaxTree {
 
             if let crate::tokens::Token::Semicolon = self.peek() {
                 self.next(); // consume ';'
+            }
+            if self.debug {
+                println!("parse_builtin: final args string: '{}'", args);
             }
             return Some(crate::expressions::Expressions::Builtin {
                 name: cmd,
@@ -765,15 +950,15 @@ impl AbstractSyntaxTree {
             return Some(assignment);
         }
 
-        // parse variable access - experimental
-        if let Some(var_expr) = self.parse_variable() {
-            return Some(var_expr);
-        }
+        // // parse variable access - experimental
+        // if let Some(var_expr) = self.parse_variable() {
+        //     return Some(var_expr);
+        // }
 
         // parse environment variables
-        if let Some(env_var) = self.parse_environment_variable() {
-            return Some(env_var);
-        }
+        // if let Some(env_var) = self.parse_environment_variable() {
+        //     return Some(env_var);
+        // }
 
         let mut expr = self.parse_primary();
 
@@ -852,6 +1037,9 @@ impl Interpreter {
 
     /// tokenize primitive tokens from input string, e.g., identifiers, numbers, strings, operators
     pub fn tokenize_primitives(&mut self, input: &str) -> Vec<crate::tokens::Token> {
+        if self.debug {
+            println!("tokenize_primitives input: {:?}", input);
+        }
         let mut tokens = Vec::new();
         let mut chars = input.chars().peekable();
         while let Some(&c) = chars.peek() {
@@ -998,7 +1186,6 @@ impl Interpreter {
                 _ if c.is_alphanumeric() || c == '_' || c == '.' => {
                     let mut identifier = String::new();
                     while let Some(&d) = chars.peek() {
-                        println!("char in identifier: {}", d);
                         if d.is_alphanumeric() || d == '_' || d == '.' {
                             identifier.push(d);
                             chars.next();
@@ -1041,6 +1228,9 @@ impl Interpreter {
         }
 
         tokens.push(crate::tokens::Token::Eof);
+        if self.debug {
+            println!("tokenize_primitives output: {:?}", tokens);
+        }
         tokens
     }
 
@@ -1345,8 +1535,19 @@ impl Interpreter {
 
     /// Tokenization pipeline
     pub fn tokenize(&mut self, input: &str) -> Vec<crate::tokens::Token> {
+        if self.debug {
+            println!("=== TOKENIZE PIPELINE START ===");
+            println!("Input: {:?}", input);
+        }
         let tokens = Self::tokenize_primitives(self, input);
+        if self.debug {
+            println!("After tokenize_primitives: {:?}", tokens);
+        }
         let tokens: Vec<crate::tokens::Token> = Self::tokenize_builtin_functions(self, tokens);
+        if self.debug {
+            println!("After tokenize_builtin_functions: {:?}", tokens);
+            println!("=== TOKENIZE PIPELINE END ===");
+        }
         self.tokens = tokens.clone();
         self.counter += 1;
         tokens

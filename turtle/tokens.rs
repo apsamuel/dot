@@ -100,3 +100,97 @@ pub enum Token {
     Semicolon,                  // ;
     Eof,                        // end of file/input
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tokenize_primitives_no_spaces() {
+        let env = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let aliases = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let builtins: Vec<String> = vec![];
+
+        let mut interp = crate::lang::Interpreter::new(env, aliases, vars, builtins, false);
+        let tokens = interp.tokenize_primitives("1+1");
+
+        let expected = vec![
+            Token::Number(1.0),
+            Token::Operator("+".to_string()),
+            Token::Number(1.0),
+            Token::Eof,
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn tokenize_primitives_with_spaces() {
+        let env = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let aliases = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let builtins: Vec<String> = vec![];
+
+        let mut interp = crate::lang::Interpreter::new(env, aliases, vars, builtins, false);
+        let tokens = interp.tokenize_primitives("1 + 1");
+
+        let expected = vec![
+            Token::Number(1.0),
+            Token::Space,
+            Token::Operator("+".to_string()),
+            Token::Space,
+            Token::Number(1.0),
+            Token::Eof,
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn tokenize_string_literals() {
+        let env = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let aliases = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let builtins: Vec<String> = vec![];
+
+        let mut interp = crate::lang::Interpreter::new(env, aliases, vars, builtins, false);
+        let tokens = interp.tokenize_primitives(r#""hello " + "world""#);
+        let expected = vec![
+            Token::String("hello ".to_string()),
+            Token::Space,
+            Token::Operator("+".to_string()),
+            Token::Space,
+            Token::String("world".to_string()),
+            Token::Eof,
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    #[test]
+    fn tokenize_boolean_literals() {
+        let env = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let aliases = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+        let builtins: Vec<String> = vec![];
+
+        let mut interp = crate::lang::Interpreter::new(env, aliases, vars, builtins, false);
+        let tokens = interp.tokenize_primitives("True && False");
+        let expected = vec![
+            Token::Keyword("True".to_string()),
+            Token::Space,
+            Token::Operator("&&".to_string()),
+            Token::Space,
+            Token::Keyword("False".to_string()),
+            Token::Eof,
+        ];
+
+        assert_eq!(tokens, expected);
+    }
+
+    // #[test]
+    // fn tokenize_mixed_expression() {
+
+    // }
+}

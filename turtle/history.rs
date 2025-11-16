@@ -12,6 +12,7 @@ impl History {
     pub fn new(path: Option<String>, interval: Option<u64>, debug: bool) -> Self {
         if let Some(p) = &path {
             let expanded_path = crate::utils::expand_path(p);
+            // Self::load(debug, Some(expanded_path.clone()), interval);
             return History {
                 debug,
                 path: Some(expanded_path),
@@ -80,13 +81,18 @@ impl History {
         let duration = std::time::Duration::from_secs(self.interval.unwrap_or(60));
         let path = self.path.clone().unwrap();
         let events = self.events.clone().unwrap_or(Vec::new());
+        let debug = self.debug;
 
         std::thread::spawn(move || {
             loop {
+                if debug {
+                    println!("Flushing history to file: {}", path);
+                }
+
                 std::thread::sleep(duration);
                 let mut file = std::fs::OpenOptions::new()
                     .create(true)
-                    .append(true)
+                    // .append(true)
                     .open(&path)
                     .unwrap();
                 for event in &events {

@@ -146,6 +146,7 @@ pub enum Layer {
     Activation(ActivationLayer),
     Conv(ConvLayer),
 }
+
 pub struct NeuralNetwork {
     layers: Vec<Layer>,
 }
