@@ -1,24 +1,72 @@
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+// use std::collections::HashMap;
+// use std::sync::{Arc, Mutex};
+
+fn setup_test_config() -> turtle::config::Config {
+    let mut config = turtle::config::Config::default();
+    config.debug = false;
+    config
+}
+
+fn setup_test_config_file() -> String {
+    let config_content = r#"
+        [defaults]
+        history_path = "~/.turtle_history_test"
+        prompt = "turtle-test> "
+    "#;
+
+    let config_path = std::env::temp_dir().join("turtle_test_config.toml");
+    std::fs::write(&config_path, config_content).expect("Failed to write test config file");
+
+    config_path.to_string_lossy().to_string()
+}
 
 /// Helper to set up a fresh interpreter and context for testing
 fn setup_test_env() -> (
     turtle::lang::Interpreter,
     turtle::context::Context,
-    Arc<Mutex<HashMap<String, turtle::expressions::Expressions>>>,
+    std::sync::Arc<
+        std::sync::Mutex<std::collections::HashMap<String, turtle::expressions::Expressions>>,
+    >,
 ) {
-    let env = Arc::new(Mutex::new(HashMap::new()));
-    let aliases = Arc::new(Mutex::new(HashMap::new()));
-    let vars = Arc::new(Mutex::new(HashMap::new()));
-    let history = Arc::new(Mutex::new(turtle::history::History {
+    let env = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+    let aliases = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+    let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
+    let args = std::sync::Arc::new(std::sync::Mutex::new(turtle::config::Arguments {
+        // args: vec![],
+        version: false,
+        debug: false,
+        debug_expressions: false,
+        debug_tokenization: false,
+        available_themes: false,
+        command: None,
+        format: None,
+        config_path: None,
+        history_path: None,
+        display_defaults: false,
+        display_config: false,
+        display_env: false,
+        display_prompt: false,
+        skip_aliases: false,
+        skip_history: false,
+        watch_config: false,
+        // interactive: false,
+        // script: None,
+    }));
+    let history = std::sync::Arc::new(std::sync::Mutex::new(turtle::history::History {
         interval: None,
         path: None,
         debug: false,
         events: Some(vec![]),
     }));
 
-    let interpreter =
-        turtle::lang::Interpreter::new(env.clone(), aliases.clone(), vars.clone(), vec![], false);
+    let interpreter = turtle::lang::Interpreter::new(
+        Some(args.clone()),
+        env.clone(),
+        aliases.clone(),
+        vars.clone(),
+        vec![],
+        false,
+    );
 
     let mut context = turtle::context::Context::new(
         None,
