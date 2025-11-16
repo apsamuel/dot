@@ -1,23 +1,30 @@
-use clap::Parser;
 use notify::Watcher;
 use serde::{Deserialize, Serialize};
 
-/// interval for worker threads
+/// default interval for worker threads
 pub const DEFAULT_INTERVAL_SECS: u64 = 60;
+
 /// default prompt template
 pub const DEFAULT_PROMPT: &str = "<+ 🐢 +> ";
+
 /// default continuation prompt template
 pub const DEFAULT_CONTINUATION_PROMPT: &str = "⏭️ ";
+
 /// default format
 pub const DEFAULT_FORMAT: &str = "table";
+
 /// default error prompt template
 pub const DEFAULT_ERROR_PROMPT: &str = "<<< ❌❌❌ >>>";
+
 /// default history size
 pub const DEFAULT_HISTORY_SIZE: usize = 1000;
+
 /// default theme
 pub const DEFAULT_THEME: &str = "monokai";
+
 /// default debug
 pub const DEFAULT_DEBUG: bool = false;
+
 /// default config
 pub const DEFAULT_CONFIG: &str = r#"
 # Default Turtle configuration file
@@ -28,12 +35,13 @@ error_prompt: "<<< ❌❌❌ >>>"
 history_size: 1000
 theme: "monokai"
 "#;
+
 /// default history file
 pub const DEFAULT_HISTORY_FILE: &str = "~/.turtle_history.json";
 /// default config file
 pub const DEFAULT_CONFIG_FILE: &str = "~/.turtlerc.yaml";
 
-/// default environment variables
+/// default environment variables (WIP)
 pub static DEFAULT_ENVIRONMENT_CONFIG: once_cell::sync::Lazy<
     std::collections::HashMap<&'static str, &'static str>,
 > = once_cell::sync::Lazy::new(|| {
@@ -710,10 +718,12 @@ pub struct Arguments {
 
 impl Arguments {
     pub fn new() -> Self {
+        use clap::Parser;
         return Arguments::parse();
     }
 
     pub fn from() -> Self {
+        use clap::Parser;
         return Arguments::parse();
     }
 
