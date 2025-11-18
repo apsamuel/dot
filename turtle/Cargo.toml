@@ -1,7 +1,9 @@
 [package]
 name = "turtle"
+description = "Turtle is a command interpreter and interpreted language"
 version = "0.1.0"
 edition = "2024"
+readme = "README.md"
 
 [dependencies]
 chrono = "0.4.42"
