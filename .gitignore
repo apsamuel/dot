@@ -181,3 +181,5 @@ test/flycheck*/stdout
 # Added by cargo
 
 /target
+
+.zombie
