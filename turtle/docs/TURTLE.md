@@ -70,7 +70,7 @@ print(message);
 
 This script declares three variables, adds them together, and prints the result.
 
-## Built-in Functions
+## Builtin Functions
 
 Turtle includes a number of built-in functions that can be used in scripts. Here are some of the most commonly used built-in functions:
 
