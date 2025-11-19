@@ -1,0 +1,12 @@
+[submodule "vendor/fzf-git"]
+	path = vendor/fzf-git
+	url = git@github.com:junegunn/fzf-git.sh.git
+[submodule "vendor/bash-commons"]
+	path = vendor/bash-commons
+	url = git@github.com:gruntwork-io/bash-commons.git
+[submodule "vendor/tmux"]
+	path = vendor/tmux
+	url = git@github.com:apsamuel/.tmux.git
+[submodule "vendor/ohmyzsh"]
+	path = vendor/ohmyzsh
+	url = git@github.com:apsamuel/ohmyzsh.git
