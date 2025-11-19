@@ -1,3 +1,5 @@
+// use clap::builder::Str;
+
 /// Shell structure and implementation
 ///
 /// Copyright (c) 2025 Aaron P. Samuel
@@ -30,7 +32,7 @@ pub struct Shell {
     pub running: bool,
     // replace events with history manager
     history: std::sync::Arc<std::sync::Mutex<crate::history::History>>,
-    events: std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>,
+    // events: std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>,
     env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     tokens: Vec<Vec<crate::tokens::Token>>,
@@ -63,6 +65,20 @@ impl Shell {
                         if let Some(cfg) = &self.config {
                             let mut cfg_lock = cfg.lock().unwrap();
                             *cfg_lock = new_config;
+                        }
+                    }
+                    crate::config::ConfigSignal::Loaded(cfg) => {
+                        if self.debug {
+                            println!("✅ configuration file loaded");
+                        }
+                        if let Some(c) = &self.config {
+                            let mut c_lock = c.lock().unwrap();
+                            *c_lock = cfg;
+                        }
+                    }
+                    crate::config::ConfigSignal::Error(err_msg) => {
+                        if self.debug {
+                            println!("❌ configuration error: {}", err_msg);
                         }
                     }
                     _ => {
@@ -107,14 +123,16 @@ impl Shell {
         config.unwrap()
     }
 
+    /// Create a new Turtle shell instance
     pub fn new(args: crate::config::Arguments) -> Self {
         // capture user environment
         let user_environment =
             std::env::vars().collect::<std::collections::HashMap<String, String>>();
+
         // load defaults
         let defaults = crate::config::Defaults::default();
 
-        // capture command line args
+        // optional command line args
         let args = Some(args);
 
         let env_config = crate::config::Environment::new(args.as_ref().unwrap().clone());
@@ -138,13 +156,15 @@ impl Shell {
         // load config from file or use default config blob
         let config = Self::configure(args.as_ref().map(|a| a.clone()));
 
+        // send configuration signal
+
         let config = Some(std::sync::Arc::new(std::sync::Mutex::new(config)));
 
         let debug = args.as_ref().unwrap().debug
-            || config
-                .as_ref()
-                .map(|c| c.lock().unwrap().debug)
-                .unwrap_or(false)
+            // || config
+            //     .as_ref()
+            //     .map(|c| c.lock().unwrap().debug)
+            //     .unwrap_or(false)
             || defaults.debug;
 
         let mut _aliases_ = std::collections::HashMap::new();
@@ -183,8 +203,8 @@ impl Shell {
         let history = std::sync::Arc::new(std::sync::Mutex::new(history));
 
         // TODO: we need to pass history around and not the events
-        let events = history.lock().unwrap().load().unwrap();
-        let events = std::sync::Arc::new(std::sync::Mutex::new(events));
+        // let events = history.lock().unwrap().load().unwrap();
+        // let events = std::sync::Arc::new(std::sync::Mutex::new(events));
         let mut context = crate::context::Context::new(
             config.clone(),
             args.clone(),
@@ -235,7 +255,6 @@ impl Shell {
             args,
             thememanager,
             history,
-            events,
             env,
             aliases,
             interpreter,
@@ -262,7 +281,7 @@ impl Shell {
         self.history.lock().unwrap().start();
 
         self.pid = std::process::id().into();
-        self.running = true;
+        self.running = false;
         self.paused = false;
         let elapsed = start.elapsed();
         if self.debug {
@@ -437,17 +456,13 @@ impl Shell {
             let expr = self.interpreter.interpret();
             let result = self.context.eval(expr.clone());
             if let Some(res) = result {
-                // res.
                 if self.debug {
                     println!("result: {:?}", res);
                 }
-                // if result.
                 std::process::exit(0);
             }
-            // exit after executing the command from args
         }
 
-        // if self.con
         // main shell loop
         loop {
             // handle any config file change signals

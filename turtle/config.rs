@@ -36,11 +36,6 @@ history_size: 1000
 theme: "monokai"
 "#;
 
-/// default history file
-pub const DEFAULT_HISTORY_FILE: &str = "~/.turtle_history.json";
-/// default config file
-pub const DEFAULT_CONFIG_FILE: &str = "~/.turtlerc.yaml";
-
 /// default environment variables (WIP)
 pub static DEFAULT_ENVIRONMENT_CONFIG: once_cell::sync::Lazy<
     std::collections::HashMap<&'static str, &'static str>,
@@ -208,7 +203,7 @@ pub struct Config {
     /// `TURTLE_DEBUG=true`
     ///
     /// TODO: make this an Option<bool> to distinguish between unset and false
-    pub debug: bool,
+    // pub debug: bool,
     /// command prompt template
     ///
     ///
@@ -240,7 +235,6 @@ impl Default for Config {
     fn default() -> Self {
         let defaults = Defaults::default();
         Config {
-            debug: defaults.debug,
             prompt: Some(defaults.prompt),
             aliases: None,
             history_size: Some(defaults.history_size),
@@ -253,15 +247,15 @@ impl std::fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Config {{ debug: {}, prompt: {:?}, aliases: {:?}, history_size: {:?}, theme: {:?} }}",
-            self.debug, self.prompt, self.aliases, self.history_size, self.theme
+            "Config prompt: {:?}, aliases: {:?}, history_size: {:?}, theme: {:?} }}",
+            self.prompt, self.aliases, self.history_size, self.theme
         )
     }
 }
 
 impl Config {
     /// Return a list of fields in the Config struct
-    fn list_fields() -> Vec<String> {
+    fn fields() -> Vec<String> {
         let json = serde_json::to_value(Config::default()).unwrap_or_default();
         json.as_object()
             .unwrap()
@@ -286,26 +280,6 @@ impl Config {
         })
         // or else return the default config
         .or_else(|| Some(Config::default()))
-
-        // first lets try to parse as a string
-
-        // otherwise, lets read as a file path
-        // legacy code
-        // if let Ok(config) = serde_yaml::from_str::<Config>(yaml) {
-        //     return Some(config);
-        // }
-        // let expanded_path = if yaml.starts_with("~") {
-        //     if let Some(home) = dirs::home_dir() {
-        //         let without_tilde = yaml.trim_start_matches("~");
-        //         home.join(without_tilde).to_string_lossy().to_string()
-        //     } else {
-        //         yaml.to_string()
-        //     }
-        // } else {
-        //     yaml.to_string()
-        // };
-        // let contents = std::fs::read_to_string(expanded_path).ok()?;
-        // serde_yaml::from_str::<Config>(&contents).ok()
     }
 
     /// resolve configuration
@@ -335,17 +309,12 @@ impl Config {
 
         // we should iterate over the list of fields in the Config
 
-        for field in Config::list_fields() {
+        for field in Config::fields() {
             // if the field is provided in env.config, use is to override
             // TURTLE_<FIELD>
             let env_key = format!("TURTLE_{}", field.to_uppercase());
             if let Some(value) = env.get(&env_key) {
                 match field.as_str() {
-                    "debug" => {
-                        if let Ok(dbg) = value.parse::<bool>() {
-                            merged.debug = dbg;
-                        }
-                    }
                     "prompt" => {
                         merged.prompt = Some(value.clone());
                     }
@@ -392,14 +361,6 @@ impl Config {
                 }
                 _ => {}
             }
-
-            // finally, override with command line arguments where applicable
-            if let Some(arguments) = args {
-                // only debug is applicable for now
-                if field == "debug" && arguments.debug {
-                    merged.debug = true;
-                }
-            }
         }
 
         if let Some(prompt) = env.get("PROMPT") {
@@ -412,18 +373,6 @@ impl Config {
         }
         if let Some(theme) = env.get("THEME") {
             merged.theme = Some(theme.clone());
-        }
-        if let Some(debug) = env.get("DEBUG") {
-            if let Ok(dbg) = debug.parse::<bool>() {
-                merged.debug = dbg;
-            }
-        }
-
-        // override with command line arguments
-        if let Some(arguments) = args {
-            if arguments.debug {
-                merged.debug = true;
-            }
         }
 
         Some(merged)
@@ -470,7 +419,6 @@ impl Config {
         };
 
         if args.debug {
-            config.debug = true;
             println!("✅ loaded config file at {}", expanded_path);
         }
 
@@ -488,7 +436,6 @@ impl Config {
             }
         };
         if args.debug {
-            config.debug = true;
             println!("✅ loaded config from string content");
         }
         Some(config)
@@ -545,7 +492,6 @@ impl Config {
                                     }
                                 }
                             }
-                            // Config::new(&watch_path, args.clone());
                         }
                     }
                     Err(e) => println!("watch error: {:?}", e),
@@ -582,37 +528,17 @@ impl Config {
 
 #[derive(Debug, Clone)]
 pub enum ConfigSignal {
-    Updated(Config),
-    Error(String),
+    Loaded(Config),
     Reloaded(Config),
+    Error(String),
 }
-
-// impl From<String> for Config {
-//     fn from(yaml_content: String) -> Self {
-//         let args = crate::config::Arguments::new();
-//         Config::loads(&yaml_content, args).unwrap_or_default()
-//     }
-// }
-
-// impl From<&str> for Config {
-//     fn from(yaml_content: &str, args: &crate::config::Arguments) -> Self {
-//         Config::loads(yaml_content, args).unwrap_or_default()
-//     }
-// }
-
-// impl From<std::fs::File> for Config {
-//     fn from(file: std::fs::File) -> Self {
-//         let reader = std::io::BufReader::new(file);
-//         serde_yaml::from_reader(reader).unwrap_or_default()
-//     }
-// }
 
 /// resolved shell configuration
 ///
 /// used internally by the shell after merging config file, environment variables, and command line arguments
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ResolvedConfig {
-    pub debug: bool,
+    // pub debug: bool,
     pub prompt: String,
     pub aliases: std::collections::HashMap<String, String>,
     pub history_size: usize,
@@ -623,8 +549,8 @@ impl std::fmt::Display for ResolvedConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "ResolvedConfig {{ debug: {}, prompt: {}, aliases: {:?}, history_size: {}, theme: {} }}",
-            self.debug, self.prompt, self.aliases, self.history_size, self.theme
+            "ResolvedConfig {{ prompt: {}, aliases: {:?}, history_size: {}, theme: {} }}",
+            self.prompt, self.aliases, self.history_size, self.theme
         )
     }
 }
@@ -633,7 +559,6 @@ impl From<Config> for ResolvedConfig {
     fn from(config: Config) -> Self {
         let defaults = Defaults::default();
         ResolvedConfig {
-            debug: config.debug,
             prompt: config.prompt.unwrap_or(defaults.prompt),
             aliases: config.aliases.unwrap_or_default(),
             history_size: config.history_size.unwrap_or(defaults.history_size),
@@ -662,6 +587,10 @@ pub struct Arguments {
     /// enable debugging
     #[arg(long, help = "Enable Tokenization Debugging", default_value_t = false)]
     pub debug_tokenization: bool,
+
+    /// debug context
+    #[arg(long, help = "Enable Context Debugging", default_value_t = false)]
+    pub debug_context: bool,
 
     /// show version and exit
     #[arg(short, long, help = "Show Version and Exit", default_value_t = false)]
@@ -722,12 +651,36 @@ impl Arguments {
         return Arguments::parse();
     }
 
-    pub fn from() -> Self {
-        use clap::Parser;
-        return Arguments::parse();
+    pub fn as_mutex(&self) -> std::sync::Arc<std::sync::Mutex<Self>> {
+        std::sync::Arc::new(std::sync::Mutex::new(self.clone()))
+    }
+
+    pub fn is_debugging(&self) -> bool {
+        self.debug || self.debug_expressions || self.debug_tokenization
+    }
+
+    pub fn should_debug_tokens(&self) -> bool {
+        self.debug || self.debug_tokenization
+    }
+    pub fn should_debug_expressions(&self) -> bool {
+        self.debug || self.debug_expressions
+    }
+
+    pub fn should_debug_context(&self) -> bool {
+        self.debug || self.debug_context
     }
 
     pub fn validate(&self) -> bool {
         true
+    }
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_arguments_new() {
+        let args = Arguments::new();
+        assert!(args.validate());
     }
 }

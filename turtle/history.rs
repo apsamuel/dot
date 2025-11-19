@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct History {
     pub debug: bool,
+    // pub args:
     pub interval: Option<u64>,
     pub path: Option<String>,
     pub events: Option<Vec<Event>>,
@@ -173,12 +174,9 @@ pub struct CommandResponse {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "event")]
-
 /// history event types
 pub enum Event {
-    // #[serde(rename = "command_request")]
     CommandRequest(CommandRequest),
-    // #[serde(rename = "command_response")]
     CommandResponse(CommandResponse),
 }
 
