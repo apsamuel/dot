@@ -3,7 +3,6 @@
 
 fn setup_test_config() -> turtle::config::Config {
     let mut config = turtle::config::Config::default();
-    config.debug = false;
     config
 }
 
@@ -37,6 +36,7 @@ fn setup_test_env() -> (
         debug: false,
         debug_expressions: false,
         debug_tokenization: false,
+        debug_context: false,
         available_themes: false,
         command: None,
         format: None,

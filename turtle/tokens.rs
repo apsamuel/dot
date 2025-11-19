@@ -116,6 +116,7 @@ mod tests {
             debug: false,
             debug_expressions: false,
             debug_tokenization: false,
+            debug_context: false,
             available_themes: false,
             command: None,
             format: None,
@@ -156,6 +157,7 @@ mod tests {
             debug: false,
             debug_expressions: false,
             debug_tokenization: false,
+            debug_context: false,
             available_themes: false,
             command: None,
             format: None,
@@ -200,6 +202,7 @@ mod tests {
             debug: false,
             debug_expressions: false,
             debug_tokenization: false,
+            debug_context: false,
             available_themes: false,
             command: None,
             format: None,
@@ -238,11 +241,11 @@ mod tests {
         let vars = std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::new()));
         let builtins: Vec<String> = vec![];
         let args = std::sync::Arc::new(std::sync::Mutex::new(crate::config::Arguments {
-            // args: vec![],
             version: false,
             debug: false,
             debug_expressions: false,
             debug_tokenization: false,
+            debug_context: false,
             available_themes: false,
             command: None,
             format: None,
@@ -255,8 +258,6 @@ mod tests {
             skip_aliases: false,
             skip_history: false,
             watch_config: false,
-            // interactive: false,
-            // script: None,
         }));
 
         let mut interp =

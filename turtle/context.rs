@@ -130,7 +130,7 @@ fn format_string(s: &str, spec: &str) -> String {
     s.to_string()
 }
 
-/// Evaluate the execution context
+/// context
 pub struct Context {
     pub debug: bool,
     pub config: Option<std::sync::Arc<std::sync::Mutex<crate::config::Config>>>,
@@ -163,6 +163,7 @@ impl Context {
                     }
                 }),
             },
+            // printf
             crate::builtins::Builtin {
                 name: "printf".to_string(),
                 description: "Print formatted output to the console".to_string(),
@@ -561,11 +562,14 @@ Examples:
         op: String,
         right: crate::expressions::Expressions,
     ) -> Option<crate::context::EvalResults> {
-        if self.debug {
-            println!(
-                "🔢 Evaluating binary operation: {:?} {} {:?}",
-                left, op, right
-            );
+        if let Some(args) = &self.args {
+            let args = args.lock().unwrap();
+            if args.is_debugging() || args.should_debug_context() {
+                println!(
+                    "🔢 Evaluating binary operation: {:?} {} {:?}",
+                    left, op, right
+                );
+            }
         }
 
         // Recursively evaluate left and right, handling nested BinaryOperation
@@ -583,11 +587,14 @@ Examples:
             _ => self.eval(Some(right))?,
         };
 
-        if self.debug {
-            println!(
-                "🔢 Left result: {:?}, Right result: {:?}",
-                left_result, right_result
-            );
+        if let Some(args) = &self.args {
+            let args = args.lock().unwrap();
+            if args.is_debugging() || args.should_debug_context() {
+                println!(
+                    "🔢 Left result: {:?}, Right result: {:?}",
+                    left_result, right_result
+                );
+            }
         }
 
         match (left_result, right_result) {
@@ -758,7 +765,17 @@ Examples:
             let builtin_names = builtins.list();
             let builtin = builtins.get(name)?;
             let arg_vec: Vec<String> = args.split_whitespace().map(|s| s.to_string()).collect();
-            let debug = self.debug;
+
+            // check debugging config
+            let debug = {
+                if let Some(args) = &self.args {
+                    let args = args.lock().unwrap();
+                    args.is_debugging() || args.should_debug_context()
+                } else {
+                    false
+                }
+            };
+
             let result = (builtin.execute)(
                 self.config.clone().unwrap(),
                 self.args.clone().unwrap(),
@@ -849,13 +866,6 @@ Examples:
         if let Some(event) = gaurd.events.as_mut() {
             event.push(crate::history::Event::CommandResponse(command_response));
         }
-
-        // self.history
-        //     .lock()
-        //     .unwrap()
-        //     .events
-        //     .unwrap()
-        //     .push(crate::history::Event::CommandResponse(command_response));
 
         Some(crate::context::EvalResults::CommandExpressionResult(
             crate::context::CommandEvalResult {
@@ -1051,22 +1061,27 @@ Examples:
                 // Check if it's a variable in the vars store
                 let var_value = {
                     let vars = self.vars.lock().unwrap();
-                    if self.debug {
-                        println!("🔍 Looking up variable '{}' in vars", name);
-                        println!("🔍 Current vars: {:?}", vars);
+                    if let Some(args) = &self.args {
+                        let args = args.lock().unwrap();
+                        if args.debug {
+                            println!("🔍 Looking up variable '{}' in vars", name);
+                            println!("🔍 Current vars: {:?}", vars);
+                        }
                     }
+
                     vars.get(&name).cloned()
                 };
 
                 if let Some(var_value) = var_value {
                     // Return the variable's value by evaluating it
-                    if self.debug {
-                        println!("🛠️ Variable '{}' found with value: {:?}", name, var_value);
-                    }
                     let result = self.eval(Some(var_value.clone()));
-                    if self.debug {
-                        println!("🛠️ Variable '{}' evaluated to: {:?}", name, result);
+                    if let Some(args) = &self.args {
+                        let args = args.lock().unwrap();
+                        if args.debug {
+                            println!("🛠️ Evaluated variable '{}' to: {:?}", name, result);
+                        }
                     }
+
                     result
                 } else {
                     // Variable not found - return an error message instead of None
