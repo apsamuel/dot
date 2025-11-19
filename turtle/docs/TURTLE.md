@@ -61,7 +61,7 @@ Turtle's syntax is inspired by both `rust` and `python`, making it easy to learn
 
 ## Example
 
-Here is a hello world script in Turtle:
+Here is a simple hello world example in *turtlelang*:
 
 ```rust
 let message = "Hello, world!";
