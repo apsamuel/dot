@@ -125,9 +125,7 @@ impl History {
         }
     }
 
-    /// starts history
-    ///
-    /// - if interval is set, starts periodic flushing
+    /// starts history flushing in the background
     ///
     pub fn start(&mut self) {
         self.setup();
@@ -169,7 +167,6 @@ pub struct CommandResponse {
     pub output: String,
     pub errors: String,
     pub timestamp: u64,
-    // pub event: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -241,6 +238,63 @@ impl Event {
                 let data = String::from_utf8(wtr.into_inner().unwrap()).unwrap();
                 data
             }
+        }
+    }
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+
+    fn test_command_request_serialization() {
+        let cmd_req = CommandRequest {
+            id: "123".to_string(),
+            command: "echo".to_string(),
+            args: vec!["Hello, World!".to_string()],
+            timestamp: 1625247600,
+        };
+
+        let event = Event::CommandRequest(cmd_req.clone());
+        let json = serde_json::to_string(&event).unwrap();
+        let deserialized_event: Event = serde_json::from_str(&json).unwrap();
+
+        match deserialized_event {
+            Event::CommandRequest(req) => {
+                assert_eq!(req.id, cmd_req.id);
+                assert_eq!(req.command, cmd_req.command);
+                assert_eq!(req.args, cmd_req.args);
+                assert_eq!(req.timestamp, cmd_req.timestamp);
+            }
+            _ => panic!("Deserialized event is not a CommandRequest"),
+        }
+    }
+
+    #[test]
+    fn test_command_response_serialization() {
+        let cmd_res = CommandResponse {
+            id: "123".to_string(),
+            status: "success".to_string(),
+            code: 0,
+            output: "Hello, World!".to_string(),
+            errors: "".to_string(),
+            timestamp: 1625247601,
+        };
+
+        let event = Event::CommandResponse(cmd_res.clone());
+        let json = serde_json::to_string(&event).unwrap();
+        let deserialized_event: Event = serde_json::from_str(&json).unwrap();
+
+        match deserialized_event {
+            Event::CommandResponse(res) => {
+                assert_eq!(res.id, cmd_res.id);
+                assert_eq!(res.status, cmd_res.status);
+                assert_eq!(res.code, cmd_res.code);
+                assert_eq!(res.output, cmd_res.output);
+                assert_eq!(res.errors, cmd_res.errors);
+                assert_eq!(res.timestamp, cmd_res.timestamp);
+            }
+            _ => panic!("Deserialized event is not a CommandResponse"),
         }
     }
 }

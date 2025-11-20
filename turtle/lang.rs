@@ -11,8 +11,7 @@
 
 /// Turtle language keywords
 pub static KEYWORDS: &[&str] = &[
-    "New", "If", "Elseif", "Else", "While", "For", "Break", "Fn", "Return", "Let", "True", "False",
-    "Null",
+    "New", "If", "Elseif", "Else", "While", "For", "Break", "Fn", "Return", "Let", "Set", "Null",
 ];
 
 /// Abstract Syntax Tree
@@ -20,20 +19,24 @@ pub static KEYWORDS: &[&str] = &[
 struct AbstractSyntaxTree {
     /// args
     args: Option<std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>>,
-    /// Debugging information
-    // debug: bool,
+
     /// environment variables
     env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+
     /// command aliases
     aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+
     /// turtle variables
     vars: std::sync::Arc<
         std::sync::Mutex<std::collections::HashMap<String, crate::expressions::Expressions>>,
     >,
+
     /// built-in function names
     builtins: Vec<String>,
+
     /// parsed tokens
     parsed: Vec<crate::tokens::Token>,
+
     /// current position in tokens
     pos: usize,
 }
@@ -73,17 +76,25 @@ impl AbstractSyntaxTree {
     /// peek at the current token
     pub fn peek(&self) -> &crate::tokens::Token {
         // if
-        if self.args.is_some() {
-            let args = self.args.as_ref().unwrap().lock().unwrap();
-
-            if args.debug {
-                println!(
-                    "peeking at token position {}: {:?}",
-                    self.pos,
-                    self.parsed.get(self.pos)
-                );
-            }
+        let args = self.args.as_ref().unwrap().lock().unwrap();
+        if args.debug {
+            println!(
+                "Peeking at token position {}: {:?}",
+                self.pos,
+                self.parsed.get(self.pos)
+            );
         }
+        // if self.args.is_some() {
+        //     let args = self.args.as_ref().unwrap().lock().unwrap();
+
+        //     if args.debug {
+        //         println!(
+        //             "peeking at token position {}: {:?}",
+        //             self.pos,
+        //             self.parsed.get(self.pos)
+        //         );
+        //     }
+        // }
 
         self.parsed
             .get(self.pos)
@@ -92,17 +103,25 @@ impl AbstractSyntaxTree {
 
     /// get the next token
     pub fn next(&mut self) -> &crate::tokens::Token {
-        if self.args.is_some() {
-            let args = self.args.as_ref().unwrap().lock().unwrap();
-
-            if args.debug {
-                println!(
-                    "Getting next token at position {}: {:?}",
-                    self.pos,
-                    self.parsed.get(self.pos)
-                );
-            }
+        let args = self.args.as_ref().unwrap().lock().unwrap();
+        if args.debug {
+            println!(
+                "Getting next token at position {}: {:?}",
+                self.pos,
+                self.parsed.get(self.pos)
+            );
         }
+        // if self.args.is_some() {
+        //     let args = self.args.as_ref().unwrap().lock().unwrap();
+
+        //     if args.debug {
+        //         println!(
+        //             "Getting next token at position {}: {:?}",
+        //             self.pos,
+        //             self.parsed.get(self.pos)
+        //         );
+        //     }
+        // }
 
         let tok = self
             .parsed
@@ -129,7 +148,10 @@ impl AbstractSyntaxTree {
             crate::tokens::Token::String(s) => {
                 Some(crate::expressions::Expressions::String(s.clone()))
             }
-            crate::tokens::Token::Boolean(b) => Some(crate::expressions::Expressions::Boolean(*b)),
+            crate::tokens::Token::Boolean(b) => {
+                println!("Parsing boolean literal: {}", b);
+                Some(crate::expressions::Expressions::Boolean(*b))
+            }
             _ => None,
         }
     }
@@ -142,36 +164,40 @@ impl AbstractSyntaxTree {
     /// ~false
     /// ``````
     fn parse_unary(&mut self) -> Option<crate::expressions::Expressions> {
+        // let args = self.args.as_ref().map(|a| a.lock().unwrap()).unwrap();
         self.skip_whitespace();
         if let crate::tokens::Token::Operator(op) = self.peek() {
             if op == "-" || op == "!" || op == "~" {
                 let op = op.clone();
-                if self.args.is_some() {
-                    let args = self.args.as_ref().unwrap().lock().unwrap();
-
-                    if args.debug {
-                        println!(
-                            "🔧 parse_unary: found unary operator '{}', pos={}, token={:?}",
-                            op,
-                            self.pos,
-                            self.peek()
-                        );
-                    }
-                }
+                // if args.debug {
+                //     println!(
+                //         "🔧 parse_unary: found unary operator '{}', pos={}, token={:?}",
+                //         op,
+                //         self.pos,
+                //         self.peek()
+                //     );
+                // }
 
                 self.next(); // consume operator
                 self.skip_whitespace();
-                if self.args.is_some() {
-                    let args = self.args.as_ref().unwrap().lock().unwrap();
+                // if args.debug {
+                //     println!(
+                //         "🔧 parse_unary: after consuming operator, pos={}, token={:?}",
+                //         self.pos,
+                //         self.peek()
+                //     );
+                // }
+                // if self.args.is_some() {
+                //     let args = self.args.as_ref().unwrap().lock().unwrap();
 
-                    if args.debug {
-                        println!(
-                            "🔧 parse_unary: after consuming operator, pos={}, token={:?}",
-                            self.pos,
-                            self.peek()
-                        );
-                    }
-                }
+                //     if args.debug {
+                //         println!(
+                //             "🔧 parse_unary: after consuming operator, pos={}, token={:?}",
+                //             self.pos,
+                //             self.peek()
+                //         );
+                //     }
+                // }
 
                 if let Some(expr) = self.parse_expr() {
                     return Some(crate::expressions::Expressions::UnaryOperation {
@@ -782,28 +808,28 @@ impl AbstractSyntaxTree {
             self.next(); // consume builtin identifier
 
             let mut input_args = String::new();
-            if let Some(args) = &self.args {
-                let args = args.lock().unwrap();
-                if args.debug {
-                    println!("parse_builtin: found builtin '{}'", cmd);
-                }
-            }
-            if let Some(args) = &self.args {
-                let args = args.lock().unwrap();
-                if args.debug {
-                    println!("parse_builtin: collecting args for builtin '{}'", cmd);
-                }
-            }
+            // if let Some(args) = &self.args {
+            //     let args = args.lock().unwrap();
+            //     if args.debug {
+            //         println!("parse_builtin: found builtin '{}'", cmd);
+            //     }
+            // }
+            // if let Some(args) = &self.args {
+            //     let args = args.lock().unwrap();
+            //     if args.debug {
+            //         println!("parse_builtin: collecting args for builtin '{}'", cmd);
+            //     }
+            // }
             while !matches!(
                 self.peek(),
                 crate::tokens::Token::Eof | crate::tokens::Token::Semicolon
             ) {
-                if let Some(args) = &self.args {
-                    let args = args.lock().unwrap();
-                    if args.debug {
-                        println!("parse_builtin: current token: {:?}", self.peek());
-                    }
-                }
+                // if let Some(args) = &self.args {
+                //     let args = args.lock().unwrap();
+                //     if args.debug {
+                //         println!("parse_builtin: current token: {:?}", self.peek());
+                //     }
+                // }
                 match self.peek() {
                     crate::tokens::Token::Space
                     | crate::tokens::Token::Tab
@@ -860,12 +886,12 @@ impl AbstractSyntaxTree {
             if let crate::tokens::Token::Semicolon = self.peek() {
                 self.next(); // consume ';'
             }
-            if let Some(args) = &self.args {
-                let args = args.lock().unwrap();
-                if args.debug {
-                    println!("parse_builtin: final args string: '{}'", input_args);
-                }
-            }
+            // if let Some(args) = &self.args {
+            //     let args = args.lock().unwrap();
+            //     if args.debug {
+            //         println!("parse_builtin: final args string: '{}'", input_args);
+            //     }
+            // }
             return Some(crate::expressions::Expressions::Builtin {
                 name: cmd,
                 args: input_args.trim().to_string(),
@@ -966,16 +992,16 @@ impl AbstractSyntaxTree {
 
     /// implements parsing rules to build TurtleExpression AST
     pub fn parse_expr(&mut self) -> Option<crate::expressions::Expressions> {
-        if let Some(args) = &self.args {
-            let args = args.lock().unwrap();
-            if args.debug {
-                println!(
-                    "Parsing expression at token position {}: {:?}",
-                    self.pos,
-                    self.peek()
-                );
-            }
-        }
+        // if let Some(args) = &self.args {
+        //     let args = args.lock().unwrap();
+        //     if args.debug {
+        //         println!(
+        //             "Parsing expression at token position {}: {:?}",
+        //             self.pos,
+        //             self.peek()
+        //         );
+        //     }
+        // }
 
         // parse  built-in functions
         if let Some(builtin) = self.parse_builtin() {
@@ -1019,40 +1045,44 @@ impl AbstractSyntaxTree {
             break;
         }
 
-        if let Some(args) = &self.args {
-            let args = args.lock().unwrap();
-            if args.debug {
-                println!(
-                    "🔍 After primary parse - expr: {:?}, current token: {:?}",
-                    expr,
-                    self.peek()
-                );
-            }
-        }
+        // if let Some(args) = &self.args {
+        //     let args = args.lock().unwrap();
+        //     if args.debug {
+        //         println!(
+        //             "🔍 After primary parse - expr: {:?}, current token: {:?}",
+        //             expr,
+        //             self.peek()
+        //         );
+        //     }
+        // }
 
         // parse unary operations
-        if expr.is_none() {
-            if let Some(args) = &self.args {
-                let args = args.lock().unwrap();
-                if args.debug {
-                    println!("🔍 Expr is None, attempting to parse unary operation");
-                }
-            }
-        } else {
-            if let Some(args) = &self.args {
-                let args = args.lock().unwrap();
-                if args.debug {
-                    println!(
-                        "🔍 Expr is Some({:?}), skipping unary operation parsing",
-                        expr
-                    );
-                }
-            }
-        }
-        if let Some(unary) = self.parse_unary() {
-            println!("🔍 Parsed unary operation: {:?}", unary);
-            return Some(unary);
-        }
+        // if expr.is_none() {
+        //     if let Some(args) = &self.args {
+        //         let args = args.lock().unwrap();
+        //         if args.debug {
+        //             println!("🔍 Expr is None, attempting to parse unary operation");
+        //         }
+        //     }
+        // } else {
+        //     if let Some(args) = &self.args {
+        //         let args = args.lock().unwrap();
+        //         if args.debug {
+        //             println!(
+        //                 "🔍 Expr is Some({:?}), skipping unary operation parsing",
+        //                 expr
+        //             );
+        //         }
+        //     }
+        // }
+
+        // disable unary parsing for now
+
+        // if let Some(unary) = self.parse_unary() {
+        //     println!("🔍 Parsed unary operation: {:?}", unary);
+        //     return Some(unary);
+        // }
+
         // if expr.is_none() {}
 
         // skip whitespace before checking for binary operations
@@ -1622,29 +1652,28 @@ impl Interpreter {
 
     /// Tokenization pipeline
     pub fn tokenize(&mut self, input: &str) -> Vec<crate::tokens::Token> {
-        if let Some(args) = &self.args {
-            let args = args.lock().unwrap();
-            if args.debug {
-                println!("=== TOKENIZE PIPELINE START ===");
-                println!("Input: {:?}", input);
-            }
+        let args = self
+            .args
+            .as_ref()
+            .map(|a| a.lock().unwrap().clone())
+            .unwrap();
+
+        if args.debug {
+            println!("=== TOKENIZE PIPELINE START ===");
+            println!("Input: {:?}", input);
         }
 
         let tokens = Self::tokenize_primitives(self, input);
-        if let Some(args) = &self.args {
-            let args = args.lock().unwrap();
-            if args.debug {
-                println!("After tokenize_primitives: {:?}", tokens);
-            }
+
+        if args.debug {
+            println!("After tokenize_primitives: {:?}", tokens);
         }
 
         let tokens: Vec<crate::tokens::Token> = Self::tokenize_builtin_functions(self, tokens);
-        if let Some(args) = &self.args {
-            let args = args.lock().unwrap();
-            if args.debug {
-                println!("After tokenize_builtin_functions: {:?}", tokens);
-                println!("=== TOKENIZE PIPELINE END ===");
-            }
+
+        if args.debug {
+            println!("After tokenize_builtin_functions: {:?}", tokens);
+            println!("=== TOKENIZE PIPELINE END ===");
         }
 
         self.tokens = tokens.clone();
