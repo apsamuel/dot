@@ -11,14 +11,17 @@
 ## Features
 
 - 🔋 **Batteries Included**: We know what shell users want, and we include it out of the box.
-  - `bash-commons` for stable and reusable shell tools
-  - `oh-my-zsh` zsh theming and plugins
-  - `oh-my-tmux` for terminal multiplexing
-  - `tmux-plugin-manager` for theming and plugins
-  - `bat` syntax highlighting in the terminal
-  - `fzf` fuzzy finding everything
-  - `fzf-git` integrates fzf with common git operations like listing branches
-  - `powerlevel10k` for a prompt that tells you more than just the time
+
+  - Fuzzy finding
+    - `fzf` fuzzy finding everything
+    - `fzf-git` integrates fzf with common git operations like
+  - Popular toolkits are vendored
+    - `bash-commons` for stable and reusable shell tools
+    - `oh-my-zsh` zsh theming and plugins
+    - `oh-my-tmux` for terminal multiplexing
+    - `bat` syntax highlighting in the terminal
+  - Appearance
+    - `powerlevel10k` for a prompt that tells you more than just the time
 - 🎨 **Sleek & Modern**: A terminal experience so smooth, you'll think you're in a sci-fi movie 🎬
 - ⚙️ **Highly Customizable**: Tweak it, bend it, make it yours. Your terminal, your rules 🛠️
 - 🚀 **Performance Optimized**: Because nobody likes a slow shell
