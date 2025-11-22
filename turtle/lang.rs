@@ -255,6 +255,10 @@ impl AbstractSyntaxTree {
                 _ => break,
             };
             let prec = self.get_operator_precedence(&op);
+            if prec == 0 {
+                self.next(); // consume operator
+                break;
+            }
             if prec < min_prec {
                 break;
             }
