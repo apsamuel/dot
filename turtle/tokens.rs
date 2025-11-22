@@ -82,7 +82,9 @@ pub enum Token {
     Tab,     // tab character
     Newline, // newline character
     // Whitespace, // spaces, tabs, newlines
-    Operator(String),           // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, !
+    Operator(String), // +, -, *, **, /, %, ==, !=, <, >, <=, >=, &&, ||, !
+    // TODO: implement specific operators
+    ExponentiationOperator,     // **
     AdditionOperator,           // +
     SubtractionOperator,        // -
     MultiplicationOperator,     // *
@@ -99,6 +101,23 @@ pub enum Token {
     NotOperator,                // !
     Semicolon,                  // ;
     Eof,                        // end of file/input
+}
+
+pub enum Operators {
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division,
+    Modulus,
+    Equal,
+    NotEqual,
+    LessThan,
+    GreaterThan,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
+    And,
+    Or,
+    Not,
 }
 
 #[cfg(test)]
