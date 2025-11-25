@@ -166,6 +166,7 @@ impl AbstractSyntaxTree {
     fn parse_unary(&mut self) -> Option<crate::expressions::Expressions> {
         // let args = self.args.as_ref().map(|a| a.lock().unwrap()).unwrap();
         self.skip_whitespace();
+        //
         if let crate::tokens::Token::Operator(op) = self.peek() {
             if op == "-" || op == "!" || op == "~" {
                 let op = op.clone();
@@ -222,26 +223,26 @@ impl AbstractSyntaxTree {
     ///
     /// "hello" + " world"
     /// ``````
-    fn parse_binary(
-        &mut self,
-        left: crate::expressions::Expressions,
-    ) -> Option<crate::expressions::Expressions> {
-        if let crate::tokens::Token::Operator(op) = self.peek() {
-            let op = op.clone();
-            self.next(); // consume operator
+    // fn parse_binary(
+    //     &mut self,
+    //     left: crate::expressions::Expressions,
+    // ) -> Option<crate::expressions::Expressions> {
+    //     if let crate::tokens::Token::Operator(op) = self.peek() {
+    //         let op = op.clone();
+    //         self.next(); // consume operator
 
-            if let Some(right) = self.parse_expr() {
-                return Some(crate::expressions::Expressions::BinaryOperation {
-                    left: Box::new(left),
-                    op,
-                    right: Box::new(right),
-                });
-            } else {
-                return None;
-            }
-        }
-        None
-    }
+    //         if let Some(right) = self.parse_expr() {
+    //             return Some(crate::expressions::Expressions::BinaryOperation {
+    //                 left: Box::new(left),
+    //                 op,
+    //                 right: Box::new(right),
+    //             });
+    //         } else {
+    //             return None;
+    //         }
+    //     }
+    //     None
+    // }
 
     fn parse_binary_with_precedence(
         &mut self,
@@ -249,39 +250,84 @@ impl AbstractSyntaxTree {
         mut left: crate::expressions::Expressions,
     ) -> crate::expressions::Expressions {
         loop {
-            self.skip_whitespace(); // skip spaces before operator
-            let op = match self.peek() {
-                crate::tokens::Token::Operator(op) => op.clone(),
+            self.skip_whitespace();
+            let (op_str, precedence) = match self.peek() {
+                crate::tokens::Token::ExponentiationOperator => {
+                    ("**", self.get_operator_precedence("**"))
+                }
+                crate::tokens::Token::AdditionOperator => ("+", self.get_operator_precedence("+")),
+                crate::tokens::Token::SubtractionOperator => {
+                    ("-", self.get_operator_precedence("-"))
+                }
+                crate::tokens::Token::MultiplicationOperator => {
+                    ("*", self.get_operator_precedence("*"))
+                }
+                crate::tokens::Token::DivisionOperator => ("/", self.get_operator_precedence("/")),
+                crate::tokens::Token::ModulusOperator => ("%", self.get_operator_precedence("%")),
+                crate::tokens::Token::EqualOperator => ("==", self.get_operator_precedence("==")),
+                crate::tokens::Token::NotEqualOperator => {
+                    ("!=", self.get_operator_precedence("!="))
+                }
+                crate::tokens::Token::LessThanOperator => ("<", self.get_operator_precedence("<")),
+                crate::tokens::Token::GreaterThanOperator => {
+                    (">", self.get_operator_precedence(">"))
+                }
+                crate::tokens::Token::LessThanOrEqualOperator => {
+                    ("<=", self.get_operator_precedence("<="))
+                }
+                crate::tokens::Token::GreaterThanOrEqualOperator => {
+                    (">=", self.get_operator_precedence(">="))
+                }
+                crate::tokens::Token::LogicalAndOperator => {
+                    ("&&", self.get_operator_precedence("&&"))
+                }
+                crate::tokens::Token::LogicalOrOperator => {
+                    ("||", self.get_operator_precedence("||"))
+                }
+                crate::tokens::Token::NotOperator => ("!", self.get_operator_precedence("!")),
                 _ => break,
             };
-            let prec = self.get_operator_precedence(&op);
-            if prec == 0 {
-                self.next(); // consume operator
-                break;
-            }
-            if prec < min_prec {
-                break;
-            }
-            self.next(); // consume operator
-            self.skip_whitespace(); // skip any spaces after the operator
 
-            // Parse the right-hand side with higher precedence
-            let mut right = self
-                .parse_primary()
-                .unwrap_or(crate::expressions::Expressions::Number(0.0));
-            self.skip_whitespace(); // skip spaces before checking for next operator
-            while let crate::tokens::Token::Operator(next_op) = self.peek() {
-                let next_prec = self.get_operator_precedence(next_op);
-                if next_prec > prec {
-                    right = self.parse_binary_with_precedence(next_prec, right);
-                } else {
-                    break;
+            if precedence < min_prec {
+                break;
+            }
+
+            self.next(); // consume operator
+            self.skip_whitespace();
+            let mut right = match self.parse_primary() {
+                Some(expr) => expr,
+                None => break,
+            };
+
+            self.skip_whitespace();
+            let next_prec = match self.peek() {
+                crate::tokens::Token::ExponentiationOperator => self.get_operator_precedence("**"),
+                crate::tokens::Token::AdditionOperator => self.get_operator_precedence("+"),
+                crate::tokens::Token::SubtractionOperator => self.get_operator_precedence("-"),
+                crate::tokens::Token::MultiplicationOperator => self.get_operator_precedence("*"),
+                crate::tokens::Token::DivisionOperator => self.get_operator_precedence("/"),
+                crate::tokens::Token::ModulusOperator => self.get_operator_precedence("%"),
+                crate::tokens::Token::EqualOperator => self.get_operator_precedence("=="),
+                crate::tokens::Token::NotEqualOperator => self.get_operator_precedence("!="),
+                crate::tokens::Token::LessThanOperator => self.get_operator_precedence("<"),
+                crate::tokens::Token::GreaterThanOperator => self.get_operator_precedence(">"),
+                crate::tokens::Token::LessThanOrEqualOperator => self.get_operator_precedence("<="),
+                crate::tokens::Token::GreaterThanOrEqualOperator => {
+                    self.get_operator_precedence(">=")
                 }
+                crate::tokens::Token::LogicalAndOperator => self.get_operator_precedence("&&"),
+                crate::tokens::Token::LogicalOrOperator => self.get_operator_precedence("||"),
+                crate::tokens::Token::NotOperator => self.get_operator_precedence("!"),
+                _ => 0,
+            };
+
+            if precedence < next_prec {
+                right = self.parse_binary_with_precedence(precedence + 1, right);
             }
 
             left = crate::expressions::Expressions::BinaryOperation {
                 left: Box::new(left),
-                op,
+                op: op_str.to_string(),
                 right: Box::new(right),
             };
         }
@@ -674,7 +720,7 @@ impl AbstractSyntaxTree {
                     self.next(); // consume identifier
                     self.skip_whitespace();
 
-                    if let crate::tokens::Token::Operator(op) = self.peek() {
+                    if let crate::tokens::Token::EqualOperator = self.peek() {
                         if op == "=" {
                             self.next(); // consume '='
                             self.skip_whitespace();
@@ -1294,11 +1340,13 @@ impl Interpreter {
                     }
                     tokens.push(crate::tokens::Token::Number(num.parse().unwrap()))
                 }
+
+                // TODO: handle env vars a little better
                 // global env var indicator
-                '$' => {
-                    tokens.push(crate::tokens::Token::Operator("$".to_string()));
-                    chars.next();
-                }
+                // '$' => {
+                //     tokens.push(crate::tokens::Token::EnvironmentVariableIndicator);
+                //     chars.next();
+                // }
                 // identifiers and keywords
                 _ if c.is_alphanumeric() || c == '_' || c == '.' => {
                     let mut identifier = String::new();
@@ -1335,7 +1383,38 @@ impl Interpreter {
                             break;
                         }
                     }
-                    tokens.push(crate::tokens::Token::Operator(op));
+                    let operation = op.clone();
+                    if &operation == "==" {
+                        tokens.push(crate::tokens::Token::EqualOperator);
+                    } else if &operation == "!=" {
+                        tokens.push(crate::tokens::Token::NotEqualOperator);
+                    } else if &operation == ">=" {
+                        tokens.push(crate::tokens::Token::GreaterThanOrEqualOperator);
+                    } else if &operation == "<=" {
+                        tokens.push(crate::tokens::Token::LessThanOrEqualOperator);
+                    } else if &operation == ">" {
+                        tokens.push(crate::tokens::Token::GreaterThanOperator);
+                    } else if &operation == "<" {
+                        tokens.push(crate::tokens::Token::LessThanOperator);
+                    } else if &operation == "+" {
+                        tokens.push(crate::tokens::Token::AdditionOperator);
+                    } else if &operation == "-" {
+                        tokens.push(crate::tokens::Token::SubtractionOperator);
+                    } else if &operation == "*" {
+                        tokens.push(crate::tokens::Token::MultiplicationOperator);
+                    } else if &operation == "/" {
+                        tokens.push(crate::tokens::Token::DivisionOperator);
+                    } else if &operation == "&&" {
+                        tokens.push(crate::tokens::Token::LogicalAndOperator);
+                    } else if &operation == "||" {
+                        tokens.push(crate::tokens::Token::LogicalOrOperator);
+                    } else if &operation == "!" {
+                        tokens.push(crate::tokens::Token::NotOperator);
+                    } else if &operation == "%" {
+                        tokens.push(crate::tokens::Token::ModulusOperator);
+                    } else if &operation == "^" {
+                        tokens.push(crate::tokens::Token::ExponentiationOperator);
+                    }
                 }
                 // unrecognized characters
                 _ => {
@@ -1486,6 +1565,7 @@ impl Interpreter {
                         match next_token {
                             crate::tokens::Token::Eof | crate::tokens::Token::Semicolon => break,
 
+                            // Handle dash-arguments: -ah, -l, etc.
                             crate::tokens::Token::Operator(op) if op == "-" => {
                                 iter.next(); // consume first '-'
                                 // Handles long arg and their values
