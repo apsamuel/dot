@@ -170,35 +170,9 @@ impl AbstractSyntaxTree {
         if let crate::tokens::Token::Operator(op) = self.peek() {
             if op == "-" || op == "!" || op == "~" {
                 let op = op.clone();
-                // if args.debug {
-                //     println!(
-                //         "🔧 parse_unary: found unary operator '{}', pos={}, token={:?}",
-                //         op,
-                //         self.pos,
-                //         self.peek()
-                //     );
-                // }
 
                 self.next(); // consume operator
                 self.skip_whitespace();
-                // if args.debug {
-                //     println!(
-                //         "🔧 parse_unary: after consuming operator, pos={}, token={:?}",
-                //         self.pos,
-                //         self.peek()
-                //     );
-                // }
-                // if self.args.is_some() {
-                //     let args = self.args.as_ref().unwrap().lock().unwrap();
-
-                //     if args.debug {
-                //         println!(
-                //             "🔧 parse_unary: after consuming operator, pos={}, token={:?}",
-                //             self.pos,
-                //             self.peek()
-                //         );
-                //     }
-                // }
 
                 if let Some(expr) = self.parse_expr() {
                     return Some(crate::expressions::Expressions::UnaryOperation {
@@ -212,37 +186,6 @@ impl AbstractSyntaxTree {
         }
         None
     }
-
-    /// parse binary expressions
-    ///
-    /// **Examples:**
-    /// ```
-    /// 1 + 2
-    ///
-    /// x - 3,
-    ///
-    /// "hello" + " world"
-    /// ``````
-    // fn parse_binary(
-    //     &mut self,
-    //     left: crate::expressions::Expressions,
-    // ) -> Option<crate::expressions::Expressions> {
-    //     if let crate::tokens::Token::Operator(op) = self.peek() {
-    //         let op = op.clone();
-    //         self.next(); // consume operator
-
-    //         if let Some(right) = self.parse_expr() {
-    //             return Some(crate::expressions::Expressions::BinaryOperation {
-    //                 left: Box::new(left),
-    //                 op,
-    //                 right: Box::new(right),
-    //             });
-    //         } else {
-    //             return None;
-    //         }
-    //     }
-    //     None
-    // }
 
     fn parse_binary_with_precedence(
         &mut self,
