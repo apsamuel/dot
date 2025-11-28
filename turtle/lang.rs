@@ -166,34 +166,85 @@ impl AbstractSyntaxTree {
     fn parse_unary(&mut self) -> Option<crate::expressions::Expressions> {
         // let args = self.args.as_ref().map(|a| a.lock().unwrap()).unwrap();
         self.skip_whitespace();
-        //
-        if let crate::tokens::Token::Operator(op) = self.peek() {
-            if op == "-" || op == "!" || op == "~" {
-                let op = op.clone();
 
+        // match self.peek() {}
+        //
+        match self.peek() {
+            crate::Token::AdditionOperator => {
                 self.next(); // consume operator
                 self.skip_whitespace();
 
                 if let Some(expr) = self.parse_expr() {
                     return Some(crate::expressions::Expressions::UnaryOperation {
-                        op,
+                        op: "+".to_string(),
                         expr: Box::new(expr),
                     });
                 } else {
                     return None;
                 }
             }
+            _ => {}
         }
+        // if let crate::tokens::Token::Operator(op) = self.peek() {
+        //     if op == "-" || op == "!" || op == "~" {
+        //         let op = op.clone();
+
+        //         self.next(); // consume operator
+        //         self.skip_whitespace();
+
+        //         if let Some(expr) = self.parse_expr() {
+        //             return Some(crate::expressions::Expressions::UnaryOperation {
+        //                 op,
+        //                 expr: Box::new(expr),
+        //             });
+        //         }
+        //         if let crate::tokens::Token::SubtractionOperator = self.peek() {
+        //             self.next(); // consume operator
+        //             self.skip_whitespace();
+        //             if let Some(expr) = self.parse_expr() {
+        //                 return Some(crate::expressions::Expressions::UnaryOperation {
+        //                     op: "-".to_string(),
+        //                     expr: Box::new(expr),
+        //                 });
+        //             } else {
+        //                 return None;
+        //             }
+        //         } else if let crate::tokens::Token::NotOperator = self.peek() {
+        //             self.next(); // consume operator
+        //             self.skip_whitespace();
+        //             if let Some(expr) = self.parse_expr() {
+        //                 return Some(crate::expressions::Expressions::UnaryOperation {
+        //                     op: "!".to_string(),
+        //                     expr: Box::new(expr),
+        //                 });
+        //             } else {
+        //                 return None;
+        //             }
+        //         } else if let crate::tokens::Token::BitwiseNotOperator = self.peek() {
+        //             self.next(); // consume operator
+        //             self.skip_whitespace();
+        //             if let Some(expr) = self.parse_expr() {
+        //                 return Some(crate::expressions::Expressions::UnaryOperation {
+        //                     op: "~".to_string(),
+        //                     expr: Box::new(expr),
+        //                 });
+        //             } else {
+        //                 return None;
+        //             }
+        //         }
+        //         None
+        //     }
+        // }
         None
     }
 
+    /// parse binary expressions with operator precedence
     fn parse_binary_with_precedence(
         &mut self,
         min_prec: u8,
         mut left: crate::expressions::Expressions,
     ) -> crate::expressions::Expressions {
         loop {
-            self.skip_whitespace();
             let (op_str, precedence) = match self.peek() {
                 crate::tokens::Token::ExponentiationOperator => {
                     ("**", self.get_operator_precedence("**"))
@@ -228,10 +279,10 @@ impl AbstractSyntaxTree {
                     ("||", self.get_operator_precedence("||"))
                 }
                 crate::tokens::Token::NotOperator => ("!", self.get_operator_precedence("!")),
-                _ => break,
+                _ => ("", 0),
             };
 
-            if precedence < min_prec {
+            if precedence == 0 || precedence < min_prec {
                 break;
             }
 
@@ -297,801 +348,810 @@ impl AbstractSyntaxTree {
                 };
 
                 // parse parameters
-                if let crate::tokens::Token::ParenOpen = self.peek() {
-                    self.next(); // consume '('
-                    self.skip_whitespace();
-                    let mut params = Vec::new();
-                    while !matches!(
-                        self.peek(),
-                        crate::tokens::Token::ParenClose | crate::tokens::Token::Eof
-                    ) {
-                        if let crate::tokens::Token::Identifier(param) = self.peek() {
-                            params.push(param.clone());
-                            self.next(); // consume parameter
-                            self.skip_whitespace();
+                match self.peek() {
+                    crate::tokens::Token::SubtractionOperator
+                    | crate::tokens::Token::NotOperator
+                    | crate::tokens::Token::BitwiseNotOperator => {
+                        let op = match self.peek() {
+                            crate::tokens::Token::SubtractionOperator => "-",
+                            crate::tokens::Token::NotOperator => "!",
+                            crate::tokens::Token::BitwiseNotOperator => "~",
+                            _ => unreachable!(),
                         }
-                        if let crate::tokens::Token::Comma = self.peek() {
-                            self.next(); // consume ','
-                            self.skip_whitespace();
-                        } else {
-                            break;
-                        }
-                    }
-                    if let crate::tokens::Token::ParenClose = self.peek() {
-                        self.next(); // consume ')'
-                        self.skip_whitespace();
-                    } else {
-                        return None; // expected ')'
-                    }
-
-                    // parse function body
-                    if let crate::tokens::Token::BraceOpen = self.peek() {
-                        self.next(); // consume '{'
-                        let mut body = Vec::new();
+                        .to_string();
+                        let mut params = Vec::new();
                         while !matches!(
                             self.peek(),
-                            crate::tokens::Token::BraceClose | crate::tokens::Token::Eof
+                            crate::tokens::Token::ParenClose | crate::tokens::Token::Eof
                         ) {
-                            if let Some(expr) = self.parse_expr() {
-                                body.push(expr);
-                            } else {
-                                // skip unknown tokens (?)
-                                self.next(); // skip unknown tokens
+                            if let crate::tokens::Token::Identifier(param) = self.peek() {
+                                params.push(param.clone());
+                                self.next(); // consume parameter
                                 self.skip_whitespace();
                             }
+                            if let crate::tokens::Token::Comma = self.peek() {
+                                self.next(); // consume ','
+                                self.skip_whitespace();
+                            } else {
+                                break;
+                            }
                         }
-                        if let crate::tokens::Token::BraceClose = self.peek() {
-                            self.next(); // consume '}'
-                            self.skip_whitespace();
-                            return Some(crate::expressions::Expressions::FunctionDefinition {
-                                name: func_name,
-                                params,
-                                body: Box::new(body),
-                            });
-                        } else {
-                            return None; // expected '}'
-                        }
-                    }
-                }
-            }
-        }
-        None
-    }
-
-    /// parse function calls
-    /// ```
-    /// my_function(...)
-    /// ```
-    fn parse_function_call(
-        &mut self,
-        expr: crate::expressions::Expressions,
-    ) -> Option<crate::expressions::Expressions> {
-        if let crate::tokens::Token::ParenOpen = self.peek() {
-            self.next(); // consume '('
-            let mut args = Vec::new();
-            while !matches!(
-                self.peek(),
-                crate::tokens::Token::ParenClose | crate::tokens::Token::Eof
-            ) {
-                if let Some(arg) = self.parse_expr() {
-                    args.push(arg);
-                }
-                if let crate::tokens::Token::Comma = self.peek() {
-                    self.next(); // consume ','
-                } else {
-                    break;
-                }
-            }
-            if let crate::tokens::Token::ParenClose = self.peek() {
-                self.next(); // consume ')'
-                // Use expr as the function (can be Identifier or MemberAccess)
-                return Some(crate::expressions::Expressions::FunctionCall {
-                    func: match expr {
-                        crate::expressions::Expressions::Identifier(ref name) => name.clone(),
-                        crate::expressions::Expressions::MemberAccess { .. } => {
-                            format!("{:?}", expr)
-                        } // Or handle as needed
-                        _ => return None,
-                    },
-                    args,
-                });
-            }
-        }
-        None
-    }
-
-    /// parse member access
-    /// ```
-    /// object.property
-    /// ```
-    fn parse_member_access(
-        &mut self,
-        expr: crate::expressions::Expressions,
-    ) -> Option<crate::expressions::Expressions> {
-        if let crate::tokens::Token::ShellDot = self.peek() {
-            self.next(); // consume '.'
-            if let crate::tokens::Token::Identifier(property) = self.peek() {
-                let property = property.clone();
-                self.next(); // consume property identifier
-                return Some(crate::expressions::Expressions::MemberAccess {
-                    object: Box::new(expr),
-                    property,
-                });
-            }
-        }
-        None
-    }
-
-    /// parse arrays
-    /// ```
-    /// [1, 2, 3]
-    /// ```
-    fn parse_literal_array(&mut self) -> Option<crate::expressions::Expressions> {
-        if let crate::tokens::Token::BracketOpen = self.peek() {
-            self.next(); // consume '['
-            self.skip_whitespace(); // skip whitespace after opening bracket
-            let mut elements = Vec::new();
-            while !matches!(
-                self.peek(),
-                crate::tokens::Token::BracketClose | crate::tokens::Token::Eof
-            ) {
-                if let Some(expr) = self.parse_expr() {
-                    elements.push(expr);
-                }
-
-                self.skip_whitespace(); // skip whitespace before comma or closing bracket
-                if let crate::tokens::Token::Comma = self.peek() {
-                    self.next(); // consume ','
-                    self.skip_whitespace(); // skip whitespace after comma
-                } else {
-                    break;
-                }
-            }
-
-            if let crate::tokens::Token::BracketClose = self.peek() {
-                self.next(); // consume ']'
-                return Some(crate::expressions::Expressions::Array(elements));
-            } else {
-                return None; // expected ']'
-            }
-        }
-        None
-    }
-
-    /// parse new array constructor
-    /// ```
-    /// new Array()
-    /// new Array([1, 2, 3])
-    /// ```
-    fn parse_new_array(&mut self) -> Option<crate::expressions::Expressions> {
-        // Save position for backtracking
-        let start_pos = self.pos;
-
-        // Check for 'New' keyword
-        if let crate::tokens::Token::Keyword(k) = self.peek() {
-            if k != "New" {
-                return None;
-            }
-            self.next(); // consume 'New'
-            self.skip_whitespace();
-
-            // Check for 'Array' identifier
-            if let crate::tokens::Token::Identifier(name) = self.peek() {
-                if name != "Array" {
-                    self.pos = start_pos; // restore position
-                    return None;
-                }
-                self.next(); // consume 'Array'
-                self.skip_whitespace();
-
-                // Check for '('
-                if let crate::tokens::Token::ParenOpen = self.peek() {
-                    self.next(); // consume '('
-                    self.skip_whitespace();
-
-                    // Check for optional array literal argument
-                    if let crate::tokens::Token::BracketOpen = self.peek() {
-                        // Parse the array literal
-                        let array_expr = self.parse_literal_array()?;
-                        self.skip_whitespace();
-
-                        // Check for ')'
                         if let crate::tokens::Token::ParenClose = self.peek() {
                             self.next(); // consume ')'
-                            return Some(array_expr);
-                        } else {
-                            self.pos = start_pos; // restore position
-                            return None;
-                        }
-                    } else if let crate::tokens::Token::ParenClose = self.peek() {
-                        // Empty constructor: new Array()
-                        self.next(); // consume ')'
-                        return Some(crate::expressions::Expressions::Array(Vec::new()));
-                    } else {
-                        self.pos = start_pos; // restore position
-                        return None;
-                    }
-                } else {
-                    self.pos = start_pos; // restore position
-                    return None;
-                }
-            } else {
-                self.pos = start_pos; // restore position
-                return None;
-            }
-        }
-        None
-    }
-
-    /// parse new object constructor
-    /// ```
-    /// new Object()
-    /// new Object({foo: 1, bar: 2})
-    /// ```
-    fn parse_new_object(&mut self) -> Option<crate::expressions::Expressions> {
-        // Save position for backtracking
-        let start_pos = self.pos;
-
-        // Check for 'New' keyword
-        if let crate::tokens::Token::Keyword(k) = self.peek() {
-            if k != "New" {
-                return None;
-            }
-            self.next(); // consume 'New'
-            self.skip_whitespace();
-
-            // Check for 'Object' identifier
-            if let crate::tokens::Token::Identifier(name) = self.peek() {
-                if name != "Object" {
-                    self.pos = start_pos; // restore position
-                    return None;
-                }
-                self.next(); // consume 'Object'
-                self.skip_whitespace();
-
-                // Check for '('
-                if let crate::tokens::Token::ParenOpen = self.peek() {
-                    self.next(); // consume '('
-                    self.skip_whitespace();
-
-                    // Check for optional object literal argument
-                    if let crate::tokens::Token::BraceOpen = self.peek() {
-                        // Parse the object literal
-                        let object_expr = self.parse_object()?;
-                        self.skip_whitespace();
-
-                        // Check for ')'
-                        if let crate::tokens::Token::ParenClose = self.peek() {
-                            self.next(); // consume ')'
-                            return Some(object_expr);
-                        } else {
-                            self.pos = start_pos; // restore position
-                            return None;
-                        }
-                    } else if let crate::tokens::Token::ParenClose = self.peek() {
-                        // Empty constructor: new Object()
-                        self.next(); // consume ')'
-                        return Some(crate::expressions::Expressions::Object(Vec::new()));
-                    } else {
-                        self.pos = start_pos; // restore position
-                        return None;
-                    }
-                } else {
-                    self.pos = start_pos; // restore position
-                    return None;
-                }
-            } else {
-                self.pos = start_pos; // restore position
-                return None;
-            }
-        }
-        None
-    }
-
-    /// parse objects
-    /// ```
-    /// {
-    ///     key1: value1,
-    ///     key2: value2
-    /// }
-    /// ```
-    fn parse_object(&mut self) -> Option<crate::expressions::Expressions> {
-        if let crate::tokens::Token::BraceOpen = self.peek() {
-            self.next(); // consume '{'
-            self.skip_whitespace(); // skip whitespace after opening brace
-            let mut properties = Vec::new();
-            while !matches!(
-                self.peek(),
-                crate::tokens::Token::BraceClose | crate::tokens::Token::Eof
-            ) {
-                // Get the key as a cloned value
-                let key_token = self.next().clone();
-                let key = if let crate::tokens::Token::Identifier(ref k) = key_token {
-                    k.clone()
-                } else {
-                    return None; // expected identifier key
-                };
-
-                self.skip_whitespace(); // skip whitespace before colon
-                if let crate::tokens::Token::Colon = self.peek() {
-                    self.next(); // consume ':'
-                    self.skip_whitespace(); // skip whitespace after colon
-                    if let Some(value) = self.parse_expr() {
-                        properties.push((key, value));
-                    } else {
-                        return None; // expected value expression
-                    }
-                } else {
-                    return None; // expected ':'
-                }
-
-                self.skip_whitespace(); // skip whitespace before comma or closing brace
-                if let crate::tokens::Token::Comma = self.peek() {
-                    self.next(); // consume ','
-                    self.skip_whitespace(); // skip whitespace after comma
-                } else {
-                    break;
-                }
-            }
-            if let crate::tokens::Token::BraceClose = self.peek() {
-                self.next(); // consume '}'
-                return Some(crate::expressions::Expressions::Object(properties));
-            } else {
-                return None; // expected '}'
-            }
-        }
-        None
-    }
-
-    /// parse assignment expressions
-    /// ```
-    /// let s = "hello";
-    ///
-    /// let n = 5;
-    ///
-    /// let f = fn(arg) { print(arg) };
-    /// ```
-    fn parse_assignment(&mut self) -> Option<crate::expressions::Expressions> {
-        self.skip_whitespace();
-        // handle assignments prefixed with the let keyword
-        if let crate::tokens::Token::Keyword(k) = self.peek() {
-            if k == "Let" {
-                self.next(); // consume 'let'
-                self.skip_whitespace();
-                if let crate::tokens::Token::Identifier(name) = self.peek() {
-                    let name = name.clone();
-                    self.next(); // consume identifier
-                    self.skip_whitespace();
-
-                    if let crate::tokens::Token::EqualOperator = self.peek() {
-                        if op == "=" {
-                            self.next(); // consume '='
                             self.skip_whitespace();
-                            if let Some(value) = self.parse_expr() {
-                                return Some(crate::expressions::Expressions::Assignment {
-                                    name,
-                                    value: Box::new(value),
+                        } else {
+                            return None; // expected ')'
+                        }
+
+                        // parse function body
+                        if let crate::tokens::Token::BraceOpen = self.peek() {
+                            self.next(); // consume '{'
+                            let mut body = Vec::new();
+                            while !matches!(
+                                self.peek(),
+                                crate::tokens::Token::BraceClose | crate::tokens::Token::Eof
+                            ) {
+                                if let Some(expr) = self.parse_expr() {
+                                    body.push(expr);
+                                } else {
+                                    // skip unknown tokens (?)
+                                    self.next(); // skip unknown tokens
+                                    self.skip_whitespace();
+                                }
+                            }
+                            if let crate::tokens::Token::BraceClose = self.peek() {
+                                self.next(); // consume '}'
+                                self.skip_whitespace();
+                                return Some(crate::expressions::Expressions::FunctionDefinition {
+                                    name: func_name,
+                                    params,
+                                    body: Box::new(body),
                                 });
                             } else {
-                                return None; // expected value expression
+                                return None; // expected '}'
                             }
-                        } else {
-                            return None;
                         }
                     }
                 }
-            } else {
-                return None;
             }
+            None
         }
 
-        // handle assignments without the let keyword
-        if let crate::tokens::Token::Identifier(name) = self.peek() {
-            let start_pos = self.pos; // Save position for backtracking
-            let name = name.clone();
-            self.next(); // consume identifier
-            self.skip_whitespace();
-
-            if let crate::tokens::Token::Operator(op) = self.peek() {
-                if op == "=" {
-                    self.next(); // consume '='
-                    self.skip_whitespace();
-                    if let Some(value) = self.parse_expr() {
-                        return Some(crate::expressions::Expressions::Assignment {
-                            name,
-                            value: Box::new(value),
-                        });
-                    } else {
-                        return None; // expected value expression
+        /// parse function calls
+        /// ```
+        /// my_function(...)
+        /// ```
+        fn parse_function_call(
+            &mut self,
+            expr: crate::expressions::Expressions,
+        ) -> Option<crate::expressions::Expressions> {
+            if let crate::tokens::Token::ParenOpen = self.peek() {
+                self.next(); // consume '('
+                let mut args = Vec::new();
+                while !matches!(
+                    self.peek(),
+                    crate::tokens::Token::ParenClose | crate::tokens::Token::Eof
+                ) {
+                    if let Some(arg) = self.parse_expr() {
+                        args.push(arg);
                     }
+                    if let crate::tokens::Token::Comma = self.peek() {
+                        self.next(); // consume ','
+                    } else {
+                        break;
+                    }
+                }
+                if let crate::tokens::Token::ParenClose = self.peek() {
+                    self.next(); // consume ')'
+                    // Use expr as the function (can be Identifier or MemberAccess)
+                    return Some(crate::expressions::Expressions::FunctionCall {
+                        func: match expr {
+                            crate::expressions::Expressions::Identifier(ref name) => name.clone(),
+                            crate::expressions::Expressions::MemberAccess { .. } => {
+                                format!("{:?}", expr)
+                            } // Or handle as needed
+                            _ => return None,
+                        },
+                        args,
+                    });
+                }
+            }
+            None
+        }
+
+        /// parse member access
+        /// ```
+        /// object.property
+        /// ```
+        fn parse_member_access(
+            &mut self,
+            expr: crate::expressions::Expressions,
+        ) -> Option<crate::expressions::Expressions> {
+            if let crate::tokens::Token::ShellDot = self.peek() {
+                self.next(); // consume '.'
+                if let crate::tokens::Token::Identifier(property) = self.peek() {
+                    let property = property.clone();
+                    self.next(); // consume property identifier
+                    return Some(crate::expressions::Expressions::MemberAccess {
+                        object: Box::new(expr),
+                        property,
+                    });
+                }
+            }
+            None
+        }
+
+        /// parse arrays
+        /// ```
+        /// [1, 2, 3]
+        /// ```
+        fn parse_literal_array(&mut self) -> Option<crate::expressions::Expressions> {
+            if let crate::tokens::Token::BracketOpen = self.peek() {
+                self.next(); // consume '['
+                self.skip_whitespace(); // skip whitespace after opening bracket
+                let mut elements = Vec::new();
+                while !matches!(
+                    self.peek(),
+                    crate::tokens::Token::BracketClose | crate::tokens::Token::Eof
+                ) {
+                    if let Some(expr) = self.parse_expr() {
+                        elements.push(expr);
+                    }
+
+                    self.skip_whitespace(); // skip whitespace before comma or closing bracket
+                    if let crate::tokens::Token::Comma = self.peek() {
+                        self.next(); // consume ','
+                        self.skip_whitespace(); // skip whitespace after comma
+                    } else {
+                        break;
+                    }
+                }
+
+                if let crate::tokens::Token::BracketClose = self.peek() {
+                    self.next(); // consume ']'
+                    return Some(crate::expressions::Expressions::Array(elements));
                 } else {
-                    // Not an assignment operator, restore position
-                    self.pos = start_pos;
+                    return None; // expected ']'
+                }
+            }
+            None
+        }
+
+        /// parse new array constructor
+        /// ```
+        /// new Array()
+        /// new Array([1, 2, 3])
+        /// ```
+        fn parse_new_array(&mut self) -> Option<crate::expressions::Expressions> {
+            // Save position for backtracking
+            let start_pos = self.pos;
+
+            // Check for 'New' keyword
+            if let crate::tokens::Token::Keyword(k) = self.peek() {
+                if k != "New" {
                     return None;
                 }
-            } else {
-                // No operator after identifier, restore position
-                self.pos = start_pos;
-            }
-        }
+                self.next(); // consume 'New'
+                self.skip_whitespace();
 
-        // parse reassignments without the let keyword
-        // if let crate::tokens::Token::Identifier(name) = self.peek() {
-        // }
-
-        None
-    }
-
-    /// parse primitive expressions
-    ///
-    /// 1
-    /// "hello"
-    /// [1, 2, 3]
-    fn parse_primary(&mut self) -> Option<crate::expressions::Expressions> {
-        // Check for Array.new() constructor syntax first
-        if let Some(array_expr) = self.parse_new_array() {
-            return Some(array_expr);
-        }
-
-        // Check for Object.new() constructor syntax
-        if let Some(object_expr) = self.parse_new_object() {
-            return Some(object_expr);
-        }
-
-        // Parse the initial literal, identifier, array, or object
-        let mut expr = match self.peek() {
-            // literals
-            crate::tokens::Token::Number(_)
-            | crate::tokens::Token::String(_)
-            | crate::tokens::Token::Boolean(_) => self.parse_literal(),
-            // arrays & objects
-            // crate::tokens::Token::ShellDot => self.parse_new_array(),
-            crate::tokens::Token::BracketOpen => self.parse_literal_array(),
-            // adds parsing
-            crate::tokens::Token::BraceOpen => self.parse_object(),
-            // identifiers
-            crate::tokens::Token::Identifier(name) => {
-                let ident = name.clone();
-                self.next(); // consume identifier
-                Some(crate::expressions::Expressions::Identifier(ident))
-            }
-            _ => None,
-        }?;
-
-        // Chain member access and function calls modularly
-        loop {
-            // Try member access
-            if let Some(member_expr) = self.parse_member_access(expr.clone()) {
-                expr = member_expr;
-                continue;
-            }
-            // Try function call
-            if let Some(call_expr) = self.parse_function_call(expr.clone()) {
-                expr = call_expr;
-                continue;
-            }
-            break;
-        }
-
-        Some(expr)
-    }
-
-    fn parse_environment_variable(&mut self) -> Option<crate::expressions::Expressions> {
-        if let crate::tokens::Token::Operator(op) = self.peek() {
-            if op == "$" {
-                self.next(); // consume '$'
+                // Check for 'Array' identifier
                 if let crate::tokens::Token::Identifier(name) = self.peek() {
-                    let name = name.clone();
-                    self.next(); // consume identifier
-                    return Some(crate::expressions::Expressions::EnvironmentVariable { name });
+                    if name != "Array" {
+                        self.pos = start_pos; // restore position
+                        return None;
+                    }
+                    self.next(); // consume 'Array'
+                    self.skip_whitespace();
+
+                    // Check for '('
+                    if let crate::tokens::Token::ParenOpen = self.peek() {
+                        self.next(); // consume '('
+                        self.skip_whitespace();
+
+                        // Check for optional array literal argument
+                        if let crate::tokens::Token::BracketOpen = self.peek() {
+                            // Parse the array literal
+                            let array_expr = self.parse_literal_array()?;
+                            self.skip_whitespace();
+
+                            // Check for ')'
+                            if let crate::tokens::Token::ParenClose = self.peek() {
+                                self.next(); // consume ')'
+                                return Some(array_expr);
+                            } else {
+                                self.pos = start_pos; // restore position
+                                return None;
+                            }
+                        } else if let crate::tokens::Token::ParenClose = self.peek() {
+                            // Empty constructor: new Array()
+                            self.next(); // consume ')'
+                            return Some(crate::expressions::Expressions::Array(Vec::new()));
+                        } else {
+                            self.pos = start_pos; // restore position
+                            return None;
+                        }
+                    } else {
+                        self.pos = start_pos; // restore position
+                        return None;
+                    }
+                } else {
+                    self.pos = start_pos; // restore position
+                    return None;
                 }
             }
+            None
         }
-        None
-    }
 
-    // TODO: the
-    fn parse_builtin(&mut self) -> Option<crate::expressions::Expressions> {
-        if let crate::tokens::Token::Identifier(cmd) = self.peek() {
-            let cmd = cmd.clone();
+        /// parse new object constructor
+        /// ```
+        /// new Object()
+        /// new Object({foo: 1, bar: 2})
+        /// ```
+        fn parse_new_object(&mut self) -> Option<crate::expressions::Expressions> {
+            // Save position for backtracking
+            let start_pos = self.pos;
 
-            if !self.builtins.contains(&cmd) {
-                return None;
+            // Check for 'New' keyword
+            if let crate::tokens::Token::Keyword(k) = self.peek() {
+                if k != "New" {
+                    return None;
+                }
+                self.next(); // consume 'New'
+                self.skip_whitespace();
+
+                // Check for 'Object' identifier
+                if let crate::tokens::Token::Identifier(name) = self.peek() {
+                    if name != "Object" {
+                        self.pos = start_pos; // restore position
+                        return None;
+                    }
+                    self.next(); // consume 'Object'
+                    self.skip_whitespace();
+
+                    // Check for '('
+                    if let crate::tokens::Token::ParenOpen = self.peek() {
+                        self.next(); // consume '('
+                        self.skip_whitespace();
+
+                        // Check for optional object literal argument
+                        if let crate::tokens::Token::BraceOpen = self.peek() {
+                            // Parse the object literal
+                            let object_expr = self.parse_object()?;
+                            self.skip_whitespace();
+
+                            // Check for ')'
+                            if let crate::tokens::Token::ParenClose = self.peek() {
+                                self.next(); // consume ')'
+                                return Some(object_expr);
+                            } else {
+                                self.pos = start_pos; // restore position
+                                return None;
+                            }
+                        } else if let crate::tokens::Token::ParenClose = self.peek() {
+                            // Empty constructor: new Object()
+                            self.next(); // consume ')'
+                            return Some(crate::expressions::Expressions::Object(Vec::new()));
+                        } else {
+                            self.pos = start_pos; // restore position
+                            return None;
+                        }
+                    } else {
+                        self.pos = start_pos; // restore position
+                        return None;
+                    }
+                } else {
+                    self.pos = start_pos; // restore position
+                    return None;
+                }
             }
-            self.next(); // consume builtin identifier
+            None
+        }
 
-            let mut input_args = String::new();
-            // if let Some(args) = &self.args {
-            //     let args = args.lock().unwrap();
-            //     if args.debug {
-            //         println!("parse_builtin: found builtin '{}'", cmd);
-            //     }
+        /// parse objects
+        /// ```
+        /// {
+        ///     key1: value1,
+        ///     key2: value2
+        /// }
+        /// ```
+        fn parse_object(&mut self) -> Option<crate::expressions::Expressions> {
+            if let crate::tokens::Token::BraceOpen = self.peek() {
+                self.next(); // consume '{'
+                self.skip_whitespace(); // skip whitespace after opening brace
+                let mut properties = Vec::new();
+                while !matches!(
+                    self.peek(),
+                    crate::tokens::Token::BraceClose | crate::tokens::Token::Eof
+                ) {
+                    // Get the key as a cloned value
+                    let key_token = self.next().clone();
+                    let key = if let crate::tokens::Token::Identifier(ref k) = key_token {
+                        k.clone()
+                    } else {
+                        return None; // expected identifier key
+                    };
+
+                    self.skip_whitespace(); // skip whitespace before colon
+                    if let crate::tokens::Token::Colon = self.peek() {
+                        self.next(); // consume ':'
+                        self.skip_whitespace(); // skip whitespace after colon
+                        if let Some(value) = self.parse_expr() {
+                            properties.push((key, value));
+                        } else {
+                            return None; // expected value expression
+                        }
+                    } else {
+                        return None; // expected ':'
+                    }
+
+                    self.skip_whitespace(); // skip whitespace before comma or closing brace
+                    if let crate::tokens::Token::Comma = self.peek() {
+                        self.next(); // consume ','
+                        self.skip_whitespace(); // skip whitespace after comma
+                    } else {
+                        break;
+                    }
+                }
+                if let crate::tokens::Token::BraceClose = self.peek() {
+                    self.next(); // consume '}'
+                    return Some(crate::expressions::Expressions::Object(properties));
+                } else {
+                    return None; // expected '}'
+                }
+            }
+            None
+        }
+
+        /// parse assignment expressions
+        /// ```
+        /// let s = "hello";
+        ///
+        /// let n = 5;
+        ///
+        /// let f = fn(arg) { print(arg) };
+        /// ```
+        fn parse_assignment(&mut self) -> Option<crate::expressions::Expressions> {
+            self.skip_whitespace();
+            // handle assignments prefixed with the let keyword
+            if let crate::tokens::Token::Keyword(k) = self.peek() {
+                if k == "Let" {
+                    self.next(); // consume 'let'
+                    self.skip_whitespace();
+                    if let crate::tokens::Token::Identifier(name) = self.peek() {
+                        let name = name.clone();
+                        self.next(); // consume identifier
+                        self.skip_whitespace();
+
+                        if let crate::tokens::Token::EqualOperator = self.peek() {
+                            if op == "=" {
+                                self.next(); // consume '='
+                                self.skip_whitespace();
+                                if let Some(value) = self.parse_expr() {
+                                    return Some(crate::expressions::Expressions::Assignment {
+                                        name,
+                                        value: Box::new(value),
+                                    });
+                                } else {
+                                    return None; // expected value expression
+                                }
+                            } else {
+                                return None;
+                            }
+                        }
+                    }
+                } else {
+                    return None;
+                }
+            }
+
+            // handle assignments without the let keyword
+            if let crate::tokens::Token::Identifier(name) = self.peek() {
+                let start_pos = self.pos; // Save position for backtracking
+                let name = name.clone();
+                self.next(); // consume identifier
+                self.skip_whitespace();
+
+                if let crate::tokens::Token::Operator(op) = self.peek() {
+                    if op == "=" {
+                        self.next(); // consume '='
+                        self.skip_whitespace();
+                        if let Some(value) = self.parse_expr() {
+                            return Some(crate::expressions::Expressions::Assignment {
+                                name,
+                                value: Box::new(value),
+                            });
+                        } else {
+                            return None; // expected value expression
+                        }
+                    } else {
+                        // Not an assignment operator, restore position
+                        self.pos = start_pos;
+                        return None;
+                    }
+                } else {
+                    // No operator after identifier, restore position
+                    self.pos = start_pos;
+                }
+            }
+
+            // parse reassignments without the let keyword
+            // if let crate::tokens::Token::Identifier(name) = self.peek() {
             // }
-            // if let Some(args) = &self.args {
-            //     let args = args.lock().unwrap();
-            //     if args.debug {
-            //         println!("parse_builtin: collecting args for builtin '{}'", cmd);
-            //     }
-            // }
-            while !matches!(
-                self.peek(),
-                crate::tokens::Token::Eof | crate::tokens::Token::Semicolon
-            ) {
+
+            None
+        }
+
+        /// parse primitive expressions
+        ///
+        /// 1
+        /// "hello"
+        /// [1, 2, 3]
+        fn parse_primary(&mut self) -> Option<crate::expressions::Expressions> {
+            // Check for Array.new() constructor syntax first
+            if let Some(array_expr) = self.parse_new_array() {
+                return Some(array_expr);
+            }
+
+            // Check for Object.new() constructor syntax
+            if let Some(object_expr) = self.parse_new_object() {
+                return Some(object_expr);
+            }
+
+            // Parse the initial literal, identifier, array, or object
+            let mut expr = match self.peek() {
+                // literals
+                crate::tokens::Token::Number(_)
+                | crate::tokens::Token::String(_)
+                | crate::tokens::Token::Boolean(_) => self.parse_literal(),
+                // arrays & objects
+                // crate::tokens::Token::ShellDot => self.parse_new_array(),
+                crate::tokens::Token::BracketOpen => self.parse_literal_array(),
+                // adds parsing
+                crate::tokens::Token::BraceOpen => self.parse_object(),
+                // identifiers
+                crate::tokens::Token::Identifier(name) => {
+                    let ident = name.clone();
+                    self.next(); // consume identifier
+                    Some(crate::expressions::Expressions::Identifier(ident))
+                }
+                _ => None,
+            }?;
+
+            // Chain member access and function calls modularly
+            loop {
+                // Try member access
+                if let Some(member_expr) = self.parse_member_access(expr.clone()) {
+                    expr = member_expr;
+                    continue;
+                }
+                // Try function call
+                if let Some(call_expr) = self.parse_function_call(expr.clone()) {
+                    expr = call_expr;
+                    continue;
+                }
+                break;
+            }
+
+            Some(expr)
+        }
+
+        fn parse_environment_variable(&mut self) -> Option<crate::expressions::Expressions> {
+            if let crate::tokens::Token::Operator(op) = self.peek() {
+                if op == "$" {
+                    self.next(); // consume '$'
+                    if let crate::tokens::Token::Identifier(name) = self.peek() {
+                        let name = name.clone();
+                        self.next(); // consume identifier
+                        return Some(crate::expressions::Expressions::EnvironmentVariable { name });
+                    }
+                }
+            }
+            None
+        }
+
+        // TODO: the
+        fn parse_builtin(&mut self) -> Option<crate::expressions::Expressions> {
+            if let crate::tokens::Token::Identifier(cmd) = self.peek() {
+                let cmd = cmd.clone();
+
+                if !self.builtins.contains(&cmd) {
+                    return None;
+                }
+                self.next(); // consume builtin identifier
+
+                let mut input_args = String::new();
                 // if let Some(args) = &self.args {
                 //     let args = args.lock().unwrap();
                 //     if args.debug {
-                //         println!("parse_builtin: current token: {:?}", self.peek());
+                //         println!("parse_builtin: found builtin '{}'", cmd);
                 //     }
                 // }
-                match self.peek() {
-                    crate::tokens::Token::Space
-                    | crate::tokens::Token::Tab
-                    | crate::tokens::Token::Newline => {
-                        input_args.push(' ');
-                        self.next(); // consume whitespace
-                    }
-                    crate::tokens::Token::String(s) => {
-                        input_args.push_str(&format!("\"{}\"", s));
-                        self.next(); // consume string
-                    }
-                    crate::tokens::Token::Number(n) => {
-                        input_args.push_str(&n.to_string());
-                        self.next(); // consume number
-                    }
-                    crate::tokens::Token::Identifier(id) => {
-                        input_args.push_str(id);
-                        self.next(); // consume identifier
-                    }
-                    crate::tokens::Token::Operator(op) => {
-                        input_args.push_str(op);
-                        self.next(); // consume operator
-                    }
-                    crate::tokens::Token::BracketOpen => {
-                        input_args.push('[');
-                        self.next(); // consume bracket
-                    }
-                    crate::tokens::Token::BracketClose => {
-                        input_args.push(']');
-                        self.next(); // consume bracket
-                    }
-                    crate::tokens::Token::BraceOpen => {
-                        input_args.push('{');
-                        self.next(); // consume brace
-                    }
-                    crate::tokens::Token::BraceClose => {
-                        input_args.push('}');
-                        self.next(); // consume brace
-                    }
-                    crate::tokens::Token::Comma => {
-                        input_args.push(',');
-                        self.next(); // consume comma
-                    }
-                    crate::tokens::Token::Colon => {
-                        input_args.push(':');
-                        self.next(); // consume colon
-                    }
-                    _ => {
-                        self.next(); // consume unknown token
+                // if let Some(args) = &self.args {
+                //     let args = args.lock().unwrap();
+                //     if args.debug {
+                //         println!("parse_builtin: collecting args for builtin '{}'", cmd);
+                //     }
+                // }
+                while !matches!(
+                    self.peek(),
+                    crate::tokens::Token::Eof | crate::tokens::Token::Semicolon
+                ) {
+                    // if let Some(args) = &self.args {
+                    //     let args = args.lock().unwrap();
+                    //     if args.debug {
+                    //         println!("parse_builtin: current token: {:?}", self.peek());
+                    //     }
+                    // }
+                    match self.peek() {
+                        crate::tokens::Token::Space
+                        | crate::tokens::Token::Tab
+                        | crate::tokens::Token::Newline => {
+                            input_args.push(' ');
+                            self.next(); // consume whitespace
+                        }
+                        crate::tokens::Token::String(s) => {
+                            input_args.push_str(&format!("\"{}\"", s));
+                            self.next(); // consume string
+                        }
+                        crate::tokens::Token::Number(n) => {
+                            input_args.push_str(&n.to_string());
+                            self.next(); // consume number
+                        }
+                        crate::tokens::Token::Identifier(id) => {
+                            input_args.push_str(id);
+                            self.next(); // consume identifier
+                        }
+                        crate::tokens::Token::Operator(op) => {
+                            input_args.push_str(op);
+                            self.next(); // consume operator
+                        }
+                        crate::tokens::Token::BracketOpen => {
+                            input_args.push('[');
+                            self.next(); // consume bracket
+                        }
+                        crate::tokens::Token::BracketClose => {
+                            input_args.push(']');
+                            self.next(); // consume bracket
+                        }
+                        crate::tokens::Token::BraceOpen => {
+                            input_args.push('{');
+                            self.next(); // consume brace
+                        }
+                        crate::tokens::Token::BraceClose => {
+                            input_args.push('}');
+                            self.next(); // consume brace
+                        }
+                        crate::tokens::Token::Comma => {
+                            input_args.push(',');
+                            self.next(); // consume comma
+                        }
+                        crate::tokens::Token::Colon => {
+                            input_args.push(':');
+                            self.next(); // consume colon
+                        }
+                        _ => {
+                            self.next(); // consume unknown token
+                        }
                     }
                 }
-            }
 
-            if let crate::tokens::Token::Semicolon = self.peek() {
-                self.next(); // consume ';'
+                if let crate::tokens::Token::Semicolon = self.peek() {
+                    self.next(); // consume ';'
+                }
+                // if let Some(args) = &self.args {
+                //     let args = args.lock().unwrap();
+                //     if args.debug {
+                //         println!("parse_builtin: final args string: '{}'", input_args);
+                //     }
+                // }
+                return Some(crate::expressions::Expressions::Builtin {
+                    name: cmd,
+                    args: input_args.trim().to_string(),
+                });
             }
+            None
+        }
+
+        // fn parse_variable
+        fn parse_command(&mut self) -> Option<crate::expressions::Expressions> {
+            if let crate::tokens::Token::Identifier(cmd) = self.peek() {
+                let cmd = cmd.clone();
+                if !crate::utils::is_command(&cmd) {
+                    return None;
+                }
+                self.next(); // consume command identifier
+
+                let mut args = String::new();
+                while !matches!(
+                    self.peek(),
+                    crate::tokens::Token::Eof | crate::tokens::Token::Semicolon
+                ) {
+                    match self.peek() {
+                        crate::tokens::Token::Space
+                        | crate::tokens::Token::Tab
+                        | crate::tokens::Token::Newline => {
+                            args.push(' ');
+                            self.next(); // consume whitespace
+                        }
+                        crate::tokens::Token::String(s) => {
+                            args.push_str(&format!("\"{}\"", s));
+                            self.next(); // consume string
+                        }
+                        crate::tokens::Token::Number(n) => {
+                            args.push_str(&n.to_string());
+                            self.next(); // consume number
+                        }
+                        crate::tokens::Token::Identifier(id) => {
+                            args.push_str(id);
+                            self.next(); // consume identifier
+                        }
+                        crate::tokens::Token::Operator(op) => {
+                            args.push_str(op);
+                            self.next(); // consume operator
+                        }
+                        &crate::tokens::Token::ShellDot => {
+                            args.push('.');
+                            self.next(); // consume dot
+                        }
+                        &crate::tokens::Token::ShellDoubleDot => {
+                            args.push_str("..");
+                            self.next(); // consume double dot
+                        }
+                        &crate::tokens::Token::BracketOpen => {
+                            args.push('[');
+                            self.next(); // consume '['
+                        }
+                        &crate::tokens::Token::BracketClose => {
+                            args.push(']');
+                            self.next(); // consume ']'
+                        }
+                        &crate::tokens::Token::ParenOpen => {
+                            args.push('(');
+                            self.next(); // consume '('
+                        }
+                        &crate::tokens::Token::ParenClose => {
+                            args.push(')');
+                            self.next(); // consume ')'
+                        }
+                        &crate::tokens::Token::BraceOpen => {
+                            args.push('{');
+                            self.next(); // consume '{'
+                        }
+                        &crate::tokens::Token::BraceClose => {
+                            args.push('}');
+                            self.next(); // consume '}'
+                        }
+                        &crate::tokens::Token::Comma => {
+                            args.push(',');
+                            self.next(); // consume ','
+                        }
+                        _ => {
+                            self.next(); // consume unknown token
+                        }
+                    }
+                }
+
+                if let crate::tokens::Token::Semicolon = self.peek() {
+                    self.next(); // consume ';'
+                }
+                return Some(crate::expressions::Expressions::ShellCommand {
+                    name: cmd,
+                    args: args.trim().to_string(),
+                });
+            }
+            None
+        }
+
+        /// implements parsing rules to build TurtleExpression AST
+        pub fn parse_expr(&mut self) -> Option<crate::expressions::Expressions> {
             // if let Some(args) = &self.args {
             //     let args = args.lock().unwrap();
             //     if args.debug {
-            //         println!("parse_builtin: final args string: '{}'", input_args);
+            //         println!(
+            //             "Parsing expression at token position {}: {:?}",
+            //             self.pos,
+            //             self.peek()
+            //         );
             //     }
             // }
-            return Some(crate::expressions::Expressions::Builtin {
-                name: cmd,
-                args: input_args.trim().to_string(),
-            });
-        }
-        None
-    }
 
-    // fn parse_variable
-    fn parse_command(&mut self) -> Option<crate::expressions::Expressions> {
-        if let crate::tokens::Token::Identifier(cmd) = self.peek() {
-            let cmd = cmd.clone();
-            if !crate::utils::is_command(&cmd) {
-                return None;
+            // parse  built-in functions
+            if let Some(builtin) = self.parse_builtin() {
+                return Some(builtin);
             }
-            self.next(); // consume command identifier
+            // parse shell commands
+            if let Some(command) = self.parse_command() {
+                return Some(command);
+            }
 
-            let mut args = String::new();
-            while !matches!(
-                self.peek(),
-                crate::tokens::Token::Eof | crate::tokens::Token::Semicolon
-            ) {
-                match self.peek() {
-                    crate::tokens::Token::Space
-                    | crate::tokens::Token::Tab
-                    | crate::tokens::Token::Newline => {
-                        args.push(' ');
-                        self.next(); // consume whitespace
-                    }
-                    crate::tokens::Token::String(s) => {
-                        args.push_str(&format!("\"{}\"", s));
-                        self.next(); // consume string
-                    }
-                    crate::tokens::Token::Number(n) => {
-                        args.push_str(&n.to_string());
-                        self.next(); // consume number
-                    }
-                    crate::tokens::Token::Identifier(id) => {
-                        args.push_str(id);
-                        self.next(); // consume identifier
-                    }
-                    crate::tokens::Token::Operator(op) => {
-                        args.push_str(op);
-                        self.next(); // consume operator
-                    }
-                    &crate::tokens::Token::ShellDot => {
-                        args.push('.');
-                        self.next(); // consume dot
-                    }
-                    &crate::tokens::Token::ShellDoubleDot => {
-                        args.push_str("..");
-                        self.next(); // consume double dot
-                    }
-                    &crate::tokens::Token::BracketOpen => {
-                        args.push('[');
-                        self.next(); // consume '['
-                    }
-                    &crate::tokens::Token::BracketClose => {
-                        args.push(']');
-                        self.next(); // consume ']'
-                    }
-                    &crate::tokens::Token::ParenOpen => {
-                        args.push('(');
-                        self.next(); // consume '('
-                    }
-                    &crate::tokens::Token::ParenClose => {
-                        args.push(')');
-                        self.next(); // consume ')'
-                    }
-                    &crate::tokens::Token::BraceOpen => {
-                        args.push('{');
-                        self.next(); // consume '{'
-                    }
-                    &crate::tokens::Token::BraceClose => {
-                        args.push('}');
-                        self.next(); // consume '}'
-                    }
-                    &crate::tokens::Token::Comma => {
-                        args.push(',');
-                        self.next(); // consume ','
-                    }
-                    _ => {
-                        self.next(); // consume unknown token
-                    }
+            // parse assignments
+            if let Some(assignment) = self.parse_assignment() {
+                return Some(assignment);
+            }
+
+            // // parse variable access - experimental
+            // if let Some(var_expr) = self.parse_variable() {
+            //     return Some(var_expr);
+            // }
+
+            // parse environment variables
+            // if let Some(env_var) = self.parse_environment_variable() {
+            //     return Some(env_var);
+            // }
+
+            let mut expr = self.parse_primary();
+
+            if let Some(func_def) = self.parse_function_def() {
+                return Some(func_def);
+            }
+
+            loop {
+                if let Some(member_access) = self.parse_member_access(expr.clone()?) {
+                    expr = Some(member_access);
+                    continue;
+                }
+                if let Some(func_call) = self.parse_function_call(expr.clone().unwrap()) {
+                    expr = Some(func_call);
+                    continue;
+                }
+                break;
+            }
+
+            // if let Some(args) = &self.args {
+            //     let args = args.lock().unwrap();
+            //     if args.debug {
+            //         println!(
+            //             "🔍 After primary parse - expr: {:?}, current token: {:?}",
+            //             expr,
+            //             self.peek()
+            //         );
+            //     }
+            // }
+
+            // parse unary operations
+            // if expr.is_none() {
+            //     if let Some(args) = &self.args {
+            //         let args = args.lock().unwrap();
+            //         if args.debug {
+            //             println!("🔍 Expr is None, attempting to parse unary operation");
+            //         }
+            //     }
+            // } else {
+            //     if let Some(args) = &self.args {
+            //         let args = args.lock().unwrap();
+            //         if args.debug {
+            //             println!(
+            //                 "🔍 Expr is Some({:?}), skipping unary operation parsing",
+            //                 expr
+            //             );
+            //         }
+            //     }
+            // }
+
+            // disable unary parsing for now
+
+            // if let Some(unary) = self.parse_unary() {
+            //     println!("🔍 Parsed unary operation: {:?}", unary);
+            //     return Some(unary);
+            // }
+
+            // if expr.is_none() {}
+
+            // skip whitespace before checking for binary operations
+            self.skip_whitespace();
+
+            // parse binary operations (chained)
+            while let Some(crate::tokens::Token::Operator(_)) = self.peek().clone().into() {
+                if let Some(left) = expr {
+                    // expr = self.parse_binary(left);
+                    expr = Some(self.parse_binary_with_precedence(1, left));
+                } else {
+                    break;
                 }
             }
 
-            if let crate::tokens::Token::Semicolon = self.peek() {
-                self.next(); // consume ';'
-            }
-            return Some(crate::expressions::Expressions::ShellCommand {
-                name: cmd,
-                args: args.trim().to_string(),
-            });
+            expr
         }
-        None
-    }
-
-    /// implements parsing rules to build TurtleExpression AST
-    pub fn parse_expr(&mut self) -> Option<crate::expressions::Expressions> {
-        // if let Some(args) = &self.args {
-        //     let args = args.lock().unwrap();
-        //     if args.debug {
-        //         println!(
-        //             "Parsing expression at token position {}: {:?}",
-        //             self.pos,
-        //             self.peek()
-        //         );
-        //     }
-        // }
-
-        // parse  built-in functions
-        if let Some(builtin) = self.parse_builtin() {
-            return Some(builtin);
-        }
-        // parse shell commands
-        if let Some(command) = self.parse_command() {
-            return Some(command);
-        }
-
-        // parse assignments
-        if let Some(assignment) = self.parse_assignment() {
-            return Some(assignment);
-        }
-
-        // // parse variable access - experimental
-        // if let Some(var_expr) = self.parse_variable() {
-        //     return Some(var_expr);
-        // }
-
-        // parse environment variables
-        // if let Some(env_var) = self.parse_environment_variable() {
-        //     return Some(env_var);
-        // }
-
-        let mut expr = self.parse_primary();
-
-        if let Some(func_def) = self.parse_function_def() {
-            return Some(func_def);
-        }
-
-        loop {
-            if let Some(member_access) = self.parse_member_access(expr.clone()?) {
-                expr = Some(member_access);
-                continue;
-            }
-            if let Some(func_call) = self.parse_function_call(expr.clone().unwrap()) {
-                expr = Some(func_call);
-                continue;
-            }
-            break;
-        }
-
-        // if let Some(args) = &self.args {
-        //     let args = args.lock().unwrap();
-        //     if args.debug {
-        //         println!(
-        //             "🔍 After primary parse - expr: {:?}, current token: {:?}",
-        //             expr,
-        //             self.peek()
-        //         );
-        //     }
-        // }
-
-        // parse unary operations
-        // if expr.is_none() {
-        //     if let Some(args) = &self.args {
-        //         let args = args.lock().unwrap();
-        //         if args.debug {
-        //             println!("🔍 Expr is None, attempting to parse unary operation");
-        //         }
-        //     }
-        // } else {
-        //     if let Some(args) = &self.args {
-        //         let args = args.lock().unwrap();
-        //         if args.debug {
-        //             println!(
-        //                 "🔍 Expr is Some({:?}), skipping unary operation parsing",
-        //                 expr
-        //             );
-        //         }
-        //     }
-        // }
-
-        // disable unary parsing for now
-
-        // if let Some(unary) = self.parse_unary() {
-        //     println!("🔍 Parsed unary operation: {:?}", unary);
-        //     return Some(unary);
-        // }
-
-        // if expr.is_none() {}
-
-        // skip whitespace before checking for binary operations
-        self.skip_whitespace();
-
-        // parse binary operations (chained)
-        while let Some(crate::tokens::Token::Operator(_)) = self.peek().clone().into() {
-            if let Some(left) = expr {
-                // expr = self.parse_binary(left);
-                expr = Some(self.parse_binary_with_precedence(1, left));
-            } else {
-                break;
-            }
-        }
-
-        expr
     }
 }
 
