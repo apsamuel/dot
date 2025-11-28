@@ -169,35 +169,8 @@ impl AbstractSyntaxTree {
         if let crate::tokens::Token::Operator(op) = self.peek() {
             if op == "-" || op == "!" || op == "~" {
                 let op = op.clone();
-                // if args.debug {
-                //     println!(
-                //         "🔧 parse_unary: found unary operator '{}', pos={}, token={:?}",
-                //         op,
-                //         self.pos,
-                //         self.peek()
-                //     );
-                // }
-
                 self.next(); // consume operator
                 self.skip_whitespace();
-                // if args.debug {
-                //     println!(
-                //         "🔧 parse_unary: after consuming operator, pos={}, token={:?}",
-                //         self.pos,
-                //         self.peek()
-                //     );
-                // }
-                // if self.args.is_some() {
-                //     let args = self.args.as_ref().unwrap().lock().unwrap();
-
-                //     if args.debug {
-                //         println!(
-                //             "🔧 parse_unary: after consuming operator, pos={}, token={:?}",
-                //             self.pos,
-                //             self.peek()
-                //         );
-                //     }
-                // }
 
                 if let Some(expr) = self.parse_expr() {
                     return Some(crate::expressions::Expressions::UnaryOperation {
@@ -812,28 +785,10 @@ impl AbstractSyntaxTree {
             self.next(); // consume builtin identifier
 
             let mut input_args = String::new();
-            // if let Some(args) = &self.args {
-            //     let args = args.lock().unwrap();
-            //     if args.debug {
-            //         println!("parse_builtin: found builtin '{}'", cmd);
-            //     }
-            // }
-            // if let Some(args) = &self.args {
-            //     let args = args.lock().unwrap();
-            //     if args.debug {
-            //         println!("parse_builtin: collecting args for builtin '{}'", cmd);
-            //     }
-            // }
             while !matches!(
                 self.peek(),
                 crate::tokens::Token::Eof | crate::tokens::Token::Semicolon
             ) {
-                // if let Some(args) = &self.args {
-                //     let args = args.lock().unwrap();
-                //     if args.debug {
-                //         println!("parse_builtin: current token: {:?}", self.peek());
-                //     }
-                // }
                 match self.peek() {
                     crate::tokens::Token::Space
                     | crate::tokens::Token::Tab
@@ -996,18 +951,7 @@ impl AbstractSyntaxTree {
 
     /// implements parsing rules to build TurtleExpression AST
     pub fn parse_expr(&mut self) -> Option<crate::expressions::Expressions> {
-        // if let Some(args) = &self.args {
-        //     let args = args.lock().unwrap();
-        //     if args.debug {
-        //         println!(
-        //             "Parsing expression at token position {}: {:?}",
-        //             self.pos,
-        //             self.peek()
-        //         );
-        //     }
-        // }
-
-        // parse  built-in functions
+        // self.skip_whitespace(); // parse  built-in functions
         if let Some(builtin) = self.parse_builtin() {
             return Some(builtin);
         }
@@ -1020,16 +964,6 @@ impl AbstractSyntaxTree {
         if let Some(assignment) = self.parse_assignment() {
             return Some(assignment);
         }
-
-        // // parse variable access - experimental
-        // if let Some(var_expr) = self.parse_variable() {
-        //     return Some(var_expr);
-        // }
-
-        // parse environment variables
-        // if let Some(env_var) = self.parse_environment_variable() {
-        //     return Some(env_var);
-        // }
 
         let mut expr = self.parse_primary();
 
@@ -1049,53 +983,12 @@ impl AbstractSyntaxTree {
             break;
         }
 
-        // if let Some(args) = &self.args {
-        //     let args = args.lock().unwrap();
-        //     if args.debug {
-        //         println!(
-        //             "🔍 After primary parse - expr: {:?}, current token: {:?}",
-        //             expr,
-        //             self.peek()
-        //         );
-        //     }
-        // }
-
-        // parse unary operations
-        // if expr.is_none() {
-        //     if let Some(args) = &self.args {
-        //         let args = args.lock().unwrap();
-        //         if args.debug {
-        //             println!("🔍 Expr is None, attempting to parse unary operation");
-        //         }
-        //     }
-        // } else {
-        //     if let Some(args) = &self.args {
-        //         let args = args.lock().unwrap();
-        //         if args.debug {
-        //             println!(
-        //                 "🔍 Expr is Some({:?}), skipping unary operation parsing",
-        //                 expr
-        //             );
-        //         }
-        //     }
-        // }
-
-        // disable unary parsing for now
-
-        // if let Some(unary) = self.parse_unary() {
-        //     println!("🔍 Parsed unary operation: {:?}", unary);
-        //     return Some(unary);
-        // }
-
-        // if expr.is_none() {}
-
         // skip whitespace before checking for binary operations
         self.skip_whitespace();
 
         // parse binary operations (chained)
         while let Some(crate::tokens::Token::Operator(_)) = self.peek().clone().into() {
             if let Some(left) = expr {
-                // expr = self.parse_binary(left);
                 expr = Some(self.parse_binary_with_precedence(1, left));
             } else {
                 break;
@@ -1109,7 +1002,6 @@ impl AbstractSyntaxTree {
 /// Tokenization & Interpretation
 #[derive(Debug, Clone)]
 pub struct Interpreter {
-    // debug: bool,
     args: Option<std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>>,
     env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
@@ -1118,7 +1010,7 @@ pub struct Interpreter {
     >,
     builtins: Vec<String>,
     counter: usize,
-    tokens: Vec<crate::tokens::Token>, // parser: Option<TurtleParser>,
+    tokens: Vec<crate::tokens::Token>,
 }
 
 impl Interpreter {
@@ -1371,11 +1263,6 @@ impl Interpreter {
                     while let Some(next_token) = iter.peek() {
                         match next_token {
                             crate::tokens::Token::Eof | crate::tokens::Token::Semicolon => break,
-
-                            // BUG: handle ShellCommands embedded in other shell commands
-                            // the name and args need to be extracted properly
-                            // and joined
-                            // Handle dash-arguments: -ah, -l, etc.
                             crate::tokens::Token::Operator(op) if op == "-" => {
                                 let mut arg = String::from("-");
                                 iter.next(); // consume '-'
