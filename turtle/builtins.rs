@@ -68,15 +68,15 @@ pub struct Builtins {
     /// available builtins
     pub builtins: Vec<Builtin>,
     /// environment variables
-    pub env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+    pub _env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     /// aliases
-    pub aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+    pub _aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     /// variables
-    pub vars: std::sync::Arc<
+    pub _vars: std::sync::Arc<
         std::sync::Mutex<std::collections::HashMap<String, crate::expressions::Expressions>>,
     >,
     /// debug flag
-    pub debug: bool,
+    pub _debug: bool,
 }
 
 impl std::fmt::Debug for Builtins {
@@ -89,7 +89,7 @@ impl std::fmt::Debug for Builtins {
 
 impl Builtins {
     /// create a new Builtins instance
-    pub fn new(
+    pub fn _new(
         builtins: Vec<Builtin>,
         env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
         aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
@@ -100,10 +100,10 @@ impl Builtins {
     ) -> Self {
         Builtins {
             builtins,
-            env,
-            aliases,
-            vars,
-            debug,
+            _env: env,
+            _aliases: aliases,
+            _vars: vars,
+            _debug: debug,
         }
     }
 
@@ -118,7 +118,7 @@ impl Builtins {
     }
 
     /// execute a builtin by name
-    pub fn exec(
+    pub fn _exec(
         &self,
         name: &str,
         vars: std::sync::Arc<
@@ -133,7 +133,7 @@ impl Builtins {
         builtin_names: Vec<String>,
         args: Vec<String>,
     ) {
-        let debug = self.debug;
+        let debug = self._debug;
         if let Some(builtin) = self.get(name) {
             (builtin.execute)(
                 config,

@@ -116,9 +116,9 @@ impl std::fmt::Display for Defaults {
 /// setting the environment variables `TURTLE_PROMPT` will override the prompt setting in the config file
 #[derive(Debug, Clone)]
 pub struct Environment {
-    pub debug: bool,
+    pub _debug: bool,
     pub config: std::collections::HashMap<String, String>,
-    pub defaults: bool, // pub config: std::collections::HashMap<String, String>,
+    pub _defaults: bool, // pub config: std::collections::HashMap<String, String>,
 }
 
 impl Environment {
@@ -140,18 +140,18 @@ impl Environment {
             Environment::default()
         } else {
             Environment {
-                debug,
+                _debug: debug,
                 config,
-                defaults: true,
+                _defaults: true,
             }
         }
     }
 
-    pub fn set(&mut self, key: &str, value: &str) {
+    pub fn _set(&mut self, key: &str, value: &str) {
         self.config.insert(key.to_string(), value.to_string());
     }
 
-    pub fn unset(&mut self, key: &str) {
+    pub fn _unset(&mut self, key: &str) {
         self.config.remove(key);
     }
 
@@ -159,7 +159,7 @@ impl Environment {
         self.config.get(key)
     }
 
-    pub fn list(&self) -> Vec<(&String, &String)> {
+    pub fn _list(&self) -> Vec<(&String, &String)> {
         self.config.iter().collect()
     }
 }
@@ -174,8 +174,8 @@ impl Default for Environment {
         }
         Environment {
             config,
-            defaults: true,
-            debug: false,
+            _defaults: true,
+            _debug: false,
         }
     }
 }
@@ -304,14 +304,12 @@ impl Config {
         let env = Environment::new(args.clone().unwrap_or_default());
         let mut merged = config.clone();
 
-        // override with environment variables / args
-        // fall back to defaults if not set
-
-        // we should iterate over the list of fields in the Config
+        /*
+        - override with environment variables / args
+        - fall back to defaults if not set
+        */
 
         for field in Config::fields() {
-            // if the field is provided in env.config, use is to override
-            // TURTLE_<FIELD>
             let env_key = format!("TURTLE_{}", field.to_uppercase());
             if let Some(value) = env.get(&env_key) {
                 match field.as_str() {
@@ -378,13 +376,11 @@ impl Config {
         Some(merged)
     }
 
-    pub fn as_mutex(&self) -> std::sync::Arc<std::sync::Mutex<Self>> {
+    pub fn _as_mutex(&self) -> std::sync::Arc<std::sync::Mutex<Self>> {
         std::sync::Arc::new(std::sync::Mutex::new(self.clone()))
     }
 
     pub fn load(path: &str, args: &crate::config::Arguments) -> Option<Self> {
-        // if the --debug flag is set, print the path being loaded
-
         let expanded_path = if path.starts_with("~") {
             if let Some(home) = dirs::home_dir() {
                 let without_tilde = path.trim_start_matches("~");
@@ -396,9 +392,6 @@ impl Config {
             path.to_string()
         };
 
-        // let contents = std::fs::read_to_string(expanded_path).ok()?;
-        // serde_yaml::from_str::<Config>(&contents).ok()
-
         let contents = match std::fs::read_to_string(&expanded_path) {
             Ok(c) => c,
             Err(e) => {
@@ -408,7 +401,7 @@ impl Config {
                 return None;
             }
         };
-        let mut config = match serde_yaml::from_str::<Config>(&contents) {
+        let config = match serde_yaml::from_str::<Config>(&contents) {
             Ok(c) => c,
             Err(e) => {
                 if args.debug {
@@ -426,7 +419,7 @@ impl Config {
     }
 
     pub fn loads(yaml_content: &str, args: &crate::config::Arguments) -> Option<Self> {
-        let mut config = match serde_yaml::from_str::<Config>(yaml_content) {
+        let config = match serde_yaml::from_str::<Config>(yaml_content) {
             Ok(c) => c,
             Err(e) => {
                 if args.debug {
@@ -459,7 +452,7 @@ impl Config {
             )
             .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
 
-        let current_config = self.clone();
+        let _current_config = self.clone();
         std::thread::spawn(move || {
             for res in rx {
                 match res {
@@ -502,7 +495,7 @@ impl Config {
         Ok(watcher)
     }
 
-    pub fn write(&self, path: &str) -> std::io::Result<()> {
+    pub fn _write(&self, path: &str) -> std::io::Result<()> {
         let expanded_path = if path.starts_with("~") {
             if let Some(home) = dirs::home_dir() {
                 let without_tilde = path.trim_start_matches("~");
@@ -517,18 +510,18 @@ impl Config {
         std::fs::write(expanded_path, yaml)
     }
 
-    pub fn validate(&self) -> bool {
+    pub fn _validate(&self) -> bool {
         true
     }
 
-    pub fn to_json(&self) -> Option<String> {
+    pub fn _to_json(&self) -> Option<String> {
         serde_json::to_string_pretty(self).ok()
     }
 }
 
 #[derive(Debug, Clone)]
 pub enum ConfigSignal {
-    Loaded(Config),
+    _Loaded(Config),
     Reloaded(Config),
     Error(String),
 }
@@ -659,10 +652,10 @@ impl Arguments {
         self.debug || self.debug_expressions || self.debug_tokenization
     }
 
-    pub fn should_debug_tokens(&self) -> bool {
+    pub fn _should_debug_tokens(&self) -> bool {
         self.debug || self.debug_tokenization
     }
-    pub fn should_debug_expressions(&self) -> bool {
+    pub fn _should_debug_expressions(&self) -> bool {
         self.debug || self.debug_expressions
     }
 
@@ -670,7 +663,7 @@ impl Arguments {
         self.debug || self.debug_context
     }
 
-    pub fn validate(&self) -> bool {
+    pub fn _validate(&self) -> bool {
         true
     }
 }
@@ -681,6 +674,6 @@ mod tests {
     #[test]
     fn test_arguments_new() {
         let args = Arguments::new();
-        assert!(args.validate());
+        assert!(args._validate());
     }
 }

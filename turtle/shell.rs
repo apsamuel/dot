@@ -67,7 +67,7 @@ impl Shell {
                             *cfg_lock = new_config;
                         }
                     }
-                    crate::config::ConfigSignal::Loaded(cfg) => {
+                    crate::config::ConfigSignal::_Loaded(cfg) => {
                         if self.debug {
                             println!("✅ configuration file loaded");
                         }

@@ -518,11 +518,11 @@ Examples:
     pub fn setup(&mut self) {
         let builtins = self.get_builtins();
         self.builtins = Some(crate::builtins::Builtins {
-            env: self.env.clone(),
-            aliases: self.aliases.clone(),
-            vars: self.vars.clone(),
+            _env: self.env.clone(),
+            _aliases: self.aliases.clone(),
+            _vars: self.vars.clone(),
             builtins,
-            debug: self.debug,
+            _debug: self.debug,
         });
     }
 
@@ -1092,18 +1092,6 @@ Examples:
                         },
                     ))
                 }
-
-                // let vars = self.vars.lock().unwrap();
-
-                // if let Some(var_value) = vars.get(&name) {
-                //     // Return the variable's value by evaluating it
-                //     drop(vars); // Release the lock before recursive eval
-                //     self.eval(Some(var_value.clone()))
-                // } else {
-                //     // Variable not found
-                //     eprintln!("Error: Variable '{}' not defined", name);
-                //     None
-                // }
             }
 
             Some(crate::expressions::Expressions::EnvironmentVariable { name }) => {
@@ -1117,8 +1105,6 @@ Examples:
 
             Some(crate::expressions::Expressions::ShellCommand { name, args }) => {
                 let result = self.eval_exec_command(&name, &args);
-                // result is an option, we need to unwrap it to access the code
-                // the result is in the CommandResult variant of ShellResults
                 if let Some(crate::context::EvalResults::CommandExpressionResult(cmd)) = &result {
                     if cmd.code != 0 {
                         eprintln!("{}", cmd.stderr);
