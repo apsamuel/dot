@@ -16,7 +16,7 @@ pub struct Shell {
     /// Shell start time
     start: Option<std::time::Instant>,
     /// Shell uptime
-    uptime: fn(start: std::time::Instant) -> Option<std::time::Duration>,
+    _uptime: fn(start: std::time::Instant) -> Option<std::time::Duration>,
     /// Shell defaults
     defaults: crate::config::Defaults,
 
@@ -33,8 +33,8 @@ pub struct Shell {
     // replace events with history manager
     history: std::sync::Arc<std::sync::Mutex<crate::history::History>>,
     // events: std::sync::Arc<std::sync::Mutex<Vec<crate::history::Event>>>,
-    env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
-    aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+    _env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+    _aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
     tokens: Vec<Vec<crate::tokens::Token>>,
     expressions: Vec<crate::expressions::Expressions>,
 
@@ -55,7 +55,7 @@ impl Shell {
                 match signal {
                     crate::config::ConfigSignal::Reloaded(cfg) => {
                         if self.debug {
-                            println!("🔄 reloading configuration due to file change");
+                            println!("🔄 reloading configuration due to file change {:?}", cfg);
                         }
                         let args = self
                             .args
@@ -67,9 +67,9 @@ impl Shell {
                             *cfg_lock = new_config;
                         }
                     }
-                    crate::config::ConfigSignal::_Loaded(cfg) => {
+                    crate::config::ConfigSignal::Loaded(cfg) => {
                         if self.debug {
-                            println!("✅ configuration file loaded");
+                            println!("✅ configuration file loaded {:?}", cfg);
                         }
                         if let Some(c) = &self.config {
                             let mut c_lock = c.lock().unwrap();
@@ -79,11 +79,6 @@ impl Shell {
                     crate::config::ConfigSignal::Error(err_msg) => {
                         if self.debug {
                             println!("❌ configuration error: {}", err_msg);
-                        }
-                    }
-                    _ => {
-                        if self.debug {
-                            println!("⚠️ received unhandled config signal: {:?}", signal);
                         }
                     }
                 }
@@ -102,7 +97,7 @@ impl Shell {
     }
 
     /// Get elapsed time since shell start
-    fn elapsed(&self) -> Option<std::time::Duration> {
+    fn _elapsed(&self) -> Option<std::time::Duration> {
         if let Some(start) = self.start {
             Some(start.elapsed())
         } else {
@@ -126,7 +121,7 @@ impl Shell {
     /// Create a new Turtle shell instance
     pub fn new(args: crate::config::Arguments) -> Self {
         // capture user environment
-        let user_environment =
+        let _user_environment =
             std::env::vars().collect::<std::collections::HashMap<String, String>>();
 
         // load defaults
@@ -135,11 +130,11 @@ impl Shell {
         // optional command line args
         let args = Some(args);
 
-        let env_config = crate::config::Environment::new(args.as_ref().unwrap().clone());
+        let _env_config = crate::config::Environment::new(args.as_ref().unwrap().clone());
 
         // Determine history path - from args or defaults
         // TODO: incorporate TURTLE_HISTORY_PATH env var
-        let history_path = args
+        let _history_path = args
             .as_ref()
             .and_then(|args| args.history_path.as_ref())
             .unwrap_or(&defaults.history_path)
@@ -147,7 +142,7 @@ impl Shell {
 
         // Determine config path - from args or defaults
         // TODO: incorporate TURTLE_CONFIG_PATH env var, or  XDG_CONFIG_HOME convention
-        let config_path = args
+        let _config_path = args
             .as_ref()
             .and_then(|args| args.config_path.as_ref())
             .unwrap_or(&defaults.config_path)
@@ -244,7 +239,7 @@ impl Shell {
         Shell {
             debug,
             start: None,
-            uptime: |start: std::time::Instant| -> Option<std::time::Duration> {
+            _uptime: |start: std::time::Instant| -> Option<std::time::Duration> {
                 Some(start.elapsed())
             },
             pid: None,
@@ -255,8 +250,8 @@ impl Shell {
             args,
             thememanager,
             history,
-            env,
-            aliases,
+            _env: env,
+            _aliases: aliases,
             interpreter,
             context,
             tokens: Vec::new(),
@@ -301,7 +296,7 @@ impl Shell {
 
         // get default paths and values
         let default_config_path = self.defaults.config_path.clone();
-        let default_history_path = self.defaults.history_path.clone();
+        let _default_history_path = self.defaults.history_path.clone();
         let default_prompt = self.defaults.prompt.clone();
         let default_theme = self.defaults.theme.clone();
 
@@ -318,7 +313,7 @@ impl Shell {
             .as_ref()
             .and_then(|c| Some(c.lock().unwrap().clone()));
 
-        let c_config = config.clone();
+        let _c_config = config.clone();
 
         // --version flag
         if let Some(show_version) = args.as_ref().and_then(|a| Some(a.version)) {
@@ -415,7 +410,7 @@ impl Shell {
         /*
             get prompt from the configuration file, or use the default
         */
-        let user_prompt = config
+        let _user_prompt = config
             .clone()
             .and_then(|cfg| cfg.prompt)
             .unwrap_or(default_prompt.clone());
@@ -451,7 +446,7 @@ impl Shell {
             .and_then(|args| args.lock().unwrap().command.clone())
         // .as_str()
         {
-            let tokens = self.interpreter.tokenize(command.as_str());
+            let _tokens = self.interpreter.tokenize(command.as_str());
 
             let expr = self.interpreter.interpret();
             let result = self.context.eval(expr.clone());
@@ -530,26 +525,29 @@ impl Shell {
     }
 }
 
-pub enum ShellError {
+pub enum _ShellError {
     /// Generic shell error
     GenericError(String),
+    /// Syntax error
+    SyntaxError(String),
     /// Command not found error
     CommandNotFound(String),
     /// Execution error
     ExecutionError(String),
 }
 
-impl std::fmt::Display for ShellError {
+impl std::fmt::Display for _ShellError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ShellError::GenericError(msg) => write!(f, "Shell Error: {}", msg),
-            ShellError::CommandNotFound(cmd) => write!(f, "Command Not Found: {}", cmd),
-            ShellError::ExecutionError(msg) => write!(f, "Execution Error: {}", msg),
+            _ShellError::GenericError(msg) => write!(f, "Shell Error: {}", msg),
+            _ShellError::CommandNotFound(cmd) => write!(f, "Command Not Found: {}", cmd),
+            _ShellError::ExecutionError(msg) => write!(f, "Execution Error: {}", msg),
+            _ShellError::SyntaxError(msg) => write!(f, "Syntax Error: {}", msg),
         }
     }
 }
 
-pub enum ShellSignal {
+pub enum _ShellSignal {
     //// Signal to exit the shell
     ExitShell,
     /// Signal to terminate the shell

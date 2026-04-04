@@ -266,7 +266,7 @@ Examples:
                 name: "keywords".to_string(),
                 description: "Display keywords".to_string(),
                 help: "Usage: keywords".to_string(),
-                execute: Box::new(|_, _, _, _, _, _, builtin_names, _, _| {
+                execute: Box::new(|_, _, _, _, _, _, _, _, _| {
                     println!("🐢 keywords:");
                     for keyword in crate::lang::KEYWORDS {
                         println!(" - {}", keyword);
@@ -278,7 +278,7 @@ Examples:
                 name: "timestamp".to_string(),
                 description: "Convert a timestamp to a date".to_string(),
                 help: "Usage: timestamp <timestamp>".to_string(),
-                execute: Box::new(|_, _, _, _, _, _, builtin_names, args, _| {
+                execute: Box::new(|_, _, _, _, _, _, _, args, _| {
                     if args.is_empty() {
                         eprintln!("timestamp <timestamp>");
                         return;
@@ -295,12 +295,12 @@ Examples:
                 name: "imgcat".to_string(),
                 description: "display images".to_string(),
                 help: "Usage: imgcat <image_path>".to_string(),
-                execute: Box::new(|_, _, _, _, _, _, builtin_names, args, _| {
+                execute: Box::new(|_, _, _, _, _, _, _, args, _| {
                     if args.is_empty() {
                         eprintln!("imgcat <image_path>");
                         return;
                     }
-                    let image_path = &args[0];
+                    let _image_path = &args[0];
                     // TODO: implement image display logic
                 }),
             },
@@ -526,11 +526,11 @@ Examples:
         });
     }
 
-    pub fn get_var(&self, name: &str) -> Option<crate::expressions::Expressions> {
+    pub fn _get_var(&self, name: &str) -> Option<crate::expressions::Expressions> {
         self.vars.lock().unwrap().get(name).cloned()
     }
 
-    pub fn set_var(&mut self, name: String, value: crate::expressions::Expressions) {
+    pub fn _set_var(&mut self, name: String, value: crate::expressions::Expressions) {
         self.vars.lock().unwrap().insert(name, value);
     }
 
@@ -538,7 +538,7 @@ Examples:
         self.env.lock().unwrap().get(name).cloned()
     }
 
-    pub fn set_env(&mut self, name: String, value: String) {
+    pub fn _set_env(&mut self, name: String, value: String) {
         self.env.lock().unwrap().insert(name, value);
     }
 
@@ -690,7 +690,7 @@ Examples:
     fn eval_variable_access(
         &mut self,
         name: &str,
-        value: Box<crate::expressions::Expressions>,
+        _value: Box<crate::expressions::Expressions>,
     ) -> Option<crate::context::EvalResults> {
         // get the variables values - this is an expression
         let var = {
@@ -699,6 +699,7 @@ Examples:
         };
 
         let results = self.eval(Some(var.clone()))?;
+        // println!("{:?}", results);
 
         return Some(results);
     }
@@ -796,7 +797,7 @@ Examples:
         None
     }
 
-    fn eval_spawn_command(
+    fn _eval_spawn_command(
         &mut self,
         command: &str,
         args: &str,
@@ -933,7 +934,6 @@ Examples:
                     timestamp: crate::utils::now_unix(),
                 };
 
-                // self.history.add
                 // append to history
                 self.history
                     .lock()
@@ -942,6 +942,18 @@ Examples:
                     .as_mut()
                     .unwrap()
                     .push(crate::history::Event::CommandResponse(command_response));
+
+                if self.debug {
+                    // print history length
+                    let history_length = self
+                        .history
+                        .lock()
+                        .unwrap()
+                        .events
+                        .as_ref()
+                        .map_or(0, |e| e.len());
+                    println!("🛠️ history length: {}", history_length);
+                }
 
                 // write to history
 
@@ -1001,7 +1013,9 @@ Examples:
 
             // experimental variable access
             Some(crate::expressions::Expressions::TurtleVariable { name, value }) => {
-                self.eval_variable_access(&name, value)
+                let result = self.eval_variable_access(&name, value);
+                // println!("variable access result: {:?}", result);
+                result
             }
 
             Some(crate::expressions::Expressions::BinaryOperation { left, op, right }) => {
@@ -1256,7 +1270,7 @@ impl std::fmt::Display for EvalResults {
 }
 
 impl EvalResults {
-    pub fn from_shell_command_result(stdout: String, stderr: String, code: i32) -> Self {
+    pub fn _from_shell_command_result(stdout: String, stderr: String, code: i32) -> Self {
         EvalResults::CommandExpressionResult(CommandEvalResult {
             stdout,
             stderr,

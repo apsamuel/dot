@@ -12,6 +12,7 @@
 /// Turtle language keywords
 pub static KEYWORDS: &[&str] = &[
     "New", "If", "Elseif", "Else", "While", "For", "Break", "Fn", "Return", "Let", "Set", "Null",
+    "new", "if", "elseif", "else", "while", "for", "break", "fn", "return", "let", "set", "null",
 ];
 
 /// Abstract Syntax Tree
@@ -21,13 +22,13 @@ struct AbstractSyntaxTree {
     args: Option<std::sync::Arc<std::sync::Mutex<crate::config::Arguments>>>,
 
     /// environment variables
-    env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+    _env: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
 
     /// command aliases
-    aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
+    _aliases: std::sync::Arc<std::sync::Mutex<std::collections::HashMap<String, String>>>,
 
     /// turtle variables
-    vars: std::sync::Arc<
+    _vars: std::sync::Arc<
         std::sync::Mutex<std::collections::HashMap<String, crate::expressions::Expressions>>,
     >,
 
@@ -65,9 +66,9 @@ impl AbstractSyntaxTree {
             parsed: tokens,
             pos: 0,
             builtins,
-            env,
-            aliases,
-            vars,
+            _env: env,
+            _aliases: aliases,
+            _vars: vars,
             args,
             // debug,
         }
@@ -163,7 +164,7 @@ impl AbstractSyntaxTree {
     /// !true
     /// ~false
     /// ``````
-    fn parse_unary(&mut self) -> Option<crate::expressions::Expressions> {
+    fn _parse_unary(&mut self) -> Option<crate::expressions::Expressions> {
         // let args = self.args.as_ref().map(|a| a.lock().unwrap()).unwrap();
         self.skip_whitespace();
         if let crate::tokens::Token::Operator(op) = self.peek() {
@@ -195,7 +196,7 @@ impl AbstractSyntaxTree {
     ///
     /// "hello" + " world"
     /// ``````
-    fn parse_binary(
+    fn _parse_binary(
         &mut self,
         left: crate::expressions::Expressions,
     ) -> Option<crate::expressions::Expressions> {
@@ -737,6 +738,12 @@ impl AbstractSyntaxTree {
             crate::tokens::Token::Identifier(name) => {
                 let ident = name.clone();
                 self.next(); // consume identifier
+                // Echo variable value if it exists
+                if let Ok(vars) = self._vars.lock() {
+                    if let Some(val) = vars.get(&ident) {
+                        println!("{} = {:?}", ident, val);
+                    }
+                }
                 Some(crate::expressions::Expressions::Identifier(ident))
             }
             _ => None,
@@ -760,7 +767,7 @@ impl AbstractSyntaxTree {
         Some(expr)
     }
 
-    fn parse_environment_variable(&mut self) -> Option<crate::expressions::Expressions> {
+    fn _parse_environment_variable(&mut self) -> Option<crate::expressions::Expressions> {
         if let crate::tokens::Token::Operator(op) = self.peek() {
             if op == "$" {
                 self.next(); // consume '$'
@@ -1249,7 +1256,7 @@ impl Interpreter {
 
     /// Tokenize shell commands and args
     #[deprecated]
-    pub fn tokenize_shell_commands(
+    pub fn _tokenize_shell_commands(
         &mut self,
         tokens: Vec<crate::tokens::Token>,
     ) -> Vec<crate::tokens::Token> {
@@ -1367,7 +1374,7 @@ impl Interpreter {
 
         while let Some(token) = iter.next() {
             match &token {
-                crate::tokens::Token::Builtin { name, args } => {
+                crate::tokens::Token::Builtin { name, .. } => {
                     let mut args = Vec::new();
                     while let Some(next_token) = iter.peek() {
                         match next_token {
@@ -1536,9 +1543,19 @@ impl Interpreter {
     }
 
     /// reset interpreter state
-    pub fn reset(&mut self) {
+    pub fn _reset(&mut self) {
         self.counter = 0;
         self.tokens.clear();
+    }
+
+    /// rewind interpreter state
+    pub fn _rewind(&mut self) {
+        // currently a no-op
+    }
+
+    /// fast forward interpreter state
+    pub fn _ff(&mut self) {
+        // currently a no-op
     }
 
     /// Tokenization pipeline

@@ -97,10 +97,10 @@ pub enum Expressions {
     Path { segments: Vec<String> },
 }
 
-impl std::fmt::Display for Outputs {
+impl std::fmt::Display for _Outputs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Outputs::Table(table) => {
+            _Outputs::Table(table) => {
                 let mut output = String::new();
                 output.push_str(&table.headers.join("\t"));
                 output.push('\n');
@@ -110,19 +110,19 @@ impl std::fmt::Display for Outputs {
                 }
                 write!(f, "{}", output)
             }
-            Outputs::Json(json) => {
+            _Outputs::Json(json) => {
                 let json_string =
                     serde_json::to_string_pretty(&json.data).map_err(|_| std::fmt::Error)?;
                 write!(f, "{}", json_string)
             }
-            Outputs::Yaml(yaml) => {
+            _Outputs::Yaml(yaml) => {
                 let yaml_string = serde_yaml::to_string(&yaml.data).map_err(|_| std::fmt::Error)?;
                 write!(f, "{}", yaml_string)
             }
-            Outputs::Text(text) => {
+            _Outputs::Text(text) => {
                 write!(f, "{}", text.data)
             }
-            Outputs::Ast(ast) => {
+            _Outputs::Ast(ast) => {
                 write!(f, "{}", ast.data)
             }
         }
@@ -130,17 +130,17 @@ impl std::fmt::Display for Outputs {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum Outputs {
-    Table(OutputCsv),
-    Json(OutputJson),
-    Yaml(OutputYaml),
-    Text(OutputText),
-    Ast(OutAst),
+pub enum _Outputs {
+    Table(_OutputCsv),
+    Json(_OutputJson),
+    Yaml(_OutputYaml),
+    Text(_OutputText),
+    Ast(_OutputAst),
 }
 
 /// shell output formats
-impl Outputs {
-    pub fn from_command_response(
+impl _Outputs {
+    pub fn _from_command_response(
         option: &str,
         response: crate::history::CommandResponse,
     ) -> Option<Self> {
@@ -159,7 +159,7 @@ impl Outputs {
                     let row = record.iter().map(|s| s.to_string()).collect();
                     rows.push(row);
                 }
-                Some(Outputs::Table(OutputCsv {
+                Some(_Outputs::Table(_OutputCsv {
                     headers,
                     data: rows,
                 }))
@@ -168,17 +168,17 @@ impl Outputs {
                 // use serde to serialize the response object to json
                 let json_data = serde_json::to_string(&response).ok()?;
                 let json_data: serde_json::Value = serde_json::from_str(&json_data).ok()?;
-                Some(Outputs::Json(OutputJson { data: json_data }))
+                Some(_Outputs::Json(_OutputJson { data: json_data }))
             }
             "yaml" => {
                 let yaml_data = serde_yaml::to_string(&response).ok()?;
                 let yaml_data: serde_yaml::Value = serde_yaml::from_str(&yaml_data).ok()?;
-                Some(Outputs::Yaml(OutputYaml { data: yaml_data }))
+                Some(_Outputs::Yaml(_OutputYaml { data: yaml_data }))
             }
-            "text" => Some(Outputs::Text(OutputText {
+            "text" => Some(_Outputs::Text(_OutputText {
                 data: response.output,
             })),
-            "ast" => Some(Outputs::Ast(OutAst {
+            "ast" => Some(_Outputs::Ast(_OutputAst {
                 data: response.output,
             })),
             _ => None,
@@ -187,18 +187,18 @@ impl Outputs {
 
     pub fn _from_turtle_expression(expression: Expressions) -> Option<Self> {
         match expression {
-            Expressions::String(s) => Some(Outputs::Text(OutputText { data: s })),
-            Expressions::Number(n) => Some(Outputs::Text(OutputText {
+            Expressions::String(s) => Some(_Outputs::Text(_OutputText { data: s })),
+            Expressions::Number(n) => Some(_Outputs::Text(_OutputText {
                 data: n.to_string(),
             })),
-            Expressions::Boolean(b) => Some(Outputs::Text(OutputText {
+            Expressions::Boolean(b) => Some(_Outputs::Text(_OutputText {
                 data: b.to_string(),
             })),
             _ => None,
         }
     }
 
-    pub fn from_str(option: &str, data: String) -> Option<Self> {
+    pub fn _from_str(option: &str, data: String) -> Option<Self> {
         match option {
             "table" => {
                 // parse CSV data
@@ -215,7 +215,7 @@ impl Outputs {
                     let row = record.iter().map(|s| s.to_string()).collect();
                     rows.push(row);
                 }
-                Some(Outputs::Table(OutputCsv {
+                Some(_Outputs::Table(_OutputCsv {
                     headers,
                     data: rows,
                 }))
@@ -225,14 +225,14 @@ impl Outputs {
                 println!("Option: {}", option);
                 println!("Data: {}", data);
                 let json_data: serde_json::Value = serde_json::from_str(&data).ok()?;
-                Some(Outputs::Json(OutputJson { data: json_data }))
+                Some(_Outputs::Json(_OutputJson { data: json_data }))
             }
             "yaml" => {
                 let yaml_data: serde_yaml::Value = serde_yaml::from_str(&data).ok()?;
-                Some(Outputs::Yaml(OutputYaml { data: yaml_data }))
+                Some(_Outputs::Yaml(_OutputYaml { data: yaml_data }))
             }
-            "text" => Some(Outputs::Text(OutputText { data })),
-            "ast" => Some(Outputs::Ast(OutAst { data })),
+            "text" => Some(_Outputs::Text(_OutputText { data })),
+            "ast" => Some(_Outputs::Ast(_OutputAst { data })),
             _ => None,
         }
     }
@@ -240,39 +240,39 @@ impl Outputs {
 
 /// CSV compatible output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct OutputCsv {
+pub struct _OutputCsv {
     pub headers: Vec<String>,
     pub data: Vec<Vec<String>>,
 }
 
 /// YAML compatible output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct OutputYaml {
+pub struct _OutputYaml {
     pub data: serde_yaml::Value,
 }
 
 /// JSON compatible output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct OutputJson {
+pub struct _OutputJson {
     pub data: serde_json::Value,
 }
 
 /// Plain text output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct OutputText {
+pub struct _OutputText {
     pub data: String,
 }
 
 /// AST output
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct OutAst {
+pub struct _OutputAst {
     pub data: String,
 }
 
 /// outputs for expression results
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "event")]
-pub enum OutputResults {
+pub enum _OutputResults {
     #[serde(rename = "command_response")]
     CommandResponse(crate::history::CommandResponse),
     #[serde(rename = "turtle_expression")]

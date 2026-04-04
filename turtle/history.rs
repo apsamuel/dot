@@ -81,8 +81,9 @@ impl History {
         use std::io::Write;
         let duration = std::time::Duration::from_secs(self.interval.unwrap_or(60));
         let path = self.path.clone().unwrap();
-        let events = self.events.clone().unwrap_or(Vec::new());
         let debug = self.debug;
+
+        let history = std::sync::Arc::new(std::sync::Mutex::new(self.clone()));
 
         std::thread::spawn(move || {
             loop {
@@ -96,7 +97,15 @@ impl History {
                     .append(true)
                     .open(&path)
                     .unwrap();
+                let events = history.lock().unwrap().events.clone().unwrap_or(Vec::new());
+                if debug {
+                    println!("writing {} events to history file", events.len());
+                }
+
                 for event in &events {
+                    if debug {
+                        println!("Writing event to history: {:?}", event);
+                    }
                     let json = serde_json::to_string(event).unwrap();
 
                     writeln!(file, "{}", json).unwrap();
@@ -107,7 +116,7 @@ impl History {
     }
 
     /// serialize and save history to file
-    pub fn save(&self) -> std::io::Result<()> {
+    pub fn _save(&self) -> std::io::Result<()> {
         use std::io::Write;
         let expanded_path = crate::utils::expand_path(self.path.as_ref().unwrap());
         let mut file = std::fs::OpenOptions::new()
@@ -130,7 +139,13 @@ impl History {
     pub fn start(&mut self) {
         self.setup();
         if let Some(interval) = self.interval {
-            self.flush().ok();
+            match self.flush() {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("❌ failed to start history flushing: {}", e);
+                }
+            }
+
             if self.debug {
                 println!("✅ history flushing started every {} seconds", interval);
             }
@@ -141,7 +156,7 @@ impl History {
 /// outputs for expression results
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "event")]
-pub enum OutputResults {
+pub enum _OutputResults {
     #[serde(rename = "command_response")]
     CommandResponse(CommandResponse),
     #[serde(rename = "turtle_expression")]
@@ -196,35 +211,35 @@ impl std::fmt::Display for Event {
 
 /// helper methods for HistoryEvent
 impl Event {
-    pub fn category(&self) -> &str {
+    pub fn _category(&self) -> &str {
         match self {
             Event::CommandRequest(_) => "CommandRequest",
             Event::CommandResponse(_) => "CommandResponse",
         }
     }
 
-    pub fn as_json(&self) -> serde_json::Value {
+    pub fn _as_json(&self) -> serde_json::Value {
         match self {
             Event::CommandRequest(req) => serde_json::to_value(req).unwrap(),
             Event::CommandResponse(res) => serde_json::to_value(res).unwrap(),
         }
     }
 
-    pub fn as_yaml(&self) -> serde_yaml::Value {
+    pub fn _as_yaml(&self) -> serde_yaml::Value {
         match self {
             Event::CommandRequest(req) => serde_yaml::to_value(req).unwrap(),
             Event::CommandResponse(res) => serde_yaml::to_value(res).unwrap(),
         }
     }
 
-    pub fn as_string(&self) -> String {
+    pub fn _as_string(&self) -> String {
         match self {
             Event::CommandRequest(req) => format!("{:?}", req),
             Event::CommandResponse(res) => format!("{:?}", res),
         }
     }
 
-    pub fn as_csv(&self) -> String {
+    pub fn _as_csv(&self) -> String {
         match self {
             Event::CommandRequest(req) => {
                 let mut wtr = csv::Writer::from_writer(vec![]);

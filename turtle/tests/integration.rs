@@ -1,12 +1,12 @@
 // use std::collections::HashMap;
 // use std::sync::{Arc, Mutex};
 
-fn setup_test_config() -> turtle::config::Config {
-    let mut config = turtle::config::Config::default();
+fn _setup_test_config() -> turtle::config::Config {
+    let config = turtle::config::Config::default();
     config
 }
 
-fn setup_test_config_file() -> String {
+fn _setup_test_config_file() -> String {
     let config_content = r#"
         [defaults]
         history_path = "~/.turtle_history_test"
@@ -113,7 +113,7 @@ fn assert_string_result(result: Option<turtle::context::EvalResults>, expected: 
 }
 
 /// Helper to assert a boolean result
-fn assert_boolean_result(result: Option<turtle::context::EvalResults>, expected: bool) {
+fn _assert_boolean_result(result: Option<turtle::context::EvalResults>, expected: bool) {
     match result {
         Some(turtle::context::EvalResults::BooleanExpressionResult(b)) => {
             assert_eq!(b.value, expected);

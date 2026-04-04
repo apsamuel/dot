@@ -521,7 +521,7 @@ impl Config {
 
 #[derive(Debug, Clone)]
 pub enum ConfigSignal {
-    _Loaded(Config),
+    Loaded(Config),
     Reloaded(Config),
     Error(String),
 }
@@ -531,7 +531,6 @@ pub enum ConfigSignal {
 /// used internally by the shell after merging config file, environment variables, and command line arguments
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ResolvedConfig {
-    // pub debug: bool,
     pub prompt: String,
     pub aliases: std::collections::HashMap<String, String>,
     pub history_size: usize,
@@ -644,7 +643,7 @@ impl Arguments {
         return Arguments::parse();
     }
 
-    pub fn as_mutex(&self) -> std::sync::Arc<std::sync::Mutex<Self>> {
+    pub fn _as_mutex(&self) -> std::sync::Arc<std::sync::Mutex<Self>> {
         std::sync::Arc::new(std::sync::Mutex::new(self.clone()))
     }
 

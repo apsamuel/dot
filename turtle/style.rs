@@ -79,7 +79,7 @@ impl std::fmt::Display for Theme {
 /// Manages themes for Turtle shell
 #[derive(Debug, Clone)]
 pub struct ThemeManager {
-    pub current: String,
+    pub _current: String,
     pub themes: std::collections::HashMap<String, crate::style::Theme>,
 }
 
@@ -209,7 +209,7 @@ impl ThemeManager {
         ]);
 
         ThemeManager {
-            current: "solarized_dark".to_string(),
+            _current: "solarized_dark".to_string(),
             themes,
         }
     }
@@ -287,7 +287,7 @@ impl From<&str> for ThemeManager {
             .collect();
 
         ThemeManager {
-            current: String::new(),
+            _current: String::new(),
             themes,
         }
     }
