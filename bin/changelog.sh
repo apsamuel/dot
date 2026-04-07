@@ -173,11 +173,9 @@ function display-release {
 
   # Remove commits that were reverted
   local hash rhash
-  # shellcheck disable=SC1072
-  # shellcheck disable=SC1073
-  # shellcheck disable=SC1058
 
-  for hash rhash in ${(kv)reverts}; do
+  for hash in ${(k)reverts}; do
+    rhash="${reverts[$hash]}"
     if (( ${+types[$rhash]} )); then
       # Remove revert commit
       unset "types[$hash]" "subjects[$hash]" "scopes[$hash]" "breaking[$hash]"
@@ -309,7 +307,8 @@ function display-release {
 
     local hash message
     local wrap_width=$(( (COLUMNS < 100 ? COLUMNS : 100) - 3 ))
-    for hash message in ${(kv)breaking}; do
+    for hash in ${(k)breaking}; do
+      message="${breaking[$hash]}"
       # Format the BREAKING CHANGE message by word-wrapping it at maximum 100
       # characters (use $COLUMNS if smaller than 100)
       message="$(fmt -w $wrap_width <<< "$message")"
@@ -346,7 +345,8 @@ function display-release {
     (( $#changes != 0 )) || return 0
 
     fmt:header "Other changes" 3
-    for hash type in ${(kv)changes}; do
+    for hash in ${(k)changes}; do
+      type="${changes[$hash]}"
       case "$type" in
       other) echo " - $(fmt:hash) $(fmt:scope)$(fmt:subject)" ;;
       *) echo " - $(fmt:hash) $(fmt:scope)$(fmt:type)$(fmt:subject)" ;;
