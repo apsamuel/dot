@@ -82,7 +82,9 @@ pub enum Token {
     Tab,     // tab character
     Newline, // newline character
     // Whitespace, // spaces, tabs, newlines
-    Operator(String),           // +, -, *, /, %, ==, !=, <, >, <=, >=, &&, ||, !
+    // Operator(String), // +, -, *, **, /, %, ==, !=, <, >, <=, >=, &&, ||, !
+    // TODO: implement specific operators
+    ExponentiationOperator,     // ** or ^
     AdditionOperator,           // +
     SubtractionOperator,        // -
     MultiplicationOperator,     // *
@@ -94,9 +96,10 @@ pub enum Token {
     GreaterThanOperator,        // >
     LessThanOrEqualOperator,    // <=
     GreaterThanOrEqualOperator, // >=
-    AndOperator,                // &&
-    OrOperator,                 // ||
+    LogicalAndOperator,         // &&
+    LogicalOrOperator,          // ||
     NotOperator,                // !
+    DollarOperator,             // $
     Semicolon,                  // ;
     Eof,                        // end of file/input
 }
@@ -137,7 +140,7 @@ mod tests {
 
         let expected = vec![
             Token::Number(1.0),
-            Token::Operator("+".to_string()),
+            Token::AdditionOperator,
             Token::Number(1.0),
             Token::Eof,
         ];
@@ -181,7 +184,7 @@ mod tests {
         let expected = vec![
             Token::Number(1.0),
             Token::Space,
-            Token::Operator("+".to_string()),
+            Token::AdditionOperator,
             Token::Space,
             Token::Number(1.0),
             Token::Eof,
@@ -225,7 +228,7 @@ mod tests {
         let expected = vec![
             Token::String("hello ".to_string()),
             Token::Space,
-            Token::Operator("+".to_string()),
+            Token::AdditionOperator,
             Token::Space,
             Token::String("world".to_string()),
             Token::Eof,
@@ -266,7 +269,7 @@ mod tests {
         let expected = vec![
             Token::Keyword("True".to_string()),
             Token::Space,
-            Token::Operator("&&".to_string()),
+            Token::LogicalAndOperator,
             Token::Space,
             Token::Keyword("False".to_string()),
             Token::Eof,

@@ -606,6 +606,7 @@ Examples:
                     "+" => left_num.value + right_num.value,
                     "-" => left_num.value - right_num.value,
                     "*" => left_num.value * right_num.value,
+                    "**" => left_num.value.powf(right_num.value),
                     "/" => left_num.value / right_num.value,
                     "%" => left_num.value % right_num.value,
                     _ => {

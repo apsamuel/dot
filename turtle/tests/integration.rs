@@ -49,13 +49,12 @@ fn setup_test_env() -> (
         skip_aliases: false,
         skip_history: false,
         watch_config: false,
-        // interactive: false,
-        // script: None,
     }));
+
     let history = std::sync::Arc::new(std::sync::Mutex::new(turtle::history::History {
         interval: None,
         path: None,
-        debug: false,
+        debug: true,
         events: Some(vec![]),
     }));
 
@@ -65,7 +64,7 @@ fn setup_test_env() -> (
         aliases.clone(),
         vars.clone(),
         vec![],
-        false,
+        true,
     );
 
     let mut context = turtle::context::Context::new(
@@ -75,7 +74,7 @@ fn setup_test_env() -> (
         aliases.clone(),
         vars.clone(),
         history,
-        false,
+        true,
     );
     context.setup();
 
@@ -190,6 +189,17 @@ fn test_division() {
     let result = ctx.eval(expr);
 
     assert_number_result(result, 5.0);
+}
+
+#[test]
+fn test_mixed_operations() {
+    let (mut interp, mut ctx, _) = setup_test_env();
+
+    interp.tokenize("2 + 3 * 4 - 5 / 1");
+    let expr = interp.interpret();
+    let result = ctx.eval(expr);
+    // 2 + (3 * 4) - (5 / 1) = 2 + 12 - 5 = 9
+    assert_number_result(result, 9.0);
 }
 
 #[test]
