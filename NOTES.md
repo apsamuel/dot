@@ -18,6 +18,6 @@ Merge a value in the Plist file for iterm2
 ```sh
 /usr/libexec/PlistBuddy \
 -c 'Add "Custom Color Presets:Synthwave" dict' \
--c 'Merge "/Users/aaronsamuel/Library/Mobile Documents/com~apple~CloudDocs/dot/terminal/themes/iTerm2-Color-Schemes/schemes/synthwave.itermcolors" \
+-c 'Merge "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/dot/terminal/themes/iTerm2-Color-Schemes/schemes/synthwave.itermcolors" \
 "Custom Color Presets:Synthwave"' "$HOME/Library/Preferences/com.googlecode.iterm2.plist"
 ```
