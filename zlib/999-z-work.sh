@@ -15,5 +15,5 @@ host="$(hostname -s)"
 
 if [[ "$host" != "prometheus" ]]; then
   SRE_CLIENTS="$(realpath "${HOME}/mlb-sre/sre-clients/.sre-clients/bin/sre-clients")"
-  echo "alias sre-clients='${SRE_CLIENTS}'" #>> "${DOT_DIR}/zlib/999-a-completion.sh"
+  alias sre-clients='${SRE_CLIENTS}' #>> ${DOT_DIR}/zlib/999-a-completion.sh
 fi
