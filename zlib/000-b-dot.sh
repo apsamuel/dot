@@ -23,7 +23,6 @@ else
 fi
 
 # setup icloud shortcuts
-#/Users/aaronsamuel/Library/Mobile\ Documents/com\~apple\~CloudDocs/
 export ICLOUD="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
 export ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
 export ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
