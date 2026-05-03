@@ -11,11 +11,13 @@ ZSH=${ZSH:-$HOME/.oh-my-zsh}
 ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
 
 # the script is now located in ./bin, this is a hack to get the project root
-dot_bootstrap_directory="$(dirname "$(dirname "$0")")"
+dot_bootstrap_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
 icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+icloud_link="${HOME}/iCloud"
+ICLOUD=${ICLOUD:-${icloud_link}}
 
 
 if [ ! -d "${dot_bootstrap_directory}" ]; then
@@ -24,6 +26,54 @@ if [ ! -d "${dot_bootstrap_directory}" ]; then
 fi
 
 . "${dot_bootstrap_directory}/zlib/static/lib/internal.sh"
+
+
+function resolveBrewfilePath () {
+    local local_brewfile="${dot_bootstrap_directory}/data/Brewfile"
+
+    if [[ -f "${local_brewfile}" ]]; then
+        echo "${local_brewfile}"
+        return 0
+    fi
+
+    if [[ -n "${ICLOUD:-}" && -f "${ICLOUD}/dot/Brewfile" ]]; then
+        echo "${ICLOUD}/dot/Brewfile"
+        return 0
+    fi
+
+    return 1
+}
+
+
+function ensureSymlink () {
+    local source_path="${1}"
+    local target_path="${2}"
+    local backup_path="${target_path}.bak"
+
+    if [[ -z "${source_path}" || -z "${target_path}" ]]; then
+        echo "❌ ensureSymlink requires source and target"
+        return 1
+    fi
+
+    if [[ ! -e "${source_path}" && ! -L "${source_path}" ]]; then
+        echo "❌ source does not exist: ${source_path}"
+        return 1
+    fi
+
+    if [[ -L "${target_path}" ]]; then
+        if [[ "$(readlink "${target_path}")" == "${source_path}" ]]; then
+            return 0
+        fi
+        rm -f "${target_path}"
+    elif [[ -e "${target_path}" ]]; then
+        if [[ -e "${backup_path}" || -L "${backup_path}" ]]; then
+            backup_path="${target_path}.bak.$(date +%s)"
+        fi
+        mv "${target_path}" "${backup_path}"
+    fi
+
+    ln -s "${source_path}" "${target_path}"
+}
 
 
 # copies zsh configuration and data files to iCloud and links them
@@ -205,7 +255,14 @@ function bootstrapPrint () {
 
 # installs ⚫️ dependencies
 function bootstrapDeps () {
-    if command brew bundle install --file "${ICLOUD}/dot/Brewfile";
+    local brewfile
+    brewfile="$(resolveBrewfilePath)"
+    if [[ -z "${brewfile}" ]]; then
+        echo "❌ no Brewfile found (checked local data/ and \$ICLOUD/dot/)"
+        return 1
+    fi
+
+    if brew bundle install --file "${brewfile}";
     then
         echo "✅ dependencies ok"
         return 0
@@ -217,12 +274,19 @@ function bootstrapDeps () {
 
 # checks and installs ⚫️ dependencies
 function bootstrapCheckDependencies () {
+    local brewfile
+    brewfile="$(resolveBrewfilePath)"
+    if [[ -z "${brewfile}" ]]; then
+        echo "❌ no Brewfile found (checked local data/ and \$ICLOUD/dot/)"
+        return 1
+    fi
+
     # you can force reinstallation of dependencies by setting DOT_DEPS=1
     if [[ "${dot_bootstrap_deps}" -gt 0 ]]; then
         echo "🛠️ installing bootstrap deps ..."
         installDependencies
     else
-        if ! command brew bundle check --file "${dot_bootstrap_directory}/data/Brewfile" &> /dev/null
+        if ! brew bundle check --file "${brewfile}" > /dev/null 2>&1
         then
             echo "🛠️ installing dependencies ..."
             installDependencies
@@ -232,7 +296,14 @@ function bootstrapCheckDependencies () {
 
 # installs ⚫️ dependencies
 function installDependencies () {
-    if command brew bundle install --file "${dot_bootstrap_directory}/data/Brewfile"
+    local brewfile
+    brewfile="$(resolveBrewfilePath)"
+    if [[ -z "${brewfile}" ]]; then
+        echo "❌ no Brewfile found (checked local data/ and \$ICLOUD/dot/)"
+        return 1
+    fi
+
+    if brew bundle install --file "${brewfile}"
     then
         echo "✅ dependencies installed"
         return 0
@@ -249,33 +320,34 @@ function bootstrapConfigPython () {
 
 # ⚫️ links iCloud directory
 function bootstrapLinkCloud () {
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    local icloud_link="${HOME}/iCloud"
-
-    if command ln -s "${icloud_directory}" "${icloud_link}"
-    then
-        echo "✅ ${icloud_link} is linked to ${icloud_directory}"
-        return 0
-    else
-        echo "❌ ${icloud_link} is not linked to ${icloud_directory}"
+    if [[ ! -d "${icloud_directory}" ]]; then
+        echo "❌ iCloud directory not found: ${icloud_directory}"
         return 1
     fi
+
+    if ensureSymlink "${icloud_directory}" "${icloud_link}"; then
+        ICLOUD="${icloud_link}"
+        export ICLOUD
+        echo "✅ ${icloud_link} is linked to ${icloud_directory}"
+        return 0
+    fi
+
+    echo "❌ ${icloud_link} is not linked to ${icloud_directory}"
+    return 1
 
 }
 
 # ⚫️ checks iCloud directory and links it
 function bootstrapCheckCloud () {
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    local icloud_link="${HOME}/iCloud"
-
-    if [[ -d "${icloud_directory}" ]];
-    echo "✅ iCloud is enabled"
-    then
-        if [[ ! -L "${icloud_link}" ]]; then
-            echo "🛠️ linking ${icloud_link} ..."
-            bootstrapLinkCloud
-        fi
+    if [[ -d "${icloud_directory}" ]]; then
+        echo "✅ iCloud is enabled"
+        bootstrapLinkCloud || return 1
+    else
+        echo "❌ iCloud is not enabled (${icloud_directory} missing)"
+        return 1
     fi
+
+    return 0
 }
 
 # ⚫️ checks Oh My Tmux installation
@@ -338,16 +410,17 @@ function bootstrapConfigIterm () {
 # ⚫️ configures ssh client
 function bootstrapConfigSsh () {
     local ssh_config="${HOME}/.ssh/config"
-    local ssh_config_dot="${HOME}/iCloud/dot/ssh/config"
+    local ssh_config_dot="${ICLOUD}/dot/ssh/config"
+    local ssh_root_dot="${ICLOUD}/dot/ssh"
     local ssh_keys=()
 
-    # always update the ssh config file
-    rm -f "${ssh_config}" && \
-    ln -s "${ssh_config_dot}" "${ssh_config}" && \
+    mkdir -p "${HOME}/.ssh"
+
+    ensureSymlink "${ssh_config_dot}" "${ssh_config}" || return 1
 
     while IFS= read -r -d '' ssh_key; do
         ssh_keys+=("${ssh_key}")
-    done < <(find "${HOME}/iCloud/dot/ssh" -type f -print0) # -print0
+    done < <(find "${ssh_root_dot}" -type f -print0)
 
     local ssh_key_name
     for ssh_key in "${ssh_keys[@]}"; do
@@ -357,21 +430,7 @@ function bootstrapConfigSsh () {
         ssh_key_name="$(basename "${ssh_key}")"
         local ssh_key_path="${HOME}/.ssh/${ssh_key_name}"
         # a link exists with this identity
-        if [[ -L "${ssh_key_path}" ]]; then
-            rm -f "${ssh_key_path}" && \
-            ln -s "${ssh_key}" "${ssh_key_path}"
-        fi
-
-        # neither a link nor file exist with this identity
-        if [[ ! -f "${ssh_key_path}" && ! -L "${ssh_key_path}" ]]; then
-            ln -s "${ssh_key}" "${ssh_key_path}"
-        fi
-
-        # a file exists with this identity, it is not a link
-        if [[ -f "${ssh_key_path}" && ! -L "${ssh_key_path}" ]]; then
-            mv "${ssh_key_path}" "${ssh_key_path}.bak"
-            ln -s "${ssh_key}" "${ssh_key_path}"
-        fi
+        ensureSymlink "${ssh_key}" "${ssh_key_path}" || return 1
     done
     echo "✅  your ssh client is configured"
 
@@ -380,11 +439,9 @@ function bootstrapConfigSsh () {
 # ⚫️ configures git
 function bootstrapConfigGit () {
     local git_config="${HOME}/.gitconfig"
-    local git_config_dot="${HOME}/iCloud/dot/git/config"
+    local git_config_dot="${ICLOUD}/dot/git/config"
 
-    # always update the git config file
-    rm -f "${git_config}" && \
-    ln -s "${git_config_dot}" "${git_config}" && \
+    ensureSymlink "${git_config_dot}" "${git_config}" || return 1
     echo "✅  your git installation is configured"
 }
 
@@ -409,6 +466,8 @@ function bootstrapConfigGh () {
     if [[ -f "${git_config_dir}/hosts.yml" ]]; then
         rm -f "${git_config_dir}/hosts.yml"
         ln -s "${git_config_dir_dot}/hosts.yml" "${git_config_dir}/hosts.yml"
+    else
+        ln -s "${git_config_dir_dot}/hosts.yml" "${git_config_dir}/hosts.yml"
     fi
 
     echo "✅  your gh installation is configured"
@@ -417,23 +476,30 @@ function bootstrapConfigGh () {
 
 # ⚫️ configures zsh
 function bootstrapConfigZsh () {
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.zshrc"
+    local zsh_bin
+    zsh_bin="$(command -v zsh)"
+
+    if [[ -z "${zsh_bin}" ]]; then
+        echo "❌ zsh is not installed"
+        return 1
+    fi
+
     # change users shell
-    chsh -s "$(command -v zsh)" "${USER}"
-    # link from dot/config/shell/
-    ln -s -f "${dot_bootstrap_directory}/config/shell/rc" "${rc}"
+    if [[ "$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")" != "zsh" ]]; then
+        chsh -s "${zsh_bin}" "${USER}"
+    fi
+
+    ensureSymlink "${dot_bootstrap_directory}/zshrc" "${rc}" || return 1
     # ln -s -f "${icloud_link}/dot/shell/zsh/rc" "${rc}" && \
     echo "✅  zsh shell is configured, please restart any open shells!"
 }
 
 # ⚫️ configures bash
 function bootstrapConfigBash () {
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    local icloud_link="${HOME}/iCloud"
     local rc="${HOME}/.bashrc"
-    ln -s -f "${icloud_link}/dot/shell/bash/rc" "${rc}"
+
+    ensureSymlink "${ICLOUD}/dot/shell/bash/rc" "${rc}" || return 1
     echo "✅  bash shell is configured, please restart any open shells!"
 }
 
@@ -748,14 +814,13 @@ function bootstrapInstallBrew () {
 
 # ⚫️ installs zsh
 function bootstrapInstallZsh () {
-    if ! command brew install zsh
-    then
-        echo "🛠️ installing zsh..."
-        bootstrapInstallZsh
-    else
+    if brew install zsh; then
         echo "✅ zsh is installed"
         return 0
     fi
+
+    echo "❌ zsh installation failed"
+    return 1
 }
 
 # ⚫️ installs jq
@@ -768,6 +833,76 @@ function bootstrapInstallJq () {
         echo "❌ jq installation failed"
         return 1
     fi
+}
+
+# ⚫️ installs nvm
+function bootstrapInstallNvm () {
+    local nvm_version="${NVM_VERSION:-v0.40.3}"
+    local nvm_install_url="https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_version}/install.sh"
+
+    if [[ -s "${HOME}/.nvm/nvm.sh" ]]; then
+        echo "✅ nvm is installed"
+        return 0
+    fi
+
+    if PROFILE=/dev/null bash -c "$(curl -fsSL "${nvm_install_url}")"; then
+        echo "✅ nvm is installed"
+        return 0
+    fi
+
+    echo "❌ nvm installation failed"
+    return 1
+}
+
+# ⚫️ configures nvm in shell profiles
+function bootstrapConfigNvm () {
+    local nvm_profile_start="# >>> nvm init >>>"
+    local nvm_profile_end="# <<< nvm init <<<"
+    local profile
+
+    for profile in "${HOME}/.zshrc" "${HOME}/.bashrc"; do
+        [[ -f "${profile}" ]] || touch "${profile}"
+        if ! grep -Fq "${nvm_profile_start}" "${profile}"; then
+            {
+                echo ""
+                echo "${nvm_profile_start}"
+                echo 'export NVM_DIR="$HOME/.nvm"'
+                echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"'
+                echo '[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"'
+                echo "${nvm_profile_end}"
+            } >> "${profile}"
+        fi
+    done
+
+    echo "✅ nvm is configured"
+    return 0
+}
+
+# ⚫️ checks nvm installation
+function bootstrapCheckNvm () {
+    if [[ ! -s "${HOME}/.nvm/nvm.sh" ]]; then
+        echo "🛠️ installing nvm ..."
+        bootstrapInstallNvm || return 1
+    else
+        echo "✅ nvm is installed"
+    fi
+
+    bootstrapConfigNvm || return 1
+
+    if [[ "${DOT_NVM_INSTALL_LTS:-0}" == "1" ]]; then
+        export NVM_DIR="${HOME}/.nvm"
+        # shellcheck source=/dev/null
+        . "${NVM_DIR}/nvm.sh"
+
+        if nvm install --lts && nvm alias default 'lts/*'; then
+            echo "✅ node LTS is installed and set as default"
+        else
+            echo "❌ failed to install node LTS with nvm"
+            return 1
+        fi
+    fi
+
+    return 0
 }
 
 # ⚫️ installs iterm2
@@ -872,14 +1007,13 @@ function bootstrapCheckVim () {
 # ⚫️ installs vim
 function bootstrapInstallVim () {
     echo "🛠️ validating vim..."
-    if ! command brew install vim
-    then
-        echo "🛠️ installing vim..."
-        bootstrapInstallVim
-    else
+    if brew install vim; then
         echo "✅ vim is installed"
         return 0
     fi
+
+    echo "❌ vim installation failed"
+    return 1
 }
 
 # ⚫️ configures vim
@@ -970,20 +1104,19 @@ function bootstrapConfigVim () {
 
 # ⚫️ checks neovim installation
 function bootstrapInstallNeovim () {
-    if ! command brew install neovim
-    then
-        echo "🛠️ installing Neovim..."
-        bootstrapInstallNeovim
-    else
+    if brew install neovim; then
         echo "✅ Neovim is installed"
         return 0
     fi
+
+    echo "❌ Neovim installation failed"
+    return 1
 }
 
 # ⚫️ checks neovim installation
 function bootstrapCheckNeovim () {
     echo "🛠️ validating Neovim..."
-    if ! command -v Neovim &> /dev/null
+    if ! command -v nvim > /dev/null 2>&1
     then
         echo "❌ Neovim is not installed"
         bootstrapInstallNeovim
@@ -1002,22 +1135,28 @@ function bootstrapConfigNeovim () {
 function bootstrapSystem() {
     # load secrets
     __load_secrets
-    bootstrapCheckBrew # install brew
-    bootstrapDeps # install Brewfile
-    # configure icloud links
-    # configure bash
-    bootstrapConfigZsh
-    bootstrapConfigBash
-    bootstrapCheckCloud
-    # configure ssh
-    bootstrapConfigSsh
-    bootstrapConfigGit
-    # validate and configure iterm
-    bootstrapCheckIterm
-    bootstrapConfigFiglet
-    bootstrapCheckZsh
-    bootstrapCheckOhMyZsh
-    bootstrapCheckPowershell10K
-    bootstrapCheckOhMyTmux
+    bootstrapCheckBrew || return 1
+    bootstrapDeps || return 1
+    bootstrapCheckCloud || return 1
+
+    bootstrapCheckZsh || return 1
+    bootstrapConfigZsh || return 1
+    bootstrapConfigBash || return 1
+
+    bootstrapConfigSsh || return 1
+    bootstrapConfigGit || return 1
+
+    bootstrapCheckNvm || return 1
+    bootstrapCheckIterm || return 1
+    bootstrapConfigFiglet || return 1
+    bootstrapCheckOhMyZsh || return 1
+    bootstrapCheckPowershell10K || return 1
+    bootstrapCheckOhMyTmux || return 1
 
 }
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    bootstrapPrint
+    bootstrapInfo
+    bootstrapSystem
+fi
