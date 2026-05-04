@@ -17,7 +17,6 @@ fi
 desired_version="3.11"
 arch="$(uname -m)"
 
-
 ## does the ~/.venv directory exist?
 if [[ ! -d "${HOME}/.venv" ]]; then
     mkdir -p "${HOME}/.venv"
@@ -32,6 +31,5 @@ if [[ ! -d "${HOME}/.venv/${venv_name}" ]]; then
     popd || exit 1
 fi
 
-# now we can source the venv
+# by default, we want to source the base venv on startup.
 source "${HOME}/.venv/${venv_name}/bin/activate"
-# export PATH

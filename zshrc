@@ -179,7 +179,6 @@ export HISTSIZE=1000000000
 export HISTFILESIZE=1000000000
 export SAVEHIST=$HISTSIZE
 export HISTFILE="$HOME"/.zsh_history
-export MANPATH="/usr/local/man:$MANPATH"
 GPG_TTY=$(tty)
 export GPG_TTY
 export LANG=en_US.UTF-8
@@ -190,11 +189,6 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
 arch="$(arch)"
 export ARCH="${arch}"
-
-
-# if we are running a privileged SSH session, we need to do a few things to make this work...
-
-# - we need to ensure t
 
 # enable zsh options
 # if $ICLOUD is inaccessible, we need to ensure that we can still load the zsh options
