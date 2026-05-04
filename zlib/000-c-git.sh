@@ -28,6 +28,17 @@ DOT_GIT_DEFAULT_DESTINATION_BRANCH="staging"
 DOT_GIT_DEFAULT_USER="apsamuel"
 DOT_GIT_DEFAULT_EMAIL="aaron.psamuel@gmail.com"
 
+ghAuth() {
+    # If GH_TOKEN is set (from secrets), inject it; otherwise fall back to interactive
+    if [[ -n "${GH_TOKEN}" ]]; then
+        echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null \
+            && echo "gh: authenticated via GH_TOKEN" \
+            || echo "gh: already authenticated"
+    else
+        gh auth login
+    fi
+}
+
 gitConfig() {
 
     # use getops to parse arguments to this function
