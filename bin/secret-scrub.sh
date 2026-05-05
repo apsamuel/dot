@@ -11,6 +11,7 @@
 #%                     (default: ***REMOVED***)
 #%   -m                also scrub all registered git submodules
 #%   -n                dry run — grep history for matches, no rewrites
+#%   -v                verbose — print step-by-step progress details
 #%   --push            force-push all branches + tags to origin after scrubbing
 #%                     (requires re-added remote; filter-repo removes it)
 #%   -h                print this help
@@ -33,13 +34,16 @@ set -euo pipefail
 
 # ── colours & helpers ────────────────────────────────────────────────────────
 RED='\033[0;31m'; YELLOW='\033[1;33m'; GREEN='\033[0;32m'
-CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
+CYAN='\033[0;36m'; BOLD='\033[1m'; DIM='\033[2m'; RESET='\033[0m'
+
+VERBOSE=false
 
 info()    { echo -e "${CYAN}ℹ️  $*${RESET}"; }
 ok()      { echo -e "${GREEN}✅  $*${RESET}"; }
 warn()    { echo -e "${YELLOW}⚠️  $*${RESET}"; }
 fail()    { echo -e "${RED}❌  $*${RESET}" >&2; exit 1; }
 heading() { echo -e "\n${BOLD}── $* ──${RESET}"; }
+verbose() { [[ "$VERBOSE" == "true" ]] && echo -e "    ${DIM}▸ $*${RESET}" || true; }
 
 # ── usage ────────────────────────────────────────────────────────────────────
 usage() {
@@ -80,6 +84,7 @@ build_replacements_file() {
 
     for secret in "${secrets[@]}"; do
         printf 'literal:%s==>%s\n' "${secret}" "${replacement}" >> "${outfile}"
+        verbose "rule: literal:${secret:0:4}*** ==> ${replacement}"
     done
 }
 
@@ -92,17 +97,23 @@ dry_run() {
     for secret in "${secrets[@]}"; do
         info "Scanning for: ${secret:0:4}$(printf '*%.0s' {1..8})${secret: -2} ..."
         # Search commit diffs
+        verbose "git log --all -p --diff-filter=ACMR | grep -F <value>"
         if git log --all -p --diff-filter=ACMR -- | grep -qF "${secret}" 2>/dev/null; then
             warn "Found in commit history (diffs/blobs)"
+            if [[ "$VERBOSE" == "true" ]]; then
+                git log --all -S "${secret}" --oneline 2>/dev/null | sed 's/^/    /'
+            fi
             found=1
         fi
         # Search all trees (filenames and content via git grep)
+        verbose "git grep -l --all-targets <value>"
         if git grep -l --all-targets "${secret}" 2>/dev/null | grep -q .; then
             warn "Found in tracked files:"
             git grep -l --all-targets "${secret}" 2>/dev/null | sed 's/^/    /'
             found=1
         fi
         # Search commit messages
+        verbose "git log --all --grep=<key> --oneline"
         if git log --all --grep="${secret}" --oneline | grep -q .; then
             warn "Found in commit messages:"
             git log --all --grep="${secret}" --oneline | sed 's/^/    /'
@@ -136,8 +147,10 @@ scrub_repo() {
     # Snapshot all current commit SHAs so we can verify something actually changed
     local pre_head
     pre_head="$(git rev-parse HEAD)"
+    verbose "HEAD before rewrite : ${pre_head}"
 
     info "Rewriting history with git-filter-repo..."
+    verbose "git filter-repo --replace-text ${replacements_file} --force"
     # --force is required when the repo has an origin (it's a safety guard)
     git filter-repo \
         --replace-text "${replacements_file}" \
@@ -159,14 +172,17 @@ scrub_repo() {
     heading "Post-rewrite cleanup: ${repo_path}"
 
     info "Expiring reflog..."
+    verbose "git reflog expire --expire=now --all"
     git reflog expire --expire=now --all
 
     info "Running aggressive gc to prune orphaned objects..."
+    verbose "git gc --prune=now --aggressive"
     git gc --prune=now --aggressive 2>&1 | sed 's/^/  /'
 
     # Clean up the backup refs that filter-repo may leave
     if git show-ref | grep -q 'refs/filter-repo'; then
         info "Removing filter-repo backup refs..."
+        verbose "git for-each-ref --format='delete %(refname)' refs/filter-repo | git update-ref --stdin"
         git for-each-ref --format='delete %(refname)' refs/filter-repo | \
             git update-ref --stdin
     fi
@@ -183,7 +199,9 @@ scrub_repo() {
             warn "This is irreversible. All collaborators MUST re-clone."
             read -r -p "Force-push ${repo_path} to origin? [y/N] " confirm
             if [[ "${confirm,,}" == "y" ]]; then
+                verbose "git push origin --force --all"
                 git push origin --force --all
+                verbose "git push origin --force --tags"
                 git push origin --force --tags
                 ok "Force-pushed all branches and tags."
             else
@@ -251,6 +269,7 @@ main() {
             -r)       [[ -n "${2:-}" ]] || fail "-r requires a value"; replacement="$2"; shift 2 ;;
             -m)       do_submodules=true; shift ;;
             -n)       dry=true; shift ;;
+            -v)       VERBOSE=true; shift ;;
             --push)   do_push=true; shift ;;
             -h|--help) usage ;;
             *)        fail "Unknown option: $1\nRun with -h for help." ;;
@@ -285,6 +304,7 @@ main() {
         cat "${rules_file}" >> "${tmp_replacements}"
     fi
 
+    [[ "$VERBOSE" == "true" ]] && info "Verbose    : enabled (-v)"
     info "Replacement rules:"
     # Print rules but mask any secret values in output
     sed 's/\(literal:\|regex:\|glob:\)\(.\{4\}\).*/\1\2***/' "${tmp_replacements}" | sed 's/^/  /'

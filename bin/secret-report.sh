@@ -8,6 +8,8 @@
 #%   -r <path>      git repo path (default: current directory)
 #%   -m             also scan all registered submodules
 #%   -u             fetch remotes before scanning (ensures upstream refs are current)
+#%   -n <count>      limit history search to the last N commits per ref
+#%                  (omit for full history — can be slow on large repos)
 #%   -o <fmt>       output format: pretty|json  (default: pretty)
 #%   -d             debug mode — verbose scan tracing to stderr
 #%   -h             print this help
@@ -22,6 +24,7 @@
 #%   bin/secret-report.sh -f /tmp/secrets.json
 #%   bin/secret-report.sh -f /tmp/secrets.json -r /path/to/repo -m
 #%   bin/secret-report.sh -f /tmp/secrets.json -u -o json | jq '.findings'
+#%   bin/secret-report.sh -f /tmp/secrets.json -n 100          # last 100 commits only
 #%   bin/secret-report.sh -f /tmp/secrets.json -r vendor/ohmyzsh -d
 
 set -uo pipefail
@@ -36,6 +39,7 @@ DEBUG=false
 OUTPUT_FMT="pretty"
 DO_SUBMODULES=false
 DO_FETCH=false
+DEPTH=""          # empty = full history; set via -n <count>
 
 # ── logging ────────────────────────────────────────────────────────────────────
 debug()   { [[ "$DEBUG" == "true" ]] && printf '%b\n' "${DIM}🔍 debug: $*${RESET}" >&2 || true; }
@@ -156,7 +160,7 @@ scan_value_in_history() {
         branches:  ($branches | split(",") | map(select(length > 0))),
         is_remote: ($is_remote == "true")
       }'
-  done < <(git -C "$repo_path" log --all -S "$value" --format="%H" -- 2>/dev/null || true)
+  done < <(git -C "$repo_path" log --all ${DEPTH:+--max-count="$DEPTH"} -S "$value" --format="%H" -- 2>/dev/null || true)
 
   debug "    ✓ ${found} commit(s)"
 }
@@ -207,7 +211,7 @@ scan_key_in_messages() {
         is_remote: ($is_remote == "true")
       }'
   done < <(
-    git -C "$repo_path" log --all --fixed-strings --grep="$key" --format="%H" 2>/dev/null || true
+    git -C "$repo_path" log --all ${DEPTH:+--max-count="$DEPTH"} --fixed-strings --grep="$key" --format="%H" 2>/dev/null || true
   )
 
   debug "    ✓ ${found} commit message(s)"
@@ -482,6 +486,9 @@ main() {
       -f)       [[ -n "${2:-}" ]] || fail "-f requires a file path"; secrets_file="$2"; shift 2 ;;
       -r)       [[ -n "${2:-}" ]] || fail "-r requires a path";      repo_path="$2";   shift 2 ;;
       -m)       DO_SUBMODULES=true; shift ;;
+      -n)       [[ -n "${2:-}" ]] || fail "-n requires a count"
+                [[ "$2" =~ ^[0-9]+$ && "$2" -gt 0 ]] || fail "-n must be a positive integer, got: $2"
+                DEPTH="$2"; shift 2 ;;
       -u)       DO_FETCH=true;      shift ;;
       -d)       DEBUG=true;         shift ;;
       -o)       [[ -n "${2:-}" ]] || fail "-o requires pretty or json"; OUTPUT_FMT="$2"; shift 2 ;;
@@ -517,6 +524,7 @@ main() {
   info "Repo       : ${repo_path}"
   info "Secrets    : ${key_count} key(s) from ${secrets_file}"
   info "Upstream   : $( [[ "$DO_FETCH" == "true" ]] && echo "fetch enabled (-u)" || echo "local refs only — add -u to fetch first" )"
+  info "Depth      : $( [[ -n "$DEPTH" ]] && echo "last ${DEPTH} commits per ref (-n)" || echo "full history" )"
   [[ "$DO_SUBMODULES" == "true" ]] && info "Submodules : enabled (-m)"
   [[ "$DEBUG"         == "true" ]] && info "Debug      : enabled (-d)"
 
