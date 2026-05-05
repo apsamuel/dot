@@ -77,7 +77,11 @@ web_modules/
 # Yarn Integrity file
 .yarn-integrity
 
+# any node_modules folder in any subdirectory
+**/node_modules
+
 # dotenv environment variable files
+.envrc
 .env
 .env.development.local
 .env.test.local
@@ -181,5 +185,4 @@ test/flycheck*/stdout
 # Added by cargo
 
 /target
-
 .zombie
