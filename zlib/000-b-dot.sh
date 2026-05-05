@@ -105,7 +105,7 @@ function dot.shell {
 
     # env
     if [[ "${command}" == printenv ]]; then
-        env | grep -E '^DOT' | "${HOME}"/.dot/bin/mask.sh
+        env | grep -E '^DOT' | "${HOME}"/.dot/bin/mask-secret.sh
     fi
 
     # secrets

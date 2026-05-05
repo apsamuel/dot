@@ -57,7 +57,7 @@ Linux is *partially* supported. **Windows is NOT**.
 git clone https://github.com/apsamuel/dot.git ~/.dot
 
 # 2. Run bootstrap (installs dependencies, symlinks configs)
-pushd ~/.dot && source ./bin/bootstrap.sh
+pushd ~/.dot && source ./bin/dot-bootstrap.sh
 
 # 3. Set ZSH as your default shell if it isn't already
 chsh -s $(which zsh)

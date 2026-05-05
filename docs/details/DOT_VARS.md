@@ -102,7 +102,7 @@ These variables establish the filesystem layout of the framework and are used th
 - **Notes:** The core mechanism by which all numbered `zlib/` modules are loaded. Re-populated each shell start.
 
 ### `DOT_BOOTSTRAP`
-- **Default:** `$DOT_DIRECTORY/bin/bootstrap.sh`
+- **Default:** `$DOT_DIRECTORY/bin/dot-bootstrap.sh`
 - **Set in:** `zlib/static/dotenv.sh`
 - **Used in:** Informational only — no module executes `$DOT_BOOTSTRAP` automatically
 - **Notes:** ⚠️ Set but only passively exported. Its value is never actually invoked by any module. Useful as a convenience reference (`source $DOT_BOOTSTRAP`) but not strictly necessary.
@@ -271,14 +271,14 @@ Defined in `zlib/static/dotenv.sh`. No module currently reads any of these — t
 These are **not** set by any `zlib/` module. They are meant to be set by the caller (in the environment or a wrapper script) before invoking bootstrap or starting a shell.
 
 ### `DOT_DEPS`
-- **Consumed in:** `bin/bootstrap.sh`
+- **Consumed in:** `bin/dot-bootstrap.sh`
 - **Effect:** If set to `1`, forces re-installation of all bootstrap dependencies (brew packages, etc.)
-- **Example:** `DOT_DEPS=1 source bin/bootstrap.sh`
+- **Example:** `DOT_DEPS=1 source bin/dot-bootstrap.sh`
 
 ### `DOT_NVM_INSTALL_LTS`
-- **Consumed in:** `bin/bootstrap.sh`
+- **Consumed in:** `bin/dot-bootstrap.sh`
 - **Effect:** If set to `1`, installs the LTS version of Node.js via nvm during bootstrap
-- **Example:** `DOT_NVM_INSTALL_LTS=1 source bin/bootstrap.sh`
+- **Example:** `DOT_NVM_INSTALL_LTS=1 source bin/dot-bootstrap.sh`
 
 ### `DOT_LIBS_DIR`
 - **Consumed in:** `zlib/000-b-dot.sh` — the `dot.shell` command sources all `*.sh` files found under this path

@@ -71,7 +71,7 @@ export DOT_LIBRARY="${DOT_LIBRARY:-${DOT_ROOT}/zlib}"
 export DOT_BIN="${DOT_BIN:-${DOT_ROOT}/bin}"
 # shellcheck disable=SC2046
 export DOT_LIBRARY_FILES=($(find "${DOT_LIBRARY}" -maxdepth 1 -type f -name "*.sh" | sort -d))
-export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/bin/bootstrap.sh}"
+export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/bin/dot-bootstrap.sh}"
 export DOT_BOOTED="${DOT_BOOTED:-false}"
 export DOT_ANACONDA_ENABLED="${DOT_ANACONDA_ENABLED:-0}"
 export DOT_DISABLE_BREW="${DOT_DISABLE_BREW:-0}"
@@ -130,7 +130,7 @@ fi
 )
 
 # bootstrap functions
-(. "${DOT_DIRECTORY}"/bin/bootstrap.sh || . "${DOT_DIRECTORY}"/bin/bootstrap.sh) || (
+(. "${DOT_DIRECTORY}"/bin/dot-bootstrap.sh || . "${DOT_DIRECTORY}"/bin/dot-bootstrap.sh) || (
     echo "Error: unable to load bootstrap functions"
     exit 1
 )

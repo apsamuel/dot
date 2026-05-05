@@ -8,11 +8,11 @@
 
 ```bash
 # From the repo root
-source ./bin/bootstrap.sh
+source ./bin/dot-bootstrap.sh
 
 # Or after cloning
 git clone https://github.com/apsamuel/dot.git ~/.dot
-pushd ~/.dot && source ./bin/bootstrap.sh
+pushd ~/.dot && source ./bin/dot-bootstrap.sh
 ```
 
 > Bootstrap must be sourced (not executed) so that environment variables it sets persist in the current shell.
@@ -42,13 +42,13 @@ pushd ~/.dot && source ./bin/bootstrap.sh
 If you want to re-run only the symlink setup without reinstalling packages:
 
 ```bash
-source ~/.dot/bin/bootstrap.sh
+source ~/.dot/bin/dot-bootstrap.sh
 ```
 
 If you want to also install/update Homebrew dependencies:
 
 ```bash
-DOT_DEPS=1 source ~/.dot/bin/bootstrap.sh
+DOT_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh
 ```
 
 ## Directory Layout After Bootstrap
