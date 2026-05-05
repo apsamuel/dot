@@ -48,7 +48,7 @@ export DOT_DISABLE_EXTENSIONS=1 # skip iTerm2, thefuck, autosuggestions
 | `000-a-plugins.sh` | Defines environment variables required for oh-my-zsh plugin loading |
 | `000-a-secrets.sh` | Secrets management: `loadSecrets`, `maskSecrets`, `__mask_secrets__`, `reloadOptions` |
 | `000-a-tools.sh` | General utilities: `splitString`, `joinList`, and string manipulation helpers |
-| `000-a-vendor.sh` | Sources vendored third-party libraries from `vendor/` |
+| `000-a-vendor.sh` | Vendor integration stub — reserved for sourcing third-party libraries from `vendor/`; currently empty |
 | `000-aa-paths.sh` | PATH configuration and path manipulation helpers |
 | `000-b-aliases.sh` | Shell aliases: `cat='bat'`, `ls='ls --color=always'`, `less='bat --paging=always'` |
 | `000-b-dot.sh` | The `dot.shell` command; iCloud path exports; TMUX session detection |
@@ -57,7 +57,7 @@ export DOT_DISABLE_EXTENSIONS=1 # skip iTerm2, thefuck, autosuggestions
 | `000-d-extensions.sh` | Shell extensions: iTerm2 shell integration, `thefuck`, `zsh-autosuggestions`; guarded by `DOT_DISABLE_EXTENSIONS` |
 | `000-d-notes.sh` | Notes utilities (placeholder for future expansion) |
 | `000-d-podman.sh` | Sets `PODMAN_COMPOSE_WARNING_LOGS=False` |
-| `000-tools.sh` | Additional tool configuration |
+| `000-tools.sh` | Additional tool helpers: `GetPreview` — fzf file picker with `bat` syntax-highlighted preview |
 
 ### Tier 001 — Language & Environment
 
@@ -96,7 +96,7 @@ Files in `zlib/static/` are sourced directly by `bootstrap.sh` and `zshrc` befor
 |---|---|
 | `static/autoload.sh` | Autoloads ZSH built-in functions |
 | `static/cloud.sh` | iCloud path setup |
-| `static/config.sh` | Core configuration loading from `config/data.json` |
+| `static/config.sh` | Sets `$DOT_CONFIGURATION` to `$ICLOUD/dot/data.json` (the live runtime config path) |
 | `static/dotbase.sh` | Foundational `DOT_*` variable exports |
 | `static/dotenv.sh` | `.env` file loading support |
 | `static/foundation.sh` | Pre-module environment validation |
