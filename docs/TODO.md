@@ -1,4 +1,4 @@
 # TODO
 
-
-* NEVER reveal secrets in Github
+* NEVER, ever, ever, ever, ever, reveal secrets in Github
+  * correct submodule branches and upstreams after cleaning for secrets...
