@@ -133,6 +133,10 @@ scrub_repo() {
         info "Captured remote URL: ${remote_url}"
     fi
 
+    # Snapshot all current commit SHAs so we can verify something actually changed
+    local pre_head
+    pre_head="$(git rev-parse HEAD)"
+
     info "Rewriting history with git-filter-repo..."
     # --force is required when the repo has an origin (it's a safety guard)
     git filter-repo \
@@ -140,7 +144,16 @@ scrub_repo() {
         --force \
         2>&1 | sed 's/^/  /'
 
-    ok "History rewritten."
+    # ── verify the rewrite actually changed something ────────────────────────
+    local post_head
+    post_head="$(git rev-parse HEAD)"
+    if [[ "${pre_head}" == "${post_head}" ]]; then
+        warn "HEAD SHA is unchanged after filter-repo — the replacement pattern"
+        warn "likely did not match any blobs. Double-check the secret value."
+        warn "No history was modified in: ${repo_path}"
+    else
+        ok "History rewritten. HEAD changed: ${pre_head:0:12} → ${post_head:0:12}"
+    fi
 
     # ── post-rewrite cleanup ─────────────────────────────────────────────────
     heading "Post-rewrite cleanup: ${repo_path}"
@@ -180,6 +193,8 @@ scrub_repo() {
         else
             info "Remote restored. When ready to publish the rewrite, run:"
             echo "  cd ${repo_path} && git push origin --force --all && git push origin --force --tags"
+            warn "⚠️  Do NOT run 'git pull' before force-pushing — it will re-introduce"
+            warn "   the old commits from the remote, undoing the rewrite."
         fi
     fi
 
@@ -210,7 +225,9 @@ scrub_submodules() {
     for sm_path in "${submodule_paths[@]}"; do
         info "Processing submodule: ${sm_path}"
         if [[ -d "${sm_path}/.git" || -f "${sm_path}/.git" ]]; then
-            scrub_repo "${sm_path}" "${replacements_file}" "${do_push}"
+            # Submodules always prompt for push — leaving a submodule unpushed
+            # is the most common failure mode (secret stays on remote).
+            scrub_repo "${sm_path}" "${replacements_file}" "true"
         else
             warn "Skipping ${sm_path} — not a git repo (may not be initialized)"
         fi
