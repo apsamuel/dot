@@ -30,7 +30,7 @@ _update_zsh_plugins() {
 }
 
 _install_zsh_plugins() {
-  for plugin in $(jq -r '.plugins.custom | map("\(.owner)/\(.repo)") | .[]' "${DOT_DIRECTORY}"/data/zsh.json); do
+  for plugin in $(yq '.plugins.custom | map(.owner + "/" + .repo) | .[]' "${DOT_DIRECTORY}"/data/zsh.yaml); do
     if [ -d "${ZSH_CUSTOM}/plugins/$(basename "${plugin}")" ]; then
       continue
     fi
@@ -40,7 +40,7 @@ _install_zsh_plugins() {
 }
 
 _update_custom_plugins() {
-  for plugin in $(jq -r '.plugins.custom | map("\(.owner)/\(.repo)") | .[]' "${DOT_DIRECTORY}"/data/zsh.json); do
+  for plugin in $(yq '.plugins.custom | map(.owner + "/" + .repo) | .[]' "${DOT_DIRECTORY}"/data/zsh.yaml); do
     if [ -d "${ZSH_CUSTOM}/plugins/$(basename "${plugin}")" ]; then
       echo "Updating ohmyzsh ${plugin}"
       _update_zsh_plugins "${plugin}"

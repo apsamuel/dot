@@ -136,8 +136,8 @@ function deployZsh () {
     fi
 
 
-    data_source="${dot_bootstrap_directory}/data/zsh.json"
-    data_dest="${icloud_directory}/dot/shell/zsh/zsh.json"
+    data_source="${dot_bootstrap_directory}/data/zsh.yaml"
+    data_dest="${icloud_directory}/dot/shell/zsh/zsh.yaml"
 
     rc_source="${dot_bootstrap_directory}/zshrc"
     rc_dest="${icloud_directory}/dot/shell/zsh/rc"
@@ -185,12 +185,12 @@ function deployZsh () {
                 # if the file exists, we remove it
                 if [[ -f "${data_dest}" ]]; then
                     rm -f "${data_dest}" && \
-                    [[ $debug -gt 0 ]] && echo "🗑️  removed existing zsh.json at ${data_dest}"
+                    [[ $debug -gt 0 ]] && echo "🗑️  removed existing zsh.yaml at ${data_dest}"
                 fi
 
                 # copy the data file to the destination
                 cp "${data_source}" "${data_dest}" && \
-                [[ $debug -gt 0 ]] && echo "✅  zsh.json is deployed to ${data_dest}"
+                [[ $debug -gt 0 ]] && echo "✅  zsh.yaml is deployed to ${data_dest}"
             fi
             # rm -f "${data_dest}" && \
             # [[ $debug -gt 0 ]] && echo "🗑️  removed existing zsh.json at ${data_dest}"
@@ -298,6 +298,12 @@ function bootstrapCheckDependencies () {
         return 1
     fi
 
+    # yq is a first-class dependency required for parsing data/zsh.yaml
+    if ! command -v yq &>/dev/null; then
+        echo "🛠️ yq not found — installing via brew..."
+        brew install yq || { echo "❌ failed to install yq"; return 1; }
+    fi
+
     # you can force reinstallation of dependencies by setting DOT_DEPS=1
     if [[ "${dot_bootstrap_deps}" -gt 0 ]]; then
         echo "🛠️ installing bootstrap deps ..."
@@ -354,13 +360,13 @@ function bootstrapConfigPython () {
     echo "✅  python venv ${venv_name} is ready"
 
     if [[ "${DOT_INSTALL_LANG_DEPS:-0}" -gt 0 ]]; then
-        local data_file="${dot_bootstrap_directory}/data/zsh.json"
+        local data_file="${dot_bootstrap_directory}/data/zsh.yaml"
         if [[ ! -f "${data_file}" ]]; then
-            echo "⚠️  data/zsh.json not found, skipping pip packages"
+            echo "⚠️  data/zsh.yaml not found, skipping pip packages"
             return 0
         fi
         local pip_packages
-        pip_packages="$(jq -r '.languages.python.pip.requirements[]' "${data_file}" 2>/dev/null)"
+        pip_packages="$(yq '.languages.python.pip.requirements[]' "${data_file}" 2>/dev/null)"
         if [[ -z "${pip_packages}" ]]; then
             return 0
         fi
@@ -642,14 +648,14 @@ function bootstrapConfigZshCustomPlugins () {
 
     # checkout custom plugins
     local custom_plugins_length
-    custom_plugins_length=$(jq -r '.plugins.custom| length' "${HOME}/.dot/data/zsh.json")
+    custom_plugins_length=$(yq '.plugins.custom | length' "${HOME}/.dot/data/zsh.yaml")
     # in a perfect world, we would use a mapfile to load the custom plugins
-    # mapfile -t custom_plugins < <(jq -r '.plugins.custom | .[]' "${HOME}/.dot/data/zsh.json")
-    for (( i=1; i<custom_plugins_length; i++ )); do
+    # mapfile -t custom_plugins < <(yq '.plugins.custom[]' "${HOME}/.dot/data/zsh.yaml")
+    for (( i=0; i<custom_plugins_length; i++ )); do
         local custom_plugin
-        # loads each dictionary item as an associative array
+        # loads each dictionary item as key=value pairs
         custom_plugin=$(
-            jq -r --arg index "${i}" '"(", (.plugins.custom[($index |tonumber)] | to_entries | .[] | "["+(.key|@sh)+"]="+(.value|@sh) ), ")"' "${HOME}/.dot/data/zsh.json"
+            yq ".plugins.custom[${i}] | to_entries | .[] | .key + \"='\" + .value + \"'\"" "${HOME}/.dot/data/zsh.yaml"
         )
         echo "✅ loading custom OMZ plugin ${custom_plugin}"
     done
@@ -733,7 +739,7 @@ function bootstrapListOhMyZshPlugin () {
 
     if [ "${listConfigured}" -gt 0 ]; then
         # get plugins from file
-        jq '.' -r '"$(\.plugins.custom[].owner)' "${HOME}/.dot/data/zsh.json" | \
+        yq '.plugins.custom[].owner' "${HOME}/.dot/data/zsh.yaml" | \
         while IFS= read -r plugin; do
             echo " - ${plugin}"
         done
@@ -1179,13 +1185,13 @@ function bootstrapConfigNode () {
     echo "✅  node ${node_version} is ready"
 
     if [[ "${DOT_INSTALL_LANG_DEPS:-0}" -gt 0 ]]; then
-        local data_file="${dot_bootstrap_directory}/data/zsh.json"
+        local data_file="${dot_bootstrap_directory}/data/zsh.yaml"
         if [[ ! -f "${data_file}" ]]; then
-            echo "⚠️  data/zsh.json not found, skipping npm packages"
+            echo "⚠️  data/zsh.yaml not found, skipping npm packages"
             return 0
         fi
         local npm_packages
-        npm_packages="$(jq -r '.languages.node.npm.requirements[]' "${data_file}" 2>/dev/null)"
+        npm_packages="$(yq '.languages.node.npm.requirements[]' "${data_file}" 2>/dev/null)"
         if [[ -z "${npm_packages}" ]]; then
             return 0
         fi
@@ -1205,15 +1211,15 @@ function bootstrapConfigNode () {
 # ⚫️ installs oh-my-zsh custom plugins via vendor/ohmyzsh nested submodules
 function bootstrapInstallOhMyZshCustomPlugins () {
     local vendor_omz="${dot_bootstrap_directory}/vendor/ohmyzsh"
-    local zsh_json="${dot_bootstrap_directory}/data/zsh.json"
+    local zsh_yaml="${dot_bootstrap_directory}/data/zsh.yaml"
     if [[ ! -d "${vendor_omz}" ]]; then
         echo "❌ vendor/ohmyzsh not found"
         return 1
     fi
     echo "🛠️ initializing oh-my-zsh custom plugin submodules..."
     local enabled_repos disabled_repos
-    enabled_repos=$(jq -r '.plugins.custom[] | select(.enabled == true) | .repo' "${zsh_json}")
-    disabled_repos=$(jq -r '.plugins.custom[] | select(.enabled == false) | .repo' "${zsh_json}")
+    enabled_repos=$(yq '.plugins.custom[] | select(.enabled == true) | .repo' "${zsh_yaml}")
+    disabled_repos=$(yq '.plugins.custom[] | select(.enabled == false) | .repo' "${zsh_yaml}")
     local failed=0
     while IFS= read -r repo; do
         [[ -z "${repo}" ]] && continue

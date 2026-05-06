@@ -1,0 +1,4 @@
+# dot project Brewfile — core dependencies
+# yq is required for parsing data/zsh.yaml (first-class dependency)
+brew "yq"
+brew "jq"

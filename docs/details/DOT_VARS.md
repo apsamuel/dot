@@ -80,7 +80,7 @@ These variables establish the filesystem layout of the framework and are used th
 ### `DOT_DIRECTORY`
 - **Default:** `$DOT_ROOT`
 - **Set in:** `zlib/static/dotenv.sh`, `zlib/static/limits.sh`
-- **Used in:** `zlib/000-a-output.sh` (quotes file path), `zlib/static/lib/internal.sh` (zsh.json plugin list), `zlib/static/lib/mac.sh` and `linux.sh` (debug messages), `zlib/000-b-dot.sh` (initializes `DOT_DIR`)
+- **Used in:** `zlib/000-a-output.sh` (quotes file path), `zlib/static/lib/internal.sh` (zsh.yaml plugin list), `zlib/static/lib/mac.sh` and `linux.sh` (debug messages), `zlib/000-b-dot.sh` (initializes `DOT_DIR`)
 - **Notes:** Canonical name for the repo root. Prefer this over `DOT_DIR` in new code.
 
 ### `DOT_DIR`

@@ -1,0 +1,133 @@
+{
+    "theme": "powerlevel10k/powerlevel10k",
+    "path": [
+
+    ],
+    "conditions": {
+        "network": {
+            "home": "192.168.0.1"
+        }
+    },
+    "languages": {
+        "python": {
+            "pip": {
+                "requirements": [
+                    "libtmux==0.36.0"
+                ]
+            }
+        },
+        "node": {
+            "npm": {
+                "requirements": [
+                    "@google/gemini-cli",
+                    "@openai/codex"
+                ]
+            }
+        }
+    },
+    "options": [
+        "autopushd",
+        "BANG_HIST",
+        "extendedglob",
+        "extendedhistory",
+        "hist_ignore_all_dups",
+        "histexpiredupsfirst",
+        "histfindnodups",
+        "histignorealldups",
+        "histignoredups",
+        "histignorespace",
+        "histnostore",
+        "histreduceblanks",
+        "histsavenodups",
+        "histverify",
+        "incappendhistory",
+        "share_history",
+        "sharehistory"
+    ],
+    "plugins": {
+        "builtin": [
+            "brew",
+            "fzf",
+            "history",
+            "alias-finder",
+            "colorize",
+            "colored-man-pages",
+            "copybuffer",
+            "copypath",
+            "direnv",
+            "emoji",
+            "emoji-clock",
+            "dash",
+            "ssh-agent",
+            "kubectl",
+            "git",
+            "git-extras",
+            "gitignore",
+            "gh",
+            "gnu-utils",
+            "web-search",
+            "node",
+            "npm",
+            "autopep8",
+            "python",
+            "docker",
+            "docker-compose",
+            "thefuck",
+            "nmap"
+        ],
+        "custom": [
+            {
+                "owner": "conda-incubator",
+                "repo": "conda-zsh-completion",
+                "exec": "",
+                "enabled": false
+            },
+            {
+                "owner": "zsh-users",
+                "repo": "zsh-autosuggestions",
+                "exec": "",
+                "enabled": false
+            },
+            {
+                "owner": "z-shell",
+                "repo": "F-Sy-H",
+                "exec": "",
+                "enabled": true
+            },
+            {
+                "owner": "Aloxaf",
+                "repo": "fzf-tab",
+                "exec": "",
+                "enabled": false
+            },
+            {
+                "owner": "denisidoro",
+                "repo": "navi",
+                "exec": "",
+                "enabled": false
+            },
+            {
+                "owner": "jeffreytse",
+                "repo": "zsh-vi-mode",
+                "exec": "",
+                "enabled": false
+            },
+            {
+                "owner": "tom-doerr",
+                "repo": "zsh_codex",
+                "exec": "",
+                "enabled": false
+            }
+        ]
+    },
+    "themes": {
+        "builtin": [],
+        "custom": [
+            {
+                "owner": "romkatv",
+                "repo": "powerlevel10k",
+                "exec": ""
+            }
+        ]
+    }
+}

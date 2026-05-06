@@ -31,16 +31,16 @@ function getProcessorBrand() {
 
 function loadZshOptions() {
     # if $ICLOUD is inaccessible, fall back to the .dot directory copy
-    if [[ -f "$ICLOUD"/dot/shell/zsh/zsh.json ]]; then
+    if [[ -f "$ICLOUD"/dot/shell/zsh/zsh.yaml ]]; then
         ZSH_OPTIONS=(
             $(
-                jq -r '.options[]' "$ICLOUD"/dot/shell/zsh/zsh.json | xargs
+                yq '.options[]' "$ICLOUD"/dot/shell/zsh/zsh.yaml | xargs
             )
         )
     else
         ZSH_OPTIONS=(
             $(
-                jq -r '.options[]' "$DOT_DIRECTORY"/data/zsh.json | xargs
+                yq '.options[]' "$DOT_DIRECTORY"/data/zsh.yaml | xargs
             )
         )
     fi

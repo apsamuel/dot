@@ -203,7 +203,7 @@ typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 
 
 # if the icloud theme is not available, fallback to using the file in the dot directory
-ZSH_THEME="$(jq -r '.theme' "$HOME"/.dot/data/zsh.json)"
+ZSH_THEME="$(yq '.theme' "$HOME"/.dot/data/zsh.yaml)"
 export ZSH_THEME
 
 # Set list of themes to pick from when loading at random
@@ -261,10 +261,10 @@ export HIST_STAMPS="dd.mm.yyyy"
 # shellcheck disable=SC2046
 export plugins=(
     $(
-        jq -r '.plugins.builtin[]' "$HOME"/.dot/data/zsh.json | xargs
+        yq '.plugins.builtin[]' "$HOME"/.dot/data/zsh.yaml | xargs
     )
     $(
-        jq -r '.plugins.custom[] | select(.enabled == true) | .repo' "$HOME"/.dot/data/zsh.json | xargs
+        yq '.plugins.custom[] | select(.enabled == true) | .repo' "$HOME"/.dot/data/zsh.yaml | xargs
     )
 )
 

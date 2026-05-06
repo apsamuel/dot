@@ -252,7 +252,7 @@ function termRandomFont() {
 
 function randomQuote() {
 	randomQuote="$(
-		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 45)' "${DOT_DIRECTORY}/data/quotes.json" |shuf -n1
+		yq '.[] | .text + " -- " + .author | select(length < 45)' "${DOT_DIRECTORY}/data/quotes.yaml" | shuf -n1
 	)"
 	echo "${randomQuote}"
 }
@@ -279,9 +279,10 @@ function termQuote() {
     (( max_len > 80 )) && max_len=80
 
     local quote
-    quote="$(jq -r --argjson maxlen "${max_len}" \
-        '. | map("\(.text) -- \(.author)") | .[] | select(length < $maxlen)' \
-        "${DOT_DIRECTORY}/data/quotes.json" | shuf -n1)"
+    quote="$(
+        yq ".[] | .text + \" -- \" + .author | select(length < ${max_len})" \
+            "${DOT_DIRECTORY}/data/quotes.yaml" | shuf -n1
+    )"
 
     [[ -z "${quote}" ]] && return 0
 

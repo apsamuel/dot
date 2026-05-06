@@ -70,5 +70,5 @@ export DOT_LIBS_DIR="${DOT_LIBS_DIR:-${DOT_LIBRARY}}"
 
 # --- cloud / data paths ---
 export DOT_CLOUD_DIR="${DOT_CLOUD_DIR:-${HOME}/Library/Mobile Documents/com~apple~CloudDocs/dot}"
-export DOT_SHELL_DATA="${DOT_SHELL_DATA:-${DOT_ROOT}/data/zsh.json}"
+export DOT_SHELL_DATA="${DOT_SHELL_DATA:-${DOT_ROOT}/data/zsh.yaml}"
 export DOT_SECRETS_DATA="${DOT_SECRETS_DATA:-${DOT_CLOUD_DIR}/secrets.json}"
