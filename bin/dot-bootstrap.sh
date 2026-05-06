@@ -21,6 +21,7 @@ else
 fi
 dot_boostrap_file="${dot_bootstrap_directory}/bin/dot-bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
+DOT_DRY_RUN=${DOT_DRY_RUN:-0}
 
 icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
 icloud_link="${HOME}/iCloud"
@@ -52,6 +53,15 @@ function resolveBrewfilePath () {
 }
 
 
+# ⚫️ dry-run wrapper: prints command instead of executing when DOT_DRY_RUN=1
+function dryrun () {
+    if [[ "${DOT_DRY_RUN:-0}" -gt 0 ]]; then
+        echo "[dry-run] $*"
+        return 0
+    fi
+    "$@"
+}
+
 function ensureSymlink () {
     local source_path="${1}"
     local target_path="${2}"
@@ -71,15 +81,15 @@ function ensureSymlink () {
         if [[ "$(readlink "${target_path}")" == "${source_path}" ]]; then
             return 0
         fi
-        rm -f "${target_path}"
+        dryrun rm -f "${target_path}"
     elif [[ -e "${target_path}" ]]; then
         if [[ -e "${backup_path}" || -L "${backup_path}" ]]; then
             backup_path="${target_path}.bak.$(date +%s)"
         fi
-        mv "${target_path}" "${backup_path}"
+        dryrun mv "${target_path}" "${backup_path}"
     fi
 
-    ln -s "${source_path}" "${target_path}"
+    dryrun ln -s "${source_path}" "${target_path}"
 }
 
 
@@ -310,7 +320,7 @@ function installDependencies () {
         return 1
     fi
 
-    if brew bundle install --file "${brewfile}"
+    if dryrun brew bundle install --file "${brewfile}"
     then
         echo "✅ dependencies installed"
         return 0
@@ -336,7 +346,7 @@ function bootstrapConfigPython () {
     mkdir -p "${HOME}/.venv"
     if [[ ! -d "${venv_path}" ]]; then
         echo "🛠️ creating python venv ${venv_name}..."
-        if ! uv venv --seed --python "${desired_version}" "${venv_path}"; then
+        if ! dryrun uv venv --seed --python "${desired_version}" "${venv_path}"; then
             echo "❌ failed to create python venv"
             return 1
         fi
@@ -358,7 +368,7 @@ function bootstrapConfigPython () {
             local pkg_name="${pkg%%==*}"
             if ! uv pip show --python "${venv_path}" "${pkg_name}" &>/dev/null; then
                 echo "🛠️ installing pip package: ${pkg}..."
-                uv pip install --python "${venv_path}" "${pkg}" || echo "⚠️  failed to install ${pkg}"
+                dryrun uv pip install --python "${venv_path}" "${pkg}" || echo "⚠️  failed to install ${pkg}"
             else
                 echo "✅  pip package already installed: ${pkg_name}"
             fi
@@ -422,9 +432,9 @@ function bootstrapCheckOhMyTmux () {
 # ⚫️ configures figlet
 function bootstrapConfigFiglet () {
     if [[ ! -d "$HOME"/.figlet ]]; then
-        git clone git@github.com:xero/figlet-fonts.git "$HOME"/.figlet &> /dev/null
+        dryrun git clone git@github.com:xero/figlet-fonts.git "$HOME"/.figlet
     else
-        git -C "$HOME"/.figlet pull &> /dev/null
+        dryrun git -C "$HOME"/.figlet pull
     fi
     echo "✅  figlet is configured"
 }
@@ -961,11 +971,11 @@ function bootstrapInstallOhMyTmux () {
 
     if [[ -d "${target}" && ! -L "${target}" ]]; then
         echo "🛠️ backing up existing ~/.tmux directory..."
-        mv "${target}" "${target}.bak"
+        dryrun mv "${target}" "${target}.bak"
     fi
 
     if ensureSymlink "${vendor_tmux}" "${target}"; then
-        ln -sf "${target}/.tmux.conf" "${HOME}/.tmux.conf"
+        dryrun ln -sf "${target}/.tmux.conf" "${HOME}/.tmux.conf"
         echo "✅  oh-my-tmux is installed (via vendor symlink)"
         return 0
     else
@@ -1026,7 +1036,7 @@ function bootstrapConfigVim () {
     if [[ ! -f "${HOME}/.vimrc" ]];
     then
         # chec if .vimrc is a link
-        ln -s -f "${icloud_directory}/dot/shell/vim/rc" "${HOME}/.vimrc"
+        dryrun ln -s -f "${icloud_directory}/dot/shell/vim/rc" "${HOME}/.vimrc"
     else
         # check if .vimrc is a link
         if [[ ! -L "${HOME}/.vimrc" ]];
@@ -1140,7 +1150,7 @@ function bootstrapInitSubmodules () {
         return 0
     fi
     echo "🛠️ initializing git submodules..."
-    if git -C "${dot_bootstrap_directory}" submodule update --init --recursive; then
+    if dryrun git -C "${dot_bootstrap_directory}" submodule update --init --recursive; then
         echo "✅ submodules initialized"
         return 0
     else
@@ -1162,7 +1172,7 @@ function bootstrapConfigNode () {
     export N_PREFIX="${n_prefix}"
     mkdir -p "${n_prefix}"
     echo "🛠️ ensuring node ${node_version} via n..."
-    if ! n "${node_version}"; then
+    if ! dryrun n "${node_version}"; then
         echo "❌ failed to install node ${node_version}"
         return 1
     fi
@@ -1182,7 +1192,7 @@ function bootstrapConfigNode () {
         while IFS= read -r pkg; do
             if ! npm list -g --depth=0 "${pkg}" &>/dev/null; then
                 echo "🛠️ installing npm package: ${pkg}..."
-                npm install -g "${pkg}" || echo "⚠️  failed to install ${pkg}"
+                dryrun npm install -g "${pkg}" || echo "⚠️  failed to install ${pkg}"
             else
                 echo "✅  npm package already installed: ${pkg}"
             fi
@@ -1209,14 +1219,14 @@ function bootstrapInstallOhMyZshCustomPlugins () {
         [[ -z "${repo}" ]] && continue
         local submodule_path="custom/plugins/${repo}"
         echo "  ➕ init ${submodule_path}"
-        git -C "${vendor_omz}" submodule update --init "${submodule_path}" || { echo "❌ failed to init ${submodule_path}"; failed=1; }
+        dryrun git -C "${vendor_omz}" submodule update --init "${submodule_path}" || { echo "❌ failed to init ${submodule_path}"; failed=1; }
     done <<< "${enabled_repos}"
     while IFS= read -r repo; do
         [[ -z "${repo}" ]] && continue
         local submodule_path="custom/plugins/${repo}"
         if [[ -d "${vendor_omz}/${submodule_path}" ]]; then
             echo "  ➖ deinit ${submodule_path} (disabled)"
-            git -C "${vendor_omz}" submodule deinit --force "${submodule_path}" || true
+            dryrun git -C "${vendor_omz}" submodule deinit --force "${submodule_path}" || true
         fi
     done <<< "${disabled_repos}"
     [[ "${failed}" -eq 0 ]] && echo "✅  oh-my-zsh custom plugins initialized" && return 0
@@ -1253,6 +1263,18 @@ function bootstrapSystem() {
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -n|--dry-run)
+                DOT_DRY_RUN=1
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    [[ "${DOT_DRY_RUN:-0}" -gt 0 ]] && echo "🔍 dry-run mode enabled — no changes will be made"
     bootstrapPrint
     bootstrapInfo
     bootstrapSystem
