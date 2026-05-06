@@ -10,3 +10,9 @@
 [submodule "vendor/ohmyzsh"]
 	path = vendor/ohmyzsh
 	url = git@github.com:apsamuel/ohmyzsh.git
+[submodule "vendor/powerlevel10k"]
+	path = vendor/powerlevel10k
+	url = git@github.com:romkatv/powerlevel10k.git
+[submodule "vendor/ohmytmux"]
+	path = vendor/ohmytmux
+	url = git@github.com:apsamuel/.tmux.git
