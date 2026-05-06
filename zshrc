@@ -374,6 +374,9 @@ export plugins=(
     $(
         jq -r '.plugins.builtin[]' "$HOME"/.dot/data/zsh.json | xargs
     )
+    $(
+        jq -r '.plugins.custom[].repo' "$HOME"/.dot/data/zsh.json | xargs
+    )
 )
 
 export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#E0F40A,bg=black,bold,underline"

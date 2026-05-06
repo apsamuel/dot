@@ -13,13 +13,31 @@ fi
 
 if [[ "$action" == "install" ]]; then
     echo "Installing Homebrew"
-    # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    read -r -p "This will install Homebrew. Proceed? [y/N] " confirm
+    if [[ "${confirm}" =~ ^[Yy]$ ]]; then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    else
+        echo "Aborted."
+        exit 0
+    fi
 elif [[ "$action" == "uninstall" ]]; then
     echo "Uninstalling Homebrew"
-    # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+    read -r -p "This will REMOVE Homebrew and all installed packages. Proceed? [y/N] " confirm
+    if [[ "${confirm}" =~ ^[Yy]$ ]]; then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+    else
+        echo "Aborted."
+        exit 0
+    fi
 elif [[ "$action" == "upgrade" ]]; then
     echo "Upgrading Homebrew"
-    # brew update && brew upgrade
+    read -r -p "This will run brew update && brew upgrade. Proceed? [y/N] " confirm
+    if [[ "${confirm}" =~ ^[Yy]$ ]]; then
+        brew update && brew upgrade
+    else
+        echo "Aborted."
+        exit 0
+    fi
 elif [[ "$action" == "info" ]]; then
     echo "Homebrew Info"
     echo "Version: $(brew --version)"

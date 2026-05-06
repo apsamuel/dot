@@ -320,9 +320,52 @@ function installDependencies () {
     fi
 }
 
-# configures python environment for ⚫️
+# ⚫️ configures python environment for ⚫️
 function bootstrapConfigPython () {
-    true
+    local desired_version="3.11"
+    local arch
+    arch="$(uname -m)"
+    local venv_name="${desired_version}-${arch}-base"
+    local venv_path="${HOME}/.venv/${venv_name}"
+
+    if ! command -v uv &> /dev/null; then
+        echo "❌ uv is not installed (expected via Brewfile)"
+        return 1
+    fi
+
+    mkdir -p "${HOME}/.venv"
+    if [[ ! -d "${venv_path}" ]]; then
+        echo "🛠️ creating python venv ${venv_name}..."
+        if ! uv venv --seed --python "${desired_version}" "${venv_path}"; then
+            echo "❌ failed to create python venv"
+            return 1
+        fi
+    fi
+    echo "✅  python venv ${venv_name} is ready"
+
+    if [[ "${DOT_INSTALL_LANG_DEPS:-0}" -gt 0 ]]; then
+        local data_file="${dot_bootstrap_directory}/config/data.json"
+        if [[ ! -f "${data_file}" ]]; then
+            echo "⚠️  config/data.json not found, skipping pip packages"
+            return 0
+        fi
+        local pip_packages
+        pip_packages="$(jq -r '.languages.python.pip.requirements[]' "${data_file}" 2>/dev/null)"
+        if [[ -z "${pip_packages}" ]]; then
+            return 0
+        fi
+        while IFS= read -r pkg; do
+            local pkg_name="${pkg%%==*}"
+            if ! uv pip show --python "${venv_path}" "${pkg_name}" &>/dev/null; then
+                echo "🛠️ installing pip package: ${pkg}..."
+                uv pip install --python "${venv_path}" "${pkg}" || echo "⚠️  failed to install ${pkg}"
+            else
+                echo "✅  pip package already installed: ${pkg_name}"
+            fi
+        done <<< "${pip_packages}"
+    fi
+
+    return 0
 }
 
 # ⚫️ links iCloud directory
@@ -561,7 +604,18 @@ function bootstrapConfigPwsh () {
 
 # ⚫️ configures oh-my-zsh
 function bootstrapConfigOhMyZsh () {
-    return 0
+    local vendor_omz="${dot_bootstrap_directory}/vendor/ohmyzsh"
+    if [[ ! -d "${vendor_omz}" ]]; then
+        echo "❌ vendor/ohmyzsh not found — run bootstrapInitSubmodules first"
+        return 1
+    fi
+    if ensureSymlink "${vendor_omz}" "${ZSH}"; then
+        echo "✅  oh-my-zsh is configured"
+        return 0
+    else
+        echo "❌  oh-my-zsh configuration failed"
+        return 1
+    fi
 }
 
 # ⚫️ configures zsh custom plugins
@@ -842,76 +896,6 @@ function bootstrapInstallJq () {
     fi
 }
 
-# ⚫️ installs nvm
-function bootstrapInstallNvm () {
-    local nvm_version="${NVM_VERSION:-v0.40.3}"
-    local nvm_install_url="https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_version}/install.sh"
-
-    if [[ -s "${HOME}/.nvm/nvm.sh" ]]; then
-        echo "✅ nvm is installed"
-        return 0
-    fi
-
-    if PROFILE=/dev/null bash -c "$(curl -fsSL "${nvm_install_url}")"; then
-        echo "✅ nvm is installed"
-        return 0
-    fi
-
-    echo "❌ nvm installation failed"
-    return 1
-}
-
-# ⚫️ configures nvm in shell profiles
-function bootstrapConfigNvm () {
-    local nvm_profile_start="# >>> nvm init >>>"
-    local nvm_profile_end="# <<< nvm init <<<"
-    local profile
-
-    for profile in "${HOME}/.zshrc" "${HOME}/.bashrc"; do
-        [[ -f "${profile}" ]] || touch "${profile}"
-        if ! grep -Fq "${nvm_profile_start}" "${profile}"; then
-            {
-                echo ""
-                echo "${nvm_profile_start}"
-                echo 'export NVM_DIR="$HOME/.nvm"'
-                echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"'
-                echo '[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"'
-                echo "${nvm_profile_end}"
-            } >> "${profile}"
-        fi
-    done
-
-    echo "✅ nvm is configured"
-    return 0
-}
-
-# ⚫️ checks nvm installation
-function bootstrapCheckNvm () {
-    if [[ ! -s "${HOME}/.nvm/nvm.sh" ]]; then
-        echo "🛠️ installing nvm ..."
-        bootstrapInstallNvm || return 1
-    else
-        echo "✅ nvm is installed"
-    fi
-
-    bootstrapConfigNvm || return 1
-
-    if [[ "${DOT_NVM_INSTALL_LTS:-0}" == "1" ]]; then
-        export NVM_DIR="${HOME}/.nvm"
-        # shellcheck source=/dev/null
-        . "${NVM_DIR}/nvm.sh"
-
-        if nvm install --lts && nvm alias default 'lts/*'; then
-            echo "✅ node LTS is installed and set as default"
-        else
-            echo "❌ failed to install node LTS with nvm"
-            return 1
-        fi
-    fi
-
-    return 0
-}
-
 # ⚫️ installs iterm2
 function bootstrapInstallIterm () {
     if command brew install --cask iterm2
@@ -951,47 +935,58 @@ function bootstrapInstallThemes () {
 
 # ⚫️ installs oh-my-zsh
 function bootstrapInstallOhMyZsh () {
-    curl -L https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install_omz.sh
-    chmod +x /tmp/install_omz.sh
-    if KEEP_ZSHRC=yes CHSH=no RUNZSH=no /tmp/install_omz.sh; then
-        #copy the zshrc in place
-        bootstrapConfigOhMyZsh
-        echo "✅  oh-my-zsh is installed"
+    local vendor_omz="${dot_bootstrap_directory}/vendor/ohmyzsh"
+    if [[ ! -d "${vendor_omz}" ]]; then
+        echo "❌ vendor/ohmyzsh not found — run bootstrapInitSubmodules first"
+        return 1
+    fi
+    if ensureSymlink "${vendor_omz}" "${ZSH}"; then
+        echo "✅  oh-my-zsh is installed (via vendor symlink)"
+        return 0
     else
         echo "❌  oh-my-zsh installation failed"
         return 1
     fi
-
-    return 0
 }
 
 # ⚫️ installs oh-my-tmux
 function bootstrapInstallOhMyTmux () {
-    # TODO: check if the folder exists and is not empty, if not, we actually resinstall
-    if [ ! -d "${HOME}"/.tmux ]; then
-        echo "🛠️ installing oh-my-tmux..."
-        if command git clone git@github.com:gpakosz/.tmux.git "${HOME}/.tmux"
-        then
-            ln -s -f "${HOME}/.tmux/.tmux.conf" "${HOME}/.tmux.conf"
-            #cp "${HOME}/.tmux/.tmux.conf.local" "${HOME}/.tmux.conf.local"
-            echo "✅  oh-my-tmux is installed"
-            return 0
-        else
-            echo "❌  oh-my-tmux installation failed"
-            return 1
-        fi
-    else
-        echo "✅  oh-my-tmux is installed"
-        return 0
+    local vendor_tmux="${dot_bootstrap_directory}/vendor/ohmytmux"
+    local target="${HOME}/.tmux"
+
+    if [[ ! -d "${vendor_tmux}" ]]; then
+        echo "❌ vendor/ohmytmux not found — run bootstrapInitSubmodules first"
+        return 1
     fi
 
+    if [[ -d "${target}" && ! -L "${target}" ]]; then
+        echo "🛠️ backing up existing ~/.tmux directory..."
+        mv "${target}" "${target}.bak"
+    fi
+
+    if ensureSymlink "${vendor_tmux}" "${target}"; then
+        ln -sf "${target}/.tmux.conf" "${HOME}/.tmux.conf"
+        echo "✅  oh-my-tmux is installed (via vendor symlink)"
+        return 0
+    else
+        echo "❌  oh-my-tmux installation failed"
+        return 1
+    fi
 }
 
 # ⚫️ installs powerlevel10k
 function bootstrapInstallPowershell10K () {
-    if command git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "${ZSH_CUSTOM}/themes/powerlevel10k"
-    then
-        echo "✅  powerlevel10k is installed"
+    local vendor_p10k="${dot_bootstrap_directory}/vendor/powerlevel10k"
+    local target="${ZSH_CUSTOM}/themes/powerlevel10k"
+
+    if [[ ! -d "${vendor_p10k}" ]]; then
+        echo "❌ vendor/powerlevel10k not found — run bootstrapInitSubmodules first"
+        return 1
+    fi
+
+    mkdir -p "${ZSH_CUSTOM}/themes"
+    if ensureSymlink "${vendor_p10k}" "${target}"; then
+        echo "✅  powerlevel10k is installed (via vendor symlink)"
         return 0
     else
         echo "❌  powerlevel10k installation failed"
@@ -1138,13 +1133,90 @@ function bootstrapConfigNeovim () {
     echo "🛠️ configuring Neovim..."
 }
 
+# ⚫️ initializes git submodules
+function bootstrapInitSubmodules () {
+    if [[ ! -f "${dot_bootstrap_directory}/.gitmodules" ]]; then
+        echo "⚠️  no .gitmodules found, skipping submodule init"
+        return 0
+    fi
+    echo "🛠️ initializing git submodules..."
+    if git -C "${dot_bootstrap_directory}" submodule update --init --recursive; then
+        echo "✅ submodules initialized"
+        return 0
+    else
+        echo "❌ submodule initialization failed"
+        return 1
+    fi
+}
+
+# ⚫️ configures node environment via n
+function bootstrapConfigNode () {
+    local node_version="${NODE_VERSION:-20.10.0}"
+    local n_prefix="${HOME}/.node-$(uname -m)"
+
+    if ! command -v n &> /dev/null; then
+        echo "❌ n is not installed (expected via Brewfile)"
+        return 1
+    fi
+
+    export N_PREFIX="${n_prefix}"
+    mkdir -p "${n_prefix}"
+    echo "🛠️ ensuring node ${node_version} via n..."
+    if ! n "${node_version}"; then
+        echo "❌ failed to install node ${node_version}"
+        return 1
+    fi
+    echo "✅  node ${node_version} is ready"
+
+    if [[ "${DOT_INSTALL_LANG_DEPS:-0}" -gt 0 ]]; then
+        local data_file="${dot_bootstrap_directory}/config/data.json"
+        if [[ ! -f "${data_file}" ]]; then
+            echo "⚠️  config/data.json not found, skipping npm packages"
+            return 0
+        fi
+        local npm_packages
+        npm_packages="$(jq -r '.languages.node.npm.requirements[]' "${data_file}" 2>/dev/null)"
+        if [[ -z "${npm_packages}" ]]; then
+            return 0
+        fi
+        while IFS= read -r pkg; do
+            if ! npm list -g --depth=0 "${pkg}" &>/dev/null; then
+                echo "🛠️ installing npm package: ${pkg}..."
+                npm install -g "${pkg}" || echo "⚠️  failed to install ${pkg}"
+            else
+                echo "✅  npm package already installed: ${pkg}"
+            fi
+        done <<< "${npm_packages}"
+    fi
+
+    return 0
+}
+
+# ⚫️ installs oh-my-zsh custom plugins via vendor/ohmyzsh nested submodules
+function bootstrapInstallOhMyZshCustomPlugins () {
+    local vendor_omz="${dot_bootstrap_directory}/vendor/ohmyzsh"
+    if [[ ! -d "${vendor_omz}" ]]; then
+        echo "❌ vendor/ohmyzsh not found"
+        return 1
+    fi
+    echo "🛠️ initializing oh-my-zsh custom plugin submodules..."
+    if git -C "${vendor_omz}" submodule update --init --recursive; then
+        echo "✅  oh-my-zsh custom plugins initialized"
+        return 0
+    else
+        echo "❌  oh-my-zsh custom plugin initialization failed"
+        return 1
+    fi
+}
+
 # ⚫️ main bootstrap function
 function bootstrapSystem() {
     # load secrets
     __load_secrets
     bootstrapCheckBrew || return 1
-    bootstrapDeps || return 1
+    bootstrapCheckDependencies || return 1
     bootstrapCheckCloud || return 1
+    bootstrapInitSubmodules || return 1
 
     bootstrapCheckZsh || return 1
     bootstrapConfigZsh || return 1
@@ -1153,10 +1225,13 @@ function bootstrapSystem() {
     bootstrapConfigSsh || return 1
     bootstrapConfigGit || return 1
 
-    bootstrapCheckNvm || return 1
+    bootstrapConfigPython || return 1
+    bootstrapConfigNode || return 1
+
     bootstrapCheckIterm || return 1
     bootstrapConfigFiglet || return 1
     bootstrapCheckOhMyZsh || return 1
+    bootstrapInstallOhMyZshCustomPlugins || return 1
     bootstrapCheckPowershell10K || return 1
     bootstrapCheckOhMyTmux || return 1
 

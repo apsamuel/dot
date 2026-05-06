@@ -28,10 +28,11 @@ fi
 
 
 # load zsh autosuggestions
-if [[ "${DOT_DISABLE_ZSH_AUTOSUGGESTIONS}" -lt 1 ]]; then
-    test -e "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh && source "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-fi
-# test -e "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh && source "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+# NOTE: zsh-autosuggestions is now loaded by oh-my-zsh via the custom plugin
+# submodule in vendor/ohmyzsh. The brew-installed version is no longer needed.
+# if [[ "${DOT_DISABLE_ZSH_AUTOSUGGESTIONS}" -lt 1 ]]; then
+#     test -e "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh && source "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+# fi
 
 # load zsh-syntax-highlighting
 if [[ "${DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING}" -lt 1 ]]; then
