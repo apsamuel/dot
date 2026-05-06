@@ -2,8 +2,11 @@
 #% description: define baseline environment variables required for the dotfiles ecosystem and the shell
 # shellcheck shell=bash
 
+directory=$(dirname "$0")
+library=$(basename "$0")
+
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${DOT_LIBRARY} (${DOT_DIRECTORY})"
+    echo "loading: ${library} (${directory})"
 fi
 
 getProcessorCores() {

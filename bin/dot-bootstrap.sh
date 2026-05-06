@@ -136,7 +136,7 @@ function deployZsh () {
     fi
 
 
-    data_source="${dot_bootstrap_directory}/config/data.json"
+    data_source="${dot_bootstrap_directory}/data/zsh.json"
     data_dest="${icloud_directory}/dot/shell/zsh/zsh.json"
 
     rc_source="${dot_bootstrap_directory}/zshrc"
@@ -354,9 +354,9 @@ function bootstrapConfigPython () {
     echo "✅  python venv ${venv_name} is ready"
 
     if [[ "${DOT_INSTALL_LANG_DEPS:-0}" -gt 0 ]]; then
-        local data_file="${dot_bootstrap_directory}/config/data.json"
+        local data_file="${dot_bootstrap_directory}/data/zsh.json"
         if [[ ! -f "${data_file}" ]]; then
-            echo "⚠️  config/data.json not found, skipping pip packages"
+            echo "⚠️  data/zsh.json not found, skipping pip packages"
             return 0
         fi
         local pip_packages
@@ -1179,9 +1179,9 @@ function bootstrapConfigNode () {
     echo "✅  node ${node_version} is ready"
 
     if [[ "${DOT_INSTALL_LANG_DEPS:-0}" -gt 0 ]]; then
-        local data_file="${dot_bootstrap_directory}/config/data.json"
+        local data_file="${dot_bootstrap_directory}/data/zsh.json"
         if [[ ! -f "${data_file}" ]]; then
-            echo "⚠️  config/data.json not found, skipping npm packages"
+            echo "⚠️  data/zsh.json not found, skipping npm packages"
             return 0
         fi
         local npm_packages

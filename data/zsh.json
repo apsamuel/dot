@@ -1,23 +1,48 @@
 {
     "theme": "powerlevel10k/powerlevel10k",
-    "path": [],
+    "path": [
+
+    ],
+    "conditions": {
+        "network": {
+            "home": "192.168.0.1"
+        }
+    },
+    "languages": {
+        "python": {
+            "pip": {
+                "requirements": [
+                    "libtmux==0.36.0"
+                ]
+            }
+        },
+        "node": {
+            "npm": {
+                "requirements": [
+                    "@google/gemini-cli",
+                    "@openai/codex"
+                ]
+            }
+        }
+    },
     "options": [
         "autopushd",
-        "extendedglob",
-        "share_history",
-        "hist_ignore_all_dups",
         "BANG_HIST",
-        "EXTENDED_HISTORY",
-        "INC_APPEND_HISTORY",
+        "extendedglob",
+        "extendedhistory",
+        "hist_ignore_all_dups",
         "histexpiredupsfirst",
-        "histignoredups",
+        "histfindnodups",
         "histignorealldups",
-        "HIST_FIND_NO_DUPS",
-        "HIST_IGNORE_SPACE",
+        "histignoredups",
+        "histignorespace",
+        "histnostore",
+        "histreduceblanks",
         "histsavenodups",
-        "HIST_REDUCE_BLANKS",
-        "HIST_NO_STORE",
-        "histverify"
+        "histverify",
+        "incappendhistory",
+        "share_history",
+        "sharehistory"
     ],
     "plugins": {
         "builtin": [
@@ -55,13 +80,13 @@
                 "owner": "conda-incubator",
                 "repo": "conda-zsh-completion",
                 "exec": "",
-                "enabled": true
+                "enabled": false
             },
             {
                 "owner": "zsh-users",
                 "repo": "zsh-autosuggestions",
                 "exec": "",
-                "enabled": true
+                "enabled": false
             },
             {
                 "owner": "z-shell",
@@ -73,25 +98,35 @@
                 "owner": "Aloxaf",
                 "repo": "fzf-tab",
                 "exec": "",
-                "enabled": true
+                "enabled": false
             },
             {
                 "owner": "denisidoro",
                 "repo": "navi",
                 "exec": "",
-                "enabled": true
+                "enabled": false
             },
             {
                 "owner": "jeffreytse",
                 "repo": "zsh-vi-mode",
                 "exec": "",
-                "enabled": true
+                "enabled": false
             },
             {
                 "owner": "tom-doerr",
                 "repo": "zsh_codex",
                 "exec": "",
-                "enabled": true
+                "enabled": false
+            }
+        ]
+    },
+    "themes": {
+        "builtin": [],
+        "custom": [
+            {
+                "owner": "romkatv",
+                "repo": "powerlevel10k",
+                "exec": ""
             }
         ]
     }

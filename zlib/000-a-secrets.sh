@@ -183,9 +183,13 @@ function maskSecrets () {
 }
 
 function reloadOptions () {
+    local _zsh_cfg="${ICLOUD}/dot/shell/zsh/zsh.json"
+    if [[ ! -f "${_zsh_cfg}" ]]; then
+        _zsh_cfg="${DOT_SHELL_DATA:-${HOME}/.dot/data/zsh.json}"
+    fi
     zsh_options=(
         $(
-            jq -r '.options[]' "${ICLOUD}"/dot/data.json | xargs
+            jq -r '.options[]' "${_zsh_cfg}" | xargs
         )
     )
     for option in "${zsh_options[@]}"; do

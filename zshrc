@@ -57,83 +57,68 @@ export HISTFILE="$HOME/.zsh_history"
 export HISTSIZE=${ZSH_HISTSIZE}
 export SAVEHIST=${ZSH_SAVEHIST}
 
-# dot exports
-export DOT_ARCHITECTURE
-DOT_ARCHITECTURE=$(arch)
-export DOT_DEBUG="${DOT_DEBUG:-0}"
-export DOT_SHELL="${DOT_SHELL:-zsh}"
-export DOT_INTERACTIVE="${DOT_INTERACTIVE:-0}"
-export DOT_ROOT="${DOT_ROOT:-${HOME}/.dot}"
-export DOT_SHELL="${DOT_SHELL:-zsh}"
-export DOT_DEBUG_RC="${DOT_DEBUG_RC:-${DOT_ROOT}/.${DOT_SHELL}rc}"
-export DOT_DIRECTORY="${DOT_DIRECTORY:-${DOT_ROOT}}"
-export DOT_LIBRARY="${DOT_LIBRARY:-${DOT_ROOT}/zlib}"
-export DOT_BIN="${DOT_BIN:-${DOT_ROOT}/bin}"
-# shellcheck disable=SC2046
-export DOT_LIBRARY_FILES=($(find "${DOT_LIBRARY}" -maxdepth 1 -type f -name "*.sh" | sort -d))
-export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/bin/dot-bootstrap.sh}"
-export DOT_BOOTED="${DOT_BOOTED:-false}"
-export DOT_ANACONDA_ENABLED="${DOT_ANACONDA_ENABLED:-0}"
-export DOT_DISABLE_BREW="${DOT_DISABLE_BREW:-0}"
-export DOT_DISABLE_EXTENSIONS="${DOT_DISABLE_EXTENSIONS:-0}"
-export DOT_DISABLE_THEFUCK="${DOT_DISABLE_THEFUCK:-0}"
-export DOT_DISABLE_ZSH_AUTOSUGGESTIONS="${DOT_DISABLE_ZSH_AUTOSUGGESTIONS:-0}"
-export DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING="${DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING:-0}"
-export DOT_DISABLE_Z="${DOT_DISABLE_Z:-0}"
-export DOT_DISABLE_ANACONDA="${DOT_DISABLE_ANACONDA:-0}"
-export DOT_DISABLE_OUTPUTS="${DOT_DISABLE_OUTPUTS:-0}"
-export DOT_DISABLE_GIT="${DOT_DISABLE_GIT:-0}"
-export DOT_DISABLE_MAC="${DOT_DISABLE_MAC:-0}"
-export DOT_DISABLE_P10K="${DOT_DISABLE_P10K:-0}"
-export DOT_DISABLE_NODE="${DOT_DISABLE_NODE:-0}"
-export DOT_DISABLE_NETWORK="${DOT_DISABLE_NETWORK:-0}"
-export DOT_PYTHON_UV_DEFAULT_VERSION="${DOT_PYTHON_VERSION:-3.13}"
+# iCloud references
+ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
+ICLOUD_DIR="${ICLOUD}" # for backward compatibility
+ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
+ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
+ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
+export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
 
-# set the Obsidian vault directory
-export DOT_MARKDOWN_VAULT="${HOME}/Library/Mobile Documents/iCloud~md~obsidian/Documents"
-# export DOT_NODE_DEFAULT_VERSION="${DOT_NODE_VERSION:-20.10.0}"
-export DOT_DIRECTORY DOT_LIBRARY DOT_LIBRARY_FILES DOT_DEBUG DOT_INTERACTIVE DOT_BOOT DOT_BOOTED DOT_ROOT DOT_SHELL DOT_DEBUG_RC DOT_ANACONDA_ENABLED
+# export TERM=xterm-256color
+export MANPATH="/usr/local/man:$MANPATH"
+export HISTSIZE=1000000000
+export HISTFILESIZE=1000000000
+export SAVEHIST=$HISTSIZE
+export HISTFILE="$HOME"/.zsh_history
+GPG_TTY=$(tty)
+export GPG_TTY
+export LANG=en_US.UTF-8
+export EDITOR=vim
+export ZSH_COLORIZE_TOOL=pygmentize
+export PAGER='bat '
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
+arch="$(arch)"
+export ARCH="${arch}"
 
-if [ "$(uname -m)"  = "x86_64" ]; then
-    export DOT_ANACONDA_DIR=/usr/local/anaconda3
-    export ANACONDA_DIR=/usr/local/anaconda3
-else
-    export DOT_ANACONDA_DIR=/opt/homebrew/anaconda3
-    export ANACONDA_DIR=/opt/homebrew/anaconda3
-fi
-export DOT_ANACONDA_ENV="${DOT_ANACONDA_ENV:-base}"
+# minimal bootstrap vars (needed to source dotenv.sh)
+DOT_ROOT="${DOT_ROOT:-${HOME}/.dot}"
+DOT_LIBRARY="${DOT_LIBRARY:-${DOT_ROOT}/zlib}"
 
+# load all DOT_* environment variables from the canonical source
+. "${DOT_LIBRARY}/static/dotenv.sh" || { echo "Error: unable to load environment variables from dotenv.sh"; exit 1; }
 
 if [ -f "${DOT_BOOTSTRAP}" ]; then
-    . "${DOT_BOOTSTRAP}" || (
+    . "${DOT_BOOTSTRAP}" || {
         echo "Error: unable to load bootstrapper"
         exit 1
-    )
+    }
 fi
 
-# configure environment variable germaine to your dot environment
-(. "${DOT_LIBRARY}"/static/dotenv.sh || . "${DOT_LIBRARY}"/static/dotenv.sh) || (
-    echo "Error: unable to load dotenv"
+# foundational functions
+. "${DOT_LIBRARY}"/static/foundation.sh || {
+    echo "Error: unable to load foundational functions"
     exit 1
-)
+}
 
 # shell limits (user)
-(. "${DOT_LIBRARY}"/static/limits.sh || . "${DOT_LIBRARY}"/static/limits.sh) || (
+. "${DOT_LIBRARY}"/static/limits.sh || {
     echo "Error: unable to load shell limits"
     exit 1
-)
+}
 
 # shell autoloads (ZSH)
-(. "${DOT_LIBRARY}"/static/autoload.sh || . "${DOT_LIBRARY}"/static/autoload.sh) || (
+. "${DOT_LIBRARY}"/static/autoload.sh || {
     echo "Error: unable to configure autoloads"
     exit 1
-)
+}
 
 # bootstrap functions
-(. "${DOT_DIRECTORY}"/bin/dot-bootstrap.sh || . "${DOT_DIRECTORY}"/bin/dot-bootstrap.sh) || (
+. "${DOT_DIRECTORY}"/bin/dot-bootstrap.sh || {
     echo "Error: unable to load bootstrap functions"
     exit 1
-)
+}
 
 # declare -a SSH_KEYS
 SSH_KEYS=()
@@ -154,83 +139,13 @@ fi
 
 export SSH_KEYS
 
-# iCloud references
-ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
-ICLOUD_DIR="${ICLOUD}" # for backward compatibility
-ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
-ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
-ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
-export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
 
-# control the dot environment
-DOT_SHELL=${DOT_SHELL:-zsh}
-DOT_DEBUG=${DOT_DEBUG:-false}
-DOT_SPLASH_SCREEN=${DOT_SPLASH_SCREEN:-true}
-DOT_SPLASH_TYPE="${DOT_SPLASH_TYPE:-quote}"
-DOT_DIR="${DOT_DIR:-$HOME/.dot}"
-DOT_LIBS_DIR="${DOT_LIBS_DIR:-$DOT_DIR/zlib}"
-DOT_CLOUD_DIR="${ICLOUD}/dot"
-DOT_SHELL_DATA=${DOT_SHELL_DATA:-$HOME/.dot/data/zsh.json}
-DOT_SECRETS_DATA=${DOT_SECRETS_DATA:-"${DOT_CLOUD_DIR}/secrets.json"}
-
-# export TERM=xterm-256color
-export MANPATH="/usr/local/man:$MANPATH"
-export HISTSIZE=1000000000
-export HISTFILESIZE=1000000000
-export SAVEHIST=$HISTSIZE
-export HISTFILE="$HOME"/.zsh_history
-GPG_TTY=$(tty)
-export GPG_TTY
-export LANG=en_US.UTF-8
-export EDITOR=vim
-export ZSH_COLORIZE_TOOL=pygmentize
-export PAGER='bat '
-export MANPAGER="sh -c 'col -bx | bat -l man -p'"
-export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
-arch="$(arch)"
-export ARCH="${arch}"
 
 # enable zsh options
-# if $ICLOUD is inaccessible, we need to ensure that we can still load the zsh options
-if [[ -f "$ICLOUD"/dot/shell/zsh/zsh.json ]]; then
-    ZSH_OPTIONS=(
-        $(
-            jq -r '.options[]' "$ICLOUD"/dot/shell/zsh/zsh.json | xargs
-        )
-    )
-else
-    # we need to get ZSH options from the .dot directory
-    ZSH_OPTIONS=(
-        $(
-            jq -r '.options[]' "$DOT_DIRECTORY"/data/zsh.json | xargs
-        )
-    )
-fi
-
-export ZSH_OPTIONS
-
-for opt in "${ZSH_OPTIONS[@]}"; do
-    if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
-        echo "set option: $opt"
-    fi
-    setopt "${opt}"
-done
+loadZshOptions
 
 # make ZLIB available to shell
-if [ -d "$DOT_LIBS_DIR" ]; then
-    for lib in $(find "${DOT_LIBS_DIR}" -type f -name "*.sh" | sort -d); do
-        # skip README.md files
-        if [[ "$lib" =~ .*README.md ]]; then
-            continue
-        fi
-        if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
-            echo "load source: $lib"
-        fi
-        . "$lib" || true
-    done
-else
-    echo "Warning: DOT_LIBS_DIR not found: $DOT_LIBS_DIR"
-fi
+loadZlib
 
 compileTermInfo
 
@@ -256,33 +171,7 @@ if [[ $(getShellName)  =~ .*zsh ]]; then
 fi
 
 # TODO: host secrets in icloud directory (optionally)
-if [[ -d "$ICLOUD"/dot && -f "$ICLOUD"/dot/secrets.json ]]; then
-    # uses an associative array to load secrets into memory
-    declare -A secrets
-    secretKeys=(
-        $(
-            jq -r '. | keys | .[]' "$ICLOUD"/dot/secrets.json | xargs
-        )
-    )
-    export DOT_SECRET_KEYS=("${secretKeys[@]}")
-
-    # if secrets length is greater than 0, write to /tmp/.secrets
-    if [[ ${#secretKeys[@]} -gt 0  ]]; then
-        touch "${TMPDIR}"/.secrets
-        echo "#!/bin/bash" > "$TMPDIR"/.secrets
-    fi
-
-    for secretKey in "${secretKeys[@]}"; do
-        secrets[$secretKey]="$(jq --arg secretKey "${secretKey}" -r '.[$secretKey]' "$ICLOUD"/dot/secrets.json)"
-        # ensure secrets are exported...
-        echo "export ${secretKey}=${secrets[$secretKey]}" >> "$TMPDIR"/.secrets
-    done
-
-    if [[ -f "$TMPDIR"/.secrets ]]; then
-        . "$TMPDIR"/.secrets
-        rm -f "$TMPDIR"/.secrets
-    fi
-fi
+loadUserSecrets
 
 if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "quote" ]]; then
     termQuote

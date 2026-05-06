@@ -6,5 +6,5 @@
 # shellcheck disable=SC2207
 
 
-DOT_CONFIGURATION="${DOT_CONFIGURATION:-${ICLOUD}/dot/data.json}"
+DOT_CONFIGURATION="${DOT_CONFIGURATION:-${ICLOUD}/dot/shell/zsh/zsh.json}"
 export DOT_CONFIGURATION

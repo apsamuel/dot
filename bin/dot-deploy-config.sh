@@ -6,4 +6,4 @@ if [[ -z "${ICLOUD}" ]]; then
 fi
 
 echo "deploying config files to ${ICLOUD}"
-cp -v config/data.json "${ICLOUD}"/dot/data.json
+cp -v data/zsh.json "${ICLOUD}"/dot/shell/zsh/zsh.json
