@@ -66,6 +66,26 @@
                 "owner": "z-shell",
                 "repo": "F-Sy-H",
                 "exec": ""
+            },
+            {
+                "owner": "Aloxaf",
+                "repo": "fzf-tab",
+                "exec": ""
+            },
+            {
+                "owner": "denisidoro",
+                "repo": "navi",
+                "exec": ""
+            },
+            {
+                "owner": "jeffreytse",
+                "repo": "zsh-vi-mode",
+                "exec": ""
+            },
+            {
+                "owner": "tom-doerr",
+                "repo": "zsh_codex",
+                "exec": ""
             }
         ]
     }
