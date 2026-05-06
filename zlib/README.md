@@ -90,7 +90,7 @@ export DOT_DISABLE_EXTENSIONS=1 # skip iTerm2, thefuck, autosuggestions
 
 ## `static/` — Static Helpers
 
-Files in `zlib/static/` are sourced directly by `bootstrap.sh` and `zshrc` before the numbered modules, providing infrastructure the modules depend on.
+Files in `zlib/static/` are sourced directly by `dot-bootstrap.sh` and `zshrc` before the numbered modules, providing infrastructure the modules depend on.
 
 | File | Description |
 |---|---|

@@ -7,14 +7,14 @@ The `config/` directory holds the **source-of-truth configuration template** tha
 ## How Config Is Used
 
 ```
-config/data.json  ──►  scripts/deploy-config.sh  ──►  $ICLOUD/dot/data.json
+config/data.json  ──►  bin/dot-deploy-config.sh  ──►  $ICLOUD/dot/data.json
                                                              │
                                          zlib/static/config.sh reads it
                                          zlib/000-a-config.sh reads it (via jq)
 ```
 
 1. **Edit** `config/data.json` in the repo.
-2. **Deploy** it to iCloud by running `scripts/deploy-config.sh` (or `bootstrap.sh -d`).
+2. **Deploy** it to iCloud by running `bin/dot-deploy-config.sh` (or `dot-bootstrap.sh -d`).
 3. **At shell startup**, `zlib/static/config.sh` sets `$DOT_CONFIGURATION` pointing at the iCloud copy, and `zlib/000-a-config.sh` reads values from it with `jq`.
 
 > `config/data.yaml` is a YAML-format mirror of the same data kept for human readability. It is **not** read at runtime — all runtime reads use `data.json`.

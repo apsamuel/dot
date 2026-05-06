@@ -25,7 +25,7 @@ tmuxHasSession() {
 }
 
 tmuxCreateSessionFromCwd() {
-    local directory
+    local current_directory
     local current_directory_base
     local session_name
 
@@ -38,6 +38,6 @@ tmuxCreateSessionFromCwd() {
         tmux attach-session -t "${session_name}"
     else
         echo "tmux session '${session_name}' does not exist, creating"
-        tmux -2 new-session -s "${session_name}" -c "${directory}"
+        tmux -2 new-session -s "${session_name}" -c "${current_directory}"
     fi
 }

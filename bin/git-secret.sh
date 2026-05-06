@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #% description: scrub secrets from git history — and report on exposure
-#% usage:   bin/secret-scrub.sh [options]
+#% usage:   bin/git-secret.sh [options]
 #%
 #% ── scrub options (default mode) ────────────────────────────────────────────
 #%   -s <secret>           literal secret string to remove (repeatable)
@@ -43,19 +43,19 @@
 #%   -h                    print this help
 #%
 #% examples:
-#%   bin/secret-scrub.sh -s "ghp_MyToken123"
-#%   bin/secret-scrub.sh -s "API_KEY=abc123" -s "ANOTHER_SECRET" -m
-#%   bin/secret-scrub.sh -f my-replacements.txt --push
-#%   bin/secret-scrub.sh -s "ghp_MyToken123" -n              # quick dry run
-#%   bin/secret-scrub.sh --trufflehog                        # trufflehog → scrub
-#%   bin/secret-scrub.sh --trufflehog -n                     # trufflehog dry run
-#%   bin/secret-scrub.sh --secrets-json "$ICLOUD/dot/secrets.json"           # JSON → scrub
-#%   bin/secret-scrub.sh --secrets-json "$ICLOUD/dot/secrets.json" --trufflehog  # both
-#%   bin/secret-scrub.sh --report -s "ghp_Tok123"            # report on one secret
-#%   bin/secret-scrub.sh --report --secrets-json sec.json    # report from JSON file
-#%   bin/secret-scrub.sh --report --trufflehog -o json       # trufflehog JSON report
-#%   bin/secret-scrub.sh --report --secrets-json sec.json -u # fetch remotes first
-#%   bin/secret-scrub.sh --report --secrets-json sec.json --depth 200 -m
+#%   bin/git-secret.sh -s "ghp_MyToken123"
+#%   bin/git-secret.sh -s "API_KEY=abc123" -s "ANOTHER_SECRET" -m
+#%   bin/git-secret.sh -f my-replacements.txt --push
+#%   bin/git-secret.sh -s "ghp_MyToken123" -n              # quick dry run
+#%   bin/git-secret.sh --trufflehog                        # trufflehog → scrub
+#%   bin/git-secret.sh --trufflehog -n                     # trufflehog dry run
+#%   bin/git-secret.sh --secrets-json "$ICLOUD/dot/secrets.json"           # JSON → scrub
+#%   bin/git-secret.sh --secrets-json "$ICLOUD/dot/secrets.json" --trufflehog  # both
+#%   bin/git-secret.sh --report -s "ghp_Tok123"            # report on one secret
+#%   bin/git-secret.sh --report --secrets-json sec.json    # report from JSON file
+#%   bin/git-secret.sh --report --trufflehog -o json       # trufflehog JSON report
+#%   bin/git-secret.sh --report --secrets-json sec.json -u # fetch remotes first
+#%   bin/git-secret.sh --report --secrets-json sec.json --depth 200 -m
 #%
 #% ⚠️  BEFORE running this script:
 #%   1. Rotate / revoke the exposed secret immediately — cleaning history
@@ -485,7 +485,7 @@ _render_pretty_report() {
     if [[ "$high" -gt 0 ]]; then
         printf '%b\n' "${RED}${BOLD}Action required:${RESET}"
         printf '  1. Rotate any exposed secrets immediately.\n'
-        printf '  2. Use bin/secret-scrub.sh to rewrite history and force-push.\n'
+        printf '  2. Use bin/git-secret.sh to rewrite history and force-push.\n'
         printf '  3. Run this report again after scrubbing to confirm clean.\n'
         printf '\n'
     fi

@@ -4,7 +4,7 @@ ENV_DIR="$HOME/.venv"
 ENVIRONMENT_NAME=${NAME:-base}
 
 help() {
-  echo "Usage: source python-env.sh [-p python_version]"
+  echo "Usage: source python-create-env.sh [-p python_version]"
   echo
   echo "Options:"
   echo "  -v    Specify the Python version to use (default: 3.8)"

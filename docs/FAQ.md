@@ -14,7 +14,7 @@ Turtle is a separate project — an experimental shell interpreter written in Ru
 
 ## Installation
 
-> **What does `bootstrap.sh` actually do?**
+> **What does `dot-bootstrap.sh` actually do?**
 
 It installs dependencies (via Homebrew), symlinks `zshrc` to `~/.zshrc`, sets up the vendor libraries, and ensures your shell is configured to load `dot`. See [BOOTSTRAP.md](./details/BOOTSTRAP.md) for a step-by-step breakdown.
 

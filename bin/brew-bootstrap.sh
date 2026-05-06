@@ -6,7 +6,7 @@
 action="$1"
 
 if [[ -z "$action" ]]; then
-    echo "Usage: brewstrap.sh <action>"
+    echo "Usage: brew-bootstrap.sh <action>"
     echo "Actions: install, uninstall, upgrade"
     exit 1
 fi
@@ -27,7 +27,7 @@ elif [[ "$action" == "info" ]]; then
     echo "Cellar: $(brew --cellar)"
     echo "Repository: $(brew --repository)"
 else
-    echo "Usage: brewstrap.sh <action>"
+    echo "Usage: brew-bootstrap.sh <action>"
     echo "Actions: install, uninstall, upgrade"
     exit 1
 fi

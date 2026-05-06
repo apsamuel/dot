@@ -111,7 +111,7 @@ These variables establish the filesystem layout of the framework and are used th
 - **Default:** `$ICLOUD/dot/data.json`
 - **Set in:** `zlib/static/config.sh`
 - **Used in:** `zlib/000-a-config.sh` — `getTheme()` and `getCondition()` query this file via `jq`
-- **Notes:** Points to the **live** runtime config (in iCloud), not the repo template at `config/data.json`. `scripts/deploy-config.sh` copies the repo template to this location.
+- **Notes:** Points to the **live** runtime config (in iCloud), not the repo template at `config/data.json`. `bin/dot-deploy-config.sh` copies the repo template to this location.
 
 ---
 

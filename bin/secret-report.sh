@@ -450,7 +450,7 @@ render_pretty() {
   if [[ "$high" -gt 0 ]]; then
     printf '%b\n' "${RED}${BOLD}Action required:${RESET}"
     printf '  1. Rotate any exposed secrets immediately.\n'
-    printf '  2. Use bin/secret-scrub.sh to rewrite history and force-push.\n'
+    printf '  2. Use bin/git-secret.sh to rewrite history and force-push.\n'
     printf '  3. Run this report again after scrubbing to confirm clean.\n'
     printf '\n'
   fi

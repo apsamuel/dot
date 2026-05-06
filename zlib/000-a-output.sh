@@ -68,7 +68,7 @@ function printLevel() {
         return 1
     fi
 
-    if [[ ! " ${levels[*]} " =~ " ${level} " ]]; then
+    if [[ ! " ${levels[*]} " =~  ${level}  ]]; then
         echo "Invalid level: ${level}. Available levels: $(printLevels)"
         return 1
     fi
@@ -303,15 +303,6 @@ function toFiglet() {
             echo "$message" | figlet "$args"
         fi
     fi
-	# echo "args: ${args}"
-	# if [[ "${color}" == "true" ]]; then
-	# 		echo "$message" | figlet "$args"| lolcat
-	# fi
-	# if [[ ! "${color}" == "true" ]]; then
-	# 		echo "$message" | figlet "$args"
-	# fi
-
-
 }
 
 function terminalHeight () {

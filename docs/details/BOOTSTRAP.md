@@ -2,7 +2,7 @@
 
 ## Overview
 
-`bootstrap.sh` is the first-run script that installs and configures the `dot` framework from scratch. It is designed to be idempotent — running it multiple times will not break an already-configured environment.
+`dot-bootstrap.sh` is the first-run script that installs and configures the `dot` framework from scratch. It is designed to be idempotent — running it multiple times will not break an already-configured environment.
 
 ## Usage
 

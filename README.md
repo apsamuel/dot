@@ -14,7 +14,7 @@
 
 ## Goals
 
-- **Zero friction onboarding** — a single `bootstrap.sh` run sets up everything from scratch
+- **Zero friction onboarding** — a single `dot-bootstrap.sh` run sets up everything from scratch
 - **Batteries included** — the tools you actually reach for are already there
 - **Composable** — enable or disable individual modules without breaking the rest
 - **Reproducible** — the same setup on any supported machine, every time
@@ -136,11 +136,11 @@ Commands:
 | Utility                                                              | Purpose                                      | Location                 |
 | -------------------------------------------------------------------- | -------------------------------------------- | ------------------------ |
 | [oh-my-zsh](https://ohmyz.sh)                                           | ZSH plugin and theme framework               | `vendor/ohmyzsh/`      |
-| [oh-my-tmux](https://github.com/gpakosz/.tmux)                          | Tmux configuration framework                 | `vendor/tmux/`         |
+| [oh-my-tmux](https://github.com/gpakosz/.tmux)                          | Tmux configuration framework                 | `vendor/ohmytmux/`, `vendor/tmux/` |
 | [fzf](https://github.com/junegunn/fzf)                                  | Fuzzy finder for the terminal                | installed via Homebrew   |
 | [fzf-git](https://github.com/junegunn/fzf-git.sh)                       | fzf bindings for git operations              | `vendor/fzf-git/`      |
 | [bash-commons](https://github.com/gruntwork-io/bash-commons)            | Reusable bash utilities                      | `vendor/bash-commons/` |
-| [powerlevel10k](https://github.com/romkatv/powerlevel10k)               | ZSH prompt theme                             | installed via oh-my-zsh  |
+| [powerlevel10k](https://github.com/romkatv/powerlevel10k)               | ZSH prompt theme                             | `vendor/powerlevel10k/` |
 | [bat](https://github.com/sharkdp/bat)                                   | `cat` replacement with syntax highlighting | installed via Homebrew   |
 | [thefuck](https://github.com/nvbn/thefuck)                              | Autocorrects mistyped commands               | installed via Homebrew   |
 | [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-style command suggestions               | installed via oh-my-zsh  |

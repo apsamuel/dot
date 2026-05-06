@@ -1,7 +1,7 @@
 #!/bin/bash
 #% description: installs and bootstrap ⚫️
 #% notes: because this must work on bash 3.x.x and 4.x.x, some of the syntax is a bit weird
-#% usage: ./bootstrap.sh
+#% usage: ./dot-bootstrap.sh
 # 🕵️ ignore shellcheck warnings about source statements
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
@@ -10,9 +10,16 @@
 ZSH=${ZSH:-$HOME/.oh-my-zsh}
 ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
 
-# the script is now located in ./bin, this is a hack to get the project root
-dot_bootstrap_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-dot_boostrap_file="${dot_bootstrap_directory}/bin/bootstrap.sh"
+# Resolve the project root.
+# When sourced in zsh, BASH_SOURCE[0] is empty — use DOT_DIRECTORY if already
+# exported (set by zshrc/dotenv.sh before this file is sourced).
+# Fall back to BASH_SOURCE only when executed directly under bash.
+if [[ -n "${DOT_DIRECTORY}" ]]; then
+    dot_bootstrap_directory="${DOT_DIRECTORY}"
+else
+    dot_bootstrap_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
+dot_boostrap_file="${dot_bootstrap_directory}/bin/dot-bootstrap.sh"
 dot_bootstrap_deps=${DOT_DEPS:-0}
 
 icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
