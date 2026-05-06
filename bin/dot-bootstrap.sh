@@ -1195,18 +1195,33 @@ function bootstrapConfigNode () {
 # ⚫️ installs oh-my-zsh custom plugins via vendor/ohmyzsh nested submodules
 function bootstrapInstallOhMyZshCustomPlugins () {
     local vendor_omz="${dot_bootstrap_directory}/vendor/ohmyzsh"
+    local zsh_json="${dot_bootstrap_directory}/data/zsh.json"
     if [[ ! -d "${vendor_omz}" ]]; then
         echo "❌ vendor/ohmyzsh not found"
         return 1
     fi
     echo "🛠️ initializing oh-my-zsh custom plugin submodules..."
-    if git -C "${vendor_omz}" submodule update --init --recursive; then
-        echo "✅  oh-my-zsh custom plugins initialized"
-        return 0
-    else
-        echo "❌  oh-my-zsh custom plugin initialization failed"
-        return 1
-    fi
+    local enabled_repos disabled_repos
+    enabled_repos=$(jq -r '.plugins.custom[] | select(.enabled == true) | .repo' "${zsh_json}")
+    disabled_repos=$(jq -r '.plugins.custom[] | select(.enabled == false) | .repo' "${zsh_json}")
+    local failed=0
+    while IFS= read -r repo; do
+        [[ -z "${repo}" ]] && continue
+        local submodule_path="custom/plugins/${repo}"
+        echo "  ➕ init ${submodule_path}"
+        git -C "${vendor_omz}" submodule update --init "${submodule_path}" || { echo "❌ failed to init ${submodule_path}"; failed=1; }
+    done <<< "${enabled_repos}"
+    while IFS= read -r repo; do
+        [[ -z "${repo}" ]] && continue
+        local submodule_path="custom/plugins/${repo}"
+        if [[ -d "${vendor_omz}/${submodule_path}" ]]; then
+            echo "  ➖ deinit ${submodule_path} (disabled)"
+            git -C "${vendor_omz}" submodule deinit --force "${submodule_path}" || true
+        fi
+    done <<< "${disabled_repos}"
+    [[ "${failed}" -eq 0 ]] && echo "✅  oh-my-zsh custom plugins initialized" && return 0
+    echo "❌  oh-my-zsh custom plugin initialization failed"
+    return 1
 }
 
 # ⚫️ main bootstrap function

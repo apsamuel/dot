@@ -375,7 +375,7 @@ export plugins=(
         jq -r '.plugins.builtin[]' "$HOME"/.dot/data/zsh.json | xargs
     )
     $(
-        jq -r '.plugins.custom[].repo' "$HOME"/.dot/data/zsh.json | xargs
+        jq -r '.plugins.custom[] | select(.enabled == true) | .repo' "$HOME"/.dot/data/zsh.json | xargs
     )
 )
 

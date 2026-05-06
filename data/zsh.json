@@ -33,7 +33,6 @@
             "emoji",
             "emoji-clock",
             "dash",
-            "vi-mode",
             "ssh-agent",
             "kubectl",
             "git",
@@ -55,37 +54,44 @@
             {
                 "owner": "conda-incubator",
                 "repo": "conda-zsh-completion",
-                "exec": ""
+                "exec": "",
+                "enabled": true
             },
             {
                 "owner": "zsh-users",
                 "repo": "zsh-autosuggestions",
-                "exec": ""
+                "exec": "",
+                "enabled": true
             },
             {
                 "owner": "z-shell",
                 "repo": "F-Sy-H",
-                "exec": ""
+                "exec": "",
+                "enabled": true
             },
             {
                 "owner": "Aloxaf",
                 "repo": "fzf-tab",
-                "exec": ""
+                "exec": "",
+                "enabled": true
             },
             {
                 "owner": "denisidoro",
                 "repo": "navi",
-                "exec": ""
+                "exec": "",
+                "enabled": true
             },
             {
                 "owner": "jeffreytse",
                 "repo": "zsh-vi-mode",
-                "exec": ""
+                "exec": "",
+                "enabled": true
             },
             {
                 "owner": "tom-doerr",
                 "repo": "zsh_codex",
-                "exec": ""
+                "exec": "",
+                "enabled": true
             }
         ]
     }
