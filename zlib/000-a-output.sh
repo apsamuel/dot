@@ -258,12 +258,59 @@ function randomQuote() {
 }
 
 function termQuote() {
-	# can we do random selection of fonts?
-	randomQuote="$(
-		jq -r '. | map("\(.text) -- \(.author)")| .[] |select(length < 45)' "${DOT_DIRECTORY}/data/quotes.json" |shuf -n1
-	)"
-	# echo "${randomQuote}" | figlet -p -w "$(terminalWidth)" -d "${HOME}/.figlet" -f "$(termRandomFont "${@}")" -k -l| lolcat
-    echo "${randomQuote}" | figlet -p -w "$(( $(terminalWidth)  ))" -d "${HOME}/.figlet" -f "$(termRandomFont "${@}")" -k -l| lolcat
+    command -v figlet &>/dev/null || { randomQuote | lolcat; return 0; }
+
+    local term_width
+    term_width="$(terminalWidth)"
+
+    # Resolve vendored font directory
+    local figlet_font_dir="${DOT_DIRECTORY}/vendor/figlet-fonts"
+    local use_vendor_fonts=0
+    if [[ -d "${figlet_font_dir}" ]]; then
+        use_vendor_fonts=1
+    else
+        echo "dot: vendored figlet-fonts not found at ${figlet_font_dir}" >&2
+        echo "dot: run 'git submodule update --init vendor/figlet-fonts' to check it out" >&2
+    fi
+
+    # Scale max raw quote length to terminal width: wider terminal → longer quotes
+    local max_len=$(( term_width / 2 ))
+    (( max_len < 30 )) && max_len=30
+    (( max_len > 80 )) && max_len=80
+
+    local quote
+    quote="$(jq -r --argjson maxlen "${max_len}" \
+        '. | map("\(.text) -- \(.author)") | .[] | select(length < $maxlen)' \
+        "${DOT_DIRECTORY}/data/quotes.json" | shuf -n1)"
+
+    [[ -z "${quote}" ]] && return 0
+
+    # Try fonts from decorative → minimal until one fits within the terminal width
+    local preferred_font
+    preferred_font="$(termRandomFont)"
+    local fonts=("${preferred_font}" "small" "mini" "term" "banner" "standard")
+
+    local font rendered max_line_len
+    for font in "${fonts[@]}"; do
+        rendered=""
+        # Prefer vendored font dir; fall back to system fonts
+        if (( use_vendor_fonts )); then
+            rendered="$(echo "${quote}" | figlet -p -w "${term_width}" -d "${figlet_font_dir}" -f "${font}" -k 2>/dev/null)"
+        fi
+        if [[ -z "${rendered}" ]]; then
+            rendered="$(echo "${quote}" | figlet -p -w "${term_width}" -f "${font}" -k 2>/dev/null)"
+        fi
+        [[ -z "${rendered}" ]] && continue
+
+        max_line_len=$(echo "${rendered}" | awk '{ if (length > max) max = length } END { print max+0 }')
+        if (( max_line_len <= term_width )); then
+            echo "${rendered}" | lolcat
+            return 0
+        fi
+    done
+
+    # Absolute fallback: plain lolcat output
+    echo "${quote}" | lolcat
 }
 
 function toFiglet() {
