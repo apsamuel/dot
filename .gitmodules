@@ -16,3 +16,6 @@
 [submodule "vendor/ohmytmux"]
 	path = vendor/ohmytmux
 	url = git@github.com:apsamuel/.tmux.git
+[submodule "vendor/figlet-fonts"]
+	path = vendor/figlet-fonts
+	url = git@github.com:xero/figlet-fonts.git
