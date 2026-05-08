@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    echo "Usage: blender-render.sh [blend-file] [output-folder]"
+    echo "Render a .blend file with Blender in background mode."
+    exit 0
+fi
+
 blendFile="${1:-${HOME}/Pictures/Blends/logoB.blend}"
 
 blendFileName="$(basename "${blendFile%.blend}")"

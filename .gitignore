@@ -186,3 +186,4 @@ test/flycheck*/stdout
 
 /target
 .zombie
+bin/apple-vm-helper/.build

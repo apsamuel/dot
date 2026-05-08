@@ -28,6 +28,39 @@ Partially. The core ZSH modules work on any system with ZSH 5.8+. macOS-specific
 
 ---
 
+## VM Control (vmctl)
+
+> **What does `vmctl backends` show for Apple?**
+
+If Apple is unavailable (`no`), either the native helper (`applevm-helper`) or the vz CLI is not installed. Install one of:
+
+- **Native (recommended):** Build `bin/apple-vm-helper` (requires Xcode), copy binary to PATH.
+- **Fallback:** `brew install Code-Hex/tap/vz`.
+
+> **How do I force the native helper even if vz is installed?**
+
+```bash
+IVM_APPLE_PROVIDER=swift-native python3 ~/.dot/bin/ivm.py <command>
+```
+
+This will fail with an explicit error if the helper is not found, rather than silently falling back.
+
+> **How do I force vz fallback for testing?**
+
+```bash
+IVM_APPLE_PROVIDER=vz python3 ~/.dot/bin/ivm.py <command>
+```
+
+> **Why does `vmctl stop` not work with vz?**
+
+The vz CLI does not have a native stop subcommand. The fallback sends SIGTERM to the vz process and waits up to 10 seconds. If the VM does not respond, it will print an error. Use the native helper for graceful shutdown.
+
+> **Why are `suspend` and `resume` unavailable with vz?**
+
+The vz CLI does not expose pause/resume APIs. Only the native helper supports these operations. Check `vmctl suspend <vm> --backend apple` and watch for explicit unsupported messaging.
+
+---
+
 ## Usage
 
 > **How do I disable a module I don't want?**

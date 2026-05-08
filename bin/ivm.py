@@ -22,9 +22,11 @@ Usage examples:
 import argparse
 import json
 import os
+import signal
 import shutil
 import subprocess
 import sys
+import time
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -412,9 +414,11 @@ class PodmanBackend(VMBackend):
 
 
 class AppleBackend(VMBackend):
-    """Wraps the `vz` CLI (https://github.com/Code-Hex/vz) built on Apple's
-    Virtualization.framework.  VM bundles live in ~/.vmctl/apple/<name>/ with
-    an optional config.json for SSH access details.
+    """Apple Virtualization backend with native-helper + vz fallback.
+
+    Preferred provider is a native helper binary (`applevm-helper`) that speaks
+    JSON. Fallback provider is the `vz` CLI. VM bundles live in
+    ~/.vmctl/apple/<name>/ with an optional config.json for SSH access details.
 
     Minimal ~/.vmctl/apple/<name>/config.json:
       { "ssh_port": 2222, "ssh_user": "admin" }
@@ -422,19 +426,159 @@ class AppleBackend(VMBackend):
 
     name = "apple"
     CONFIG_DIR = os.path.expanduser("~/.vmctl/apple")
+    PROVIDER_ENV = "IVM_APPLE_PROVIDER"
+    HELPER_ENV = "IVM_APPLE_HELPER"
     _cli: Optional[str] = None
+    _helper: Optional[str] = None
+    _provider: Optional[str] = None
+    _provider_forced = False
+    _provider_reason: Optional[str] = None
+
+    def _resolve_cmd(self, cmd: str) -> Optional[str]:
+        if os.path.sep in cmd:
+            return cmd if os.path.isfile(cmd) and os.access(cmd, os.X_OK) else None
+        return shutil.which(cmd)
+
+    def _select_provider(self) -> Optional[str]:
+        if self._provider is not None:
+            return self._provider
+
+        forced = os.environ.get(self.PROVIDER_ENV, "").strip().lower()
+        self._provider_forced = bool(forced)
+
+        helper_cfg = os.environ.get(self.HELPER_ENV, "").strip() or "applevm-helper"
+        helper_path = self._resolve_cmd(helper_cfg)
+        vz_path = self._resolve_cmd("vz")
+
+        native_available = helper_path is not None
+        vz_available = vz_path is not None
+
+        if forced in ("native", "swift-native"):
+            if native_available:
+                self._provider = "swift-native"
+                self._helper = helper_path
+            else:
+                self._provider_reason = (
+                    f"forced {self.PROVIDER_ENV}=swift-native but helper "
+                    f"'{helper_cfg}' is not executable"
+                )
+            return self._provider
+
+        if forced == "vz":
+            if vz_available:
+                self._provider = "vz"
+                self._cli = vz_path
+            else:
+                self._provider_reason = (
+                    "forced IVM_APPLE_PROVIDER=vz but 'vz' is not installed"
+                )
+            return self._provider
+
+        if forced and forced not in ("native", "swift-native", "vz"):
+            self._provider_reason = (
+                f"invalid {self.PROVIDER_ENV}='{forced}' (expected swift-native|vz)"
+            )
+            return None
+
+        if native_available:
+            self._provider = "swift-native"
+            self._helper = helper_path
+            return self._provider
+
+        if vz_available:
+            self._provider = "vz"
+            self._cli = vz_path
+            return self._provider
+
+        self._provider_reason = "neither native helper nor vz is available"
+        return None
+
+    def _can_fallback_to_vz(self) -> bool:
+        return (not self._provider_forced) and self._resolve_cmd("vz") is not None
+
+    def _helper_call(
+        self, action: str, extra_args: Optional[list[str]] = None
+    ) -> tuple[bool, dict, str]:
+        if not self._helper:
+            return False, {}, "native helper is unavailable"
+        cmd = [self._helper, action] + (extra_args or [])
+        result = _run(cmd)
+        if result.returncode != 0:
+            detail = (
+                result.stderr.strip() or result.stdout.strip() or "helper call failed"
+            )
+            return False, {}, detail
+        out = (result.stdout or "").strip()
+        if not out:
+            return True, {}, ""
+        try:
+            payload = json.loads(out)
+            if isinstance(payload, dict):
+                return True, payload, ""
+            return False, {}, "helper returned non-object JSON"
+        except json.JSONDecodeError:
+            return False, {}, "helper returned invalid JSON"
+
+    def _bundle_for(self, vm: str) -> str:
+        return os.path.join(self.CONFIG_DIR, vm)
+
+    def _find_vz_pids(self, vm: str) -> list[int]:
+        bundle = self._bundle_for(vm)
+        listing = _run(["ps", "-axo", "pid=,command="])
+        if listing.returncode != 0:
+            return []
+        pids: list[int] = []
+        for line in listing.stdout.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split(None, 1)
+            if len(parts) != 2:
+                continue
+            pid_raw, cmd = parts
+            args = cmd.split()
+            if not args:
+                continue
+            if os.path.basename(args[0]) != "vz":
+                continue
+            if " run " not in f" {cmd} ":
+                continue
+            if bundle not in cmd:
+                continue
+            try:
+                pids.append(int(pid_raw))
+            except ValueError:
+                continue
+        return pids
+
+    def _vz_status_dict(self, vm: str) -> dict:
+        return {
+            "name": vm,
+            "status": "running" if self._find_vz_pids(vm) else "stopped",
+            "id": vm,
+            "config": self._cfg_path(vm) or "(none)",
+        }
 
     def is_available(self) -> bool:
-        if _which("vz"):
-            self._cli = "vz"
-            return True
-        return False
+        return self._select_provider() is not None
 
     def version(self) -> str:
-        if not self._cli:
-            return "not installed (install vz: https://github.com/Code-Hex/vz)"
-        r = _run([self._cli, "version"])
-        return r.stdout.strip() if r.returncode == 0 else "unknown"
+        provider = self._select_provider()
+        if provider == "swift-native":
+            ok, payload, err = self._helper_call("version")
+            if ok:
+                val = payload.get("version") or payload.get("detail") or "unknown"
+                return f"swift-native: {val}"
+            return f"swift-native: error ({err})"
+
+        if provider == "vz" and self._cli:
+            r = _run([self._cli, "version"])
+            if r.returncode == 0:
+                return f"vz: {r.stdout.strip()}"
+            return "vz: unknown"
+
+        hint = self._provider_reason or "native helper or vz is required"
+        return f"unavailable ({hint})"
 
     # -- internal --
 
@@ -464,49 +608,168 @@ class AppleBackend(VMBackend):
     # -- public interface --
 
     def list_vms(self) -> list[dict]:
-        return [
-            {
-                "name": n,
-                "status": "unknown",
-                "id": n,
-                "config": self._cfg_path(n) or "(none)",
-            }
-            for n in self._vm_names()
-        ]
+        provider = self._select_provider()
+        if provider == "swift-native":
+            ok, payload, err = self._helper_call("list", ["--root", self.CONFIG_DIR])
+            if ok:
+                items = payload.get("vms")
+                if isinstance(items, list):
+                    result = []
+                    for item in items:
+                        if isinstance(item, dict):
+                            result.append(
+                                {
+                                    "name": item.get("name", ""),
+                                    "status": item.get("status", "unknown"),
+                                    "id": item.get("id", item.get("name", "")),
+                                }
+                            )
+                    return result
+                return []
+            if self._can_fallback_to_vz():
+                print(
+                    f"[apple] native helper list failed: {err}; falling back to vz",
+                    file=sys.stderr,
+                )
+                self._provider = "vz"
+                self._cli = self._resolve_cmd("vz")
+            else:
+                print(f"[apple] native helper list failed: {err}", file=sys.stderr)
+
+        names = self._vm_names()
+        return [self._vz_status_dict(n) for n in names]
 
     def start(self, vm: str) -> None:
-        if not self._cli:
-            print("[apple] vz is not installed", file=sys.stderr)
-            return
         bundle = os.path.join(self.CONFIG_DIR, vm)
         if not os.path.isdir(bundle):
             print(f"[apple] bundle not found: {bundle}", file=sys.stderr)
+            return
+
+        provider = self._select_provider()
+        if provider == "swift-native":
+            ok, payload, err = self._helper_call(
+                "start", ["--bundle", bundle, "--name", vm]
+            )
+            if ok:
+                state = payload.get("state", "running")
+                print(f"[apple] started '{vm}' via swift-native ({state})")
+                return
+            if self._can_fallback_to_vz():
+                print(
+                    f"[apple] native helper start failed: {err}; falling back to vz",
+                    file=sys.stderr,
+                )
+                self._provider = "vz"
+                self._cli = self._resolve_cmd("vz")
+            else:
+                print(f"[apple] native helper start failed: {err}", file=sys.stderr)
+                return
+
+        if not self._cli:
+            print("[apple] vz is not installed", file=sys.stderr)
             return
         subprocess.Popen(
             [self._cli, "run", bundle],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        print(f"[apple] started '{vm}'")
+        print(f"[apple] started '{vm}' via vz")
 
     def stop(self, vm: str) -> None:
-        # vz has no stop subcommand; signal the spawned process.
-        print(
-            f"[apple] graceful stop not yet implemented — "
-            f"find the vz process for '{vm}' and send SIGTERM",
-            file=sys.stderr,
-        )
+        provider = self._select_provider()
+        if provider == "swift-native":
+            ok, payload, err = self._helper_call(
+                "stop", ["--name", vm, "--grace", "20"]
+            )
+            if ok:
+                state = payload.get("state", "stopped")
+                print(f"[apple] {vm}: {state}")
+                return
+            if self._can_fallback_to_vz():
+                print(
+                    f"[apple] native helper stop failed: {err}; falling back to vz",
+                    file=sys.stderr,
+                )
+                self._provider = "vz"
+                self._cli = self._resolve_cmd("vz")
+            else:
+                print(f"[apple] native helper stop failed: {err}", file=sys.stderr)
+                return
+
+        pids = self._find_vz_pids(vm)
+        if not pids:
+            print(f"[apple] {vm}: not running")
+            return
+        for pid in pids:
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except OSError as exc:
+                print(f"[apple] failed to stop pid {pid}: {exc}", file=sys.stderr)
+                return
+        deadline = time.time() + 10
+        while time.time() < deadline and self._find_vz_pids(vm):
+            time.sleep(0.2)
+        if self._find_vz_pids(vm):
+            print(f"[apple] '{vm}' is still running after SIGTERM", file=sys.stderr)
+            return
+        print(f"[apple] stopped '{vm}' via vz")
+
+    def suspend(self, vm: str) -> None:
+        provider = self._select_provider()
+        if provider == "swift-native":
+            ok, payload, err = self._helper_call("suspend", ["--name", vm])
+            if ok:
+                state = payload.get("state", "suspended")
+                print(f"[apple] {vm}: {state}")
+                return
+            print(f"[apple] suspend failed: {err}", file=sys.stderr)
+            return
+        print("[apple] suspend is not supported via vz fallback", file=sys.stderr)
+
+    def resume(self, vm: str) -> None:
+        provider = self._select_provider()
+        if provider == "swift-native":
+            ok, payload, err = self._helper_call("resume", ["--name", vm])
+            if ok:
+                state = payload.get("state", "running")
+                print(f"[apple] {vm}: {state}")
+                return
+            print(f"[apple] resume failed: {err}", file=sys.stderr)
+            return
+        print("[apple] resume is not supported via vz fallback", file=sys.stderr)
 
     def status(self, vm: str) -> None:
+        provider = self._select_provider()
+        if provider == "swift-native":
+            ok, payload, err = self._helper_call("status", ["--name", vm])
+            if ok:
+                state = payload.get("state", "unknown")
+                detail = payload.get("detail")
+                suffix = f" ({detail})" if detail else ""
+                print(f"[apple] {vm}: {state}{suffix}")
+                return
+            if self._can_fallback_to_vz():
+                print(
+                    f"[apple] native helper status failed: {err}; falling back to vz",
+                    file=sys.stderr,
+                )
+                self._provider = "vz"
+                self._cli = self._resolve_cmd("vz")
+            else:
+                print(f"[apple] native helper status failed: {err}", file=sys.stderr)
+                return
+
         cfg_path = self._cfg_path(vm)
         bundle = os.path.join(self.CONFIG_DIR, vm)
-        if os.path.isdir(bundle):
-            print(
-                f"[apple] {vm}: bundle at {bundle}"
-                + (f", config: {cfg_path}" if cfg_path else "")
-            )
-        else:
+        if not os.path.isdir(bundle):
             print(f"[apple] {vm}: not found in {self.CONFIG_DIR}", file=sys.stderr)
+            return
+        st = self._vz_status_dict(vm)
+        status = st.get("status", "unknown")
+        print(
+            f"[apple] {vm}: {status}, bundle at {bundle}"
+            + (f", config: {cfg_path}" if cfg_path else "")
+        )
 
     def shell(self, vm: str) -> None:
         cfg = self._load_cfg(vm)

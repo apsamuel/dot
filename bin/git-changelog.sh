@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  echo "Usage: git-changelog.sh [until] [since|--all] [--raw|--text|--md]"
+  echo "Generate a changelog grouped by conventional commit type."
+  echo "Defaults: until=HEAD, since=last tag/configured version, output=--text."
+  exit 0
+fi
+
 ##############################
 # CHANGELOG SCRIPT CONSTANTS #
 ##############################

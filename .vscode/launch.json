@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:.dot}/bin/apple-vm-helper",
+      "name": "Debug applevm-helper (bin/apple-vm-helper)",
+      "target": "applevm-helper",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug applevm-helper (bin/apple-vm-helper)"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:.dot}/bin/apple-vm-helper",
+      "name": "Release applevm-helper (bin/apple-vm-helper)",
+      "target": "applevm-helper",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release applevm-helper (bin/apple-vm-helper)"
+    }
+  ]
+}

@@ -2,12 +2,21 @@
 #% author: github.com/apsamuel
 #% description: wrapper for brew install, uninstall, and upgrade
 
+print_usage() {
+    echo "Usage: brew-bootstrap.sh <action>"
+    echo "Actions: install, uninstall, upgrade, info"
+}
+
 
 action="$1"
 
+if [[ "$action" == "-h" || "$action" == "--help" ]]; then
+    print_usage
+    exit 0
+fi
+
 if [[ -z "$action" ]]; then
-    echo "Usage: brew-bootstrap.sh <action>"
-    echo "Actions: install, uninstall, upgrade"
+    print_usage
     exit 1
 fi
 
@@ -45,8 +54,7 @@ elif [[ "$action" == "info" ]]; then
     echo "Cellar: $(brew --cellar)"
     echo "Repository: $(brew --repository)"
 else
-    echo "Usage: brew-bootstrap.sh <action>"
-    echo "Actions: install, uninstall, upgrade"
+    print_usage
     exit 1
 fi
 # curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh

@@ -17,6 +17,16 @@
 # - ignore shellcheck warnings about read/mapfile
 # shellcheck disable=SC2207
 
+
+# export ZSH="$HOME/.oh-my-zsh"
+export ZSH="$HOME/.dot/vendor/ohmyzsh"
+export ZSH_HISTFILE="$HOME/.zsh_history"
+export ZSH_HISTSIZE=1000000
+export ZSH_SAVEHIST=1000000
+export HISTFILE="$HOME/.zsh_history"
+export HISTSIZE=${ZSH_HISTSIZE}
+export SAVEHIST=${ZSH_SAVEHIST}
+
 # configure XDG variables
 # XDG Base Directory Specification
 # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest
@@ -49,13 +59,7 @@ if [ -z "$SHELL" ]; then
     exit 1
 fi
 
-export ZSH="$HOME/.oh-my-zsh"
-export ZSH_HISTFILE="$HOME/.zsh_history"
-export ZSH_HISTSIZE=1000000
-export ZSH_SAVEHIST=1000000
-export HISTFILE="$HOME/.zsh_history"
-export HISTSIZE=${ZSH_HISTSIZE}
-export SAVEHIST=${ZSH_SAVEHIST}
+
 
 # iCloud references
 ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
@@ -75,6 +79,8 @@ GPG_TTY=$(tty)
 export GPG_TTY
 export LANG=en_US.UTF-8
 export EDITOR=vim
+
+# TODO: this is a dependency on the pygmentize tool, which neds to be installed separately. We should either remove this dependency or add it to the bootstrap process
 export ZSH_COLORIZE_TOOL=pygmentize
 export PAGER='bat '
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
@@ -114,11 +120,11 @@ fi
     exit 1
 }
 
-# bootstrap functions
-. "${DOT_DIRECTORY}"/bin/dot-bootstrap.sh || {
-    echo "Error: unable to load bootstrap functions"
-    exit 1
-}
+# # bootstrap functions | this is a redundant sourcing
+# . "${DOT_DIRECTORY}"/bin/dot-bootstrap.sh || {
+#     echo "Error: unable to load bootstrap functions"
+#     exit 1
+# }
 
 # declare -a SSH_KEYS
 SSH_KEYS=()
@@ -161,9 +167,9 @@ if [[ $(getShellName)  =~ .*zsh ]]; then
     zstyle :omz:plugins:iterm2 shell-integration yes # enable zsh integration
     zstyle ':omz:update' frequency 7
     zstyle ':completion::complete:*' use-cache 1
-    zstyle ":conda_zsh_completion:*" use-groups true
-    zstyle ":conda_zsh_completion:*" show-unnamed true
-    zstyle ":conda_zsh_completion:*" sort-envs-by-time true
+    # zstyle ":conda_zsh_completion:*" use-groups true
+    # zstyle ":conda_zsh_completion:*" show-unnamed true
+    # zstyle ":conda_zsh_completion:*" sort-envs-by-time true
     zstyle :omz:plugins:ssh-agent identities "${SSH_KEYS[@]}"
     zstyle :omz:plugins:ssh-agent agent-forwarding on
     zstyle :omz:plugins:ssh-agent lifetime

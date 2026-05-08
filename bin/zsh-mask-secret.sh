@@ -440,6 +440,10 @@ ZSHEOF
 
 # ── main ───────────────────────────────────────────────────────────────────────
 main() {
+    if [[ "${1:-}" == "--help" ]]; then
+        usage
+    fi
+
     check_prereqs
 
     local opt OPTIND OPTARG

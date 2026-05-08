@@ -357,6 +357,7 @@ function bootstrapConfigPython () {
             return 1
         fi
     fi
+
     echo "✅  python venv ${venv_name} is ready"
 
     if [[ "${DOT_INSTALL_LANG_DEPS:-0}" -gt 0 ]]; then
@@ -464,11 +465,11 @@ function bootstrapConfigIterm () {
     defaults write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool true
 
     # copy Profiles to DynamicProfiles path
-    if [[ ! -d "${dynamic_profiles}" ]];
-    then
-        mkdir -p "${dynamic_profiles}"
-    fi
-    cp "${icloud_directory}/dot/terminal/iterm2.profiles.json" "${dynamic_profiles}/Profiles.json"
+    # if [[ ! -d "${dynamic_profiles}" ]];
+    # then
+    #     mkdir -p "${dynamic_profiles}"
+    # fi
+    # cp "${icloud_directory}/dot/terminal/iterm2.profiles.json" "${dynamic_profiles}/Profiles.json"
     echo "✅ iterm2 is configured, please start/restart iterm2!"
 
 }
@@ -537,7 +538,6 @@ function bootstrapConfigGh () {
     fi
 
     echo "✅  your gh installation is configured"
-
 }
 
 # ⚫️ configures zsh

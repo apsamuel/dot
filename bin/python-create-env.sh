@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # shellcheck shell=bash
 
 ENV_DIR="$HOME/.venv"
@@ -10,6 +12,12 @@ help() {
   echo "  -v    Specify the Python version to use (default: 3.8)"
   echo
 }
+
+if [[ "${1:-}" == "--help" ]]; then
+  help
+  exit 0
+fi
+
 while getopts "v:n:h" opt; do
   case ${opt} in
 

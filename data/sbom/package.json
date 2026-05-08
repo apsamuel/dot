@@ -1,0 +1,165 @@
+{
+  "name": "vscode-sbom",
+  "displayName": "SBOM Scanner",
+  "description": "Generate CycloneDX and SPDX SBOMs and scan for vulnerabilities via OSV.dev",
+  "version": "0.1.0",
+  "publisher": "apsamuel",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Linters"
+  ],
+  "keywords": [
+    "sbom",
+    "security",
+    "cyclonedx",
+    "spdx",
+    "vulnerabilities",
+    "osv",
+    "syft"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sbom.checkSyft",
+        "title": "Check syft Installation",
+        "category": "SBOM"
+      },
+      {
+        "command": "sbom.generate",
+        "title": "Generate SBOM for Workspace",
+        "category": "SBOM",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "sbom.generateForFile",
+        "title": "Generate SBOM for File/Folder",
+        "category": "SBOM"
+      },
+      {
+        "command": "sbom.scan",
+        "title": "Scan SBOM for Vulnerabilities",
+        "category": "SBOM",
+        "icon": "$(search)"
+      },
+      {
+        "command": "sbom.view",
+        "title": "View SBOM",
+        "category": "SBOM",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "sbom.refresh",
+        "title": "Refresh",
+        "category": "SBOM",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sbom",
+          "title": "SBOM",
+          "icon": "images/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "sbom": [
+        {
+          "id": "sbomExplorer",
+          "name": "Components",
+          "contextualTitle": "SBOM Explorer"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "sbom.generate",
+          "when": "view == sbomExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "sbom.refresh",
+          "when": "view == sbomExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "sbom.scan",
+          "when": "view == sbomExplorer && viewItem == sbomDocument",
+          "group": "inline"
+        },
+        {
+          "command": "sbom.view",
+          "when": "view == sbomExplorer && viewItem == sbomDocument",
+          "group": "inline"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "sbom.generateForFile",
+          "when": "explorerResourceIsFolder",
+          "group": "sbom@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "SBOM",
+      "properties": {
+        "sbom.syftPath": {
+          "type": "string",
+          "default": "syft",
+          "description": "Path to the syft binary. Defaults to 'syft' (must be on PATH)."
+        },
+        "sbom.outputFormat": {
+          "type": "string",
+          "enum": [
+            "cyclonedx-json",
+            "spdx-json",
+            "both"
+          ],
+          "default": "cyclonedx-json",
+          "description": "SBOM output format(s) to generate."
+        },
+        "sbom.outputDir": {
+          "type": "string",
+          "default": ".sbom",
+          "description": "Directory to write SBOM output files (relative to scan target, or absolute)."
+        },
+        "sbom.autoScanOnGenerate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically scan for vulnerabilities via OSV.dev after generating an SBOM."
+        },
+        "sbom.osvBatchSize": {
+          "type": "number",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Number of components per OSV.dev batch request."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^18.x",
+    "typescript": "^5.3.0"
+  }
+}

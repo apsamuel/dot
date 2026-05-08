@@ -30,12 +30,72 @@ pushd ~/.dot && source ./bin/dot-bootstrap.sh
 
 ## Environment Variables
 
-| Variable | Default | Effect |
-|---|---|---|
-| `DOT_DEPS` | `0` | Set to `1` to install Homebrew dependencies during bootstrap |
-| `ICLOUD` | `~/iCloud` | Override the iCloud Drive path |
-| `ZSH` | `~/.oh-my-zsh` | oh-my-zsh installation directory |
-| `ZSH_CUSTOM` | `~/.oh-my-zsh/custom` | oh-my-zsh custom directory for themes and plugins |
+| Variable     | Default               | Effect                                                       |
+| ------------ | --------------------- | ------------------------------------------------------------ |
+| `DOT_DEPS`   | `0`                   | Set to `1` to install Homebrew dependencies during bootstrap |
+| `ICLOUD`     | `~/iCloud`            | Override the iCloud Drive path                               |
+| `ZSH`        | `~/.oh-my-zsh`        | oh-my-zsh installation directory                             |
+| `ZSH_CUSTOM` | `~/.oh-my-zsh/custom` | oh-my-zsh custom directory for themes and plugins            |
+
+## Apple VM Backend (vmctl)
+
+The `vmctl` tool in `bin/ivm.py` supports controlling Apple Virtualization.framework VMs. Two provider backends are available:
+
+### Native Helper Provider (Recommended)
+
+The native helper (`applevm-helper`) is a compiled Swift binary that speaks to Virtualization.framework directly, providing full VM lifecycle control (start, stop, suspend, resume, status).
+
+**Setup:**
+
+1. Build the helper (requires Xcode command-line tools):
+
+   ```bash
+   cd ~/.dot/bin/apple-vm-helper && swift build -c release
+   # Binary will be at .build/release/applevm-helper
+   ```
+
+2. Link or copy to a location in `$PATH` or in `~/.dot/bin/`:
+
+   ```bash
+   cp .build/release/applevm-helper ~/.dot/bin/
+   ```
+
+3. Verify availability:
+   ```bash
+   python3 ~/.dot/bin/ivm.py backends
+   # Should show "apple    yes    swift-native: <version>"
+   ```
+
+**Environment Control:**
+
+| Variable                           | Effect                                     |
+| ---------------------------------- | ------------------------------------------ |
+| `IVM_APPLE_PROVIDER=swift-native`  | Force native provider; fail if unavailable |
+| `IVM_APPLE_PROVIDER=vz`            | Force vz fallback; fail if unavailable     |
+| `IVM_APPLE_HELPER=/path/to/helper` | Custom path to native helper binary        |
+
+### Fallback Provider (vz CLI)
+
+If the native helper is unavailable, vmctl automatically falls back to the `vz` CLI (https://github.com/Code-Hex/vz).
+
+**Install:**
+
+```bash
+brew install Code-Hex/tap/vz
+```
+
+**Limitations:**
+
+- `stop` uses process signals (SIGTERM) instead of graceful guest shutdown
+- `suspend` and `resume` are not supported
+- `status` reports only bundle presence, not actual VM state
+- `list` reports status as "unknown"
+
+Force use of vz fallback if needed during troubleshooting:
+
+```bash
+IVM_APPLE_PROVIDER=vz python3 ~/.dot/bin/ivm.py <command>
+```
 
 ## Manually Re-running Parts of Bootstrap
 

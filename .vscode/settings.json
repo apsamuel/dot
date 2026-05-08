@@ -1,9 +1,48 @@
 {
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": true,
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.watcherExclude": {
+    "**/target/**": true,
+    "**/node_modules/**": true,
+  },
+  // Exclude node_modules and vendor directories from search results, and also exclude any files with the .code-search extension.
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/vendor": true,
+    "**/*.code-search": true
+  },
   "rust-analyzer.linkedProjects": [
-    "${workspaceFolder}/turtle/Cargo.toml",
+    "${workspaceFolder}/turtle/Cargo.toml"
   ],
   "[rust]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
+  "[yaml]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "shellcheck.enable": true,
+  "shellcheck.customArgs": [
+    "-x"
+  ],
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.cwd": "${workspaceFolder}"
 }

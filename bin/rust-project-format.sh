@@ -1,6 +1,12 @@
 # shellcheck source=/dev/null
 # shellcheck shell=bash
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    echo "Usage: rust-project-format.sh"
+    echo "Find and format Rust source files recursively with rustfmt."
+    exit 0
+fi
+
 # Format Turtle source files
 find . -name "*.rs" -print -exec rustfmt {} \;
 
