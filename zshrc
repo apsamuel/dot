@@ -87,8 +87,9 @@ export EDITOR=vim
 
 # TODO: this is a dependency on the pygmentize tool, which neds to be installed separately. We should either remove this dependency or add it to the bootstrap process
 export ZSH_COLORIZE_TOOL=pygmentize
-export PAGER='bat '
-export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+# PAGER / MANPAGER — kept as plain less (set via zlib/000-a-config.sh).
+# Avoid bat here: bat-as-pager breaks automated processes that pipe through $PAGER.
+# Use `cless` for interactive syntax-highlighted paging.
 export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
 arch="$(arch)"
 export ARCH="${arch}"
