@@ -21,10 +21,8 @@
 # export ZSH="$HOME/.oh-my-zsh"
 export ZSH="$HOME/.dot/vendor/oh-my-zsh"
 export ZSH_CUSTOM="$ZSH/custom"
-# TODO: we need to figure out how to manage TPM plugins as submodules within the forked oh-my-tmux repo in vendor/oh-my-tmux.
-# For now, we can just install TPM plugins manually and ignore them as part of the dotfiles repo.
-# do we set TMUX_PLUGIN_MANAGER_PATH to point to the plugins directory within the vendor/oh-my-tmux repo? or do we just ignore that and let users manage their own TPM plugins?
-# export TMUX_PLUGIN_MANAGER_PATH="$HOME/.dot/vendor/oh-my-tmux/plugins"
+# TPM plugins are managed as git submodules inside vendor/oh-my-tmux/plugins/
+# See vendor/oh-my-tmux/.gitmodules for the full plugin inventory.
 export ZSH_HISTFILE="$HOME/.zsh_history"
 export ZSH_HISTSIZE=1000000
 export ZSH_SAVEHIST=1000000
@@ -90,7 +88,7 @@ export ZSH_COLORIZE_TOOL=pygmentize
 # PAGER / MANPAGER — kept as plain less (set via zlib/000-a-config.sh).
 # Avoid bat here: bat-as-pager breaks automated processes that pipe through $PAGER.
 # Use `cless` for interactive syntax-highlighted paging.
-export TMUX_PLUGIN_MANAGER_PATH="$HOME/.tmux/plugins"
+export TMUX_PLUGIN_MANAGER_PATH="${DOT_ROOT}/vendor/oh-my-tmux/plugins"
 arch="$(arch)"
 export ARCH="${arch}"
 
