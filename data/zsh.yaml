@@ -1,3 +1,7 @@
+# TODO: I want to embed zsh settings in a top-level key named .zsh
+# TODO: I want to embed tmux settings in a top-level key named .tmux
+# .zsh
+# .tmux
 theme: 'powerlevel10k/powerlevel10k' # the oh-my-zsh theme to use, can be overridden by custom themes
 path: # a list of paths to dynamically append to the $PATH variable, can be overridden by users below
 conditions: # a list of conditions to check before loading the shell, can be overridden by users below
