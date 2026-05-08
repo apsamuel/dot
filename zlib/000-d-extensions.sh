@@ -29,7 +29,7 @@ fi
 
 # load zsh autosuggestions
 # NOTE: zsh-autosuggestions is now loaded by oh-my-zsh via the custom plugin
-# submodule in vendor/ohmyzsh. The brew-installed version is no longer needed.
+# submodule in vendor/oh-my-zsh. The brew-installed version is no longer needed.
 # if [[ "${DOT_DISABLE_ZSH_AUTOSUGGESTIONS}" -lt 1 ]]; then
 #     test -e "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh && source "$HOMEBREW_PREFIX"/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 # fi

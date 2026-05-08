@@ -620,9 +620,9 @@ function bootstrapConfigPwsh () {
 
 # ⚫️ configures oh-my-zsh
 function bootstrapConfigOhMyZsh () {
-    local vendor_omz="${dot_bootstrap_directory}/vendor/ohmyzsh"
+    local vendor_omz="${dot_bootstrap_directory}/vendor/oh-my-zsh"
     if [[ ! -d "${vendor_omz}" ]]; then
-        echo "❌ vendor/ohmyzsh not found — run bootstrapInitSubmodules first"
+        echo "❌ vendor/oh-my-zsh not found — run bootstrapInitSubmodules first"
         return 1
     fi
     if ensureSymlink "${vendor_omz}" "${ZSH}"; then
@@ -951,9 +951,9 @@ function bootstrapInstallThemes () {
 
 # ⚫️ installs oh-my-zsh
 function bootstrapInstallOhMyZsh () {
-    local vendor_omz="${dot_bootstrap_directory}/vendor/ohmyzsh"
+    local vendor_omz="${dot_bootstrap_directory}/vendor/oh-my-zsh"
     if [[ ! -d "${vendor_omz}" ]]; then
-        echo "❌ vendor/ohmyzsh not found — run bootstrapInitSubmodules first"
+        echo "❌ vendor/oh-my-zsh not found — run bootstrapInitSubmodules first"
         return 1
     fi
     if ensureSymlink "${vendor_omz}" "${ZSH}"; then
@@ -967,11 +967,11 @@ function bootstrapInstallOhMyZsh () {
 
 # ⚫️ installs oh-my-tmux
 function bootstrapInstallOhMyTmux () {
-    local vendor_tmux="${dot_bootstrap_directory}/vendor/ohmytmux"
+    local vendor_tmux="${dot_bootstrap_directory}/vendor/oh-my-tmux"
     local target="${HOME}/.tmux"
 
     if [[ ! -d "${vendor_tmux}" ]]; then
-        echo "❌ vendor/ohmytmux not found — run bootstrapInitSubmodules first"
+        echo "❌ vendor/oh-my-tmux not found — run bootstrapInitSubmodules first"
         return 1
     fi
 
@@ -992,22 +992,16 @@ function bootstrapInstallOhMyTmux () {
 
 # ⚫️ installs powerlevel10k
 function bootstrapInstallPowershell10K () {
-    local vendor_p10k="${dot_bootstrap_directory}/vendor/powerlevel10k"
-    local target="${ZSH_CUSTOM}/themes/powerlevel10k"
+    local vendor_omz="${dot_bootstrap_directory}/vendor/oh-my-zsh"
+    local p10k_path="${vendor_omz}/custom/themes/powerlevel10k"
 
-    if [[ ! -d "${vendor_p10k}" ]]; then
-        echo "❌ vendor/powerlevel10k not found — run bootstrapInitSubmodules first"
+    if [[ ! -d "${p10k_path}" ]]; then
+        echo "❌ powerlevel10k not found in vendor/oh-my-zsh/custom/themes — run bootstrapInitSubmodules first"
         return 1
     fi
 
-    mkdir -p "${ZSH_CUSTOM}/themes"
-    if ensureSymlink "${vendor_p10k}" "${target}"; then
-        echo "✅  powerlevel10k is installed (via vendor symlink)"
-        return 0
-    else
-        echo "❌  powerlevel10k installation failed"
-        return 1
-    fi
+    echo "✅  powerlevel10k is installed (bundled in vendor/oh-my-zsh custom themes)"
+    return 0
 }
 
 # ⚫️ checks vim installation

@@ -4,17 +4,11 @@
 [submodule "vendor/bash-commons"]
 	path = vendor/bash-commons
 	url = git@github.com:gruntwork-io/bash-commons.git
-[submodule "vendor/tmux"]
-	path = vendor/tmux
-	url = git@github.com:apsamuel/.tmux.git
-[submodule "vendor/ohmyzsh"]
-	path = vendor/ohmyzsh
+[submodule "vendor/oh-my-zsh"]
+	path = vendor/oh-my-zsh
 	url = git@github.com:apsamuel/ohmyzsh.git
-[submodule "vendor/powerlevel10k"]
-	path = vendor/powerlevel10k
-	url = git@github.com:romkatv/powerlevel10k.git
-[submodule "vendor/ohmytmux"]
-	path = vendor/ohmytmux
+[submodule "vendor/oh-my-tmux"]
+	path = vendor/oh-my-tmux
 	url = git@github.com:apsamuel/.tmux.git
 [submodule "vendor/figlet-fonts"]
 	path = vendor/figlet-fonts

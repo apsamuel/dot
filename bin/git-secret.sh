@@ -805,7 +805,7 @@ scrub_submodules() {
 
     local submodule_paths=()
     while IFS= read -r line; do
-        # git submodule foreach outputs: Entering 'vendor/ohmyzsh'
+        # git submodule foreach outputs: Entering 'vendor/oh-my-zsh'
         local sm_path
         sm_path="$(echo "${line}" | sed "s/Entering '//;s/'//")"
         submodule_paths+=("${repo_root}/${sm_path}")

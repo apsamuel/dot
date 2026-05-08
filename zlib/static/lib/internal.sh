@@ -34,7 +34,7 @@ _install_zsh_plugins() {
     if [ -d "${ZSH_CUSTOM}/plugins/$(basename "${plugin}")" ]; then
       continue
     fi
-    echo "Installing ohmyzsh ${plugin}"
+    echo "Installing oh-my-zsh plugin: ${plugin}"
     gh repo clone "${plugin}" "${ZSH_CUSTOM}/plugins/$(basename "${plugin}")"
   done
 }
@@ -42,7 +42,7 @@ _install_zsh_plugins() {
 _update_custom_plugins() {
   for plugin in $(yq '.plugins.custom | map(.owner + "/" + .repo) | .[]' "${DOT_DIRECTORY}"/data/zsh.yaml); do
     if [ -d "${ZSH_CUSTOM}/plugins/$(basename "${plugin}")" ]; then
-      echo "Updating ohmyzsh ${plugin}"
+      echo "Updating oh-my-zsh plugin: ${plugin}"
       _update_zsh_plugins "${plugin}"
       continue
     fi

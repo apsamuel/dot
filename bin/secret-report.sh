@@ -25,7 +25,7 @@
 #%   bin/secret-report.sh -f /tmp/secrets.json -r /path/to/repo -m
 #%   bin/secret-report.sh -f /tmp/secrets.json -u -o json | jq '.findings'
 #%   bin/secret-report.sh -f /tmp/secrets.json -n 100          # last 100 commits only
-#%   bin/secret-report.sh -f /tmp/secrets.json -r vendor/ohmyzsh -d
+#%   bin/secret-report.sh -f /tmp/secrets.json -r vendor/oh-my-zsh -d
 
 set -uo pipefail
 

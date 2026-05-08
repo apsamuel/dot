@@ -19,7 +19,7 @@
 
 
 # export ZSH="$HOME/.oh-my-zsh"
-export ZSH="$HOME/.dot/vendor/ohmyzsh"
+export ZSH="$HOME/.dot/vendor/oh-my-zsh"
 export ZSH_HISTFILE="$HOME/.zsh_history"
 export ZSH_HISTSIZE=1000000
 export ZSH_SAVEHIST=1000000
