@@ -419,12 +419,10 @@ function bootstrapCheckCloud () {
 
 # ⚫️ checks Oh My Tmux installation
 function bootstrapCheckOhMyTmux () {
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    local icloud_link="${HOME}/iCloud"
     local tmux_local_config="${HOME}/.tmux.conf.local"
-    local tmux_icloud_config="${icloud_directory}/dot/shell/tmux/conf"
+    local tmux_vendor_config="${HOME}/.tmux/.tmux.conf.local"
 
-    ln -s -f "${tmux_icloud_config}" "${tmux_local_config}"
+    ln -s -f "${tmux_vendor_config}" "${tmux_local_config}"
     # start a new tmux session, and install plugins
     if tmux has-session -t bootstrap; then
         tmux kill-session -t bootstrap
