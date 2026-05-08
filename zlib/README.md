@@ -47,8 +47,8 @@ export DOT_DISABLE_EXTENSIONS=1 # skip iTerm2, thefuck, autosuggestions
 | `000-a-output.sh` | Terminal output helpers: `printLevel`, `printPretty`, `termLogo`, `termImage`, `termQuote`, `randomQuote`, `toFiglet`, `showcolors256` |
 | `000-a-plugins.sh` | Defines environment variables required for oh-my-zsh plugin loading |
 | `000-a-secrets.sh` | Secrets management: `loadSecrets`, `maskSecrets`, `__mask_secrets__`, `reloadOptions` |
-| `000-a-tools.sh` | General utilities: `splitString`, `joinList`, and string manipulation helpers |
-| `000-a-vendor.sh` | Vendor integration stub — reserved for sourcing third-party libraries from `vendor/`; currently empty |
+| `000-a-tools.sh` | General utilities: `splitString`, `joinList`, `GetPreview` (fzf file picker with `bat` preview), and string manipulation helpers |
+| `000-a-vendor.sh` | Vendor integration — sources third-party libraries from `vendor/` (fzf-git, figlet-fonts, etc.) |
 | `000-aa-paths.sh` | PATH configuration and path manipulation helpers |
 | `000-b-aliases.sh` | Shell aliases: `cat='bat'`, `ls='ls --color=always'`, `less='bat --paging=always'` |
 | `000-b-dot.sh` | The `dot.shell` command; iCloud path exports; TMUX session detection |
@@ -57,17 +57,16 @@ export DOT_DISABLE_EXTENSIONS=1 # skip iTerm2, thefuck, autosuggestions
 | `000-d-extensions.sh` | Shell extensions: iTerm2 shell integration, `thefuck`, `zsh-autosuggestions`; guarded by `DOT_DISABLE_EXTENSIONS` |
 | `000-d-notes.sh` | Notes utilities (placeholder for future expansion) |
 | `000-d-podman.sh` | Sets `PODMAN_COMPOSE_WARNING_LOGS=False` |
-| `000-tools.sh` | Additional tool helpers: `GetPreview` — fzf file picker with `bat` syntax-highlighted preview |
 
 ### Tier 001 — Language & Environment
 
 | File | Description |
 |---|---|
 | `001-a-p10k.sh` | Sources `~/.p10k.zsh` to activate the powerlevel10k prompt |
+| `001-a-tmux.sh` | Tmux helpers: `tmuxCreateSessionFromCwd`, `tmuxHasSession`, `tmuxGetSafeSessionName`, `tmuxKillUnattached` |
 | `001-d-node.sh` | Node.js environment: detects architecture, sets `N_PREFIX`, adds Homebrew node to PATH; guarded by `DOT_DISABLE_NODE` |
 | `001-d-python.sh` | Python environment: creates and activates an architecture-specific `uv` venv at `~/.venv/<version>-<arch>-base` |
 | `001-d-rust.sh` | Rust environment: adds `rustup` Homebrew prefix to PATH |
-| `001-tmux.sh` | Tmux helpers: `tmuxCreateSessionFromCwd`, `tmuxHasSession`, `tmuxGetSafeSessionName`, `tmuxKillUnattached` |
 | `001-z-java.sh` | Java environment: initialises `jenv`, sets `JAVA_HOME`; guarded by `jenv` availability |
 
 ### Tier 002 — Domain-specific
@@ -90,14 +89,33 @@ export DOT_DISABLE_EXTENSIONS=1 # skip iTerm2, thefuck, autosuggestions
 
 ## `static/` — Static Helpers
 
-Files in `zlib/static/` are sourced directly by `dot-bootstrap.sh` and `zshrc` before the numbered modules, providing infrastructure the modules depend on.
+Files in `zlib/static/` are sourced directly by `zshrc` before the numbered modules, providing foundational infrastructure the rest of the framework depends on.
 
 | File | Description |
 |---|---|
 | `static/autoload.sh` | Autoloads ZSH built-in functions |
-| `static/cloud.sh` | iCloud path setup |
+| `static/cloud.sh` | iCloud path setup — exports `ICLOUD` pointing to `~/Library/Mobile Documents/com~apple~CloudDocs` |
 | `static/config.sh` | Sets `$DOT_CONFIGURATION` to `$ICLOUD/dot/data.json` (the live runtime config path) |
-| `static/dotbase.sh` | Foundational `DOT_*` variable exports |
+| `static/dotbase.sh` | Bootstrap entry point for static sources — chains `limits.sh` and `autoload.sh` |
+| `static/dotenv.sh` | Core `DOT_*` variable exports: `DOT_ROOT`, `DOT_DIRECTORY`, `DOT_LIBRARY`, `DOT_BIN`, `DOT_BOOTSTRAP`, `DOT_SHELL`, `DOT_DEBUG`, `DOT_BOOTED`, `DOT_ARCHITECTURE` |
+| `static/foundation.sh` | Foundational shell functions loaded early: `getShellName`, `getSecureString`, `getProcessorCores`, `getProcessorBrand`, `loadZshOptions` |
+| `static/limits.sh` | Reads and exports current `ulimit` values as `DOT_*_LIMIT` variables |
+| `static/set.sh` | Shell option configuration (placeholder for `setopt`/`unsetopt` directives) |
+| `static/ssh.sh` | Discovers SSH private keys from `~/.ssh/` and exports them as the `SSH_KEYS` array |
+
+### `static/lib/` — Internal Bootstrap Helpers
+
+Sourced exclusively by `dot-bootstrap.sh` and other low-level scripts. Not intended for direct use.
+
+| File | Description |
+|---|---|
+| `static/lib/internal.sh` | Core bootstrap utilities shared across `bin/` scripts |
+| `static/lib/universal.sh` | OS-agnostic helper functions |
+| `static/lib/mac.sh` | macOS-specific helper functions |
+| `static/lib/linux.sh` | Linux-specific helper functions |
+| `static/lib/windows.sh` | Windows/WSL stub helpers |
+| `static/lib/plumbing.sh` | Low-level plumbing utilities (process, path, string) |
+| `static/lib/std.sh` | Standard library shims and compatibility helpers |
 | `static/dotenv.sh` | `.env` file loading support |
 | `static/foundation.sh` | Pre-module environment validation |
 | `static/limits.sh` | Sets shell resource limits |

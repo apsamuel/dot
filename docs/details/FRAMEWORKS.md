@@ -18,13 +18,13 @@ The plugin list is configured in `config/data.json` under `plugins.builtin` and 
 
 ## Tmux — [oh-my-tmux](https://github.com/gpakosz/.tmux)
 
-A self-contained tmux configuration framework vendored in `vendor/ohmytmux/` (canonical) and `vendor/tmux/` (legacy path retained for backwards compatibility). It provides:
+A self-contained tmux configuration framework vendored in `vendor/oh-my-tmux/`. It provides:
 
 - A feature-rich status bar
 - Mouse support
 - Sane key bindings
 
-`dot` adds tmux helpers in `zlib/001-tmux.sh` (session management, safe session naming, creation from cwd).
+`dot` adds tmux helpers in `zlib/001-a-tmux.sh` (session management, safe session naming, creation from cwd).
 
 ---
 
@@ -32,7 +32,7 @@ A self-contained tmux configuration framework vendored in `vendor/ohmytmux/` (ca
 
 The ZSH prompt theme. `dot` ships a pre-baked `p10k.zsh` configuration at `config/shell/p10k.zsh`, symlinked to `~/.p10k.zsh` by bootstrap. This means you get a sensible, fast prompt without running the interactive wizard.
 
-Powerlevel10k is vendored directly in `vendor/powerlevel10k/` so it is available immediately after bootstrap without requiring oh-my-zsh's plugin installation step.
+Powerlevel10k is installed as an oh-my-zsh custom theme at `vendor/oh-my-zsh/custom/themes/powerlevel10k/`, activated by `zlib/001-a-p10k.sh`.
 
 Requires a [Nerd Font](https://www.nerdfonts.com) in your terminal emulator to render icons correctly.
 

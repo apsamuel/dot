@@ -2,7 +2,7 @@
 
 ![dot](./data/images/black-sun.jpg)
 
-> Because a shell deserves better than dad jokes, plain defaults and endless plugins.
+> A shell deserves a better fate than dad jokes.
 
 ## About
 
@@ -24,29 +24,29 @@
 
 ## Features
 
-| Feature                  | Description                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------- |
-| 🔋 Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions` wired up out of the box |
-| 🎨 Sleek Prompt          | `powerlevel10k` with pre-baked configuration                                           |
-| ⚙️ Modular Library     | `zlib/` modules loaded in numbered order; disable any with an env var                  |
-| 🔐 Secrets Management    | Load and mask secrets from JSON without leaking them in history                          |
-| 🐢 Turtle Shell          | Experimental Rust-powered shell interpreter built alongside this framework               |
-| 🛠 Language Environments | Python (`uv`), Node.js, Rust (`rustup`), Java (`jenv`) all managed from one place  |
-| 🌐 Vendor-first          | Key dependencies are vendored so installs don't break when upstreams move                |
+| Feature                  | Description                                                                       |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| 🔋 Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions` wired up out of the box    |
+| 🎨 Sleek Prompt          | `powerlevel10k` with pre-baked configuration                                      |
+| ⚙️ Modular Library       | `zlib/` modules loaded in numbered order; disable any with an env var             |
+| 🔐 Secrets Management    | Load and mask secrets from JSON without leaking them in history                   |
+| 🐢 Turtle Shell          | Experimental Rust-powered shell interpreter built alongside this framework        |
+| 🛠 Language Environments | Python (`uv`), Node.js, Rust (`rustup`), Java (`jenv`) all managed from one place |
+| 🌐 Vendor-first          | Key dependencies are vendored so installs don't break when upstreams move         |
 
 ---
 
 ## Requirements
 
-| Requirement  | Version                                 |
-| ------------ | --------------------------------------- |
-| macOS        | 12 Monterey or later (primary platform) |
-| ZSH          | 5.8 or higher                           |
-| Git          | 2.x                                     |
-| Homebrew     | Latest                                  |
-| Rust / Cargo | For building [Turtle](./turtle/README.md) |
+| Requirement  | Version                                  |
+| ------------ | ---------------------------------------- |
+| macOS        | 12 Monterey or later (primary platform)  |
+| ZSH          | 5.8 or higher                            |
+| Git          | 2.x                                      |
+| Homebrew     | Latest                                   |
+| Rust / Cargo | For building[Turtle](./turtle/README.md) |
 
-Linux is *partially* supported. **Windows is NOT**.
+Linux is _partially_ supported. **Windows is NOT**.
 
 ---
 
@@ -95,17 +95,17 @@ Full directory details are covered in [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md
 
 `dot` is controlled through environment variables. Set any of these before or inside `~/.zshrc` to change behaviour:
 
-| Variable                            | Default | Effect                                  |
-| ----------------------------------- | ------- | --------------------------------------- |
-| `DOT_DEBUG`                       | `0`   | Print each module as it loads           |
-| `DOT_DISABLE_BREW`                | `0`   | Skip Homebrew setup                     |
-| `DOT_DISABLE_EXTENSIONS`          | `0`   | Skip iTerm2 / thefuck / autosuggestions |
-| `DOT_DISABLE_GIT`                 | `0`   | Skip git module                         |
-| `DOT_DISABLE_NODE`                | `0`   | Skip Node.js environment setup          |
-| `DOT_DISABLE_MAC`                 | `0`   | Skip macOS-specific helpers             |
-| `DOT_DISABLE_THEFUCK`             | `0`   | Skip thefuck command corrector          |
-| `DOT_DISABLE_ZSH_AUTOSUGGESTIONS` | `0`   | Skip zsh-autosuggestions                |
-| `DOT_ANACONDA_ENABLED`            | `0`   | Enable Anaconda instead of uv venvs     |
+| Variable                          | Default | Effect                                  |
+| --------------------------------- | ------- | --------------------------------------- |
+| `DOT_DEBUG`                       | `0`     | Print each module as it loads           |
+| `DOT_DISABLE_BREW`                | `0`     | Skip Homebrew setup                     |
+| `DOT_DISABLE_EXTENSIONS`          | `0`     | Skip iTerm2 / thefuck / autosuggestions |
+| `DOT_DISABLE_GIT`                 | `0`     | Skip git module                         |
+| `DOT_DISABLE_NODE`                | `0`     | Skip Node.js environment setup          |
+| `DOT_DISABLE_MAC`                 | `0`     | Skip macOS-specific helpers             |
+| `DOT_DISABLE_THEFUCK`             | `0`     | Skip thefuck command corrector          |
+| `DOT_DISABLE_ZSH_AUTOSUGGESTIONS` | `0`     | Skip zsh-autosuggestions                |
+| `DOT_ANACONDA_ENABLED`            | `0`     | Enable Anaconda instead of uv venvs     |
 
 Per-module configuration lives in the module file itself (e.g. `zlib/000-c-git.sh` for git defaults).
 
@@ -133,17 +133,21 @@ Commands:
 
 `dot` vendors or integrates the following open-source projects:
 
-| Utility                                                              | Purpose                                      | Location                 |
-| -------------------------------------------------------------------- | -------------------------------------------- | ------------------------ |
-| [oh-my-zsh](https://ohmyz.sh)                                           | ZSH plugin and theme framework               | `vendor/ohmyzsh/`      |
-| [oh-my-tmux](https://github.com/gpakosz/.tmux)                          | Tmux configuration framework                 | `vendor/ohmytmux/`, `vendor/tmux/` |
-| [fzf](https://github.com/junegunn/fzf)                                  | Fuzzy finder for the terminal                | installed via Homebrew   |
-| [fzf-git](https://github.com/junegunn/fzf-git.sh)                       | fzf bindings for git operations              | `vendor/fzf-git/`      |
-| [bash-commons](https://github.com/gruntwork-io/bash-commons)            | Reusable bash utilities                      | `vendor/bash-commons/` |
-| [powerlevel10k](https://github.com/romkatv/powerlevel10k)               | ZSH prompt theme                             | `vendor/powerlevel10k/` |
-| [bat](https://github.com/sharkdp/bat)                                   | `cat` replacement with syntax highlighting | installed via Homebrew   |
-| [thefuck](https://github.com/nvbn/thefuck)                              | Autocorrects mistyped commands               | installed via Homebrew   |
-| [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-style command suggestions               | installed via oh-my-zsh  |
+| Utility                                                                 | Purpose                                    | Location                           |
+| ----------------------------------------------------------------------- | ------------------------------------------ | ---------------------------------- |
+| [oh-my-zsh](https://ohmyz.sh)                                           | ZSH plugin and theme framework             | `vendor/oh-my-zsh/`                |
+| [oh-my-tmux](https://github.com/gpakosz/.tmux)                          | Tmux configuration framework               | `vendor/oh-my-tmux/`               |
+| [fzf](https://github.com/junegunn/fzf)                                  | Fuzzy finder for the terminal              | installed via Homebrew             |
+| [fzf-git](https://github.com/junegunn/fzf-git.sh)                       | fzf bindings for git operations            | `vendor/fzf-git/`                  |
+| [bash-commons](https://github.com/gruntwork-io/bash-commons)            | Reusable bash utilities                    | `vendor/bash-commons/`             |
+| [figlet-fonts](https://github.com/xero/figlet-fonts)                    | Figlet font collection for `toFiglet`      | `vendor/figlet-fonts/`             |
+| [powerlevel10k](https://github.com/romkatv/powerlevel10k)               | ZSH prompt theme                           | `vendor/oh-my-zsh/custom/themes/powerlevel10k/` |
+| [bat](https://github.com/sharkdp/bat)                                   | `cat` replacement with syntax highlighting | installed via Homebrew             |
+| [thefuck](https://github.com/nvbn/thefuck)                              | Autocorrects mistyped commands             | installed via Homebrew             |
+| [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-style command suggestions             | `vendor/oh-my-zsh/custom/plugins/zsh-autosuggestions/` |
+| [fzf-tab](https://github.com/Aloxaf/fzf-tab)                            | Replace ZSH completion menu with fzf       | `vendor/oh-my-zsh/custom/plugins/fzf-tab/` |
+| [zsh-vi-mode](https://github.com/jeffreytse/zsh-vi-mode)                | Enhanced vi mode for ZSH                   | `vendor/oh-my-zsh/custom/plugins/zsh-vi-mode/` |
+| [F-Sy-H](https://github.com/z-shell/F-Sy-H)                             | Feature-rich ZSH syntax highlighting       | `vendor/oh-my-zsh/custom/plugins/F-Sy-H/` |
 
 ---
 
@@ -161,11 +165,11 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on how to add modules, r
 
 ## Further Reading
 
-| Document                                   | Description                    |
-| ------------------------------------------ | ------------------------------ |
-| [FAQ.md](./docs/FAQ.md)                       | Common questions answered      |
-| [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md)   | Full bootstrap walkthrough     |
-| [FRAMEWORKS.md](./docs/details/FRAMEWORKS.md) | Frameworks used and why        |
-| [SECRETS.md](./docs/details/SECRETS.md)       | How secrets management works   |
-| [zlib/README.md](./zlib/README.md)            | ZSH library module reference   |
+| Document                                      | Description                  |
+| --------------------------------------------- | ---------------------------- |
+| [FAQ.md](./docs/FAQ.md)                       | Common questions answered    |
+| [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md)   | Full bootstrap walkthrough   |
+| [FRAMEWORKS.md](./docs/details/FRAMEWORKS.md) | Frameworks used and why      |
+| [SECRETS.md](./docs/details/SECRETS.md)       | How secrets management works |
+| [zlib/README.md](./zlib/README.md)            | ZSH library module reference |
 | [bin/README.md](./bin/README.md)              | Scripts available on `$PATH` |

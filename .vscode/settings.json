@@ -44,5 +44,14 @@
     "-x"
   ],
   "terminal.integrated.defaultProfile.osx": "zsh",
-  "terminal.integrated.cwd": "${workspaceFolder}"
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  // Automation terminal: used by Copilot, tasks, and extensions.
+  // Bypasses the full interactive .zshrc (no oh-my-zsh, p10k, plugins, banners).
+  "terminal.integrated.automationProfile.osx": {
+    "path": "/bin/zsh",
+    "env": {
+      "ZDOTDIR": "/Users/Aaron.Samuel/.dot/config/automation"
+    }
+  },
+  "python.analysis.typeCheckingMode": "standard"
 }
