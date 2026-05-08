@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 #% author: github.com/apsamuel
 #% description: manage root-level and vendored (nested) git submodules
-#% usage: ./submodule-sync.sh [OPTIONS] <command>
+#% usage: ./submodule-sync.sh [OPTIONS] <command> [submodule]
 #
 # Commands:
 #   status      Show checkout state for all submodules (root + nested)
 #   init        Initialize + update all submodules recursively
 #   update      Pull latest for all submodules recursively
 #   list        Print all registered submodule paths and remote URLs
+#
+# Arguments:
+#   submodule   Optional submodule path to target (e.g. vendor/oh-my-zsh).
+#               When omitted, all submodules are processed.
 #
 # Options:
 #   -n          Dry-run — print commands instead of running them
@@ -65,6 +69,10 @@ usage() {
     echo "  update   Pull latest for all submodules recursively"
     echo "  list     Print all registered submodule paths and remote URLs"
     echo
+    echo "Arguments:"
+    echo "  submodule  Optional submodule path (e.g. vendor/oh-my-zsh)."
+    echo "             When omitted, all submodules are processed."
+    echo
     echo "Options:"
     echo "  -n       Dry-run — print commands instead of running them"
     echo "  -v       Verbose — pass --verbose to git submodule calls"
@@ -79,7 +87,7 @@ usage() {
 #   +  checked out but at a different commit than recorded in the index
 
 cmd_status() {
-    _log "submodule status (root + nested) in ${REPO_ROOT}"
+    _log "submodule status (root + nested) in ${REPO_ROOT}${TARGET:+ [filter: ${TARGET}]}"
     echo
     printf '%-6s  %-55s  %s\n' "STATE" "PATH" "REF / COMMIT"
     printf '%-6s  %-55s  %s\n' "-----" "----" "------------"
@@ -87,6 +95,9 @@ cmd_status() {
     git -C "${REPO_ROOT}" submodule foreach --quiet --recursive \
         'echo "${displaypath} $(git -C "${toplevel}/${displaypath}" rev-parse --short HEAD 2>/dev/null || echo "(uninitialized)")"' \
         2>/dev/null | while read -r path ref; do
+            if [[ -n "${TARGET}" && "${path}" != "${TARGET}" && "${path}" != "${TARGET}"/* ]]; then
+                continue
+            fi
             printf '%-6s  %-55s  %s\n' "✔" "${path}" "${ref}"
         done
 
@@ -96,13 +107,14 @@ cmd_status() {
     git -C "${REPO_ROOT}" submodule status --recursive 2>/dev/null \
         | grep '^-' \
         | awk '{print "  -  " $2}' \
+        | { [[ -n "${TARGET}" ]] && grep -F "${TARGET}" || cat; } \
         || _info "none"
 }
 
 # ── subcommand: list ──────────────────────────────────────────────────────────
 
 cmd_list() {
-    _log "registered submodules in ${REPO_ROOT}"
+    _log "registered submodules in ${REPO_ROOT}${TARGET:+ [filter: ${TARGET}]}"
     echo
     printf '%-55s  %s\n' "PATH" "URL"
     printf '%-55s  %s\n' "----" "---"
@@ -112,6 +124,10 @@ cmd_list() {
         --get-regexp 'submodule\..*\.path' \
         | awk '{print $2}' \
         | while read -r path; do
+            # skip if a target is specified and this path doesn't match
+            if [[ -n "${TARGET}" && "${path}" != "${TARGET}" && "${path}" != "${TARGET}"/* && "${TARGET}" != "${path}"/* ]]; then
+                continue
+            fi
             url="$(git -C "${REPO_ROOT}" config --file "${REPO_ROOT}/.gitmodules" \
                 --get "submodule.${path}.url" 2>/dev/null || echo "(no url)")"
             # Strip the leading "submodule." prefix that git uses
@@ -167,7 +183,7 @@ _rewrite_url_if_needed() {
 }
 
 cmd_init() {
-    _log "initializing + updating all submodules in ${REPO_ROOT}"
+    _log "initializing + updating all submodules in ${REPO_ROOT}${TARGET:+ [filter: ${TARGET}]}"
 
     local vflag
     vflag="$(verbose_flag)"
@@ -179,12 +195,18 @@ cmd_init() {
         --init \
         ${vflag} \
         --jobs "${JOBS}" \
+        ${TARGET:+-- "${TARGET}"} \
         2>&1 | sed 's/^/  /'
 
     # Step 2 — nested submodules inside each vendor path
     _log "step 2/2: nested submodules within vendor paths"
 
     while IFS= read -r vendor_path; do
+        # when a target is specified, only process vendor paths that match or contain it
+        if [[ -n "${TARGET}" && "${vendor_path}" != "${TARGET}" && "${TARGET}" != "${vendor_path}"/* ]]; then
+            continue
+        fi
+
         vendor_dir="${REPO_ROOT}/${vendor_path}"
         nested_gitmodules="${vendor_dir}/.gitmodules"
 
@@ -232,7 +254,7 @@ cmd_init() {
 # tracked branch (or the commit pinned in the index if no branch is set).
 
 cmd_update() {
-    _log "updating all submodules to latest in ${REPO_ROOT}"
+    _log "updating all submodules to latest in ${REPO_ROOT}${TARGET:+ [filter: ${TARGET}]}"
 
     local vflag
     vflag="$(verbose_flag)"
@@ -245,11 +267,17 @@ cmd_update() {
         --remote \
         ${vflag} \
         --jobs "${JOBS}" \
+        ${TARGET:+-- "${TARGET}"} \
         2>&1 | sed 's/^/  /'
 
     # Nested
     _log "step 2/2: nested submodules within vendor paths"
     while IFS= read -r vendor_path; do
+        # when a target is specified, only process vendor paths that match or contain it
+        if [[ -n "${TARGET}" && "${vendor_path}" != "${TARGET}" && "${TARGET}" != "${vendor_path}"/* ]]; then
+            continue
+        fi
+
         vendor_dir="${REPO_ROOT}/${vendor_path}"
         [[ -f "${vendor_dir}/.gitmodules" ]] || continue
 
@@ -282,6 +310,7 @@ done
 shift $((OPTIND - 1))
 
 COMMAND="${1:-status}"
+TARGET="${2:-}"
 
 case "${COMMAND}" in
     status) cmd_status ;;
