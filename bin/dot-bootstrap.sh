@@ -7,8 +7,8 @@
 # shellcheck source=/dev/null
 
 # globals
-ZSH=${ZSH:-$HOME/.oh-my-zsh}
-ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}
+ZSH=${ZSH:-$HOME/.dot/vendor/oh-my-zsh}
+ZSH_CUSTOM=${ZSH_CUSTOM:-$HOME/.dot/vendor/oh-my-zsh/custom}
 
 # Resolve the project root.
 # When sourced in zsh, BASH_SOURCE[0] is empty — use DOT_DIRECTORY if already
