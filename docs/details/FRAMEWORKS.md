@@ -26,7 +26,7 @@ Tmux configuration framework.
 - 🔌 TPM root: `TMUX_PLUGIN_MANAGER_PATH=$DOT_ROOT/vendor/oh-my-tmux/plugins`
 - 🧾 TPM plugin list lives in `data/zsh.yaml` under `tmux.plugins`
 - 🐈 Fork: [`apsamuel/.tmux`](https://github.com/apsamuel/.tmux)
-- 🧩 `dot` helpers: [`zlib/001-a-tmux.sh`](../../zlib/001-a-tmux.sh) (session management, safe session naming, cwd-derived sessions)
+- 🧩 `dot` helpers: [`modules/001-a-tmux.sh`](../../modules/001-a-tmux.sh) (session management, safe session naming, cwd-derived sessions)
 
 ---
 
@@ -36,7 +36,7 @@ ZSH prompt theme.
 
 - 📍 **Location:** `vendor/oh-my-zsh/custom/themes/powerlevel10k/`
 - 🎨 Pre-baked config at [`config/shell/p10k.zsh`](../../config/shell/p10k.zsh) → symlinked to `~/.p10k.zsh` by bootstrap (no wizard, no waiting)
-- 🚀 Activated in [`zlib/001-a-p10k.sh`](../../zlib/001-a-p10k.sh)
+- 🚀 Activated in [`modules/001-a-p10k.sh`](../../modules/001-a-p10k.sh)
 - 🔤 Requires a [Nerd Font](https://www.nerdfonts.com) in your terminal emulator
 
 ---
@@ -46,7 +46,7 @@ ZSH prompt theme.
 - 🍺 `fzf` is installed via Homebrew (Brewfile)
 - 📍 `fzf-git` is vendored at `vendor/fzf-git/`
 - 🌳 Adds interactive UI for git branches, tags, remotes, diffs, stage/unstash, reflog
-- ⚙️ Wired in [`zlib/999-a-terminal.sh`](../../zlib/999-a-terminal.sh)
+- ⚙️ Wired in [`modules/999-a-terminal.sh`](../../modules/999-a-terminal.sh)
 
 ---
 
@@ -69,14 +69,14 @@ Curated figlet font collection used by the `toFiglet` helper.
 
 ## 🧬 Language Environments
 
-`dot` manages language runtimes through dedicated `zlib/` modules. Their package lists live in [`data/zsh.yaml`](../../data/zsh.yaml) under `languages.*` and are installed when `DOT_INSTALL_LANG_DEPS=1`.
+`dot` manages language runtimes through dedicated `modules/` files. Their package lists live in [`data/zsh.yaml`](../../data/zsh.yaml) under `languages.*` and are installed when `DOT_INSTALL_LANG_DEPS=1`.
 
-| Language   | Toolchain                                     | Module                                               |
-| ---------- | --------------------------------------------- | ---------------------------------------------------- |
-| 🐍 Python  | [`uv`](https://github.com/astral-sh/uv) venvs | [`zlib/001-d-python.sh`](../../zlib/001-d-python.sh) |
-| 🟢 Node.js | Homebrew + `fnm`/`n`                          | [`zlib/001-d-node.sh`](../../zlib/001-d-node.sh)     |
-| 🦀 Rust    | [`rustup`](https://rustup.rs) via Homebrew    | [`zlib/001-d-rust.sh`](../../zlib/001-d-rust.sh)     |
-| ☕ Java    | [`jenv`](https://www.jenv.be)                 | [`zlib/001-z-java.sh`](../../zlib/001-z-java.sh)     |
+| Language  | Toolchain                                     | Module                                                     |
+| --------- | --------------------------------------------- | ---------------------------------------------------------- |
+| 🐍 Python  | [`uv`](https://github.com/astral-sh/uv) venvs | [`modules/001-d-python.sh`](../../modules/001-d-python.sh) |
+| 🟢 Node.js | Homebrew + `fnm`/`n`                          | [`modules/001-d-node.sh`](../../modules/001-d-node.sh)     |
+| 🦀 Rust    | [`rustup`](https://rustup.rs) via Homebrew    | [`modules/001-d-rust.sh`](../../modules/001-d-rust.sh)     |
+| ☕ Java    | [`jenv`](https://www.jenv.be)                 | [`modules/001-z-java.sh`](../../modules/001-z-java.sh)     |
 
 ---
 

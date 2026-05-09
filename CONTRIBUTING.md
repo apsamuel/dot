@@ -25,12 +25,12 @@ Thanks for your interest in improving `dot`. Contributions are welcome in the fo
 
 ## Types of Contributions
 
-### Adding a `zlib` Module
+### Adding a Module
 
-Shell modules live in `zlib/`. To add one:
+Shell modules live in `modules/`. To add one:
 
 1. Choose a filename that fits the load order: `NNN-x-name.sh`
-   - Use a tier appropriate to when your module needs to run (see [zlib/README.md](./zlib/README.md))
+   - Use a tier appropriate to when your module needs to run (see [modules/README.md](./modules/README.md))
    - Use a letter sub-order that doesn't conflict with existing files
 2. Start with the standard header:
    ```bash
@@ -49,7 +49,7 @@ Shell modules live in `zlib/`. To add one:
    if [[ "${DOT_DISABLE_MYMODULE:-0}" -eq 1 ]]; then return; fi
    ```
 4. Test by opening a new shell and confirming your functions/aliases are available.
-5. Document your module with a row in the [zlib/README.md](./zlib/README.md) module table.
+5. Document your module with a row in the [modules/README.md](./modules/README.md) module table.
 
 ### Adding a `bin/` Script
 
@@ -64,7 +64,7 @@ Default options, plugins, and paths are configured in `config/data.json` and `co
 
 ### Documenting Changes
 
-- Update the relevant `README.md` (root, `zlib/`, `bin/`, etc.)
+- Update the relevant `README.md` (root, `modules/`, `bin/`, etc.)
 - For feature additions, add an entry to `docs/`
 - Keep entries concise — this is a reference, not a tutorial
 
@@ -96,7 +96,7 @@ Tests cover shell basics, language target builds (C, C++, Go, Rust, Java), and u
 1. Ensure your branch is up to date with `main`
 2. Run shellcheck on any modified `.sh` files:
    ```bash
-   shellcheck zlib/your-module.sh
+   shellcheck modules/your-module.sh
    ```
 3. Push your branch and open a pull request against `main`
 4. Describe what the change does and why in the PR description

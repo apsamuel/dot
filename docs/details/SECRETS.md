@@ -22,14 +22,14 @@ Secrets are stored in a JSON file **outside the repository** (e.g. `~/.secrets.j
 
 ## Functions
 
-All functions are defined in `zlib/000-a-secrets.sh`.
+All functions are defined in `modules/000-a-secrets.sh`.
 
-| Function | Description |
-|---|---|
+| Function             | Description                                                                                               |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
 | `loadSecrets [path]` | Loads a JSON secrets file and exports each key as an environment variable. Defaults to `~/.secrets.json`. |
-| `maskSecrets` | Masks the values of all loaded secrets in subsequent shell output. |
-| `__mask_secrets__` | Internal function called by `maskSecrets`. |
-| `reloadOptions` | Reloads shell options after secrets are masked. |
+| `maskSecrets`        | Masks the values of all loaded secrets in subsequent shell output.                                        |
+| `__mask_secrets__`   | Internal function called by `maskSecrets`.                                                                |
+| `reloadOptions`      | Reloads shell options after secrets are masked.                                                           |
 
 ---
 

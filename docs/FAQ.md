@@ -121,7 +121,7 @@ DOT_DEBUG=1 zsh
 
 > **Where do secrets go?**
 
-Never in the repo. Use [`zlib/000-a-secrets.sh`](../zlib/000-a-secrets.sh) + the helpers in [`bin/zsh-mask-secret.sh`](../bin/zsh-mask-secret.sh). See [SECRETS.md](./details/SECRETS.md).
+Never in the repo. Use [`modules/000-a-secrets.sh`](../modules/000-a-secrets.sh) + the helpers in [`bin/zsh-mask-secret.sh`](../bin/zsh-mask-secret.sh). See [SECRETS.md](./details/SECRETS.md).
 
 ---
 

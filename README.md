@@ -38,7 +38,7 @@
 | --- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | 🔋   | Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions`, `navi`, `zsh_codex` wired up out of the box                              |
 | 🎨   | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                           |
-| 🧩   | Modular Library       | 30+`modules/` files loaded in lex order; disable any with a `DOT_DISABLE_*` flag                                                  |
+| 🧩   | Modular Library       | 30+`modules/` files loaded in lex order; disable any with a `DOT_DISABLE_*` flag                                                 |
 | 🗂   | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                               |
 | 🔐   | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                     |
 | 🛠   | Language Environments | Python (`uv`), Node.js (`fnm`/`n`), Rust (`rustup`), Java (`jenv`) all from one place                                            |

@@ -30,7 +30,7 @@ DOT_INSTALL_LANG_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh
 ## 🧭 What It Does
 
 1. ✅ Validates `$HOME`, `$USER`, and the project directory.
-2. 📚 Sources `zlib/static/lib/internal.sh` for shared helpers.
+2. 📚 Sources `modules/static/lib/internal.sh` for shared helpers.
 3. 🍺 Resolves the **Brewfile** (`data/Brewfile`, falling back to iCloud).
 4. 🧰 Installs **bootstrap dependencies**: Homebrew, `gh`, and `yq` (the YAML parser is required because `data/zsh.yaml` is the runtime source of truth).
 5. 🔗 Symlinks `~/.dot/zshrc` → `~/.zshrc` (existing file → `~/.zshrc.bak`).
@@ -45,7 +45,7 @@ DOT_INSTALL_LANG_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh
 
 ## 🎚️ Environment Variables
 
-| 🔧 Variable                | Default                               | Effect                                                   |
+| 🔧 Variable                 | Default                               | Effect                                                   |
 | -------------------------- | ------------------------------------- | -------------------------------------------------------- |
 | `DOT_DRY_RUN`              | `0`                                   | Print every action without executing                     |
 | `DOT_DEPS`                 | `0`                                   | Force install / refresh of bootstrap deps (brew, gh, yq) |
@@ -93,7 +93,7 @@ cp .build/release/applevm-helper ~/.dot/bin/
 python3 ~/.dot/bin/ivm.py backends    # → "apple yes swift-native: <version>"
 ```
 
-| 🔧 Variable                        | Effect                                            |
+| 🔧 Variable                         | Effect                                            |
 | ---------------------------------- | ------------------------------------------------- |
 | `IVM_APPLE_PROVIDER=swift-native`  | Force native provider; fail loudly if unavailable |
 | `IVM_APPLE_PROVIDER=vz`            | Force vz fallback; fail if unavailable            |

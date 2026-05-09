@@ -22,20 +22,20 @@ data/zsh.yaml  ──►  bin/dot-deploy-config.sh  ──►  $ICLOUD/dot/shell
 
 ## 🗂️ Files in `config/`
 
-| 📄 File                                                 | Purpose                                                                                          |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| 🐍 [`langs/requirements.txt`](./langs/requirements.txt) | Python packages installed into the base `uv` venv when `DOT_INSTALL_LANG_DEPS=1`                 |
-| 🎨 [`shell/p10k.zsh`](./shell/p10k.zsh)                 | Pre-baked Powerlevel10k prompt configuration                                                     |
-| 🤖 [`automation/`](./automation/)                       | Headless ZSH profile for Copilot / CI runners — see its [README](./automation/README.md)         |
+| 📄 File                                                 | Purpose                                                                                           |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| 🐍 [`langs/requirements.txt`](./langs/requirements.txt) | Python packages installed into the base `uv` venv when `DOT_INSTALL_LANG_DEPS=1`                  |
+| 🎨 [`shell/p10k.zsh`](./shell/p10k.zsh)                 | Pre-baked Powerlevel10k prompt configuration                                                      |
+| 🤖 [`automation/`](./automation/)                       | Headless ZSH profile for Copilot / CI runners — see its [README](./automation/README.md)          |
 | 🧾 [`data.json`](./data.json)                           | **Legacy** runtime config (JSON). Kept for back-compat; not consumed by current `modules/` files. |
-| 🧾 [`data.yaml`](./data.yaml)                           | **Legacy** YAML mirror of `data.json`.                                                           |
+| 🧾 [`data.yaml`](./data.yaml)                           | **Legacy** YAML mirror of `data.json`.                                                            |
 
 ---
 
 ## 🚚 Deploy
 
-| Script                                                       | Action                                                                        |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| Script                                                      | Action                                                                        |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | 🌥 [`bin/dot-deploy-config.sh`](../bin/dot-deploy-config.sh) | Pushes [`data/zsh.yaml`](../data/zsh.yaml) → `$ICLOUD/dot/shell/zsh/zsh.yaml` |
 | 🌥 [`bin/dot-deploy-rc.sh`](../bin/dot-deploy-rc.sh)         | Pushes the repo's [`zshrc`](../zshrc) → `$ICLOUD/dot/shell/zsh/rc`            |
 

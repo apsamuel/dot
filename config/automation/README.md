@@ -35,7 +35,7 @@ ZSH will read [`config/automation/.zshrc`](.zshrc) instead of `~/.zshrc`.
 
 ## 🔇 What It Disables
 
-| 🔧 Variable                             | Effect                          |
+| 🔧 Variable                              | Effect                          |
 | --------------------------------------- | ------------------------------- |
 | `DOT_SPLASH_SCREEN=false`               | No banner                       |
 | `DOT_DISABLE_OUTPUTS=1`                 | No decorative `echo` chatter    |
