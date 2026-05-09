@@ -1,150 +1,60 @@
-# ⚫️ Configuration
+# ⚫️ config/
 
-The `config/` directory holds the **source-of-truth configuration template** that controls shell behaviour, plugin selection, theme, and language tooling. The live copy that runs at shell startup lives in iCloud (`$ICLOUD/dot/data.json`).
-
----
-
-## How Config Is Used
-
-```
-config/data.json  ──►  bin/dot-deploy-config.sh  ──►  $ICLOUD/dot/data.json
-                                                             │
-                                         zlib/static/config.sh reads it
-                                         zlib/000-a-config.sh reads it (via jq)
-```
-
-1. **Edit** `config/data.json` in the repo.
-2. **Deploy** it to iCloud by running `bin/dot-deploy-config.sh` (or `dot-bootstrap.sh -d`).
-3. **At shell startup**, `zlib/static/config.sh` sets `$DOT_CONFIGURATION` pointing at the iCloud copy, and `zlib/000-a-config.sh` reads values from it with `jq`.
-
-> `config/data.yaml` is a YAML-format mirror of the same data kept for human readability. It is **not** read at runtime — all runtime reads use `data.json`.
+> Repo-side configuration templates. The **runtime** source-of-truth lives at [`data/zsh.yaml`](../data/zsh.yaml) and (when deployed) at `$ICLOUD/dot/shell/zsh/zsh.yaml`.
 
 ---
 
-## Files
+## 🧭 How Config Flows
 
-| File | Description |
-|------|-------------|
-| `data.json` | Primary configuration file — plugins, options, theme, language requirements |
-| `data.yaml` | YAML mirror of `data.json` (human reference only, not loaded at runtime) |
-| `langs/requirements.txt` | Python packages installed into the base venv by bootstrap |
-| `shell/p10k.zsh` | Powerlevel10k prompt configuration template |
+```text
+data/zsh.yaml  ──►  bin/dot-deploy-config.sh  ──►  $ICLOUD/dot/shell/zsh/zsh.yaml
+       │                                                       │
+       └────────────► parsed by `yq` at shell start ◄───────────┘
+                          • zshrc      → .theme  → $ZSH_THEME
+                          • bootstrap  → .zsh.plugins.{builtin,custom}
+                          • bootstrap  → .languages.python.packages
+                          • bootstrap  → .tmux.plugins
+```
+
+> 🪦 **Legacy:** earlier versions of `dot` read `config/data.json` (and its `data.yaml` mirror) via `jq`. Both files are retained as a reference, but **runtime now consumes `data/zsh.yaml`** through `yq`. New options and plugins should be added to `data/zsh.yaml`.
 
 ---
 
-## `data.json` Field Reference
+## 🗂️ Files in `config/`
 
-Below is an example configuration file in JSON format that demonstrates how to set up various options, plugins, themes, and language requirements.
+| 📄 File                                                 | Purpose                                                                                          |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 🐍 [`langs/requirements.txt`](./langs/requirements.txt) | Python packages installed into the base `uv` venv when `DOT_INSTALL_LANG_DEPS=1`                 |
+| 🎨 [`shell/p10k.zsh`](./shell/p10k.zsh)                 | Pre-baked Powerlevel10k prompt configuration                                                     |
+| 🤖 [`automation/`](./automation/)                       | Headless ZSH profile for Copilot / CI runners — see its [README](./automation/README.md)         |
+| 🧾 [`data.json`](./data.json)                           | **Legacy** runtime config (JSON). Kept for back-compat; not consumed by current `zlib/` modules. |
+| 🧾 [`data.yaml`](./data.yaml)                           | **Legacy** YAML mirror of `data.json`.                                                           |
 
-```json
-{
-    "conditions": {
-        "network": {
-            "home": "192.168.0.1"
-        }
-    },
-    "languages": {
-        "python": {
-            "pip": {
-                "requirements": [
-                    "libtmux==0.36.0"
-                ]
-            }
-        },
-        "node": {
-            "npm": {
-                "requirements": [
-                    "@google/gemini-cli",
-                    "@openai/codex"
-                ]
-            }
-        }
-    },
-    "options": [
-        "autopushd",
-        "BANG_HIST",
-        "extendedglob",
-        "extendedhistory",
-        "hist_ignore_all_dups",
-        "histexpiredupsfirst",
-        "histfindnodups",
-        "histignorealldups",
-        "histignoredups",
-        "histignorespace",
-        "histnostore",
-        "histreduceblanks",
-        "histsavenodups",
-        "histverify",
-        "incappendhistory",
-        "share_history",
-        "sharehistory"
-    ],
-    "path": [],
-    "plugins": {
-        "builtin": [
-            "alias-finder",
-            "autopep8",
-            "brew",
-            "colored-man-pages",
-            "colorize",
-            "copybuffer",
-            "copypath",
-            "dash",
-            "direnv",
-            "docker-compose",
-            "docker",
-            "emoji-clock",
-            "emoji",
-            "fzf",
-            "gh",
-            "git-extras",
-            "git",
-            "gitignore",
-            "gnu-utils",
-            "kubectl",
-            "nmap",
-            "node",
-            "npm",
-            "python",
-            "ssh-agent",
-            "thefuck",
-            "vi-mode",
-            "web-search"
-        ],
-        "custom": [
-            {
-                "exec": "",
-                "owner": "conda-incubator",
-                "post": "",
-                "pre": "",
-                "repo": "conda-zsh-completion"
-            },
-            {
-                "exec": "",
-                "owner": "zsh-users",
-                "post": "",
-                "pre": "",
-                "repo": "zsh-autosuggestions"
-            },
-            {
-                "exec": "",
-                "owner": "z-shell",
-                "post": "",
-                "pre": "",
-                "repo": "F-Sy-H"
-            }
-        ]
-    },
-    "theme": "powerlevel10k/powerlevel10k",
-    "themes": {
-        "builtin": [],
-        "custom": [
-            {
-                "exec": "",
-                "owner": "",
-                "repo": ""
-            }
-        ]
-    }
-}
+---
+
+## 🚚 Deploy
+
+| Script                                                       | Action                                                                        |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| 🌥 [`bin/dot-deploy-config.sh`](../bin/dot-deploy-config.sh) | Pushes [`data/zsh.yaml`](../data/zsh.yaml) → `$ICLOUD/dot/shell/zsh/zsh.yaml` |
+| 🌥 [`bin/dot-deploy-rc.sh`](../bin/dot-deploy-rc.sh)         | Pushes the repo's [`zshrc`](../zshrc) → `$ICLOUD/dot/shell/zsh/rc`            |
+
+Both require `$ICLOUD` (set by `zshrc` from `~/Library/Mobile Documents/com~apple~CloudDocs`).
+
+---
+
+## 🧪 Editing the Active Plugin Set
+
+To enable / disable a plugin **at runtime**, flip its `enabled` flag in `data/zsh.yaml`:
+
+```yaml
+zsh:
+  plugins:
+    custom:
+      - { name: zsh_codex, type: plugin, enabled: false } # ← turn off
+      - { name: navi, type: plugin, enabled: true } # ← turn on
 ```
+
+The submodule remains on disk under `vendor/oh-my-zsh/custom/plugins/`; only its activation by `bin/dot-bootstrap.sh` / oh-my-zsh changes.
+
+To **add** a new custom plugin, register it as a submodule under `vendor/oh-my-zsh/custom/{plugins,themes}/<name>` and append a stanza to `zsh.plugins.custom` (or `themes.custom`).

@@ -2,6 +2,9 @@
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
 
+# point oh-my-tmux / tpm at an XDG-style plugin dir so we don't need ~/.tmux
+export TMUX_PLUGIN_MANAGER_PATH="${XDG_DATA_HOME:-${HOME}/.local/share}/tmux/plugins"
+
 tmuxKillUnattached() {
     tmux list-sessions -F '#{session_name} #{session_attached}' | awk '$2 == "0" {print $1}' | xargs -I {} -r tmux kill-session -t {}
 }

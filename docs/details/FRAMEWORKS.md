@@ -1,68 +1,91 @@
-# Frameworks
+# 🌱 Frameworks
 
-`dot` does not replace shell frameworks — it configures and orchestrates them. Below are the frameworks integrated and how they are used.
-
----
-
-## ZSH — [oh-my-zsh](https://ohmyz.sh)
-
-The primary ZSH plugin and theme management framework. `dot` uses oh-my-zsh for:
-
-- Built-in plugins (completions, git aliases, colored man pages, etc.)
-- Custom plugin directory at `$ZSH_CUSTOM`
-- Theme loading (powerlevel10k is loaded as an oh-my-zsh theme)
-
-The plugin list is configured in `config/data.json` under `plugins.builtin` and `plugins.custom`. Bootstrap ensures oh-my-zsh is installed to `~/.oh-my-zsh`.
+`dot` does not replace shell frameworks — it **configures, vendors, and orchestrates** them. Every framework below is a pinned **git submodule** under [`vendor/`](../../vendor/README.md). Update them all in parallel with [`scripts/submodule-sync.sh`](../../scripts/README.md).
 
 ---
 
-## Tmux — [oh-my-tmux](https://github.com/gpakosz/.tmux)
+## 🐚 [oh-my-zsh](https://ohmyz.sh)
 
-A self-contained tmux configuration framework vendored in `vendor/oh-my-tmux/`. It provides:
+The primary ZSH plugin and theme manager.
 
-- A feature-rich status bar
-- Mouse support
-- Sane key bindings
+- 📍 **Location:** `vendor/oh-my-zsh/` (NOT `~/.oh-my-zsh`)
+- 🔧 `ZSH=$HOME/.dot/vendor/oh-my-zsh`, `ZSH_CUSTOM=$ZSH/custom`
+- 🧾 Plugin list lives in [`data/zsh.yaml`](../../data/zsh.yaml) under `zsh.plugins.{builtin,custom}` — each custom plugin has an `enabled: true|false` flag
+- 🐈 Fork: [`apsamuel/oh-my-zsh`](https://github.com/apsamuel/oh-my-zsh)
 
-`dot` adds tmux helpers in `zlib/001-a-tmux.sh` (session management, safe session naming, creation from cwd).
-
----
-
-## Prompt — [powerlevel10k](https://github.com/romkatv/powerlevel10k)
-
-The ZSH prompt theme. `dot` ships a pre-baked `p10k.zsh` configuration at `config/shell/p10k.zsh`, symlinked to `~/.p10k.zsh` by bootstrap. This means you get a sensible, fast prompt without running the interactive wizard.
-
-Powerlevel10k is installed as an oh-my-zsh custom theme at `vendor/oh-my-zsh/custom/themes/powerlevel10k/`, activated by `zlib/001-a-p10k.sh`.
-
-Requires a [Nerd Font](https://www.nerdfonts.com) in your terminal emulator to render icons correctly.
+Custom plugins/themes are themselves nested submodules under `vendor/oh-my-zsh/custom/`:
+`powerlevel10k`, `fzf-tab`, `zsh-autosuggestions`, `zsh-vi-mode`, `zsh_codex`, `F-Sy-H`, `navi`, `conda-zsh-completion`.
 
 ---
 
-## Fuzzy Finding — [fzf](https://github.com/junegunn/fzf) + [fzf-git](https://github.com/junegunn/fzf-git.sh)
+## 🪟 [oh-my-tmux](https://github.com/gpakosz/.tmux)
 
-`fzf` is the fuzzy finder wired into shell history, file selection, and process listing. `fzf-git` (vendored in `vendor/fzf-git/`) extends fzf to cover common git operations:
+Tmux configuration framework.
 
-- Browse branches, tags, and remotes
-- Preview diffs interactively
-- Stage, unstash, and navigate the reflog
-
-Configured in `zlib/999-a-terminal.sh`.
-
----
-
-## Shell Utilities — [bash-commons](https://github.com/gruntwork-io/bash-commons)
-
-Vendored in `vendor/bash-commons/`. Provides reusable, tested bash functions for logging, assertions, OS detection, and string manipulation. Used internally by `dot` shell scripts.
+- 📍 **Location:** `vendor/oh-my-tmux/`
+- 🔌 TPM root: `TMUX_PLUGIN_MANAGER_PATH=$DOT_ROOT/vendor/oh-my-tmux/plugins`
+- 🧾 TPM plugin list lives in `data/zsh.yaml` under `tmux.plugins`
+- 🐈 Fork: [`apsamuel/.tmux`](https://github.com/apsamuel/.tmux)
+- 🧩 `dot` helpers: [`zlib/001-a-tmux.sh`](../../zlib/001-a-tmux.sh) (session management, safe session naming, cwd-derived sessions)
 
 ---
 
-## Language Environments
+## ⚡ [powerlevel10k](https://github.com/romkatv/powerlevel10k)
 
-`dot` manages language runtimes through dedicated `zlib` modules:
+ZSH prompt theme.
 
-| Language | Toolchain | Module |
-|---|---|---|
-| Python | [uv](https://github.com/astral-sh/uv) venvs | `zlib/001-d-python.sh` |
-| Node.js | Homebrew + `n` | `zlib/001-d-node.sh` |
-| Rust | [rustup](https://rustup.rs) via Homebrew | `zlib/001-d-rust.sh` |
-| Java | [jenv](https://www.jenv.be) | `zlib/001-z-java.sh` |
+- 📍 **Location:** `vendor/oh-my-zsh/custom/themes/powerlevel10k/`
+- 🎨 Pre-baked config at [`config/shell/p10k.zsh`](../../config/shell/p10k.zsh) → symlinked to `~/.p10k.zsh` by bootstrap (no wizard, no waiting)
+- 🚀 Activated in [`zlib/001-a-p10k.sh`](../../zlib/001-a-p10k.sh)
+- 🔤 Requires a [Nerd Font](https://www.nerdfonts.com) in your terminal emulator
+
+---
+
+## 🔍 [fzf](https://github.com/junegunn/fzf) + [fzf-git](https://github.com/junegunn/fzf-git.sh)
+
+- 🍺 `fzf` is installed via Homebrew (Brewfile)
+- 📍 `fzf-git` is vendored at `vendor/fzf-git/`
+- 🌳 Adds interactive UI for git branches, tags, remotes, diffs, stage/unstash, reflog
+- ⚙️ Wired in [`zlib/999-a-terminal.sh`](../../zlib/999-a-terminal.sh)
+
+---
+
+## 🛠 [bash-commons](https://github.com/gruntwork-io/bash-commons)
+
+Reusable, tested bash helpers (logging, assertions, OS detection, string manipulation).
+
+- 📍 **Location:** `vendor/bash-commons/`
+- 🔧 Used internally by scripts under [`bin/`](../../bin/README.md)
+
+---
+
+## 🔠 [figlet-fonts](https://github.com/xero/figlet-fonts)
+
+Curated figlet font collection used by the `toFiglet` helper.
+
+- 📍 **Location:** `vendor/figlet-fonts/`
+
+---
+
+## 🧬 Language Environments
+
+`dot` manages language runtimes through dedicated `zlib/` modules. Their package lists live in [`data/zsh.yaml`](../../data/zsh.yaml) under `languages.*` and are installed when `DOT_INSTALL_LANG_DEPS=1`.
+
+| Language   | Toolchain                                     | Module                                               |
+| ---------- | --------------------------------------------- | ---------------------------------------------------- |
+| 🐍 Python  | [`uv`](https://github.com/astral-sh/uv) venvs | [`zlib/001-d-python.sh`](../../zlib/001-d-python.sh) |
+| 🟢 Node.js | Homebrew + `fnm`/`n`                          | [`zlib/001-d-node.sh`](../../zlib/001-d-node.sh)     |
+| 🦀 Rust    | [`rustup`](https://rustup.rs) via Homebrew    | [`zlib/001-d-rust.sh`](../../zlib/001-d-rust.sh)     |
+| ☕ Java    | [`jenv`](https://www.jenv.be)                 | [`zlib/001-z-java.sh`](../../zlib/001-z-java.sh)     |
+
+---
+
+## 🔄 Keeping Frameworks in Sync
+
+Every framework above is a **git submodule** so that upstream renames, archives, or breaking changes can never wreck a fresh `dot` install. Use the [submodule-sync helper](../../scripts/README.md):
+
+```bash
+./scripts/submodule-sync.sh status     # report
+./scripts/submodule-sync.sh update     # pull latest tracked branches
+./scripts/submodule-sync.sh init       # first-time fetch
+```

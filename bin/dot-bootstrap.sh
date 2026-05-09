@@ -420,30 +420,29 @@ function bootstrapCheckCloud () {
 # ⚫️ installs and configures Oh My Tmux
 function bootstrapCheckOhMyTmux () {
     local vendor_tmux="${dot_bootstrap_directory}/vendor/oh-my-tmux"
-    local tmux_dir="${HOME}/.tmux"
+    local plugin_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/tmux/plugins"
 
     if [[ ! -d "${vendor_tmux}" ]]; then
         echo "❌ vendor/oh-my-tmux not found — run bootstrapInitSubmodules first"
         return 1
     fi
 
-    # back up an existing non-symlink ~/.tmux directory
-    if [[ -d "${tmux_dir}" && ! -L "${tmux_dir}" ]]; then
-        echo "🛠️ backing up existing ~/.tmux directory..."
-        dryrun mv "${tmux_dir}" "${tmux_dir}.bak"
-    fi
-
-    # ~/.tmux → vendor (needed for TPM plugin directory)
-    ensureSymlink "${vendor_tmux}" "${tmux_dir}" || {
-        echo "❌  oh-my-tmux installation failed"
-        return 1
-    }
-
     # link config files directly to vendor paths
     dryrun ln -sf "${vendor_tmux}/.tmux.conf"       "${HOME}/.tmux.conf"
     dryrun ln -sf "${vendor_tmux}/.tmux.conf.local" "${HOME}/.tmux.conf.local"
 
+    # ensure the tpm plugin directory exists (TMUX_PLUGIN_MANAGER_PATH)
+    dryrun mkdir -p "${plugin_dir}"
+
+    # back up any legacy ~/.tmux directory or symlink — no longer needed
+    if [[ -e "${HOME}/.tmux" || -L "${HOME}/.tmux" ]]; then
+        echo "🛠️ removing legacy ~/.tmux (plugins now live in ${plugin_dir})"
+        dryrun rm -rf "${HOME}/.tmux.bak"
+        dryrun mv "${HOME}/.tmux" "${HOME}/.tmux.bak"
+    fi
+
     # start a new tmux session, and install plugins
+    export TMUX_PLUGIN_MANAGER_PATH="${plugin_dir}"
     if tmux has-session -t bootstrap 2>/dev/null; then
         tmux kill-session -t bootstrap
     fi

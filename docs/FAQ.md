@@ -1,111 +1,140 @@
-# FAQ
+# ❓ FAQ
 
-## General
+## 🌑 General
 
 > **Is this another shell framework?**
 
-No. `dot` is configuration layered on top of existing, well-maintained frameworks — it does not reinvent the wheel. It wires together [oh-my-zsh](https://ohmyz.sh), [powerlevel10k](https://github.com/romkatv/powerlevel10k), [oh-my-tmux](https://github.com/gpakosz/.tmux), and other utilities with sensible defaults so you don't have to. See [FRAMEWORKS.md](./details/FRAMEWORKS.md) for the full list.
+Nope. `dot` is **configuration** layered on top of well-maintained, _vendored_ frameworks. It does not reinvent the wheel — it pins [oh-my-zsh](https://ohmyz.sh), [powerlevel10k](https://github.com/romkatv/powerlevel10k), [oh-my-tmux](https://github.com/gpakosz/.tmux), and friends as **git submodules** under [`vendor/`](../vendor/README.md) and wires them together with sensible defaults. See [FRAMEWORKS.md](./details/FRAMEWORKS.md) for the full list.
 
-> **What about [🐢 Turtle](../turtle/README.md)?**
+> **Why vendor everything as submodules?**
 
-Turtle is a separate project — an experimental shell interpreter written in Rust — that lives inside this repository. It is optional and independent of the ZSH configuration. You can use `dot` without ever touching Turtle.
+🛡️ Reproducibility. Upstream projects rename, move, archive, and break. By pinning a SHA, every machine that runs `dot` gets the _exact_ same plugin set. Updates are explicit, opt-in actions through [`scripts/submodule-sync.sh`](../scripts/README.md).
+
+> **What's the YAML file for?**
+
+[`data/zsh.yaml`](../data/zsh.yaml) is the runtime source of truth — theme, plugin list (with per-plugin `enabled` flags), tmux config, language packages. It's parsed by `yq` (which `dot-bootstrap.sh` installs for you).
 
 ---
 
-## Installation
+## 🚀 Installation
 
 > **What does `dot-bootstrap.sh` actually do?**
 
-It installs dependencies (via Homebrew), symlinks `zshrc` to `~/.zshrc`, sets up the vendor libraries, and ensures your shell is configured to load `dot`. See [BOOTSTRAP.md](./details/BOOTSTRAP.md) for a step-by-step breakdown.
+Installs dependencies via Homebrew (incl. `yq`, `gh`), initialises every submodule under `vendor/`, symlinks `zshrc` → `~/.zshrc`, builds the Apple VM helper if Xcode is present, and (optionally) installs language deps from `data/zsh.yaml`. Walk-through: [BOOTSTRAP.md](./details/BOOTSTRAP.md).
+
+> **Can I preview what bootstrap will do without changing anything?**
+
+Yes — that's exactly what `DOT_DRY_RUN` is for:
+
+```bash
+DOT_DRY_RUN=1 source ./bin/dot-bootstrap.sh
+# or
+./bin/dot-bootstrap.sh -n
+```
+
+Every action is printed instead of executed.
+
+> **I forgot `--recurse-submodules` when cloning. Now what?**
+
+Run [`scripts/submodule-sync.sh init`](../scripts/README.md). It fetches every root submodule **and** every nested submodule under `vendor/oh-my-zsh/custom/` in parallel.
+
+> **How do I keep the vendored projects up to date?**
+
+```bash
+./scripts/submodule-sync.sh update     # pull latest tracked branches
+./scripts/submodule-sync.sh status     # see what changed
+```
 
 > **Do I need Homebrew?**
 
-On macOS, yes — Homebrew is the primary package manager used by `dot`. You can disable it with `DOT_DISABLE_BREW=1` if you manage packages yourself, but several modules assume Homebrew-installed paths.
+On macOS, yes. Disable it with `DOT_DISABLE_BREW=1` if you manage packages yourself, but several modules assume Homebrew paths.
 
 > **Can I use this on Linux?**
 
-Partially. The core ZSH modules work on any system with ZSH 5.8+. macOS-specific modules (iTerm2 integration, `sysctl`-based CPU detection, etc.) are guarded by capability checks and should be silently skipped on Linux. Homebrew on Linux (`linuxbrew`) is supported but not tested regularly.
+Partially. Core ZSH modules work on any ZSH 5.8+. macOS-specific modules are guarded by capability checks. `linuxbrew` is supported but not regularly tested.
 
 ---
 
-## VM Control (vmctl)
+## 🤖 Automation / CI / Copilot
+
+> **My agent / runner spawns interactive shells and chokes on splash output. Help.**
+
+Use the headless profile:
+
+```bash
+ZDOTDIR="$HOME/.dot/config/automation" zsh
+```
+
+It disables `p10k`, splashes, plugin loading, and the language envs. See [`config/automation/README.md`](../config/automation/README.md).
+
+---
+
+## 🛡️ SBOM & CVEs
+
+> **What's in `data/sbom/`?**
+
+A self-contained VS Code extension that wraps [Syft](https://github.com/anchore/syft) (SBOM generation) and [OSV.dev](https://osv.dev/) (vulnerability scanning). Generates **CycloneDX** _or_ **SPDX** SBOMs and reports CVEs against them. See [`data/sbom/README.md`](../data/sbom/README.md).
+
+---
+
+## 🍎 Apple VM Helper
 
 > **What does `vmctl backends` show for Apple?**
 
-If Apple is unavailable (`no`), either the native helper (`applevm-helper`) or the vz CLI is not installed. Install one of:
+If Apple is `no`, neither the native `applevm-helper` nor the `vz` CLI is on `$PATH`. Either:
 
-- **Native (recommended):** Build `bin/apple-vm-helper` (requires Xcode), copy binary to PATH.
-- **Fallback:** `brew install Code-Hex/tap/vz`.
+- 🥇 **Native (recommended):** build [`bin/apple-vm-helper`](../bin/apple-vm-helper/README.md) (requires Xcode).
+- 🥈 **Fallback:** `brew install Code-Hex/tap/vz`.
 
-> **How do I force the native helper even if vz is installed?**
+> **Force the native helper:**
 
 ```bash
 IVM_APPLE_PROVIDER=swift-native python3 ~/.dot/bin/ivm.py <command>
 ```
 
-This will fail with an explicit error if the helper is not found, rather than silently falling back.
+> **Why are `suspend` / `resume` not available with vz?**
 
-> **How do I force vz fallback for testing?**
-
-```bash
-IVM_APPLE_PROVIDER=vz python3 ~/.dot/bin/ivm.py <command>
-```
-
-> **Why does `vmctl stop` not work with vz?**
-
-The vz CLI does not have a native stop subcommand. The fallback sends SIGTERM to the vz process and waits up to 10 seconds. If the VM does not respond, it will print an error. Use the native helper for graceful shutdown.
-
-> **Why are `suspend` and `resume` unavailable with vz?**
-
-The vz CLI does not expose pause/resume APIs. Only the native helper supports these operations. Check `vmctl suspend <vm> --backend apple` and watch for explicit unsupported messaging.
+The vz CLI doesn't expose pause/resume. Only the native helper does.
 
 ---
 
-## Usage
+## 🎚️ Usage
 
-> **How do I disable a module I don't want?**
-
-Set the relevant `DOT_DISABLE_*` environment variable to `1` before your shell sources `zshrc`:
+> **How do I disable a module?**
 
 ```bash
 export DOT_DISABLE_THEFUCK=1
 export DOT_DISABLE_NODE=1
 ```
 
-All disable flags are listed in the [README](../README.md#customization).
+Full list: [`docs/details/DOT_VARS.md`](./details/DOT_VARS.md).
 
-> **How do I enable debug output to see what loads?**
+> **How do I disable a plugin without removing the submodule?**
+
+Flip its `enabled: true|false` in [`data/zsh.yaml`](../data/zsh.yaml). The submodule stays on disk; only its activation at shell start changes.
+
+> **Debug output?**
 
 ```bash
 DOT_DEBUG=1 zsh
 ```
 
-Each module prints its name as it loads.
+> **Where do secrets go?**
 
-> **How do I add my own module?**
-
-Drop a `.sh` file in `zlib/` following the naming convention `NNN-x-name.sh` where `NNN` is the load order (e.g. `050`), `x` is a letter for sub-ordering, and `name` is a descriptive identifier. It will be sourced automatically on the next shell start. See [zlib/README.md](../zlib/README.md) for details.
-
-> **Where should I put secrets and tokens?**
-
-Never commit secrets. Use the secrets management system: store them in a JSON file outside the repo and reference them via the `loadSecrets` / `maskSecrets` functions in `zlib/000-a-secrets.sh`. See [SECRETS.md](./details/SECRETS.md).
+Never in the repo. Use [`zlib/000-a-secrets.sh`](../zlib/000-a-secrets.sh) + the helpers in [`bin/zsh-mask-secret.sh`](../bin/zsh-mask-secret.sh). See [SECRETS.md](./details/SECRETS.md).
 
 ---
 
-## Troubleshooting
+## 🧪 Troubleshooting
 
-> **My shell is slow to start — what do I do?**
+> **Slow shell start?**
 
-Enable debug mode (`DOT_DEBUG=1 zsh`) to see which modules are loading and how long the startup takes. Common culprits are heavy completions, slow `brew` calls, or Python venv activation. Disable unused language modules with the `DOT_DISABLE_*` flags.
+`DOT_DEBUG=1 zsh` to see what's loading. Disable unused language modules.
 
-> **`dot.shell` command not found**
+> **`dot.shell` command not found?**
 
-Your shell didn't source the `dot` library. Make sure `~/.zshrc` is symlinked to `~/.dot/zshrc`. You can re-run bootstrap or check with:
+`ls -la ~/.zshrc` — should symlink to `~/.dot/zshrc`. Re-run bootstrap if not.
 
-```bash
-ls -la ~/.zshrc
-```
+> **Powerlevel10k shows garbled glyphs?**
 
-> **Powerlevel10k shows garbled characters**
-
-Install a [Nerd Font](https://www.nerdfonts.com) and configure your terminal emulator to use it. iTerm2 users can set this under Preferences → Profiles → Text → Font.
+Install a [Nerd Font](https://www.nerdfonts.com) and configure your terminal to use it.

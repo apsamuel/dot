@@ -1,128 +1,143 @@
-# Bootstrap
+# 🚀 Bootstrap
 
-## Overview
+## 🌑 Overview
 
-`dot-bootstrap.sh` is the first-run script that installs and configures the `dot` framework from scratch. It is designed to be idempotent — running it multiple times will not break an already-configured environment.
+[`bin/dot-bootstrap.sh`](../../bin/dot-bootstrap.sh) is the first-run script that installs and configures `dot` from scratch. It is **idempotent** — running it again is safe and converges on the same state.
 
-## Usage
+## 🧪 Usage
 
 ```bash
-# From the repo root
-source ./bin/dot-bootstrap.sh
+# Clone with submodules
+git clone --recurse-submodules https://github.com/apsamuel/dot.git ~/.dot
 
-# Or after cloning
-git clone https://github.com/apsamuel/dot.git ~/.dot
-pushd ~/.dot && source ./bin/dot-bootstrap.sh
+# Preview every action without changing your system
+DOT_DRY_RUN=1 source ~/.dot/bin/dot-bootstrap.sh
+# or
+~/.dot/bin/dot-bootstrap.sh -n
+
+# Real run
+source ~/.dot/bin/dot-bootstrap.sh
+
+# Force install / refresh of bootstrap dependencies (brew, gh, yq…)
+DOT_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh
+
+# Install language deps (Python via uv, Node via npm) declared in data/zsh.yaml
+DOT_INSTALL_LANG_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh
 ```
 
-> Bootstrap must be sourced (not executed) so that environment variables it sets persist in the current shell.
+> 🚨 Source it (`source …`) — don't execute it. The script exports environment variables that need to land in your current shell.
 
-## What It Does
+## 🧭 What It Does
 
-1. **Validates the environment** — checks that `$HOME`, `$USER`, and the project directory are present.
-2. **Sources internal helpers** — loads `zlib/static/lib/internal.sh` for shared utilities.
-3. **Resolves the Brewfile** — looks for `data/Brewfile` locally, then falls back to iCloud if present.
-4. **Symlinks `zshrc`** — links `~/.dot/zshrc` → `~/.zshrc`, backing up any existing file to `~/.zshrc.bak`.
-5. **Symlinks `p10k.zsh`** — links the pre-baked powerlevel10k configuration to `~/.p10k.zsh`.
-6. **Sets up iCloud shortcut** — creates a `~/iCloud` symlink for convenience if iCloud Drive is present.
-7. **Installs Homebrew dependencies** — runs `brew bundle` against the Brewfile if `DOT_DEPS` is set.
-8. **Sets up vendor libraries** — ensures `vendor/` submodules are initialized.
+1. ✅ Validates `$HOME`, `$USER`, and the project directory.
+2. 📚 Sources `zlib/static/lib/internal.sh` for shared helpers.
+3. 🍺 Resolves the **Brewfile** (`data/Brewfile`, falling back to iCloud).
+4. 🧰 Installs **bootstrap dependencies**: Homebrew, `gh`, and `yq` (the YAML parser is required because `data/zsh.yaml` is the runtime source of truth).
+5. 🔗 Symlinks `~/.dot/zshrc` → `~/.zshrc` (existing file → `~/.zshrc.bak`).
+6. 🔗 Symlinks `~/.dot/config/shell/p10k.zsh` → `~/.p10k.zsh`.
+7. 🌥 Creates a `~/iCloud` shortcut on macOS.
+8. 🍺 If `DOT_DEPS=1`, runs `brew bundle` against the Brewfile.
+9. 🌱 Initialises **vendored submodules** under `vendor/` (oh-my-zsh, oh-my-tmux, fzf-git, bash-commons, figlet-fonts, plus all nested oh-my-zsh custom plugins/themes).
+10. 🐚 Wires up oh-my-zsh from `vendor/oh-my-zsh` (`ZSH=$HOME/.dot/vendor/oh-my-zsh`, `ZSH_CUSTOM=$ZSH/custom`).
+11. 🪟 Wires up oh-my-tmux from `vendor/oh-my-tmux` and sets `TMUX_PLUGIN_MANAGER_PATH=$DOT_ROOT/vendor/oh-my-tmux/plugins`.
+12. 🍎 Builds [`bin/applevm-helper`](../../bin/apple-vm-helper/README.md) when Xcode CLT is present.
+13. 🐍 If `DOT_INSTALL_LANG_DEPS=1`, seeds Python (via `uv`) and Node (via `npm`) from `data/zsh.yaml`.
 
-## Environment Variables
+## 🎚️ Environment Variables
 
-| Variable     | Default               | Effect                                                       |
-| ------------ | --------------------- | ------------------------------------------------------------ |
-| `DOT_DEPS`   | `0`                   | Set to `1` to install Homebrew dependencies during bootstrap |
-| `ICLOUD`     | `~/iCloud`            | Override the iCloud Drive path                               |
-| `ZSH`        | `~/.oh-my-zsh`        | oh-my-zsh installation directory                             |
-| `ZSH_CUSTOM` | `~/.oh-my-zsh/custom` | oh-my-zsh custom directory for themes and plugins            |
+| 🔧 Variable                | Default                               | Effect                                                   |
+| -------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| `DOT_DRY_RUN`              | `0`                                   | Print every action without executing                     |
+| `DOT_DEPS`                 | `0`                                   | Force install / refresh of bootstrap deps (brew, gh, yq) |
+| `DOT_INSTALL_LANG_DEPS`    | `0`                                   | Install language deps from `data/zsh.yaml`               |
+| `DOT_NVM_INSTALL_LTS`      | `0`                                   | Install Node.js LTS via `nvm`                            |
+| `ICLOUD`                   | `~/iCloud`                            | iCloud Drive path                                        |
+| `ZSH`                      | `$HOME/.dot/vendor/oh-my-zsh`         | Vendored oh-my-zsh root                                  |
+| `ZSH_CUSTOM`               | `$ZSH/custom`                         | oh-my-zsh custom directory                               |
+| `TMUX_PLUGIN_MANAGER_PATH` | `$DOT_ROOT/vendor/oh-my-tmux/plugins` | TPM root                                                 |
 
-## Apple VM Backend (vmctl)
+## 🚚 Deploy Flags
 
-The `vmctl` tool in `bin/ivm.py` supports controlling Apple Virtualization.framework VMs. Two provider backends are available:
+`dot-bootstrap.sh` exposes deploy shortcuts (matching the standalone scripts under `bin/`):
 
-### Native Helper Provider (Recommended)
+| Flag               | Equivalent                                               | Effect                                                  |
+| ------------------ | -------------------------------------------------------- | ------------------------------------------------------- |
+| `-d`               | [`dot-deploy-config.sh`](../../bin/dot-deploy-config.sh) | Push `data/zsh.yaml` → `$ICLOUD/dot/shell/zsh/zsh.yaml` |
+| `-r`               | [`dot-deploy-rc.sh`](../../bin/dot-deploy-rc.sh)         | Push `zshrc` → `$ICLOUD/dot/shell/zsh/rc`               |
+| `-n` / `--dry-run` | `DOT_DRY_RUN=1`                                          | Preview only                                            |
 
-The native helper (`applevm-helper`) is a compiled Swift binary that speaks to Virtualization.framework directly, providing full VM lifecycle control (start, stop, suspend, resume, status).
+## 🌱 Submodule Workflow
 
-**Setup:**
+`dot-bootstrap.sh` calls into [`scripts/submodule-sync.sh`](../../scripts/README.md) to fetch and update every submodule. Use it directly afterwards to keep the tree in sync:
 
-1. Build the helper (requires Xcode command-line tools):
+```bash
+./scripts/submodule-sync.sh init     # first-time fetch (root + nested, parallel)
+./scripts/submodule-sync.sh update   # pull latest tracked branches
+./scripts/submodule-sync.sh status   # report dirty/clean/missing
+./scripts/submodule-sync.sh list     # paths only
+```
 
-   ```bash
-   cd ~/.dot/bin/apple-vm-helper && swift build -c release
-   # Binary will be at .build/release/applevm-helper
-   ```
+Flags: `-n` dry-run, `-v` verbose, `-j N` parallel jobs. SSH→HTTPS rewriting is automatic.
 
-2. Link or copy to a location in `$PATH` or in `~/.dot/bin/`:
+## 🍎 Apple VM Backend (vmctl)
 
-   ```bash
-   cp .build/release/applevm-helper ~/.dot/bin/
-   ```
+[`bin/ivm.py`](../../bin/ivm.py) drives Apple `Virtualization.framework` VMs through one of two providers:
 
-3. Verify availability:
-   ```bash
-   python3 ~/.dot/bin/ivm.py backends
-   # Should show "apple    yes    swift-native: <version>"
-   ```
+### 🥇 Native Helper (Recommended)
 
-**Environment Control:**
+[`bin/applevm-helper`](../../bin/apple-vm-helper/README.md) is a compiled Swift binary that speaks directly to Virtualization.framework. Full lifecycle: start, stop (graceful), suspend, resume, status.
 
-| Variable                           | Effect                                     |
-| ---------------------------------- | ------------------------------------------ |
-| `IVM_APPLE_PROVIDER=swift-native`  | Force native provider; fail if unavailable |
-| `IVM_APPLE_PROVIDER=vz`            | Force vz fallback; fail if unavailable     |
-| `IVM_APPLE_HELPER=/path/to/helper` | Custom path to native helper binary        |
+```bash
+cd ~/.dot/bin/apple-vm-helper && swift build -c release
+cp .build/release/applevm-helper ~/.dot/bin/
+python3 ~/.dot/bin/ivm.py backends    # → "apple yes swift-native: <version>"
+```
 
-### Fallback Provider (vz CLI)
+| 🔧 Variable                        | Effect                                            |
+| ---------------------------------- | ------------------------------------------------- |
+| `IVM_APPLE_PROVIDER=swift-native`  | Force native provider; fail loudly if unavailable |
+| `IVM_APPLE_PROVIDER=vz`            | Force vz fallback; fail if unavailable            |
+| `IVM_APPLE_HELPER=/path/to/helper` | Custom path to native helper                      |
 
-If the native helper is unavailable, vmctl automatically falls back to the `vz` CLI (https://github.com/Code-Hex/vz).
-
-**Install:**
+### 🥈 Fallback (vz CLI)
 
 ```bash
 brew install Code-Hex/tap/vz
 ```
 
-**Limitations:**
+Limitations: SIGTERM stop, no suspend/resume, status only checks bundle presence.
 
-- `stop` uses process signals (SIGTERM) instead of graceful guest shutdown
-- `suspend` and `resume` are not supported
-- `status` reports only bundle presence, not actual VM state
-- `list` reports status as "unknown"
+## 🗂️ After Bootstrap
 
-Force use of vz fallback if needed during troubleshooting:
-
-```bash
-IVM_APPLE_PROVIDER=vz python3 ~/.dot/bin/ivm.py <command>
-```
-
-## Manually Re-running Parts of Bootstrap
-
-If you want to re-run only the symlink setup without reinstalling packages:
-
-```bash
-source ~/.dot/bin/dot-bootstrap.sh
-```
-
-If you want to also install/update Homebrew dependencies:
-
-```bash
-DOT_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh
-```
-
-## Directory Layout After Bootstrap
-
-```
+```text
 ~/
-├── .zshrc          → ~/.dot/zshrc          (symlink)
-├── .p10k.zsh       → ~/.dot/config/shell/p10k.zsh  (symlink)
-├── .oh-my-zsh/     (installed by oh-my-zsh installer if missing)
-└── iCloud          → ~/Library/Mobile Documents/com~apple~CloudDocs  (symlink, macOS only)
+├── .zshrc          → ~/.dot/zshrc                              (symlink)
+├── .p10k.zsh       → ~/.dot/config/shell/p10k.zsh              (symlink)
+└── iCloud          → ~/Library/Mobile Documents/com~apple~CloudDocs
+
+~/.dot/vendor/
+├── oh-my-zsh/                  ← $ZSH (vendored, NOT ~/.oh-my-zsh)
+│   └── custom/
+│       ├── themes/powerlevel10k/
+│       └── plugins/{zsh-autosuggestions,fzf-tab,F-Sy-H,zsh-vi-mode,zsh_codex,navi,conda-zsh-completion}/
+├── oh-my-tmux/                 ← TMUX_PLUGIN_MANAGER_PATH=$_/plugins
+├── fzf-git/
+├── bash-commons/
+└── figlet-fonts/
 ```
 
-## Troubleshooting
+## 🧪 Re-running Bootstrap
 
-- **`~/.zshrc` not updated** — check if a stale backup (`~/.zshrc.bak`) exists that needs to be cleaned up manually.
-- **Homebrew packages not installed** — ensure `DOT_DEPS=1` is exported, or run `brew bundle --file=~/.dot/data/Brewfile` directly.
-- **Symlinks point to wrong location** — delete the broken symlink (`rm ~/.zshrc`) and re-run bootstrap.
+```bash
+source ~/.dot/bin/dot-bootstrap.sh                         # symlinks + checks
+DOT_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh              # also refresh brew/gh/yq
+DOT_INSTALL_LANG_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh # plus language deps
+DOT_DRY_RUN=1 source ~/.dot/bin/dot-bootstrap.sh           # preview only
+```
+
+## 🧯 Troubleshooting
+
+- 🔗 **`~/.zshrc` not updated** — clean any stale `~/.zshrc.bak` and rerun.
+- 🍺 **Brew packages missing** — `DOT_DEPS=1` or run `brew bundle --file=~/.dot/data/Brewfile`.
+- 🌱 **Vendored submodules missing** — `./scripts/submodule-sync.sh init`.
+- 🧾 **`yq: command not found`** — `brew install yq`, then re-source `~/.zshrc`.
