@@ -15,7 +15,7 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
 fi
 
 # we need to source the mac.sh file first
-source "${DOT_LIBRARY}"/static/lib/mac.sh
+source "${DOT_MODULES}"/static/lib/mac.sh
 
 
 function compileTermInfo() {

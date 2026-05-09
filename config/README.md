@@ -27,7 +27,7 @@ data/zsh.yaml  ──►  bin/dot-deploy-config.sh  ──►  $ICLOUD/dot/shell
 | 🐍 [`langs/requirements.txt`](./langs/requirements.txt) | Python packages installed into the base `uv` venv when `DOT_INSTALL_LANG_DEPS=1`                 |
 | 🎨 [`shell/p10k.zsh`](./shell/p10k.zsh)                 | Pre-baked Powerlevel10k prompt configuration                                                     |
 | 🤖 [`automation/`](./automation/)                       | Headless ZSH profile for Copilot / CI runners — see its [README](./automation/README.md)         |
-| 🧾 [`data.json`](./data.json)                           | **Legacy** runtime config (JSON). Kept for back-compat; not consumed by current `zlib/` modules. |
+| 🧾 [`data.json`](./data.json)                           | **Legacy** runtime config (JSON). Kept for back-compat; not consumed by current `modules/` files. |
 | 🧾 [`data.yaml`](./data.yaml)                           | **Legacy** YAML mirror of `data.json`.                                                           |
 
 ---

@@ -85,7 +85,7 @@ export EDITOR=vim
 
 # TODO: this is a dependency on the pygmentize tool, which neds to be installed separately. We should either remove this dependency or add it to the bootstrap process
 export ZSH_COLORIZE_TOOL=pygmentize
-# PAGER / MANPAGER — kept as plain less (set via zlib/000-a-config.sh).
+# PAGER / MANPAGER — kept as plain less (set via modules/000-a-config.sh).
 # Avoid bat here: bat-as-pager breaks automated processes that pipe through $PAGER.
 # Use `cless` for interactive syntax-highlighted paging.
 export TMUX_PLUGIN_MANAGER_PATH="${DOT_ROOT}/vendor/oh-my-tmux/plugins"
@@ -94,10 +94,10 @@ export ARCH="${arch}"
 
 # minimal bootstrap vars (needed to source dotenv.sh)
 DOT_ROOT="${DOT_ROOT:-${HOME}/.dot}"
-DOT_LIBRARY="${DOT_LIBRARY:-${DOT_ROOT}/zlib}"
+DOT_MODULES="${DOT_MODULES:-${DOT_ROOT}/modules}"
 
 # load all DOT_* environment variables from the canonical source
-. "${DOT_LIBRARY}/static/dotenv.sh" || { echo "Error: unable to load environment variables from dotenv.sh"; exit 1; }
+. "${DOT_MODULES}/static/dotenv.sh" || { echo "Error: unable to load environment variables from dotenv.sh"; exit 1; }
 
 if [ -f "${DOT_BOOTSTRAP}" ]; then
     . "${DOT_BOOTSTRAP}" || {
@@ -107,19 +107,19 @@ if [ -f "${DOT_BOOTSTRAP}" ]; then
 fi
 
 # foundational functions
-. "${DOT_LIBRARY}"/static/foundation.sh || {
+. "${DOT_MODULES}"/static/foundation.sh || {
     echo "Error: unable to load foundational functions"
     exit 1
 }
 
 # shell limits (user)
-. "${DOT_LIBRARY}"/static/limits.sh || {
+. "${DOT_MODULES}"/static/limits.sh || {
     echo "Error: unable to load shell limits"
     exit 1
 }
 
 # shell autoloads (ZSH)
-. "${DOT_LIBRARY}"/static/autoload.sh || {
+. "${DOT_MODULES}"/static/autoload.sh || {
     echo "Error: unable to configure autoloads"
     exit 1
 }
@@ -127,7 +127,7 @@ fi
 # declare -a SSH_KEYS
 SSH_KEYS=()
 # prepare files in .ssh directory for the ssh-agent
-# (getSshIdentities is defined in zlib/static/foundation.sh)
+# (getSshIdentities is defined in modules/static/foundation.sh)
 getSshIdentities --format array --var SSH_KEYS
 
 export SSH_KEYS
@@ -137,12 +137,12 @@ export SSH_KEYS
 # enable zsh options
 loadZshOptions
 
-# make ZLIB available to shell
+# make MODULES available to shell
 
-# zstyle configuration lives in zlib/000-b-zstyle.sh (sourced via loadZlib above,
+# zstyle configuration lives in modules/000-b-zstyle.sh (sourced via loadModules above,
 # which runs before oh-my-zsh.sh — required so plugins read the right styles).
 
-loadZlib
+loadModules
 
 compileTermInfo
 

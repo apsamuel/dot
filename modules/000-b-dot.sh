@@ -29,7 +29,7 @@ export ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
 export ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
 
 
-. "${DOT_DIR}"/zlib/static/lib/internal.sh
+. "${DOT_DIR}"/modules/static/lib/internal.sh
 
 function dot.shell {
     local command="${1:-version}"
@@ -47,7 +47,7 @@ Commands:
   changelog [options]     Print git changelog
   printenv                Print DOT_* environment variables
   secrets <action>        Manage secrets (placeholder)
-  refresh-libs            Re-source all zlib modules
+  refresh-modules         Re-source all modules
   load-options            Load zsh options
   add-plugin <url>        Add a zsh plugin via git submodule
   add-theme <url>         Add a zsh theme via git submodule
@@ -259,8 +259,8 @@ USAGE
             return $?
             ;;
 
-        refresh-libs)
-            loadZlib
+        refresh-modules)
+            loadModules
             return $?
             ;;
 

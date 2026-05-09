@@ -1,6 +1,6 @@
-# zlib — ZSH Library
+# modules — ZSH Modules
 
-`zlib/` is the heart of the `dot` framework. It contains all ZSH modules that are sourced automatically when a new shell session starts. Each module is a plain `.sh` file.
+`modules/` is the heart of the `dot` framework. It contains all ZSH modules that are sourced automatically when a new shell session starts. Each module is a plain `.sh` file.
 
 ---
 
@@ -90,7 +90,7 @@ export DOT_DISABLE_EXTENSIONS=1 # skip iTerm2, thefuck, autosuggestions
 
 ## `static/` — Static Helpers
 
-Files in `zlib/static/` are sourced directly by `zshrc` before the numbered modules, providing foundational infrastructure the rest of the framework depends on.
+Files in `modules/static/` are sourced directly by `zshrc` before the numbered modules, providing foundational infrastructure the rest of the framework depends on.
 
 | File                   | Description                                                                                                                                                       |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -98,7 +98,7 @@ Files in `zlib/static/` are sourced directly by `zshrc` before the numbered modu
 | `static/cloud.sh`      | iCloud path setup — exports `ICLOUD` pointing to `~/Library/Mobile Documents/com~apple~CloudDocs`                                                                 |
 | `static/config.sh`     | Sets `$DOT_CONFIGURATION` to `$ICLOUD/dot/data.json` (the live runtime config path)                                                                               |
 | `static/dotbase.sh`    | Bootstrap entry point for static sources — chains `limits.sh` and `autoload.sh`                                                                                   |
-| `static/dotenv.sh`     | Core `DOT_*` variable exports: `DOT_ROOT`, `DOT_DIRECTORY`, `DOT_LIBRARY`, `DOT_BIN`, `DOT_BOOTSTRAP`, `DOT_SHELL`, `DOT_DEBUG`, `DOT_BOOTED`, `DOT_ARCHITECTURE` |
+| `static/dotenv.sh`     | Core `DOT_*` variable exports: `DOT_ROOT`, `DOT_DIRECTORY`, `DOT_MODULES`, `DOT_BIN`, `DOT_BOOTSTRAP`, `DOT_SHELL`, `DOT_DEBUG`, `DOT_BOOTED`, `DOT_ARCHITECTURE` |
 | `static/foundation.sh` | Foundational shell functions loaded early: `getShellName`, `getSecureString`, `getProcessorCores`, `getProcessorBrand`, `loadZshOptions`                          |
 | `static/limits.sh`     | Reads and exports current `ulimit` values as `DOT_*_LIMIT` variables                                                                                              |
 | `static/set.sh`        | Shell option configuration (placeholder for `setopt`/`unsetopt` directives)                                                                                       |
@@ -128,7 +128,7 @@ Sourced exclusively by `dot-bootstrap.sh` and other low-level scripts. Not inten
 
 ## Adding a New Module
 
-1. Create `zlib/NNN-x-name.sh` (pick a tier that fits)
+1. Create `modules/NNN-x-name.sh` (pick a tier that fits)
 2. Start with the standard header:
    ```bash
    #shellcheck shell=bash

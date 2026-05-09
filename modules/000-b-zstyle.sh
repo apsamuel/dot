@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 #% description: configure zstyle settings for zsh subsystems (compsys, oh-my-zsh, plugins)
 #% notes: this module MUST be sourced before oh-my-zsh.sh is sourced from zshrc,
-#%        because plugins read their styles at load time. zlib is loaded from
+#%        because plugins read their styles at load time. modules are loaded from
 #%        zshrc *before* `. "$ZSH"/oh-my-zsh.sh`, so the ordering is correct.
 # shellcheck source=/dev/null
 
@@ -75,7 +75,7 @@ zstyle ':omz:update' frequency "${DOT_OMZ_UPDATE_FREQUENCY:-7}"
 zstyle ':omz:plugins:iterm2' shell-integration yes
 
 # ssh-agent — keys to load and forwarding behaviour.
-# SSH_KEYS is populated in zshrc via getSshIdentities before loadZlib runs.
+# SSH_KEYS is populated in zshrc via getSshIdentities before loadModules runs.
 if (( ${#SSH_KEYS[@]} > 0 )); then
     zstyle ':omz:plugins:ssh-agent' identities "${SSH_KEYS[@]}"
 fi

@@ -6,5 +6,5 @@
 # shellcheck disable=SC2207
 
 # source static sources
-source "${DOT_LIBRARY}"/static/limits.sh
-source "${DOT_LIBRARY}"/static/autoload.sh
+source "${DOT_MODULES}"/static/limits.sh
+source "${DOT_MODULES}"/static/autoload.sh

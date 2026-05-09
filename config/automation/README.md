@@ -14,7 +14,7 @@ A **headless ZSH profile** for non-interactive use cases — Copilot Workspace, 
 - 🐳 Container builds where `~/.zshrc` is mounted from `dot`
 - 📦 Tooling that wants Homebrew + language runtimes but no prompt decoration
 
-For interactive day-to-day use, you want the full [`zshrc`](../../zshrc) and [`zlib/`](../../zlib/README.md) chain instead.
+For interactive day-to-day use, you want the full [`zshrc`](../../zshrc) and [`modules/`](../../modules/README.md) chain instead.
 
 ---
 

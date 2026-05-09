@@ -7,7 +7,7 @@
 
 
 # we need to source the mac.sh file first
-source "${DOT_LIBRARY}"/000-c-mac.sh
+source "${DOT_MODULES}"/000-c-mac.sh
 
 function getShellName () {
     currentShell="$(command ps -p $$ -ocomm=)"
@@ -55,7 +55,7 @@ function loadZshOptions() {
     done
 }
 
-function loadZlib() {
+function loadModules() {
     if [ -d "$DOT_LIBS_DIR" ]; then
         for lib in $(find "${DOT_LIBS_DIR}" -maxdepth 1 -type f -name "[0-9][0-9][0-9]-*-*.sh" | sort -d); do
             if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then

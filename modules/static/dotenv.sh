@@ -9,10 +9,10 @@
 export DOT_ROOT="${DOT_ROOT:-${HOME}/.dot}"
 # DOT_DIRECTORY is a synonym for DOT_ROOT
 export DOT_DIRECTORY="${DOT_DIRECTORY:-${DOT_ROOT}}"
-export DOT_LIBRARY="${DOT_LIBRARY:-${DOT_ROOT}/zlib}"
+export DOT_MODULES="${DOT_MODULES:-${DOT_ROOT}/modules}"
 export DOT_BIN="${DOT_BIN:-${DOT_ROOT}/bin}"
 # shellcheck disable=SC2046
-export DOT_LIBRARY_FILES=($(find "${DOT_LIBRARY}" -maxdepth 1 -type f -name "*.sh" | sort -d))
+export DOT_MODULES_FILES=($(find "${DOT_MODULES}" -maxdepth 1 -type f -name "*.sh" | sort -d))
 export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/bin/dot-bootstrap.sh}"
 
 # --- shell settings ---
@@ -66,7 +66,7 @@ export DOT_SPLASH_TYPE="${DOT_SPLASH_TYPE:-quote}"
 
 # --- legacy aliases (backward compatibility) ---
 export DOT_DIR="${DOT_DIR:-${DOT_ROOT}}"
-export DOT_LIBS_DIR="${DOT_LIBS_DIR:-${DOT_LIBRARY}}"
+export DOT_LIBS_DIR="${DOT_LIBS_DIR:-${DOT_MODULES}}"
 
 # --- cloud / data paths ---
 export DOT_CLOUD_DIR="${DOT_CLOUD_DIR:-${HOME}/Library/Mobile Documents/com~apple~CloudDocs/dot}"

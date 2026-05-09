@@ -38,7 +38,7 @@
 | --- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | 🔋   | Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions`, `navi`, `zsh_codex` wired up out of the box                              |
 | 🎨   | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                           |
-| 🧩   | Modular Library       | 30+`zlib/` modules loaded in lex order; disable any with a `DOT_DISABLE_*` flag                                                  |
+| 🧩   | Modular Library       | 30+`modules/` files loaded in lex order; disable any with a `DOT_DISABLE_*` flag                                                  |
 | 🗂   | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                               |
 | 🔐   | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                     |
 | 🛠   | Language Environments | Python (`uv`), Node.js (`fnm`/`n`), Rust (`rustup`), Java (`jenv`) all from one place                                            |
@@ -97,7 +97,7 @@ See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough o
 ```
 .dot/
 ├── zshrc                  # 🐚 Main ZSH entry point — symlinked to ~/.zshrc
-├── zlib/                  # 🧩 ZSH library: all modules loaded at shell startup
+├── modules/               # 🧩 ZSH modules: all loaded at shell startup
 │   └── static/            #     Foundational helpers sourced before numbered modules
 ├── bin/                   # 🛠  Scripts on $PATH (dot-bootstrap, ivm, ictl, applevm-helper, …)
 │   └── apple-vm-helper/   #     Swift sources for the native Apple VM helper binary
@@ -114,7 +114,7 @@ See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough o
 │   └── sbom/              # 🛡  VS Code SBOM + OSV scanner extension
 ├── vendor/                # 🌱 Vendored submodules (oh-my-zsh, oh-my-tmux, fzf-git, …)
 ├── scripts/               # 🔄 Submodule sync + repo automation
-├── zlib/                  # 🧠 (covered above)
+├── modules/               # 🧠 (covered above)
 ├── test/                  # 🧪 Smoke tests for toolchains and shell behaviour
 └── docs/                  # 📚 Documentation tree
 ```
@@ -133,10 +133,10 @@ dot.shell [command]
 Commands:
   version       Print branch, revision, date, and author
   update        Pull the latest changes from the remote
-  reload        Re-source all zlib modules
-  changelog     Print the git changelog
-  printenv      Print dot-related environment variables
-  source-zlib   Source all zlib modules manually
+  reload          Re-source all modules
+  changelog       Print the git changelog
+  printenv        Print dot-related environment variables
+  refresh-modules Re-source all modules manually
 ```
 
 ---
@@ -213,7 +213,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on adding modules, repor
 | [FRAMEWORKS](./docs/details/FRAMEWORKS.md) | Frameworks used and why               |
 | [SECRETS](./docs/details/SECRETS.md)       | Loading & masking secrets             |
 | [DOT_VARS](./docs/details/DOT_VARS.md)     | Every `DOT_*` env var, audited        |
-| [zlib/README](./zlib/README.md)            | ZSH library module reference          |
+| [modules/README](./modules/README.md)      | ZSH modules reference                 |
 | [bin/README](./bin/README.md)              | Scripts available on `$PATH`          |
 | [vendor/README](./vendor/README.md)        | Vendored submodules                   |
 | [scripts/README](./scripts/README.md)      | Submodule sync & repo automation      |

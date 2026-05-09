@@ -33,7 +33,7 @@ if [ ! -d "${dot_bootstrap_directory}" ]; then
     exit 1
 fi
 
-. "${dot_bootstrap_directory}/zlib/static/lib/internal.sh"
+. "${dot_bootstrap_directory}/modules/static/lib/internal.sh"
 
 
 function resolveBrewfilePath () {

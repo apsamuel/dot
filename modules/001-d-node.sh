@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-## TODO: move node setup to DOT_LIBRARY file
+## TODO: move node setup to DOT_MODULES file
 
 
 directory=$(dirname "$0")
