@@ -51,7 +51,12 @@ Commands:
   load-options            Load zsh options
   add-plugin <url>        Add a zsh plugin via git submodule
   add-theme <url>         Add a zsh theme via git submodule
+  vendor <action> [path]  Manage git submodules (root + nested)
   help, -h, --help        Show this help message
+
+Vendor actions:
+  status, init, update, list
+  Options: -n (dry-run), -v (verbose), -j <N> (parallel jobs)
 
 Changelog options:
   --all                   Show full changelog
@@ -292,6 +297,20 @@ USAGE
             theme_name="$(basename -s .git "${git_url}")"
             local themes_dir="${DOT_DIR}/zsh/custom/themes"
             git -C "${ZSH}" submodule add "${git_url}" "${themes_dir}/${theme_name}"
+            return $?
+            ;;
+
+        vendor)
+            local vendor_script="${DOT_DIR}/scripts/submodule-sync.sh"
+            if [[ ! -x "${vendor_script}" ]]; then
+                if [[ -r "${vendor_script}" ]]; then
+                    bash "${vendor_script}" "$@"
+                    return $?
+                fi
+                echo "Error: vendor script not found: ${vendor_script}"
+                return 1
+            fi
+            "${vendor_script}" "$@"
             return $?
             ;;
 

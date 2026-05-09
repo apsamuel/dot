@@ -166,6 +166,32 @@ function getSshIdentities () {
             --var)      outVar="$2"; shift 2 ;;
             --exclude)  exclude="$2"; shift 2 ;;
             --absolute) absolute=1; shift ;;
+            -h|--help)
+                cat <<'EOF'
+Usage: getSshIdentities [--dir DIR] [--format array|string] [--var VARNAME]
+                        [--exclude REGEX] [--absolute]
+
+Scan an SSH directory for private key files and return their basenames
+(or absolute paths) in a form suitable for consumers like
+`zstyle :omz:plugins:ssh-agent identities`.
+
+Options:
+  --dir DIR        Directory to scan (default: $HOME/.ssh)
+  --format FMT     Output format: "array" (newline-separated, default) or
+                   "string" (space-separated, shell-quoted entries)
+  --var VARNAME    Assign result to VARNAME instead of printing to stdout
+  --exclude REGEX  Override default key exclusion regex
+                   (default skips config, *.pub, known_hosts*,
+                   environment*, and *deprecated* entries)
+  --absolute       Emit absolute paths instead of basenames
+  -h, --help       Show this help
+
+Examples:
+  getSshIdentities --format array --var SSH_KEYS
+  getSshIdentities --format string --var SSH_KEYS_STR
+EOF
+                return 0
+                ;;
             *)
                 echo "getSshIdentities: unknown argument: $1" >&2
                 return 2

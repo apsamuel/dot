@@ -496,22 +496,38 @@ function bootstrapConfigSsh () {
     local ssh_config="${HOME}/.ssh/config"
     local ssh_config_dot="${ICLOUD}/dot/ssh/config"
     local ssh_root_dot="${ICLOUD}/dot/ssh"
+    local ssh_config_d_dot="${ICLOUD}/dot/ssh/config.d"
+    local ssh_config_d="${HOME}/.ssh/config.d"
     local ssh_keys=()
 
     mkdir -p "${HOME}/.ssh"
+    mkdir -p "${ssh_config_d}"
 
     ensureSymlink "${ssh_config_dot}" "${ssh_config}" || return 1
 
+    # link any per-host/include config snippets from ${ICLOUD}/dot/ssh/config.d
+    # into ${HOME}/.ssh/config.d preserving the original filename
+    if [[ -d "${ssh_config_d_dot}" ]]; then
+        local ssh_config_snippet snippet_name
+        while IFS= read -r -d '' ssh_config_snippet; do
+            snippet_name="$(basename "${ssh_config_snippet}")"
+            ensureSymlink "${ssh_config_snippet}" "${ssh_config_d}/${snippet_name}" || return 1
+        done < <(find "${ssh_config_d_dot}" -type f -print0)
+    fi
+
+    # gather ssh keys from the top-level ${ICLOUD}/dot/ssh directory only,
+    # so we don't recurse into config.d/ (which is handled above)
     while IFS= read -r -d '' ssh_key; do
         ssh_keys+=("${ssh_key}")
-    done < <(find "${ssh_root_dot}" -type f -print0)
+    done < <(find "${ssh_root_dot}" -maxdepth 1 -type f -print0)
 
     local ssh_key_name
     for ssh_key in "${ssh_keys[@]}"; do
-        if [[ "${ssh_key}" =~ config ]]; then
+        ssh_key_name="$(basename "${ssh_key}")"
+        # skip the top-level ssh config, it is linked above
+        if [[ "${ssh_key_name}" == "config" ]]; then
             continue
         fi
-        ssh_key_name="$(basename "${ssh_key}")"
         local ssh_key_path="${HOME}/.ssh/${ssh_key_name}"
         # a link exists with this identity
         ensureSymlink "${ssh_key}" "${ssh_key_path}" || return 1

@@ -106,9 +106,16 @@ if [ -f "${DOT_BOOTSTRAP}" ]; then
     }
 fi
 
+
 # foundational functions
 . "${DOT_MODULES}"/static/foundation.sh || {
     echo "Error: unable to load foundational functions"
+    exit 1
+}
+
+# ssh configuration (keys, config file parsing, etc.)
+. "${DOT_MODULES}"/static/ssh.sh || {
+    echo "Error: unable to load SSH configuration"
     exit 1
 }
 
