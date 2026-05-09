@@ -124,3 +124,99 @@ function loadUserSecrets () {
         rm -f "${TMPDIR}"/.secrets
     fi
 }
+
+# getSshIdentities: scan an SSH directory for private key files and return the
+# basenames in a form suitable for `zstyle :omz:plugins:ssh-agent identities`
+# (or any other consumer).
+#
+# Usage:
+#   getSshIdentities [--dir DIR] [--format array|string] [--var VARNAME]
+#                    [--exclude REGEX] [--absolute]
+#
+# Options:
+#   --dir DIR        Directory to scan (default: $HOME/.ssh).
+#   --format FMT     Output format: "array" (newline-separated, default) or
+#                    "string" (space-separated, shell-quoted entries).
+#   --var VARNAME    Assign the result to VARNAME instead of printing to stdout.
+#                    With --format array the variable is populated as a real
+#                    array; with --format string it receives a single string.
+#   --exclude REGEX  Override the default exclusion regex. The default skips
+#                    config, *.pub, known_hosts*, environment*, and *deprecated*
+#                    entries.
+#   --absolute       Emit absolute paths instead of basenames.
+#
+# Examples:
+#   # populate a zsh array and pass to zstyle
+#   getSshIdentities --format array --var SSH_KEYS
+#   zstyle :omz:plugins:ssh-agent identities "${SSH_KEYS[@]}"
+#
+#   # capture as a string
+#   getSshIdentities --format string --var SSH_KEYS_STR
+function getSshIdentities () {
+    local dir="${HOME}/.ssh"
+    local format="array"
+    local outVar=""
+    local exclude='(config|deprecated|.*\.pub|environment.*|known_hosts.*)'
+    local absolute=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --dir)      dir="$2"; shift 2 ;;
+            --format)   format="$2"; shift 2 ;;
+            --var)      outVar="$2"; shift 2 ;;
+            --exclude)  exclude="$2"; shift 2 ;;
+            --absolute) absolute=1; shift ;;
+            *)
+                echo "getSshIdentities: unknown argument: $1" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if [[ "${format}" != "array" && "${format}" != "string" ]]; then
+        echo "getSshIdentities: --format must be 'array' or 'string'" >&2
+        return 2
+    fi
+
+    local -a keys=()
+    if [[ -d "${dir}" ]]; then
+        local file base
+        for file in "${dir}"/*; do
+            [[ -e "${file}" ]] || continue
+            [[ -f "${file}" ]] || continue
+            base="${file##*/}"
+            if [[ "${base}" =~ ${exclude} ]]; then
+                continue
+            fi
+            if (( absolute )); then
+                keys+=("${file}")
+            else
+                keys+=("${base}")
+            fi
+        done
+    fi
+
+    local joined
+    joined="$(printf '%q ' "${keys[@]}")"
+    joined="${joined% }"
+
+    if [[ -n "${outVar}" ]]; then
+        if [[ "${format}" == "array" ]]; then
+            # assign positional values to a named array (zsh + bash compatible)
+            eval "${outVar}=(\"\${keys[@]}\")"
+        else
+            # assign string to a named scalar
+            eval "${outVar}=\${joined}"
+        fi
+        return 0
+    fi
+
+    if [[ "${format}" == "array" ]]; then
+        local k
+        for k in "${keys[@]}"; do
+            printf '%s\n' "${k}"
+        done
+    else
+        printf '%s\n' "${joined}"
+    fi
+}

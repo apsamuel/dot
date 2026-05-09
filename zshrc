@@ -124,28 +124,11 @@ fi
     exit 1
 }
 
-# # bootstrap functions | this is a redundant sourcing
-# . "${DOT_DIRECTORY}"/bin/dot-bootstrap.sh || {
-#     echo "Error: unable to load bootstrap functions"
-#     exit 1
-# }
-
 # declare -a SSH_KEYS
 SSH_KEYS=()
 # prepare files in .ssh directory for the ssh-agent
-if [ -d "$HOME"/.ssh ]; then
-
-    files=("$HOME"/.ssh/*)
-    for file in "${files[@]}"; do
-
-        if [[ "$file" =~ (config|deprecated|.*pub|environment.*|known_hosts.*) ]]; then
-            continue
-        fi
-        base=$(basename "$file")
-
-        SSH_KEYS+=("$base")
-    done
-fi
+# (getSshIdentities is defined in zlib/static/foundation.sh)
+getSshIdentities --format array --var SSH_KEYS
 
 export SSH_KEYS
 
