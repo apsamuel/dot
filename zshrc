@@ -138,6 +138,10 @@ export SSH_KEYS
 loadZshOptions
 
 # make ZLIB available to shell
+
+# zstyle configuration lives in zlib/000-b-zstyle.sh (sourced via loadZlib above,
+# which runs before oh-my-zsh.sh — required so plugins read the right styles).
+
 loadZlib
 
 compileTermInfo
@@ -146,22 +150,7 @@ if [[ "${DOT_DEBUG}" -gt 0 ]]; then
     echo "configuring: $OPERATING_SYSTEM/$CPU_ARCHITECTURE"
 fi
 
-# configure zstyle
-# NOTE: 💡 the zstyle section should precede sourcing of oh-my-zsh
-# shellcheck disable=SC2154
-# shellcheck disable=SC2309
-if [[ $(getShellName)  =~ .*zsh ]]; then
-    zstyle :omz:plugins:iterm2 shell-integration yes # enable zsh integration
-    zstyle ':omz:update' frequency 7
-    zstyle ':completion::complete:*' use-cache 1
-    # zstyle ":conda_zsh_completion:*" use-groups true
-    # zstyle ":conda_zsh_completion:*" show-unnamed true
-    # zstyle ":conda_zsh_completion:*" sort-envs-by-time true
-    zstyle :omz:plugins:ssh-agent identities "${SSH_KEYS[@]}"
-    zstyle :omz:plugins:ssh-agent agent-forwarding on
-    zstyle :omz:plugins:ssh-agent lifetime
 
-fi
 
 # TODO: host secrets in icloud directory (optionally)
 loadUserSecrets
