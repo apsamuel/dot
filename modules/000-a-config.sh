@@ -18,6 +18,11 @@ if [[ ! -f "${_dot_config_path}" ]] && [[ -f "${icloud_dot_directory}/shell/zsh/
 fi
 export DOT_SHELL_DATA="${_dot_config_path}"
 
+
+getConfig() {
+  yq '.' "${_dot_config_path}" 2>/dev/null
+}
+
 getTheme() {
   yq '.theme' "${_dot_config_path}" 2>/dev/null
 }
@@ -27,8 +32,4 @@ getCondition() {
   local target="$2"
   yq ".conditions.${condition}.${target}" "${_dot_config_path}" 2>/dev/null
 
-}
-
-printConfig() {
-  yq '.' "${_dot_config_path}" 2>/dev/null
 }

@@ -18,27 +18,6 @@
 # shellcheck disable=SC2207
 
 
-# export ZSH="$HOME/.oh-my-zsh"
-export ZSH="$HOME/.dot/vendor/oh-my-zsh"
-export ZSH_CUSTOM="$ZSH/custom"
-# TPM plugins are managed as git submodules inside vendor/oh-my-tmux/plugins/
-# See vendor/oh-my-tmux/.gitmodules for the full plugin inventory.
-export ZSH_HISTFILE="$HOME/.zsh_history"
-export ZSH_HISTSIZE=1000000
-export ZSH_SAVEHIST=1000000
-export HISTFILE="$HOME/.zsh_history"
-export HISTSIZE=${ZSH_HISTSIZE}
-export SAVEHIST=${ZSH_SAVEHIST}
-
-# configure XDG variables
-# XDG Base Directory Specification
-# https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest
-# https://wiki.archlinux.org/title/XDG_Base_Directory
-XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
-XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-export XDG_CACHE_HOME XDG_CONFIG_HOME XDG_DATA_HOME
-
 DOT_INIT_DIR=$(pwd -P)
 # shell start time
 DOT_INIT_START_TIME=$(date +%s)
