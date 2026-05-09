@@ -34,34 +34,34 @@
 
 ## ✨ Features
 
-| 🪶  | Feature               | Description                                                                                                                      |
+| 🪶   | Feature               | Description                                                                                                                      |
 | --- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 🔋  | Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions`, `navi`, `zsh_codex` wired up out of the box                              |
-| 🎨  | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                           |
-| 🧩  | Modular Library       | 30+ `zlib/` modules loaded in lex order; disable any with a `DOT_DISABLE_*` flag                                                 |
-| 🗂  | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                               |
-| 🔐  | Secrets Management    | Load **and mask** secrets from JSON without leaking them in history or output                                                    |
-| 🛠  | Language Environments | Python (`uv`), Node.js (`fnm`/`n`), Rust (`rustup`), Java (`jenv`) all from one place                                            |
-| 🌱  | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                      |
-| 🔄  | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                    |
-| 🛡  | SBOM + OSV Scanner    | [`data/sbom/`](./data/sbom/) — VS Code extension that generates CycloneDX/SPDX SBOMs and scans them via OSV.dev                  |
-| 🤖  | Automation Profile    | [`config/automation/.zshrc`](./config/automation/.zshrc) — minimal headless ZSH for Copilot/CI (no p10k, no plugins, no banners) |
-| 🖥  | VM Control            | [`bin/ivm.py`](./bin/ivm.py) — unified VM lifecycle for UTM, QEMU, Podman, and Apple Virtualization.framework                    |
-| 🍎  | Apple VM Helper       | [`bin/applevm-helper`](./bin/apple-vm-helper/README.md) — native Swift binary using `Virtualization.framework`                   |
-| 🥷  | Dry-run Mode          | `DOT_DRY_RUN=1` (or `-n`) on bootstrap — preview every action before it touches your machine                                     |
+| 🔋   | Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions`, `navi`, `zsh_codex` wired up out of the box                              |
+| 🎨   | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                           |
+| 🧩   | Modular Library       | 30+`zlib/` modules loaded in lex order; disable any with a `DOT_DISABLE_*` flag                                                  |
+| 🗂   | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                               |
+| 🔐   | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                     |
+| 🛠   | Language Environments | Python (`uv`), Node.js (`fnm`/`n`), Rust (`rustup`), Java (`jenv`) all from one place                                            |
+| 🌱   | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                      |
+| 🔄   | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                    |
+| 🛡   | SBOM + OSV Scanner    | [`data/sbom/`](./data/sbom/) — VS Code extension that generates CycloneDX/SPDX SBOMs and scans them via OSV.dev                  |
+| 🤖   | Automation Profile    | [`config/automation/.zshrc`](./config/automation/.zshrc) — minimal headless ZSH for Copilot/CI (no p10k, no plugins, no banners) |
+| 🖥   | VM Control            | [`bin/ivm.py`](./bin/ivm.py) — unified VM lifecycle for UTM, QEMU, Podman, and Apple Virtualization.framework                    |
+| 🍎   | Apple VM Helper       | [`bin/applevm-helper`](./bin/apple-vm-helper/README.md) — native Swift binary using `Virtualization.framework`                   |
+| 🥷   | Dry-run Mode          | `DOT_DRY_RUN=1` (or `-n`) on bootstrap — preview every action before it touches your machine                                     |
 
 ---
 
 ## 📋 Requirements
 
-| Tool        | Version      | Purpose                                           |
-| ----------- | ------------ | ------------------------------------------------- |
+| Tool       | Version      | Purpose                                           |
+| ---------- | ------------ | ------------------------------------------------- |
 | 🍎 macOS    | 12 Monterey+ | Primary platform                                  |
 | 🐚 ZSH      | 5.8+         | Required shell                                    |
 | 🌳 Git      | 2.x+         | Submodule support                                 |
 | 🍺 Homebrew | latest       | Package manager (auto-installed)                  |
-| 🔧 `yq`     | 4.x          | YAML parsing for `data/zsh.yaml` (auto-installed) |
-| 🦅 `gh`     | 2.x          | GitHub CLI for plugin install (auto-installed)    |
+| 🔧`yq`      | 4.x          | YAML parsing for `data/zsh.yaml` (auto-installed) |
+| 🦅`gh`      | 2.x          | GitHub CLI for plugin install (auto-installed)    |
 
 > 🐧 Linux is _partially_ supported. ❌ Windows is **not** supported.
 
@@ -145,7 +145,7 @@ Commands:
 
 `dot` is controlled through environment variables. Set any of these before sourcing `~/.zshrc` to change behaviour:
 
-| 🔧 Variable              | Default | Effect                                                            |
+| 🔧 Variable               | Default | Effect                                                            |
 | ------------------------ | ------- | ----------------------------------------------------------------- |
 | `DOT_DEBUG`              | `0`     | Print each module as it loads                                     |
 | `DOT_DRY_RUN`            | `0`     | Bootstrap prints actions without executing them                   |
@@ -168,21 +168,21 @@ Commands:
 
 Every third-party dependency below is pinned as a git submodule under [`vendor/`](./vendor/README.md). This guarantees reproducible installs even when upstream repos move, rename, or break.
 
-| 🧩 Project                                                                 | Purpose                                                    | Location                                                |
-| -------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------- |
-| 🐚 [oh-my-zsh](https://ohmyz.sh)                                           | ZSH plugin & theme framework                               | `vendor/oh-my-zsh/`                                     |
-| 🪟 [oh-my-tmux](https://github.com/gpakosz/.tmux)                          | Tmux config framework (TPM at `$TMUX_PLUGIN_MANAGER_PATH`) | `vendor/oh-my-tmux/`                                    |
-| 🔍 [fzf-git](https://github.com/junegunn/fzf-git.sh)                       | fzf bindings for git ops                                   | `vendor/fzf-git/`                                       |
-| 🛠 [bash-commons](https://github.com/gruntwork-io/bash-commons)            | Reusable bash helpers                                      | `vendor/bash-commons/`                                  |
-| 🔠 [figlet-fonts](https://github.com/xero/figlet-fonts)                    | Figlet fonts for `toFiglet`                                | `vendor/figlet-fonts/`                                  |
-| ⚡ [powerlevel10k](https://github.com/romkatv/powerlevel10k)               | ZSH prompt theme                                           | `vendor/oh-my-zsh/custom/themes/powerlevel10k/`         |
-| 💡 [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-style suggestions                                     | `vendor/oh-my-zsh/custom/plugins/zsh-autosuggestions/`  |
-| ⌨️ [fzf-tab](https://github.com/Aloxaf/fzf-tab)                            | Replace ZSH completion menu with fzf                       | `vendor/oh-my-zsh/custom/plugins/fzf-tab/`              |
-| ✏️ [zsh-vi-mode](https://github.com/jeffreytse/zsh-vi-mode)                | Enhanced vi mode                                           | `vendor/oh-my-zsh/custom/plugins/zsh-vi-mode/`          |
-| 🌈 [F-Sy-H](https://github.com/z-shell/F-Sy-H)                             | Feature-rich syntax highlighting                           | `vendor/oh-my-zsh/custom/plugins/F-Sy-H/`               |
-| 🤖 [zsh_codex](https://github.com/tom-doerr/zsh_codex)                     | LLM-powered shell completion                               | `vendor/oh-my-zsh/custom/plugins/zsh_codex/`            |
-| 🧭 [navi](https://github.com/denisidoro/navi)                              | Interactive cheatsheet                                     | `vendor/oh-my-zsh/custom/plugins/navi/`                 |
-| 🐍 [conda-zsh-completion](https://github.com/esc/conda-zsh-completion)     | Conda completion                                           | `vendor/oh-my-zsh/custom/plugins/conda-zsh-completion/` |
+| 🧩 Project                                                                | Purpose                                                    | Location                                                |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------- |
+| 🐚[oh-my-zsh](https://ohmyz.sh)                                           | ZSH plugin & theme framework                               | `vendor/oh-my-zsh/`                                     |
+| 🪟[oh-my-tmux](https://github.com/gpakosz/.tmux)                          | Tmux config framework (TPM at `$TMUX_PLUGIN_MANAGER_PATH`) | `vendor/oh-my-tmux/`                                    |
+| 🔍[fzf-git](https://github.com/junegunn/fzf-git.sh)                       | fzf bindings for git ops                                   | `vendor/fzf-git/`                                       |
+| 🛠[bash-commons](https://github.com/gruntwork-io/bash-commons)            | Reusable bash helpers                                      | `vendor/bash-commons/`                                  |
+| 🔠[figlet-fonts](https://github.com/xero/figlet-fonts)                    | Figlet fonts for `toFiglet`                                | `vendor/figlet-fonts/`                                  |
+| ⚡[powerlevel10k](https://github.com/romkatv/powerlevel10k)               | ZSH prompt theme                                           | `vendor/oh-my-zsh/custom/themes/powerlevel10k/`         |
+| 💡[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-style suggestions                                     | `vendor/oh-my-zsh/custom/plugins/zsh-autosuggestions/`  |
+| ⌨️[fzf-tab](https://github.com/Aloxaf/fzf-tab)                            | Replace ZSH completion menu with fzf                       | `vendor/oh-my-zsh/custom/plugins/fzf-tab/`              |
+| ✏️[zsh-vi-mode](https://github.com/jeffreytse/zsh-vi-mode)                | Enhanced vi mode                                           | `vendor/oh-my-zsh/custom/plugins/zsh-vi-mode/`          |
+| 🌈[F-Sy-H](https://github.com/z-shell/F-Sy-H)                             | Feature-rich syntax highlighting                           | `vendor/oh-my-zsh/custom/plugins/F-Sy-H/`               |
+| 🤖[zsh_codex](https://github.com/tom-doerr/zsh_codex)                     | LLM-powered shell completion                               | `vendor/oh-my-zsh/custom/plugins/zsh_codex/`            |
+| 🧭[navi](https://github.com/denisidoro/navi)                              | Interactive cheatsheet                                     | `vendor/oh-my-zsh/custom/plugins/navi/`                 |
+| 🐍[conda-zsh-completion](https://github.com/esc/conda-zsh-completion)     | Conda completion                                           | `vendor/oh-my-zsh/custom/plugins/conda-zsh-completion/` |
 
 Each plugin entry in [`data/zsh.yaml`](./data/zsh.yaml) carries an `enabled` flag that controls **selective initialisation** at shell start, _without_ deinit'ing the submodule on disk.
 
@@ -206,7 +206,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on adding modules, repor
 
 ## 📚 Further Reading
 
-| 📄 Document                                | Description                           |
+| 📄 Document                                 | Description                           |
 | ------------------------------------------ | ------------------------------------- |
 | [FAQ](./docs/FAQ.md)                       | Common questions answered             |
 | [BOOTSTRAP](./docs/details/BOOTSTRAP.md)   | Full bootstrap walkthrough            |
