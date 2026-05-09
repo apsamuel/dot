@@ -131,6 +131,12 @@ fi
     exit 1
 }
 
+# dot.shell command + iCloud/TMUX exports (formerly modules/000-b-dot.sh)
+. "${DOT_MODULES}"/static/dot.sh || {
+    echo "Error: unable to load dot.shell"
+    exit 1
+}
+
 # declare -a SSH_KEYS
 SSH_KEYS=()
 # prepare files in .ssh directory for the ssh-agent
