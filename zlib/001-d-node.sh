@@ -18,11 +18,11 @@ fi
 
 N_PREFIX="${HOME}"/.node-$(arch)
 
-NODE_VERSION="${NODE_VERSION:-20.10.0}"
+NODE_VERSION="${NODE_VERSION:-24.15.0}"
 NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-x64.tar.xz"
 
 if [ "$CPU_ARCHITECTURE" = "arm64" ]; then
-    NODE_VERSION="${NODE_VERSION:-20.10.0}"
+    NODE_VERSION="${NODE_VERSION:-24.15.0}"
     NODE_URL="${NODE_URL:-https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-arm64.tar.xz}"
 fi
 
@@ -50,7 +50,7 @@ if brew list | grep node >/dev/null 2>&1 ; then
 
 fi
 
-function node::tar::install () {
+function getNodeJS () {
     # download node into a temporary DOT_DIRECTORY
     mkdir -p /tmp/node
     echo "Downloading node from $NODE_URL"
