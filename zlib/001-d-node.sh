@@ -17,13 +17,36 @@ if [[ "${DOT_DISABLE_NODE}" -eq 1 ]]; then
 fi
 
 N_PREFIX="${HOME}"/.node-$(arch)
+export N_PREFIX
+export PATH="${N_PREFIX}/bin:${PATH}"
 
-NODE_VERSION="${NODE_VERSION:-24.15.0}"
-NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-x64.tar.xz"
+# resolve desired node version: env override → local zsh.yaml → iCloud zsh.yaml → default
+desired_version="${NODE_VERSION:-}"
+if [[ -z "${desired_version}" ]] && command -v yq >/dev/null 2>&1; then
+    for _cfg in "${DOT_SHELL_DATA}" "${DOT_DIRECTORY}/data/zsh.yaml" "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/dot/shell/zsh/zsh.yaml"; do
+        [[ -n "${_cfg}" && -f "${_cfg}" ]] || continue
+        desired_version="$(yq -r '.languages.node.version // ""' "${_cfg}" 2>/dev/null)"
+        [[ -n "${desired_version}" && "${desired_version}" != "null" ]] && break
+    done
+    unset _cfg
+fi
+desired_version="${desired_version:-24.15.0}"
 
+NODE_URL="https://nodejs.org/dist/v${desired_version}/node-v${desired_version}-darwin-x64.tar.xz"
 if [ "$CPU_ARCHITECTURE" = "arm64" ]; then
-    NODE_VERSION="${NODE_VERSION:-24.15.0}"
-    NODE_URL="${NODE_URL:-https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-darwin-arm64.tar.xz}"
+    NODE_URL="https://nodejs.org/dist/v${desired_version}/node-v${desired_version}-darwin-arm64.tar.xz"
+fi
+
+# ensure desired node version is active via n
+if command -v n >/dev/null 2>&1; then
+    mkdir -p "${N_PREFIX}"
+    current_node="$(node --version 2>/dev/null | sed 's/^v//')"
+    if [[ "${current_node}" != "${desired_version}" ]]; then
+        if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+            echo "switching node to ${desired_version} via n (current: ${current_node:-none})"
+        fi
+        n "${desired_version}" >/dev/null 2>&1 || echo "⚠️  failed to activate node ${desired_version} via n"
+    fi
 fi
 
 # if node is installed via homebrew, update the PATH and LDFLAGS and CPPFLAGS to include the node binary
@@ -56,5 +79,3 @@ function getNodeJS () {
     echo "Downloading node from $NODE_URL"
     curl -L "$NODE_URL" | tar -xJ --strip-components=1 -C /tmp/node
 }
-
-export N_PREFIX
