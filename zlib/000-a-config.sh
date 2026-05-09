@@ -11,11 +11,12 @@ export MANPAGER="less -R -X -F"
 icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
 icloud_dot_directory="${icloud_directory}/dot"
 
-# Resolve config path: prefer iCloud copy of zsh.yaml, fall back to local repo copy
+# Resolve config path: prefer local repo copy of zsh.yaml, fall back to iCloud copy
 _dot_config_path="${DOT_SHELL_DATA:-${HOME}/.dot/data/zsh.yaml}"
-if [[ -f "${icloud_dot_directory}/shell/zsh/zsh.yaml" ]]; then
+if [[ ! -f "${_dot_config_path}" ]] && [[ -f "${icloud_dot_directory}/shell/zsh/zsh.yaml" ]]; then
     _dot_config_path="${icloud_dot_directory}/shell/zsh/zsh.yaml"
 fi
+export DOT_SHELL_DATA="${_dot_config_path}"
 
 getTheme() {
   yq '.theme' "${_dot_config_path}" 2>/dev/null
@@ -26,4 +27,8 @@ getCondition() {
   local target="$2"
   yq ".conditions.${condition}.${target}" "${_dot_config_path}" 2>/dev/null
 
+}
+
+printConfig() {
+  yq '.' "${_dot_config_path}" 2>/dev/null
 }
