@@ -417,14 +417,34 @@ function bootstrapCheckCloud () {
     return 0
 }
 
-# ⚫️ checks Oh My Tmux installation
+# ⚫️ installs and configures Oh My Tmux
 function bootstrapCheckOhMyTmux () {
-    local tmux_local_config="${HOME}/.tmux.conf.local"
-    local tmux_vendor_config="${HOME}/.tmux/.tmux.conf.local"
+    local vendor_tmux="${dot_bootstrap_directory}/vendor/oh-my-tmux"
+    local tmux_dir="${HOME}/.tmux"
 
-    ln -s -f "${tmux_vendor_config}" "${tmux_local_config}"
+    if [[ ! -d "${vendor_tmux}" ]]; then
+        echo "❌ vendor/oh-my-tmux not found — run bootstrapInitSubmodules first"
+        return 1
+    fi
+
+    # back up an existing non-symlink ~/.tmux directory
+    if [[ -d "${tmux_dir}" && ! -L "${tmux_dir}" ]]; then
+        echo "🛠️ backing up existing ~/.tmux directory..."
+        dryrun mv "${tmux_dir}" "${tmux_dir}.bak"
+    fi
+
+    # ~/.tmux → vendor (needed for TPM plugin directory)
+    ensureSymlink "${vendor_tmux}" "${tmux_dir}" || {
+        echo "❌  oh-my-tmux installation failed"
+        return 1
+    }
+
+    # link config files directly to vendor paths
+    dryrun ln -sf "${vendor_tmux}/.tmux.conf"       "${HOME}/.tmux.conf"
+    dryrun ln -sf "${vendor_tmux}/.tmux.conf.local" "${HOME}/.tmux.conf.local"
+
     # start a new tmux session, and install plugins
-    if tmux has-session -t bootstrap; then
+    if tmux has-session -t bootstrap 2>/dev/null; then
         tmux kill-session -t bootstrap
     fi
 
@@ -963,30 +983,7 @@ function bootstrapInstallOhMyZsh () {
     fi
 }
 
-# ⚫️ installs oh-my-tmux
-function bootstrapInstallOhMyTmux () {
-    local vendor_tmux="${dot_bootstrap_directory}/vendor/oh-my-tmux"
-    local target="${HOME}/.tmux"
-
-    if [[ ! -d "${vendor_tmux}" ]]; then
-        echo "❌ vendor/oh-my-tmux not found — run bootstrapInitSubmodules first"
-        return 1
-    fi
-
-    if [[ -d "${target}" && ! -L "${target}" ]]; then
-        echo "🛠️ backing up existing ~/.tmux directory..."
-        dryrun mv "${target}" "${target}.bak"
-    fi
-
-    if ensureSymlink "${vendor_tmux}" "${target}"; then
-        dryrun ln -sf "${target}/.tmux.conf" "${HOME}/.tmux.conf"
-        echo "✅  oh-my-tmux is installed (via vendor symlink)"
-        return 0
-    else
-        echo "❌  oh-my-tmux installation failed"
-        return 1
-    fi
-}
+# NOTE: bootstrapInstallOhMyTmux was consolidated into bootstrapCheckOhMyTmux
 
 # ⚫️ installs powerlevel10k
 function bootstrapInstallPowershell10K () {
