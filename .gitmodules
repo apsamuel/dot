@@ -13,3 +13,6 @@
 [submodule "vendor/figlet-fonts"]
 	path = vendor/figlet-fonts
 	url = git@github.com:xero/figlet-fonts.git
+[submodule "vendor/vim"]
+	path = vendor/vim
+	url = git@github-personal.com:apsamuel/vim.git
