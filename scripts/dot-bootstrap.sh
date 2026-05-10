@@ -28,23 +28,55 @@ icloud_link="${HOME}/iCloud"
 ICLOUD=${ICLOUD:-${icloud_link}}
 
 
+# Detect whether this file is being sourced or executed.
+# Safe under both bash and zsh; never call `exit` from a sourced file.
+_dot_bootstrap_is_sourced () {
+    # bash: BASH_SOURCE[0] differs from $0 when sourced
+    if [ -n "${BASH_SOURCE[0]:-}" ]; then
+        [ "${BASH_SOURCE[0]}" != "${0}" ]
+        return $?
+    fi
+    # zsh: ZSH_EVAL_CONTEXT contains "file" when sourced
+    case "${ZSH_EVAL_CONTEXT:-}" in
+        *:file:*|*:file) return 0 ;;
+    esac
+    return 1
+}
+
 if [ ! -d "${dot_bootstrap_directory}" ]; then
     echo "❌  ${dot_bootstrap_directory} does not exist"
-    exit 1
+    if _dot_bootstrap_is_sourced; then
+        return 1 2>/dev/null || true
+    else
+        exit 1
+    fi
 fi
 
-. "${dot_bootstrap_directory}/modules/static/lib/internal.sh"
+if [ -r "${dot_bootstrap_directory}/modules/static/lib/internal.sh" ]; then
+    . "${dot_bootstrap_directory}/modules/static/lib/internal.sh"
+fi
 
-# resolve a Brewfile path based on CPU architecture
+# resolve the in-repo Brewfile (CLI dependencies)
 function resolveBrewfilePath () {
-    local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
-    local file="${1:-${ICLOUD}/dot/Brewfile.${arch}}"
+    local file="${1:-${dot_bootstrap_directory}/data/Brewfile}"
     if [[ -f "$file" ]]; then
         echo "$file"
-    return 0
+        return 0
     else
         echo "Brewfile not found at $file"
-    return 1
+        return 1
+    fi
+}
+
+# resolve the in-repo Brewfile.cask (graphical / cask dependencies)
+function resolveBrewfileCaskPath () {
+    local file="${1:-${dot_bootstrap_directory}/data/Brewfile.cask}"
+    if [[ -f "$file" ]]; then
+        echo "$file"
+        return 0
+    else
+        echo "Brewfile.cask not found at $file"
+        return 1
     fi
 }
 
@@ -234,7 +266,7 @@ function bootstrapDeps () {
     local brewfile
     brewfile="$(resolveBrewfilePath)"
     if [[ -z "${brewfile}" ]]; then
-        say_err "📋 no Brewfile found (checked local data/ and \$ICLOUD/dot/)"
+        say_err "📋 no Brewfile found at ${dot_bootstrap_directory}/data/Brewfile"
         return 1
     fi
 
@@ -251,7 +283,7 @@ function bootstrapCheckDependencies () {
     local brewfile
     brewfile="$(resolveBrewfilePath)"
     if [[ -z "${brewfile}" ]]; then
-        say_err "📋 no Brewfile found (checked local data/ and \$ICLOUD/dot/)"
+        say_err "📋 no Brewfile found at ${dot_bootstrap_directory}/data/Brewfile"
         return 1
     fi
 
@@ -277,7 +309,7 @@ function installDependencies () {
     local brewfile
     brewfile="$(resolveBrewfilePath)"
     if [[ -z "${brewfile}" ]]; then
-        say_err "📋 no Brewfile found (checked local data/ and \$ICLOUD/dot/)"
+        say_err "📋 no Brewfile found at ${dot_bootstrap_directory}/data/Brewfile"
         return 1
     fi
 
@@ -286,6 +318,44 @@ function installDependencies () {
         return 0
     fi
     say_err "📋 dependencies installation failed"
+    return 1
+}
+
+# checks and installs ⚫️ cask (graphical) dependencies
+# mirrors bootstrapCheckDependencies but uses data/Brewfile.cask
+function bootstrapCheckCaskDependencies () {
+    local cask_brewfile
+    cask_brewfile="$(resolveBrewfileCaskPath)"
+    if [[ -z "${cask_brewfile}" || ! -f "${cask_brewfile}" ]]; then
+        say_err "🖼  no Brewfile.cask found at ${dot_bootstrap_directory}/data/Brewfile.cask"
+        return 1
+    fi
+
+    if [[ "${dot_bootstrap_deps}" -gt 0 ]]; then
+        say_work "🖼  reinstalling brew cask bundle (DOT_DEPS=${dot_bootstrap_deps})"
+        installCaskDependencies
+    elif brew bundle check --file "${cask_brewfile}" > /dev/null 2>&1; then
+        say_skip "🖼  brew cask bundle satisfied (${cask_brewfile})"
+    else
+        say_work "🖼  brew cask bundle missing items — installing"
+        installCaskDependencies
+    fi
+}
+
+# installs ⚫️ cask (graphical) dependencies
+function installCaskDependencies () {
+    local cask_brewfile
+    cask_brewfile="$(resolveBrewfileCaskPath)"
+    if [[ -z "${cask_brewfile}" || ! -f "${cask_brewfile}" ]]; then
+        say_err "🖼  no Brewfile.cask found at ${dot_bootstrap_directory}/data/Brewfile.cask"
+        return 1
+    fi
+
+    if dryrun brew bundle install --file "${cask_brewfile}"; then
+        say_ok "🖼  cask dependencies installed"
+        return 0
+    fi
+    say_err "🖼  cask dependencies installation failed"
     return 1
 }
 
@@ -411,48 +481,50 @@ function bootstrapCheckOhMyTmux () {
 
 # ⚫️ configures figlet (idempotent: clone or pull)
 function bootstrapConfigFiglet () {
-    if [[ ! -d "$HOME"/.figlet ]]; then
-        say_work "🅰️ cloning figlet-fonts → ~/.figlet"
-        dryrun git clone git@github.com:xero/figlet-fonts.git "$HOME"/.figlet
-    else
-        say_work "🅰️ updating ~/.figlet"
-        dryrun git -C "$HOME"/.figlet pull --ff-only
-    fi
-    say_ok "🅰️ figlet is configured"
+    say_skip "🅰️ figlet fonts is configures as a vendored module ./vendor/figlet-fonts"
+    # if [[ ! -d "$HOME"/.figlet ]]; then
+    #     say_work "🅰️ cloning figlet-fonts → ~/.figlet"
+    #     dryrun git clone git@github.com:xero/figlet-fonts.git "$HOME"/.figlet
+    # else
+    #     say_work "🅰️ updating ~/.figlet"
+    #     dryrun git -C "$HOME"/.figlet pull --ff-only
+    # fi
+    # say_ok "🅰️ figlet is configured"
 }
 
 # ⚫️ configures iterm2 (idempotent: defaults are diffed; theme imports run only when not in dry-run)
 function bootstrapConfigIterm () {
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    local schemes_root="${ICLOUD}/dot/terminal/themes/iTerm2-Color-Schemes"
-    local catppuccin_root="${ICLOUD}/dot/terminal/themes/catppuccin/catppuccin"
+    say_skip "🖥️  iterm2 configuration is a work in progress"
+    # local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
+    # local schemes_root="${ICLOUD}/dot/terminal/themes/iTerm2-Color-Schemes"
+    # local catppuccin_root="${ICLOUD}/dot/terminal/themes/catppuccin/catppuccin"
 
-    # import color schemes (these scripts are themselves idempotent for already-imported schemes)
-    if [[ -x "${schemes_root}/tools/import-scheme.sh" ]]; then
-        if _is_dry; then
-            say_plan "${schemes_root}/tools/import-scheme.sh -v ${schemes_root}/schemes/"
-        else
-            say_work "🎨 importing iTerm2-Color-Schemes"
-            "${schemes_root}/tools/import-scheme.sh" -v "${schemes_root}/schemes/" >/dev/null
-        fi
-    else
-        say_warn "🎨 iTerm2-Color-Schemes import script missing (${schemes_root})"
-    fi
+    # # import color schemes (these scripts are themselves idempotent for already-imported schemes)
+    # if [[ -x "${schemes_root}/tools/import-scheme.sh" ]]; then
+    #     if _is_dry; then
+    #         say_plan "${schemes_root}/tools/import-scheme.sh -v ${schemes_root}/schemes/"
+    #     else
+    #         say_work "🎨 importing iTerm2-Color-Schemes"
+    #         "${schemes_root}/tools/import-scheme.sh" -v "${schemes_root}/schemes/" >/dev/null
+    #     fi
+    # else
+    #     say_warn "🎨 iTerm2-Color-Schemes import script missing (${schemes_root})"
+    # fi
 
-    if [[ -x "${schemes_root}/tools/import-scheme.sh" && -d "${catppuccin_root}/colors" ]]; then
-        if _is_dry; then
-            say_plan "${schemes_root}/tools/import-scheme.sh -v ${catppuccin_root}/colors/"
-        else
-            say_work "🎨 importing catppuccin schemes"
-            "${schemes_root}/tools/import-scheme.sh" -v "${catppuccin_root}/colors/" >/dev/null
-        fi
-    fi
+    # if [[ -x "${schemes_root}/tools/import-scheme.sh" && -d "${catppuccin_root}/colors" ]]; then
+    #     if _is_dry; then
+    #         say_plan "${schemes_root}/tools/import-scheme.sh -v ${catppuccin_root}/colors/"
+    #     else
+    #         say_work "🎨 importing catppuccin schemes"
+    #         "${schemes_root}/tools/import-scheme.sh" -v "${catppuccin_root}/colors/" >/dev/null
+    #     fi
+    # fi
 
-    # idempotent defaults: only writes when the value differs
-    dry_defaults_write com.googlecode.iterm2 PrefsCustomFolder       -string "${icloud_directory}/dot/terminal"
-    dry_defaults_write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool  true
+    # # idempotent defaults: only writes when the value differs
+    # dry_defaults_write com.googlecode.iterm2 PrefsCustomFolder       -string "${icloud_directory}/dot/terminal"
+    # dry_defaults_write com.googlecode.iterm2 LoadPrefsFromCustomFolder -bool  true
 
-    say_ok "🖥️  iterm2 is configured (restart iterm2 to pick up changes)"
+    # say_ok "🖥️  iterm2 is configured (restart iterm2 to pick up changes)"
 }
 
 # ⚫️ configures ssh client
@@ -655,31 +727,138 @@ function bootstrapConfigureZsh () {
 
 # ⚫️ configures bash
 function bootstrapConfigBash () {
+    local OPTIND=1
+    local dry_mode=0
+    while getopts ":nh" opt; do
+        case "${opt}" in
+            n) dry_mode=1 ;;
+            h)
+                echo "Usage: bootstrapConfigBash [-n] [-h]"
+                echo "  -n   dry-run"
+                echo "  -h   show this help message"
+                return 0
+                ;;
+            \?) echo "Invalid option: -$OPTARG" >&2; return 1 ;;
+        esac
+    done
+
+    local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"
+    if [[ ${dry_mode} -gt 0 ]]; then
+        DOT_DRY_RUN=1
+    fi
+
+    local rc_source="${dot_bootstrap_directory}/data/configs/shell/bash/rc"
     local rc="${HOME}/.bashrc"
 
-    ensureSymlink "${ICLOUD}/dot/shell/bash/rc" "${rc}" || return 1
+    if [[ ! -f "${rc_source}" ]]; then
+        say_err "rc source missing: ${rc_source}"
+        return 1
+    fi
+
+    ensureSymlink "${rc_source}" "${rc}" || return 1
     say_ok "🐚 bash shell is configured (restart open shells)"
 }
 
 # ⚫️ configures fish
 function bootstrapConfigFish () {
+    local OPTIND=1
+    local dry_mode=0
+    while getopts ":nh" opt; do
+        case "${opt}" in
+            n) dry_mode=1 ;;
+            h)
+                echo "Usage: bootstrapConfigFish [-n] [-h]"
+                echo "  -n   dry-run"
+                echo "  -h   show this help message"
+                return 0
+                ;;
+            \?) echo "Invalid option: -$OPTARG" >&2; return 1 ;;
+        esac
+    done
+
+    local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"
+    if [[ ${dry_mode} -gt 0 ]]; then
+        DOT_DRY_RUN=1
+    fi
+
+    local rc_source="${dot_bootstrap_directory}/data/configs/shell/fish/rc"
     local rc="${HOME}/.config/fish/config.fish"
+
+    if [[ ! -f "${rc_source}" ]]; then
+        say_err "rc source missing: ${rc_source}"
+        return 1
+    fi
+
     dry_mkdir "$(dirname "${rc}")"
-    ensureSymlink "${ICLOUD}/dot/shell/fish/rc" "${rc}" || return 1
+    ensureSymlink "${rc_source}" "${rc}" || return 1
     say_ok "🐟 fish shell is configured (restart open shells)"
 }
 
 # ⚫️ configures ksh
 function bootstrapConfigKsh () {
+    local OPTIND=1
+    local dry_mode=0
+    while getopts ":nh" opt; do
+        case "${opt}" in
+            n) dry_mode=1 ;;
+            h)
+                echo "Usage: bootstrapConfigKsh [-n] [-h]"
+                echo "  -n   dry-run"
+                echo "  -h   show this help message"
+                return 0
+                ;;
+            \?) echo "Invalid option: -$OPTARG" >&2; return 1 ;;
+        esac
+    done
+
+    local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"
+    if [[ ${dry_mode} -gt 0 ]]; then
+        DOT_DRY_RUN=1
+    fi
+
+    local rc_source="${dot_bootstrap_directory}/data/configs/shell/ksh/rc"
     local rc="${HOME}/.kshrc"
-    ensureSymlink "${ICLOUD}/dot/shell/ksh/rc" "${rc}" || return 1
+
+    if [[ ! -f "${rc_source}" ]]; then
+        say_err "rc source missing: ${rc_source}"
+        return 1
+    fi
+
+    ensureSymlink "${rc_source}" "${rc}" || return 1
     say_ok "🐘 ksh shell is configured (restart open shells)"
 }
 
 # ⚫️ configures csh
 function bootstrapConfigCsh () {
+    local OPTIND=1
+    local dry_mode=0
+    while getopts ":nh" opt; do
+        case "${opt}" in
+            n) dry_mode=1 ;;
+            h)
+                echo "Usage: bootstrapConfigCsh [-n] [-h]"
+                echo "  -n   dry-run"
+                echo "  -h   show this help message"
+                return 0
+                ;;
+            \?) echo "Invalid option: -$OPTARG" >&2; return 1 ;;
+        esac
+    done
+
+    local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"
+    if [[ ${dry_mode} -gt 0 ]]; then
+        DOT_DRY_RUN=1
+    fi
+
+    local rc_source="${dot_bootstrap_directory}/data/configs/shell/csh/rc"
     local rc="${HOME}/.cshrc"
-    ensureSymlink "${ICLOUD}/dot/shell/csh/rc" "${rc}" || return 1
+
+    if [[ ! -f "${rc_source}" ]]; then
+        say_err "rc source missing: ${rc_source}"
+        return 1
+    fi
+
+    ensureSymlink "${rc_source}" "${rc}" || return 1
     say_ok "🦜 csh shell is configured (restart open shells)"
 }
 
@@ -832,59 +1011,34 @@ function bootstrapCheckBrew () {
     bootstrapInstallBrew
 }
 
-# ⚫️ checks zsh installation
+# ⚫️ checks zsh installation (DEPRECATED — handled by data/Brewfile)
 function bootstrapCheckZsh () {
-    if command -v zsh &> /dev/null; then
-        say_skip "🐢 zsh already installed"
-    else
-        say_work "🐢 installing zsh"
-        bootstrapInstallZsh
-    fi
-
-    if [[ "$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")" == "zsh" ]]; then
-        say_skip "🐢 zsh is already the default login shell"
-    else
-        say_work "🐢 zsh is not the default login shell — configuring"
-        bootstrapConfigureZsh
-    fi
+    say_skip "🐢 bootstrapCheckZsh deprecated — zsh provided by data/Brewfile"
     return 0
 }
 
-# ⚫️ checks jq installation
+# ⚫️ checks jq installation (DEPRECATED — handled by data/Brewfile)
 function bootstrapCheckJq () {
-    if command -v jq &> /dev/null; then
-        say_skip "🧪 jq already installed"
-        return 0
-    fi
-    say_work "🧪 installing jq"
-    bootstrapInstallJq
+    say_skip "🧪 bootstrapCheckJq deprecated — jq provided by data/Brewfile"
+    return 0
 }
 
-# ⚫️ checks iterm2 installation
+# ⚫️ checks iterm2 installation (DEPRECATED — handled by data/Brewfile.cask)
 function bootstrapCheckIterm () {
-    if mdfind "kMDItemKind == 'Application'" 2>/dev/null | grep -q -Ei '^/Applications/[i]Term.*?.app'; then
-        say_skip "🖥️  iterm2 already installed"
-    else
-        say_work "🖥️  installing iterm2"
-        bootstrapInstallIterm || return 1
-    fi
-    bootstrapConfigIterm
+    say_skip "🖥️  bootstrapCheckIterm deprecated — iterm2 provided by data/Brewfile.cask"
+    return 0
 }
 
-# ⚫️ checks fonts installation
+# ⚫️ checks fonts installation (DEPRECATED — handled by data/Brewfile.cask)
 function bootstrapCheckFonts () {
-    true
-    true
+    say_skip "🔤 bootstrapCheckFonts deprecated — fonts provided by data/Brewfile.cask"
+    return 0
 }
 
-# ⚫️ checks iterm2 themes installation
+# ⚫️ checks iterm2 themes installation (DEPRECATED — handled by data/Brewfile.cask)
 function bootstrapCheckThemes () {
-    if [[ -d "${HOME}/.themes" ]]; then
-        say_skip "🎨 iterm2 themes already installed"
-        return 0
-    fi
-    say_work "🎨 installing iterm2 themes"
-    bootstrapInstallThemes
+    say_skip "🎨 bootstrapCheckThemes deprecated — themes provided by data/Brewfile.cask"
+    return 0
 }
 
 # ⚫️ checks oh-my-zsh installation
@@ -1102,7 +1256,8 @@ function bootstrapInitSubmodules () {
 # ⚫️ configures node environment via n
 function bootstrapConfigNode () {
     local node_version="${NODE_VERSION:-20.10.0}"
-    local n_prefix="${HOME}/.node-$(uname -m)"
+    local n_prefix
+    n_prefix="${HOME}/.node-$(uname -m)"
 
     if ! command -v n &> /dev/null; then
         say_err "🟢 n is not installed (expected via Brewfile)"
@@ -1195,10 +1350,11 @@ function bootstrapSystem() {
     __load_secrets
     bootstrapCheckBrew || return 1
     bootstrapCheckDependencies || return 1
+    bootstrapCheckCaskDependencies || return 1
     bootstrapCheckCloud || return 1
     bootstrapInitSubmodules || return 1
 
-    bootstrapCheckZsh || return 1
+    # bootstrapCheckZsh || return 1   # zsh provided by data/Brewfile
     bootstrapConfigureZsh || return 1
     bootstrapConfigBash || return 1
 
@@ -1208,17 +1364,72 @@ function bootstrapSystem() {
     bootstrapConfigPython || return 1
     bootstrapConfigNode || return 1
 
-    bootstrapCheckIterm || return 1
+    # bootstrapCheckIterm || return 1   # iterm2 provided by data/Brewfile.cask
+    bootstrapConfigIterm || return 1
     bootstrapConfigFiglet || return 1
     bootstrapCheckOhMyZsh || return 1
     bootstrapInstallOhMyZshCustomPlugins || return 1
-    bootstrapCheckPowershell10K || return 1
+
+
+    # bootstrapCheckPowershell10K || return 1
     bootstrapCheckOhMyTmux || return 1
 
     say_done "bootstrap complete"
 }
 
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+# Export every defined function so sub-shells (bash) inherit them when this
+# file has been sourced. zsh does not support `export -f`; use `typeset -fx`
+# there so the same names are marked exported within the current zsh session.
+_dot_bootstrap_export_functions () {
+    local fn
+    local fns=(
+        _is_dry dryrun
+        say_step say_info say_ok say_skip say_work say_warn say_err say_plan say_done
+        dry_mkdir dry_rm dry_rmrf dry_mv dry_cp dry_defaults_write
+        ensureSymlink
+        resolveBrewfilePath resolveBrewfileCaskPath
+        installDependencies installCaskDependencies
+        bootstrapPrint bootstrapInfo bootstrapDeps
+        bootstrapCheckBrew bootstrapInstallBrew
+        bootstrapCheckDependencies bootstrapCheckCaskDependencies
+        bootstrapCheckCloud bootstrapLinkCloud
+        bootstrapCheckJq bootstrapInstallJq
+        bootstrapCheckZsh bootstrapInstallZsh bootstrapConfigureZsh
+        bootstrapConfigBash bootstrapConfigCsh bootstrapConfigKsh
+        bootstrapConfigFish bootstrapConfigPwsh
+        bootstrapConfigSsh bootstrapConfigGit bootstrapConfigGh
+        bootstrapConfigPython bootstrapConfigNode
+        bootstrapCheckIterm bootstrapInstallIterm bootstrapConfigIterm
+        bootstrapConfigFiglet
+        bootstrapCheckOhMyZsh bootstrapInstallOhMyZsh bootstrapConfigOhMyZsh
+        bootstrapCheckOhMyZshPlugin bootstrapInstallOhMyZshPlugin
+        bootstrapListOhMyZshPlugin bootstrapListOhMyZshPluginConfiguredPlugins
+        bootstrapInstallOhMyZshCustomPlugins bootstrapConfigZshCustomPlugins
+        bootstrapCheckPowershell10K bootstrapInstallPowershell10K bootstrapConfigPowershell10K
+        bootstrapCheckOhMyTmux
+        bootstrapCheckThemes bootstrapInstallThemes
+        bootstrapCheckFonts bootstrapInstallFonts
+        bootstrapCheckVim bootstrapInstallVim bootstrapConfigVim
+        bootstrapCheckNeovim bootstrapInstallNeovim bootstrapConfigNeovim
+        bootstrapInitSubmodules
+        bootstrapSystem
+    )
+    if [ -n "${BASH_VERSION:-}" ]; then
+        for fn in "${fns[@]}"; do
+            # only export functions that are actually defined
+            declare -F "${fn}" >/dev/null 2>&1 && export -f "${fn}" 2>/dev/null || true
+        done
+    elif [ -n "${ZSH_VERSION:-}" ]; then
+        for fn in "${fns[@]}"; do
+            typeset -f "${fn}" >/dev/null 2>&1 && typeset -fx "${fn}" 2>/dev/null || true
+        done
+    fi
+}
+
+if _dot_bootstrap_is_sourced; then
+    # Sourced: expose functions, do NOT run any configuration steps.
+    _dot_bootstrap_export_functions
+else
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -n|--dry-run)
