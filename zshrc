@@ -18,14 +18,9 @@
 # shellcheck disable=SC2207
 
 
-DOT_INIT_DIR=$(pwd -P)
-# shell start time
-DOT_INIT_START_TIME=$(date +%s)
 
-# enable zsh completions
-# autoload -U +X bashcompinit && bashcompinit
+# early exit if critical environment variables are not set
 
-# baseline conditions
 if [ -z "$HOME"  ]; then
     echo "Error: HOME environment variable not set"
     exit 1
@@ -42,28 +37,19 @@ if [ -z "$SHELL" ]; then
 fi
 
 
+# what path are we running from?
+DOT_INIT_DIR=$(pwd -P)
 
-# iCloud references
-ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
-ICLOUD_DIR="${ICLOUD}" # for backward compatibility
-ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
-ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
-ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
-export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
+# Captures the start time for benchmarking
+DOT_INIT_START_TIME=$(date +%s)
 
-# export TERM=xterm-256color
-export MANPATH="/usr/local/man:$MANPATH"
-export HISTSIZE=1000000000
-export HISTFILESIZE=1000000000
-export SAVEHIST=$HISTSIZE
-export HISTFILE="$HOME"/.zsh_history
-GPG_TTY=$(tty)
-export GPG_TTY
-export LANG=en_US.UTF-8
-export EDITOR=vim
+# Enables zsh completions
+# autoload -U +X bashcompinit && bashcompinit
 
-# TODO: this is a dependency on the pygmentize tool, which neds to be installed separately. We should either remove this dependency or add it to the bootstrap process
-export ZSH_COLORIZE_TOOL=pygmentize
+# TODO: this is a dependency on the pygmentize tool, which neds to be installed separately.
+# TODO: We should either remove this dependency or add it to the bootstrap process
+# export ZSH_COLORIZE_TOOL=pygmentize
+
 # PAGER / MANPAGER — kept as plain less (set via modules/000-a-config.sh).
 # Avoid bat here: bat-as-pager breaks automated processes that pipe through $PAGER.
 # Use `cless` for interactive syntax-highlighted paging.
