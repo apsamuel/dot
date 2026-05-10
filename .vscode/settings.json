@@ -1,27 +1,4 @@
 {
-  "editor.tabSize": 2,
-  "editor.insertSpaces": true,
-  "editor.formatOnSave": true,
-  "files.eol": "\n",
-  "files.insertFinalNewline": true,
-  "files.trimTrailingWhitespace": true,
-  "files.watcherExclude": {
-    "**/target/**": true,
-    "**/node_modules/**": true,
-  },
-  // Exclude node_modules and vendor directories from search results, and also exclude any files with the .code-search extension.
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/vendor": true,
-    "**/*.code-search": true
-  },
-  "rust-analyzer.linkedProjects": [
-    "${workspaceFolder}/turtle/Cargo.toml"
-  ],
-  "[rust]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "rust-lang.rust-analyzer"
-  },
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features",
     "editor.formatOnSave": true
@@ -30,28 +7,59 @@
     "editor.defaultFormatter": "vscode.json-language-features",
     "editor.formatOnSave": true
   },
-  "[yaml]": {
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true
   },
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format",
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2
   },
-  "shellcheck.enable": true,
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2
+  },
+  "editor.formatOnSave": true,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/target/**": true
+  },
+  "git.detectSubmodules": false,
+  "git.repositoryScanIgnoredFolders": [
+    "node_modules",
+    "vendor/oh-my-tmux/plugins",
+    "vendor/oh-my-zsh/custom/plugins",
+    "vendor/oh-my-zsh/custom/themes",
+    "vendor/vim/pack"
+  ],
+  "python.analysis.typeCheckingMode": "standard",
+  "rust-analyzer.linkedProjects": [
+    "${workspaceFolder}/turtle/Cargo.toml"
+  ],
+  // Exclude node_modules and vendor directories from search results, and also exclude any files with the .code-search extension.
+  "search.exclude": {
+    "**/*.code-search": true,
+    "**/node_modules": true,
+    "**/vendor": true
+  },
   "shellcheck.customArgs": [
     "-x"
   ],
-  "terminal.integrated.defaultProfile.osx": "zsh",
-  "terminal.integrated.cwd": "${workspaceFolder}",
+  "shellcheck.enable": true,
   // Automation terminal: used by Copilot, tasks, and extensions.
   // Bypasses the full interactive .zshrc (no oh-my-zsh, p10k, plugins, banners).
   "terminal.integrated.automationProfile.osx": {
-    "path": "/bin/zsh",
     "env": {
       "ZDOTDIR": "/Users/Aaron.Samuel/.dot/config/automation"
-    }
+    },
+    "path": "/bin/zsh"
   },
-  "python.analysis.typeCheckingMode": "standard"
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "terminal.integrated.defaultProfile.osx": "zsh"
 }
