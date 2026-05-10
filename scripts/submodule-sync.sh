@@ -238,6 +238,7 @@ cmd_init() {
         # shellcheck disable=SC2086
         run git -C "${vendor_dir}" submodule update \
             --init \
+            --recursive \
             ${vflag} \
             --jobs "${JOBS}" \
             2>&1 | sed 's/^/    /'
@@ -284,6 +285,7 @@ cmd_update() {
         # shellcheck disable=SC2086
         run git -C "${vendor_dir}" submodule update \
             --init \
+            --recursive \
             --remote \
             ${vflag} \
             --jobs "${JOBS}" \
