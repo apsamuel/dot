@@ -30,7 +30,7 @@
     "**/node_modules/**": true,
     "**/target/**": true
   },
-  "git.detectSubmodules": false,
+  "git.detectSubmodules": true,
   "git.repositoryScanIgnoredFolders": [
     "node_modules",
     "vendor/oh-my-tmux/plugins",
