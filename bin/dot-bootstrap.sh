@@ -93,119 +93,6 @@ function ensureSymlink () {
 }
 
 
-# copies zsh configuration and data files to iCloud and links them
-function deployZsh () {
-    local dry_mode=0
-    local handles_config=0
-    local handles_rc=0
-    local debug=0
-
-    while getopts ":ndhrx" opt; do
-        case ${opt} in
-
-            d)
-                handles_config=1
-                ;;
-            r)
-                handles_rc=1
-                ;;
-            n)
-                dry_mode=1
-                ;;
-            x)
-                debug=1
-                ;;
-            h)
-                echo "Usage: ${0} [-d] [-h]"
-                echo "  -d, --dry-run   Enable dry run mode"
-                echo "  -h, --help      Show this help message"
-                return 0
-                ;;
-            \?)
-                echo "Invalid option: -$OPTARG" >&2
-                ;;
-            :)
-                echo "Option -$OPTARG requires an argument." >&2
-                ;;
-        esac
-    done
-
-    if [[ -z "${ICLOUD}" ]]; then
-        echo "ICLOUD is not set"
-        return 1
-    fi
-
-
-    data_source="${dot_bootstrap_directory}/data/zsh.yaml"
-    data_dest="${icloud_directory}/dot/shell/zsh/zsh.yaml"
-
-    rc_source="${dot_bootstrap_directory}/zshrc"
-    rc_dest="${icloud_directory}/dot/shell/zsh/rc"
-
-    [[ $debug -gt 0 ]] && (
-        echo "zsh debug" && set -x
-    )
-
-    [[ $debug -gt 0 ]] && echo "deploying rc files to ${ICLOUD}"
-
-    if [[ ${handles_rc} -gt 0 ]]; then
-        # creates a link to the zshrc file in iCloud
-
-        # if dry we only print the command
-        if [[ ${dry_mode} -gt 0 ]]; then
-            echo "ln -s -f ${rc_source} ${rc_dest}"
-            return 0
-        else
-            # if the file exists, we remove it
-            if [[ -f "${rc_dest}" ]]; then
-                rm -f "${rc_dest}" && \
-                [[ $debug -gt 0 ]] && echo "🗑️  removed existing zshrc at ${rc_dest}"
-            fi
-
-            # if the file is a link, we remove it
-            if [[ -L "${rc_dest}" ]]; then
-                rm -f "${rc_dest}" && \
-                [[ $debug -gt 0 ]] && echo "🗑️  removed existing zshrc link at ${rc_dest}"
-            fi
-
-            # create a new link
-            ln -s -f "${rc_source}" "${rc_dest}" && \
-            [[ $debug -gt 0 ]] && echo "✅  zshrc is deployed to ${rc_dest}"
-        fi
-    fi
-
-    if [[ ${handles_config} -gt 0 ]]; then
-
-        # if the source data is newer than the destination data, we copy it
-        if [[ -f "${data_dest}" && "${data_source}" -nt "${data_dest}" ]]; then
-            # check if we are in dry mode
-            if [[ ${dry_mode} -gt 0 ]]; then
-                echo "cp ${data_source} ${data_dest}"
-            else
-                # if the file exists, we remove it
-                if [[ -f "${data_dest}" ]]; then
-                    rm -f "${data_dest}" && \
-                    [[ $debug -gt 0 ]] && echo "🗑️  removed existing zsh.yaml at ${data_dest}"
-                fi
-
-                # copy the data file to the destination
-                cp "${data_source}" "${data_dest}" && \
-                [[ $debug -gt 0 ]] && echo "✅  zsh.yaml is deployed to ${data_dest}"
-            fi
-            # rm -f "${data_dest}" && \
-            # [[ $debug -gt 0 ]] && echo "🗑️  removed existing zsh.json at ${data_dest}"
-        fi
-
-    fi
-
-    # always relink the zshrc file to iCloud
-    # ln -s -f "${ICLOUD}/dot/shell/zsh/rc" "${HOME}/.zshrc" && \
-    # [[ $debug -gt 0 ]] && echo "✅  zshrc is deployed to ${ICLOUD}/dot/shell/zsh/rc"
-
-    return 0
-
-}
-
 # ⚫️ preflight checks and information
 function bootstrapInfo () {
     # we will build up a status string and print it
@@ -574,24 +461,134 @@ function bootstrapConfigGh () {
 }
 
 # ⚫️ configures zsh
-function bootstrapConfigZsh () {
-    local rc="${HOME}/.zshrc"
-    local zsh_bin
-    zsh_bin="$(command -v zsh)"
+#
+# Links the git-tracked zshrc (`$DOT_DIRECTORY/zshrc`) to `~/.zshrc` and,
+# optionally, mirrors `data/zsh.yaml` into iCloud (the only zsh artifact we
+# still duplicate there). The legacy iCloud `rc` file is no longer written;
+# git is the source of truth for the rc.
+#
+# Flags:
+#   -r   link `$DOT_DIRECTORY/zshrc` -> `~/.zshrc` (default when neither
+#        -r nor -d is supplied)
+#   -d   mirror `$DOT_DIRECTORY/data/zsh.yaml` ->
+#        `$ICLOUD/dot/shell/zsh/zsh.yaml` (only when source is newer)
+#   -n   dry-run
+#   -x   debug / xtrace
+#   -h   show usage
+function bootstrapConfigureZsh () {
+    local dry_mode=0
+    local handles_config=0
+    local handles_rc=0
+    local debug=0
+    local OPTIND=1
 
-    if [[ -z "${zsh_bin}" ]]; then
-        echo "❌ zsh is not installed"
+    while getopts ":ndhrx" opt; do
+        case ${opt} in
+            d) handles_config=1 ;;
+            r) handles_rc=1 ;;
+            n) dry_mode=1 ;;
+            x) debug=1 ;;
+            h)
+                echo "Usage: bootstrapConfigureZsh [-r] [-d] [-n] [-x] [-h]"
+                echo "  -r   link \$DOT_DIRECTORY/zshrc -> ~/.zshrc (default)"
+                echo "  -d   mirror data/zsh.yaml -> \$ICLOUD/dot/shell/zsh/zsh.yaml"
+                echo "  -n   dry-run"
+                echo "  -x   debug"
+                echo "  -h   show this help message"
+                return 0
+                ;;
+            \?) echo "Invalid option: -$OPTARG" >&2 ;;
+            :)  echo "Option -$OPTARG requires an argument." >&2 ;;
+        esac
+    done
+
+    # default action: link rc
+    if [[ ${handles_rc} -eq 0 && ${handles_config} -eq 0 ]]; then
+        handles_rc=1
+    fi
+
+    # honor a function-scoped DOT_DRY_RUN so dryrun/ensureSymlink see -n
+    local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"
+    if [[ ${dry_mode} -gt 0 ]]; then
+        DOT_DRY_RUN=1
+    fi
+
+    [[ ${debug} -gt 0 ]] && set -x
+
+    local rc_source="${dot_bootstrap_directory}/zshrc"
+    local rc_target="${HOME}/.zshrc"
+
+    if [[ ! -f "${rc_source}" ]]; then
+        echo "❌ rc source missing: ${rc_source}"
+        [[ ${debug} -gt 0 ]] && set +x
         return 1
     fi
 
-    # change users shell
-    if [[ "$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")" != "zsh" ]]; then
-        chsh -s "${zsh_bin}" "${USER}"
+    local zsh_bin
+    zsh_bin="$(command -v zsh)"
+    if [[ -z "${zsh_bin}" ]]; then
+        echo "❌ zsh is not installed"
+        [[ ${debug} -gt 0 ]] && set +x
+        return 1
     fi
 
-    ensureSymlink "${dot_bootstrap_directory}/zshrc" "${rc}" || return 1
-    # ln -s -f "${icloud_link}/dot/shell/zsh/rc" "${rc}" && \
+    # ensure user's login shell is zsh
+    local current_shell
+    current_shell="$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")"
+    if [[ "${current_shell}" != "zsh" ]]; then
+        dryrun chsh -s "${zsh_bin}" "${USER}"
+    fi
+
+    # one-shot deprecation notice for legacy iCloud rc
+    if [[ -n "${ICLOUD:-}" && -e "${ICLOUD}/dot/shell/zsh/rc" ]]; then
+        echo "⚠️  iCloud zsh rc is deprecated; the git-tracked ${rc_source} is now canonical."
+        echo "   You may safely remove ${ICLOUD}/dot/shell/zsh/rc once nothing references it."
+    fi
+
+    # -r: link git-tracked zshrc -> ~/.zshrc
+    if [[ ${handles_rc} -gt 0 ]]; then
+        if ! ensureSymlink "${rc_source}" "${rc_target}"; then
+            echo "❌  failed to link ${rc_source} -> ${rc_target}"
+            [[ ${debug} -gt 0 ]] && set +x
+            return 1
+        fi
+        [[ ${debug} -gt 0 ]] && echo "✅  ${rc_target} -> ${rc_source}"
+    fi
+
+    # -d: mirror data/zsh.yaml to iCloud (still treated as duplicated data)
+    if [[ ${handles_config} -gt 0 ]]; then
+        if [[ -z "${ICLOUD:-}" ]]; then
+            echo "❌ ICLOUD is not set; cannot mirror zsh.yaml"
+            [[ ${debug} -gt 0 ]] && set +x
+            return 1
+        fi
+
+        local data_source="${dot_bootstrap_directory}/data/zsh.yaml"
+        local data_dest="${icloud_directory}/dot/shell/zsh/zsh.yaml"
+        local data_dest_dir="${data_dest%/*}"
+
+        if [[ ! -f "${data_source}" ]]; then
+            echo "❌ data source missing: ${data_source}"
+            [[ ${debug} -gt 0 ]] && set +x
+            return 1
+        fi
+
+        if [[ ! -d "${data_dest_dir}" ]]; then
+            dryrun mkdir -p "${data_dest_dir}"
+        fi
+
+        # copy only when source is newer (or destination missing)
+        if [[ ! -f "${data_dest}" || "${data_source}" -nt "${data_dest}" ]]; then
+            dryrun cp "${data_source}" "${data_dest}"
+            [[ ${debug} -gt 0 ]] && echo "✅  ${data_source} -> ${data_dest}"
+        else
+            [[ ${debug} -gt 0 ]] && echo "⏭️  ${data_dest} is up to date"
+        fi
+    fi
+
+    [[ ${debug} -gt 0 ]] && set +x
     echo "✅  zsh shell is configured, please restart any open shells!"
+    return 0
 }
 
 # ⚫️ configures bash
@@ -831,7 +828,7 @@ function bootstrapCheckZsh () {
 
     if [[ ! "$(basename -- "$(dscl . -read "$HOME" UserShell | awk '{print $NF}')")" == "zsh" ]]; then
         echo "🛠️ zsh is not the default terminal..."
-        bootstrapConfigZsh
+        bootstrapConfigureZsh
     else
         echo "✅ zsh is the default terminal"
     fi
@@ -1254,7 +1251,7 @@ function bootstrapSystem() {
     bootstrapInitSubmodules || return 1
 
     bootstrapCheckZsh || return 1
-    bootstrapConfigZsh || return 1
+    bootstrapConfigureZsh || return 1
     bootstrapConfigBash || return 1
 
     bootstrapConfigSsh || return 1
