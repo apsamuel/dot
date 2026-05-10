@@ -301,7 +301,7 @@ USAGE
             ;;
 
         vendor)
-            local vendor_script="${DOT_DIR}/scripts/submodule-sync.sh"
+            local vendor_script="${DOT_DIR}/scripts/dot-submodule-sync.sh"
             if [[ ! -x "${vendor_script}" ]]; then
                 if [[ -r "${vendor_script}" ]]; then
                     bash "${vendor_script}" "$@"
