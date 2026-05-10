@@ -13,7 +13,7 @@ export DOT_MODULES="${DOT_MODULES:-${DOT_ROOT}/modules}"
 export DOT_BIN="${DOT_BIN:-${DOT_ROOT}/bin}"
 # shellcheck disable=SC2046
 export DOT_MODULES_FILES=($(find "${DOT_MODULES}" -maxdepth 1 -type f -name "*.sh" | sort -d))
-export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/bin/dot-bootstrap.sh}"
+export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/scripts/dot-bootstrap.sh}"
 
 # --- shell settings ---
 export DOT_SHELL="${DOT_SHELL:-zsh}"
@@ -43,6 +43,8 @@ export DOT_DISABLE_MAC="${DOT_DISABLE_MAC:-0}"
 export DOT_DISABLE_P10K="${DOT_DISABLE_P10K:-0}"
 export DOT_DISABLE_NODE="${DOT_DISABLE_NODE:-0}"
 export DOT_DISABLE_NETWORK="${DOT_DISABLE_NETWORK:-0}"
+export DOT_DISABLE_TMUX="${DOT_DISABLE_TMUX:-0}"
+export DOT_DISABLE_VIMODE="${DOT_DISABLE_VIMODE:-0}"
 
 # --- tool version defaults ---
 export DOT_PYTHON_UV_DEFAULT_VERSION="${DOT_PYTHON_UV_DEFAULT_VERSION:-3.13}"

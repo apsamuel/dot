@@ -2,6 +2,15 @@
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
 
+# Skip tmux helpers entirely when DOT_DISABLE_TMUX=1 (set automatically in
+# VSCode/Copilot terminals — tmux's per-pane alt-screen breaks output capture).
+if [[ "${DOT_DISABLE_TMUX}" -eq 1 ]]; then
+    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+        echo "tmux module disabled (DOT_DISABLE_TMUX=1)"
+    fi
+    return 0
+fi
+
 # point oh-my-tmux / tpm at an XDG-style plugin dir so we don't need ~/.tmux
 export TMUX_PLUGIN_MANAGER_PATH="${XDG_DATA_HOME:-${HOME}/.local/share}/tmux/plugins"
 

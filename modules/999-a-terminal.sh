@@ -8,6 +8,13 @@ function compileTerminalInfo() {
 
 # fzf
 function configureFzf() {
+    # fzf key-bindings install widgets that can pop the alternate screen
+    # buffer for previews. Skip entirely in non-interactive / Copilot
+    # terminals where DOT_INTERACTIVE=0 — there's no human at the keyboard
+    # to use CTRL-R / CTRL-T / ALT-C anyway.
+    if [[ "${DOT_INTERACTIVE}" -eq 0 ]]; then
+        return 0
+    fi
     if  command -v fzf  >/dev/null 2>&1; then
         # get currently installed version
         # echo "fzf version: $(brew info fzf --json | jq -r '.[0].linked_keg')"
@@ -22,7 +29,7 @@ function configureFzf() {
     return 0
 }
 
-if  command -v fzf  >/dev/null 2>&1; then
+if [[ "${DOT_INTERACTIVE}" -ne 0 ]] && command -v fzf >/dev/null 2>&1; then
     # get currently installed version
     # echo "fzf version: $(brew info fzf --json | jq -r '.[0].linked_keg')"
     fzf_version="$(brew info fzf --json | jq -r '.[0].linked_keg')"
