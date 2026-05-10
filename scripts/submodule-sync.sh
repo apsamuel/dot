@@ -112,7 +112,6 @@ cmd_status() {
 }
 
 # ── subcommand: list ──────────────────────────────────────────────────────────
-
 cmd_list() {
     _log "registered submodules in ${REPO_ROOT}${TARGET:+ [filter: ${TARGET}]}"
     echo
