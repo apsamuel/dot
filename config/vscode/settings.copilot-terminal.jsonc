@@ -1,0 +1,45 @@
+// Copy these keys into your VSCode user settings.json to route Copilot's
+// agent terminal AND VSCode automation tasks through ~/.dot/config/automation.
+//
+// Why: tmux, p10k, zsh-vi-mode, F-Sy-H, and fzf-tab can switch the terminal
+// into the alternate screen buffer (ESC[?1049h), which breaks Copilot's
+// command-output capture ("The command opened the alternate buffer, so I
+// couldn't run ..."). The minimal automation profile avoids all of that.
+//
+// Pair this with the early guard block in ~/.dot/zshrc, which auto-disables
+// tmux/decorations whenever COPILOT_AGENT_TERMINAL=1 or TERM_PROGRAM=vscode.
+{
+  "chat.tools.terminal.terminalProfile.osx": "zsh-copilot",
+  "terminal.integrated.automationProfile.osx": {
+    "icon": "light-bulb",
+    "path": "/opt/homebrew/bin/zsh",
+    "args": [
+      "-l"
+    ],
+    "env": {
+      "ZDOTDIR": "${env:HOME}/.dot/config/automation",
+      "DOT_INTERACTIVE": "0",
+      "DOT_DISABLE_TMUX": "1",
+      "COPILOT_AGENT_TERMINAL": "1",
+      "TERM": "xterm-256color"
+    }
+  },
+  "terminal.integrated.profiles.osx": {
+    "zsh-copilot": {
+      "path": "/opt/homebrew/bin/zsh",
+      "args": [
+        "-l"
+      ],
+      "icon": "copilot",
+      "color": "terminal.ansiMagenta",
+      "overrideName": true,
+      "env": {
+        "ZDOTDIR": "${env:HOME}/.dot/config/automation",
+        "DOT_INTERACTIVE": "0",
+        "DOT_DISABLE_TMUX": "1",
+        "COPILOT_AGENT_TERMINAL": "1",
+        "TERM": "xterm-256color"
+      }
+    }
+  }
+}
