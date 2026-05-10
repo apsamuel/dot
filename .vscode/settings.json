@@ -36,7 +36,7 @@
     // "vendor/oh-my-tmux/plugins",
     // "vendor/oh-my-zsh/custom/plugins",
     // "vendor/oh-my-zsh/custom/themes",
-    "vendor/vim/pack"
+    // "vendor/vim/pack"
   ],
   "python.analysis.typeCheckingMode": "standard",
   "rust-analyzer.linkedProjects": [
