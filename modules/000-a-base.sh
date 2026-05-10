@@ -1,6 +1,16 @@
 #shellcheck shell=bash
 #% description: base variables and functions
 
+# export TERM=xterm-256color
+export MANPATH="/usr/local/man:$MANPATH"
+export HISTSIZE=1000000000
+export HISTFILESIZE=1000000000
+export SAVEHIST=$HISTSIZE
+export HISTFILE="$HOME"/.zsh_history
+GPG_TTY=$(tty)
+export GPG_TTY
+export LANG=en_US.UTF-8
+export EDITOR=vim
 
 directory=$(dirname "$0")
 library=$(basename "$0")
@@ -8,6 +18,8 @@ library=$(basename "$0")
 if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
+
+
 
 ZSH="$HOME/.dot/vendor/oh-my-zsh"
 ZSH_CUSTOM="$ZSH/custom"
@@ -18,6 +30,14 @@ ZSH_SAVEHIST=1000000
 HISTFILE="$HOME/.zsh_history"
 HISTSIZE=${ZSH_HISTSIZE}
 SAVEHIST=${ZSH_SAVEHIST}
+
+# iCloud references
+ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
+ICLOUD_DIR="${ICLOUD}" # for backward compatibility
+ICLOUD_DOCUMENTS="${ICLOUD}/Documents"
+ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
+ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
+export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
 
 # TODO: validate that these variables are set correctly and exit with an error if not
 # TODO: ensure we consume our submodules correctly and exit with an error if they are not present
