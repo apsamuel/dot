@@ -92,8 +92,12 @@ cmd_status() {
     printf '%-6s  %-55s  %s\n' "STATE" "PATH" "REF / COMMIT"
     printf '%-6s  %-55s  %s\n' "-----" "----" "------------"
 
+    # NOTE: inside `submodule foreach --recursive`, $toplevel is the IMMEDIATE
+    # parent's top-level while $displaypath is relative to the OUTER superproject,
+    # so joining them is wrong for nested submodules. The cwd is already the
+    # submodule directory, so just run rev-parse there.
     git -C "${REPO_ROOT}" submodule foreach --quiet --recursive \
-        'echo "${displaypath} $(git -C "${toplevel}/${displaypath}" rev-parse --short HEAD 2>/dev/null || echo "(uninitialized)")"' \
+        'echo "${displaypath} $(git rev-parse --short HEAD 2>/dev/null || echo "(uninitialized)")"' \
         2>/dev/null | while read -r path ref; do
             if [[ -n "${TARGET}" && "${path}" != "${TARGET}" && "${path}" != "${TARGET}"/* ]]; then
                 continue
