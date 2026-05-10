@@ -70,6 +70,7 @@ plugins: # oh-my-zsh plugins to load, can be overridden by users below
     - 'npm'
     - 'python'
     - 'shrink-path'
+    - 'ssh'
     - 'ssh-agent'
     - 'thefuck'
     - 'web-search'
