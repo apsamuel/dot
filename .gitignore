@@ -187,4 +187,4 @@ test/flycheck*/stdout
 /target
 .zombie
 bin/apple-vm-helper/.build
-config/automation/.zsh_history
+.zsh_history
