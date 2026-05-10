@@ -33,9 +33,9 @@
   "git.detectSubmodules": true,
   "git.repositoryScanIgnoredFolders": [
     "node_modules",
-    "vendor/oh-my-tmux/plugins",
-    "vendor/oh-my-zsh/custom/plugins",
-    "vendor/oh-my-zsh/custom/themes",
+    // "vendor/oh-my-tmux/plugins",
+    // "vendor/oh-my-zsh/custom/plugins",
+    // "vendor/oh-my-zsh/custom/themes",
     "vendor/vim/pack"
   ],
   "python.analysis.typeCheckingMode": "standard",
