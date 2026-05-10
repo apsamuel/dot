@@ -18,6 +18,7 @@ if [[ "${DOT_DISABLE_BREW}" -eq 1 ]]; then
     return
 fi
 
+
 if [[ "$OPERATING_SYSTEM" == "linux-gnu"* ]]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 elif [[ $OPERATING_SYSTEM == "darwin" && "$CPU_ARCHITECTURE" == "arm64" ]]; then
@@ -119,6 +120,18 @@ function brewCheckCask () {
     echo "Package '$1' is installed"
   else
     echo "Package '$1' is not installed"
+    return 1
+  fi
+}
+
+function brewResolveBrewfile() {
+  local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
+  local file="${1:-${ICLOUD}/dot/Brewfile.${arch}}"
+  if [[ -f "$file" ]]; then
+    echo "$file"
+    return 0
+  else
+    echo "Brewfile not found at $file"
     return 1
   fi
 }
