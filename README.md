@@ -81,14 +81,14 @@ cd ~/.dot
 ./scripts/submodule-sync.sh status   # confirm every submodule is checked out
 
 # 3. (Optional) Preview every bootstrap action without changing your system
-DOT_DRY_RUN=1 source ./bin/dot-bootstrap.sh
+DOT_DRY_RUN=1 source ./scripts/dot-bootstrap.sh
 
 # 4. Run bootstrap for real — installs deps, symlinks ~/.zshrc + ~/.p10k.zsh,
 #    wires up vendored oh-my-zsh / oh-my-tmux, builds applevm-helper
-source ./bin/dot-bootstrap.sh
+source ./scripts/dot-bootstrap.sh
 
 # 5. (First time only) Pull language deps declared in data/zsh.yaml
-DOT_INSTALL_LANG_DEPS=1 source ./bin/dot-bootstrap.sh
+DOT_INSTALL_LANG_DEPS=1 source ./scripts/dot-bootstrap.sh
 
 # 6. Make ZSH your default shell if it isn't
 chsh -s "$(which zsh)"

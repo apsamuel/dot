@@ -102,7 +102,7 @@ These variables establish the filesystem layout of the framework and are used th
 - **Notes:** The core mechanism by which all numbered `modules/` files are loaded. Re-populated each shell start.
 
 ### `DOT_BOOTSTRAP`
-- **Default:** `$DOT_DIRECTORY/bin/dot-bootstrap.sh`
+- **Default:** `$DOT_DIRECTORY/scripts/dot-bootstrap.sh`
 - **Set in:** `modules/static/dotenv.sh`
 - **Used in:** Informational only — no module executes `$DOT_BOOTSTRAP` automatically
 - **Notes:** ⚠️ Set but only passively exported. Its value is never actually invoked by any module. Useful as a convenience reference (`source $DOT_BOOTSTRAP`) but not strictly necessary.
@@ -111,7 +111,7 @@ These variables establish the filesystem layout of the framework and are used th
 - **Default:** `$ICLOUD/dot/data.json`
 - **Set in:** `modules/static/config.sh`
 - **Used in:** `modules/000-a-config.sh` — `getTheme()` and `getCondition()` query this file via `jq`
-- **Notes:** Points to the **live** runtime config (in iCloud), not the repo template at `config/data.json`. `bin/dot-deploy-config.sh` copies the repo template to this location.
+- **Notes:** Points to the **live** runtime config (in iCloud), not the repo template at `config/data.json`. `scripts/dot-deploy-config.sh` copies the repo template to this location.
 
 ---
 
@@ -271,14 +271,14 @@ Defined in `modules/static/dotenv.sh`. No module currently reads any of these �
 These are **not** set by any `modules/` file. They are meant to be set by the caller (in the environment or a wrapper script) before invoking bootstrap or starting a shell.
 
 ### `DOT_DEPS`
-- **Consumed in:** `bin/dot-bootstrap.sh`
+- **Consumed in:** `scripts/dot-bootstrap.sh`
 - **Effect:** If set to `1`, forces re-installation of all bootstrap dependencies (brew packages, etc.)
-- **Example:** `DOT_DEPS=1 source bin/dot-bootstrap.sh`
+- **Example:** `DOT_DEPS=1 source scripts/dot-bootstrap.sh`
 
 ### `DOT_NVM_INSTALL_LTS`
-- **Consumed in:** `bin/dot-bootstrap.sh`
+- **Consumed in:** `scripts/dot-bootstrap.sh`
 - **Effect:** If set to `1`, installs the LTS version of Node.js via nvm during bootstrap
-- **Example:** `DOT_NVM_INSTALL_LTS=1 source bin/dot-bootstrap.sh`
+- **Example:** `DOT_NVM_INSTALL_LTS=1 source scripts/dot-bootstrap.sh`
 
 ### `DOT_LIBS_DIR`
 - **Consumed in:** [`modules/static/dot.sh`](../../modules/static/dot.sh) — the `dot.shell` command sources all `*.sh` files found under this path

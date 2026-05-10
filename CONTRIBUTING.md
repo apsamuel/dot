@@ -13,7 +13,7 @@ Thanks for your interest in improving `dot`. Contributions are welcome in the fo
 
 2. Run bootstrap to set up your environment:
    ```bash
-   pushd ~/.dot && source ./bin/dot-bootstrap.sh
+   pushd ~/.dot && source ./scripts/dot-bootstrap.sh
    ```
 
 3. Create a branch for your change:

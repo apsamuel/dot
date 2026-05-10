@@ -8,14 +8,16 @@
 
 ### 🧱 Bootstrap & Deployment
 
-| Script                                           | Lang | Description                                                                                                                                                                                                                  |
-| ------------------------------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`dot-bootstrap.sh`](./dot-bootstrap.sh)         | Bash | First-run installer — installs deps, symlinks configs, vendors `oh-my-zsh` & `oh-my-tmux`, sets `TMUX_PLUGIN_MANAGER_PATH`. Supports `DOT_DRY_RUN=1` / `-n` / `--dry-run`. See [BOOTSTRAP.md](../docs/details/BOOTSTRAP.md). |
-| [`dot-deploy-config.sh`](./dot-deploy-config.sh) | Bash | Copies `data/zsh.yaml` → `$ICLOUD/dot/shell/zsh/zsh.yaml`.                                                                                                                                                                   |
-| [`dot-deploy-rc.sh`](./dot-deploy-rc.sh)         | Bash | Copies repo `zshrc` → `$ICLOUD/dot/shell/zsh/rc`.                                                                                                                                                                            |
-| [`brew-bootstrap.sh`](./brew-bootstrap.sh)       | Bash | Thin wrapper around Homebrew (`install`, `uninstall`, `upgrade`, `info`).                                                                                                                                                    |
-| [`plugctl.sh`](./plugctl.sh)                     | Bash | Installs / updates oh-my-zsh themes and plugins.                                                                                                                                                                             |
-| [`python-create-env.sh`](./python-create-env.sh) | Bash | Creates a project Python venv via `uv`.                                                                                                                                                                                      |
+> 🪧 The first-run installer and iCloud deploy helpers now live in [`scripts/`](../scripts/README.md):
+> [`scripts/dot-bootstrap.sh`](../scripts/dot-bootstrap.sh),
+> [`scripts/dot-deploy-config.sh`](../scripts/dot-deploy-config.sh),
+> [`scripts/dot-deploy-rc.sh`](../scripts/dot-deploy-rc.sh).
+
+| Script                                           | Lang | Description                                                               |
+| ------------------------------------------------ | ---- | ------------------------------------------------------------------------- |
+| [`brew-bootstrap.sh`](./brew-bootstrap.sh)       | Bash | Thin wrapper around Homebrew (`install`, `uninstall`, `upgrade`, `info`). |
+| [`plugctl.sh`](./plugctl.sh)                     | Bash | Installs / updates oh-my-zsh themes and plugins.                          |
+| [`python-create-env.sh`](./python-create-env.sh) | Bash | Creates a project Python venv via `uv`.                                   |
 
 ### 🌳 Git Tools
 
@@ -60,7 +62,7 @@
 
 ## 🍎 Apple VM Helper
 
-[`applevm-helper`](./apple-vm-helper/README.md) is a compiled Swift binary that drives Apple's `Virtualization.framework` directly: start, stop, suspend, resume, status. It is the preferred provider for `ivm.py`'s `apple` backend. Build instructions live in [`apple-vm-helper/README.md`](./apple-vm-helper/README.md); the `dot-bootstrap.sh` flow can build & link it for you.
+[`applevm-helper`](./apple-vm-helper/README.md) is a compiled Swift binary that drives Apple's `Virtualization.framework` directly: start, stop, suspend, resume, status. It is the preferred provider for `ivm.py`'s `apple` backend. Build instructions live in [`apple-vm-helper/README.md`](./apple-vm-helper/README.md); the [`scripts/dot-bootstrap.sh`](../scripts/dot-bootstrap.sh) flow can build & link it for you.
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## 🌑 Overview
 
-[`bin/dot-bootstrap.sh`](../../bin/dot-bootstrap.sh) is the first-run script that installs and configures `dot` from scratch. It is **idempotent** — running it again is safe and converges on the same state.
+[`scripts/dot-bootstrap.sh`](../../scripts/dot-bootstrap.sh) is the first-run script that installs and configures `dot` from scratch. It is **idempotent** — running it again is safe and converges on the same state.
 
 ## � Full Setup (clone → first run)
 
@@ -20,14 +20,14 @@ cd ~/.dot
 ./scripts/submodule-sync.sh status    # confirm every submodule is checked out
 
 # 3. (Optional) Preview every bootstrap action — touches nothing
-DOT_DRY_RUN=1 source ./bin/dot-bootstrap.sh
+DOT_DRY_RUN=1 source ./scripts/dot-bootstrap.sh
 
 # 4. Bootstrap for real — installs deps, symlinks ~/.zshrc + ~/.p10k.zsh,
 #    wires up vendored oh-my-zsh / oh-my-tmux, builds applevm-helper
-source ./bin/dot-bootstrap.sh
+source ./scripts/dot-bootstrap.sh
 
 # 5. (First time) Pull language deps declared in data/zsh.yaml
-DOT_INSTALL_LANG_DEPS=1 source ./bin/dot-bootstrap.sh
+DOT_INSTALL_LANG_DEPS=1 source ./scripts/dot-bootstrap.sh
 
 # 6. Make ZSH your default shell if it isn't
 chsh -s "$(which zsh)"
@@ -47,18 +47,18 @@ exec zsh
 git clone --recurse-submodules https://github.com/apsamuel/dot.git ~/.dot
 
 # Preview every action without changing your system
-DOT_DRY_RUN=1 source ~/.dot/bin/dot-bootstrap.sh
+DOT_DRY_RUN=1 source ~/.dot/scripts/dot-bootstrap.sh
 # or
-~/.dot/bin/dot-bootstrap.sh -n
+~/.dot/scripts/dot-bootstrap.sh -n
 
 # Real run
-source ~/.dot/bin/dot-bootstrap.sh
+source ~/.dot/scripts/dot-bootstrap.sh
 
 # Force install / refresh of bootstrap dependencies (brew, gh, yq…)
-DOT_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh
+DOT_DEPS=1 source ~/.dot/scripts/dot-bootstrap.sh
 
 # Install language deps (Python via uv, Node via npm) declared in data/zsh.yaml
-DOT_INSTALL_LANG_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh
+DOT_INSTALL_LANG_DEPS=1 source ~/.dot/scripts/dot-bootstrap.sh
 ```
 
 > 🚨 Source it (`source …`) — don't execute it. The script exports environment variables that need to land in your current shell.
@@ -98,8 +98,8 @@ DOT_INSTALL_LANG_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh
 
 | Flag               | Equivalent                                               | Effect                                                  |
 | ------------------ | -------------------------------------------------------- | ------------------------------------------------------- |
-| `-d`               | [`dot-deploy-config.sh`](../../bin/dot-deploy-config.sh) | Push `data/zsh.yaml` → `$ICLOUD/dot/shell/zsh/zsh.yaml` |
-| `-r`               | [`dot-deploy-rc.sh`](../../bin/dot-deploy-rc.sh)         | Push `zshrc` → `$ICLOUD/dot/shell/zsh/rc`               |
+| `-d`               | [`dot-deploy-config.sh`](../../scripts/dot-deploy-config.sh) | Push `data/zsh.yaml` → `$ICLOUD/dot/shell/zsh/zsh.yaml` |
+| `-r`               | [`dot-deploy-rc.sh`](../../scripts/dot-deploy-rc.sh)         | Push `zshrc` → `$ICLOUD/dot/shell/zsh/rc`               |
 | `-n` / `--dry-run` | `DOT_DRY_RUN=1`                                          | Preview only                                            |
 
 ## 🌱 Submodule Workflow
@@ -165,10 +165,10 @@ Limitations: SIGTERM stop, no suspend/resume, status only checks bundle presence
 ## 🧪 Re-running Bootstrap
 
 ```bash
-source ~/.dot/bin/dot-bootstrap.sh                         # symlinks + checks
-DOT_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh              # also refresh brew/gh/yq
-DOT_INSTALL_LANG_DEPS=1 source ~/.dot/bin/dot-bootstrap.sh # plus language deps
-DOT_DRY_RUN=1 source ~/.dot/bin/dot-bootstrap.sh           # preview only
+source ~/.dot/scripts/dot-bootstrap.sh                         # symlinks + checks
+DOT_DEPS=1 source ~/.dot/scripts/dot-bootstrap.sh              # also refresh brew/gh/yq
+DOT_INSTALL_LANG_DEPS=1 source ~/.dot/scripts/dot-bootstrap.sh # plus language deps
+DOT_DRY_RUN=1 source ~/.dot/scripts/dot-bootstrap.sh           # preview only
 ```
 
 ## 🧯 Troubleshooting
@@ -177,3 +177,4 @@ DOT_DRY_RUN=1 source ~/.dot/bin/dot-bootstrap.sh           # preview only
 - 🍺 **Brew packages missing** — `DOT_DEPS=1` or run `brew bundle --file=~/.dot/data/Brewfile`.
 - 🌱 **Vendored submodules missing** — `./scripts/submodule-sync.sh init`.
 - 🧾 **`yq: command not found`** — `brew install yq`, then re-source `~/.zshrc`.
+- 🩺 **Anything else missing?** — run [`./scripts/dot-deps-report.sh`](../../scripts/README.md#-dot-deps-reportsh) to audit every Tier 0–4 dependency. Full reference in [DEPENDENCIES.md](./DEPENDENCIES.md).

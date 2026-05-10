@@ -27,9 +27,9 @@ Installs dependencies via Homebrew (incl. `yq`, `gh`), initialises every submodu
 Yes — that's exactly what `DOT_DRY_RUN` is for:
 
 ```bash
-DOT_DRY_RUN=1 source ./bin/dot-bootstrap.sh
+DOT_DRY_RUN=1 source ./scripts/dot-bootstrap.sh
 # or
-./bin/dot-bootstrap.sh -n
+./scripts/dot-bootstrap.sh -n
 ```
 
 Every action is printed instead of executed.
@@ -48,6 +48,10 @@ Run [`scripts/submodule-sync.sh init`](../scripts/README.md). It fetches every r
 > **Do I need Homebrew?**
 
 On macOS, yes. Disable it with `DOT_DISABLE_BREW=1` if you manage packages yourself, but several modules assume Homebrew paths.
+
+> **What system dependencies does `dot` actually expect?**
+
+The full tier-by-tier reference lives in [`docs/details/DEPENDENCIES.md`](./details/DEPENDENCIES.md). To audit your machine right now: `./scripts/dot-deps-report.sh`.
 
 > **Can I use this on Linux?**
 

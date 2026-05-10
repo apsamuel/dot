@@ -11,7 +11,7 @@
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 🧾 [`zsh.yaml`](./zsh.yaml)                   | **Source of truth** for the ZSH environment — theme, plugins (with `enabled` flags), splash screen settings, language deps. Parsed at runtime by `yq`. |
 | 🪞 [`zsh.json`](./zsh.json)                   | Legacy JSON mirror of `zsh.yaml` (kept for backward compatibility — _YAML wins_).                                                                      |
-| 🍺 [`Brewfile`](./Brewfile)                   | Homebrew bundle consumed by `bin/dot-bootstrap.sh` (and resolvable from iCloud).                                                                       |
+| 🍺 [`Brewfile`](./Brewfile)                   | Homebrew bundle consumed by `scripts/dot-bootstrap.sh` (and resolvable from iCloud).                                                                       |
 | 💭 [`quotes.yaml`](./quotes.yaml)             | Splash-screen quotes (rendered by `termQuote`).                                                                                                        |
 | 🪞 `quotes.json`                              | Legacy JSON mirror of `quotes.yaml`.                                                                                                                   |
 | 🖼 [`images/`](./images/)                     | Branding assets (`black-sun.jpg`, etc.) used in docs.                                                                                                  |
@@ -26,9 +26,9 @@
 `zsh.yaml` defines the shape of every interactive `dot` shell. It is parsed by `yq` (a hard bootstrap dependency) and consulted by:
 
 - 🐚 `zshrc` → reads `.theme` to set `$ZSH_THEME`
-- 🚀 `bin/dot-bootstrap.sh` → reads `.zsh.plugins.builtin` & `.zsh.plugins.custom` to enable / disable oh-my-zsh modules
-- 🐍 `bin/dot-bootstrap.sh` → reads `.languages.python.packages` (when `DOT_INSTALL_LANG_DEPS=1`) to seed the base venv
-- 🪟 `bin/dot-bootstrap.sh` → reads `.tmux.*` to wire up oh-my-tmux + TPM
+- 🚀 `scripts/dot-bootstrap.sh` → reads `.zsh.plugins.builtin` & `.zsh.plugins.custom` to enable / disable oh-my-zsh modules
+- 🐍 `scripts/dot-bootstrap.sh` → reads `.languages.python.packages` (when `DOT_INSTALL_LANG_DEPS=1`) to seed the base venv
+- 🪟 `scripts/dot-bootstrap.sh` → reads `.tmux.*` to wire up oh-my-tmux + TPM
 
 Top-level keys:
 
@@ -60,8 +60,8 @@ Two scripts under `bin/` ship local data into the iCloud-backed live config tree
 
 | Script                                                       | Effect                                              |
 | ------------------------------------------------------------ | --------------------------------------------------- |
-| 🌥 [`bin/dot-deploy-config.sh`](../bin/dot-deploy-config.sh) | `cp data/zsh.yaml → $ICLOUD/dot/shell/zsh/zsh.yaml` |
-| 🌥 [`bin/dot-deploy-rc.sh`](../bin/dot-deploy-rc.sh)         | `cp zshrc → $ICLOUD/dot/shell/zsh/rc`               |
+| 🌥 [`scripts/dot-deploy-config.sh`](../scripts/dot-deploy-config.sh) | `cp data/zsh.yaml → $ICLOUD/dot/shell/zsh/zsh.yaml` |
+| 🌥 [`scripts/dot-deploy-rc.sh`](../scripts/dot-deploy-rc.sh)         | `cp zshrc → $ICLOUD/dot/shell/zsh/rc`               |
 
 ---
 
