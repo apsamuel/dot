@@ -1,4 +1,10 @@
 #!/bin/sh
+#% author: Aaron P. Samuel
+#% description: configure the shell environment
+#% usage: git clone --recurse-submodules https://github.com/apsamuel/dot.git ~/.dot
+#% usage:
+#% usage: chsh -s $(which zsh) , source ~/.zshrc
+
 # - ignore shellcheck warnings ZSH files, we are loading a ZSH environment
 # shellcheck disable=SC1071
 
@@ -9,9 +15,6 @@
 # shellcheck disable=SC3024
 # shellcheck disable=SC3044
 
-#% author: Aaron P. Samuel
-#% description: configure the shell environment
-#% usage: chsh -s $(which zsh) , source ~/.zshrc
 # - ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
 # - ignore shellcheck warnings about read/mapfile
@@ -34,6 +37,42 @@ fi
 if [ -z "$SHELL" ]; then
     echo "Error: SHELL environment variable not set"
     exit 1
+fi
+
+
+# ── VSCode / Copilot / non-interactive guard ─────────────────────────────────
+# When sourced by VSCode or Copilot's agent terminal we MUST avoid any feature
+# that switches the terminal into the alternate screen buffer (tmux, p10k
+# instant prompt redraws, zsh-vi-mode, F-Sy-H, fzf-tab previews) — otherwise
+# Copilot's command-output capture fails with: "The command opened the
+# alternate buffer, so I couldn't run ...".
+#
+# Two tiers:
+#   1. Full minimal mode: non-interactive shells, dumb terminals, or anything
+#      flagged as a Copilot agent terminal → disable everything decorative.
+#   2. Tmux-only suppression: any VSCode terminal (human or agent) → never
+#      auto-attach tmux, since each tmux pane uses the alt screen and that
+#      breaks VSCode shell integration (OSC 633) capture.
+if [[ $- != *i* ]] || [[ "$TERM" == "dumb" ]] || [[ -n "$COPILOT_AGENT_TERMINAL" ]]; then
+    export DOT_INTERACTIVE=0
+    export DOT_DISABLE_P10K=1
+    export DOT_DISABLE_OUTPUTS=1
+    export DOT_DISABLE_EXTENSIONS=1
+    export DOT_DISABLE_THEFUCK=1
+    export DOT_DISABLE_ZSH_AUTOSUGGESTIONS=1
+    export DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING=1
+    export DOT_DISABLE_VIMODE=1
+    export DOT_DISABLE_TMUX=1
+    export DOT_SPLASH_SCREEN=false
+elif [[ "$TERM_PROGRAM" == "vscode" ]]; then
+    # Heavy profile is fine for human VSCode terminals, but tmux's per-pane
+    # alt-screen still confuses VSCode's shell-integration capture. Suppress
+    # only tmux auto-attach; leave p10k / plugins alone.
+    export DOT_INTERACTIVE=1
+    export DOT_DISABLE_TMUX=1
+else
+    # Normal human interactive shell.
+    export DOT_INTERACTIVE=1
 fi
 
 
@@ -131,13 +170,18 @@ fi
 
 
 # TODO: host secrets in icloud directory (optionally)
-loadUserSecrets
+# Skip splash screens AND secret-loading prompts in non-interactive shells
+# (Copilot agent, dumb terminals, automation tasks) where there's no human
+# to enter passphrases or read decorative output.
+if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
+    loadUserSecrets
 
-if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "quote" ]]; then
-    termQuote
-fi
-if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "ascii" ]]; then
-    termLogo
+    if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "quote" ]]; then
+        termQuote
+    fi
+    if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "ascii" ]]; then
+        termLogo
+    fi
 fi
 
 export VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
