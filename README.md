@@ -34,21 +34,21 @@
 
 ## ✨ Features
 
-| 🪶   | Feature               | Description                                                                                                                      |
-| --- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 🔋   | Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions`, `navi`, `zsh_codex` wired up out of the box                              |
-| 🎨   | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                           |
-| 🧩   | Modular Library       | 30+`modules/` files loaded in lex order; disable any with a `DOT_DISABLE_*` flag                                                 |
-| 🗂   | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                               |
-| 🔐   | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                     |
-| 🛠   | Language Environments | Python (`uv`), Node.js (`fnm`/`n`), Rust (`rustup`), Java (`jenv`) all from one place                                            |
-| 🌱   | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                      |
-| 🔄   | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                    |
-| 🛡   | SBOM + OSV Scanner    | [`data/sbom/`](./data/sbom/) — VS Code extension that generates CycloneDX/SPDX SBOMs and scans them via OSV.dev                  |
-| 🤖   | Automation Profile    | [`config/automation/.zshrc`](./config/automation/.zshrc) — minimal headless ZSH for Copilot/CI (no p10k, no plugins, no banners) |
-| 🖥   | VM Control            | [`bin/ivm.py`](./bin/ivm.py) — unified VM lifecycle for UTM, QEMU, Podman, and Apple Virtualization.framework                    |
-| 🍎   | Apple VM Helper       | [`bin/applevm-helper`](./bin/apple-vm-helper/README.md) — native Swift binary using `Virtualization.framework`                   |
-| 🥷   | Dry-run Mode          | `DOT_DRY_RUN=1` (or `-n`) on bootstrap — preview every action before it touches your machine                                     |
+| 🪶   | Feature               | Description                                                                                                                                         |
+| --- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔋   | Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions`, `navi`, `zsh_codex` wired up out of the box                                                 |
+| 🎨   | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                                              |
+| 🧩   | Modular Library       | Two-tier `modules/` library: **static** helpers always loaded, plus 30+ **dynamic** snippets in lex order — disable any with a `DOT_DISABLE_*` flag |
+| 🗂   | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                                                  |
+| 🔐   | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                                        |
+| 🛠   | Language Environments | Python (`uv`), Node.js (`fnm`/`n`), Rust (`rustup`), Java (`jenv`) all from one place                                                               |
+| 🌱   | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                                         |
+| 🔄   | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                                       |
+| 🛡   | SBOM + OSV Scanner    | [`data/sbom/`](./data/sbom/) — VS Code extension that generates CycloneDX/SPDX SBOMs and scans them via OSV.dev                                     |
+| 🤖   | Automation Profile    | [`config/automation/.zshrc`](./config/automation/.zshrc) — minimal headless ZSH for Copilot/CI (no p10k, no plugins, no banners)                    |
+| 🖥   | VM Control            | [`bin/ivm.py`](./bin/ivm.py) — unified VM lifecycle for UTM, QEMU, Podman, and Apple Virtualization.framework                                       |
+| 🍎   | Apple VM Helper       | [`bin/applevm-helper`](./bin/apple-vm-helper/README.md) — native Swift binary using `Virtualization.framework`                                      |
+| 🥷   | Dry-run Mode          | `DOT_DRY_RUN=1` (or `-n`) on bootstrap — preview every action before it touches your machine                                                        |
 
 ---
 
@@ -69,55 +69,84 @@
 
 ## 🚀 Installation
 
+Full end-to-end setup, from a bare machine to a working `dot` shell:
+
 ```bash
-# 1. Clone to ~/.dot (with submodules)
+# 1. Clone to ~/.dot — pull every vendored submodule (root + nested) in one shot
 git clone --recurse-submodules https://github.com/apsamuel/dot.git ~/.dot
+cd ~/.dot
 
-# 2. (Optional) Preview every bootstrap action without changing your system
-cd ~/.dot && DOT_DRY_RUN=1 source ./bin/dot-bootstrap.sh
+# 2. (Already cloned without --recurse-submodules?) Initialise + fetch them now
+./scripts/submodule-sync.sh init     # parallel, two-pass (root → nested)
+./scripts/submodule-sync.sh status   # confirm every submodule is checked out
 
-# 3. Run bootstrap for real (installs dependencies, symlinks configs)
-cd ~/.dot && source ./bin/dot-bootstrap.sh
+# 3. (Optional) Preview every bootstrap action without changing your system
+DOT_DRY_RUN=1 source ./bin/dot-bootstrap.sh
 
-# 4. Make ZSH your default shell if it isn't
+# 4. Run bootstrap for real — installs deps, symlinks ~/.zshrc + ~/.p10k.zsh,
+#    wires up vendored oh-my-zsh / oh-my-tmux, builds applevm-helper
+source ./bin/dot-bootstrap.sh
+
+# 5. (First time only) Pull language deps declared in data/zsh.yaml
+DOT_INSTALL_LANG_DEPS=1 source ./bin/dot-bootstrap.sh
+
+# 6. Make ZSH your default shell if it isn't
 chsh -s "$(which zsh)"
 
-# 5. Reload your shell
+# 7. First run — reload your shell. Static modules load first, then the
+#    numbered dynamic modules in lex order.
 exec zsh
 ```
 
-> Already cloned without `--recurse-submodules`? Run [`scripts/submodule-sync.sh init`](./scripts/README.md) to fetch every submodule (root and nested) in parallel.
+> 🔁 Re-running step 4 is always safe — `dot-bootstrap.sh` is idempotent.
 
-See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough of what bootstrap does.
+See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough of what bootstrap does, and [scripts/README.md](./scripts/README.md) for the submodule sync details.
 
 ---
 
 ## 🗺️ Directory Structure
 
+`dot` organises shell behaviour into two complementary tiers — **static modules** and **dynamic modules** — backed by vendored upstreams and maintainer scripts.
+
 ```
 .dot/
 ├── zshrc                  # 🐚 Main ZSH entry point — symlinked to ~/.zshrc
-├── modules/               # 🧩 ZSH modules: all loaded at shell startup
-│   └── static/            #     Foundational helpers sourced before numbered modules
-├── bin/                   # 🛠  Scripts on $PATH (dot-bootstrap, ivm, ictl, applevm-helper, …)
-│   └── apple-vm-helper/   #     Swift sources for the native Apple VM helper binary
+├── modules/               # 🧩 The dot module library (formerly “zlib”)
+│   ├── static/            # 🪨 STATIC modules — functions/vars always loaded,
+│   │                      #    sourced first so later modules + bin/ tools can rely on them
+│   └── NNN-x-name.sh      # 🌀 DYNAMIC modules — loaded in lex order; each is a
+│                          #    self-contained snippet of targeted functionality
+├── bin/                   # 🛠  General-purpose tooling prepended to $PATH at shell startup
+│   │                      #    (dot-bootstrap, ivm, ictl, secret-*, git-*, applevm-helper, …)
+│   └── apple-vm-helper/   #    Swift sources for the native Apple VM helper binary
+├── vendor/                # 🌱 Vendored git submodules — keep dot self-contained
+│                          #    (oh-my-zsh, oh-my-tmux, fzf-git, bash-commons, figlet-fonts,
+│                          #     plus nested oh-my-zsh custom plugins/themes)
+├── scripts/               # 🔧 Maintainer scripts that operate on the dot repo itself
+│                          #    (submodule-sync.sh — init/update/status for every submodule)
 ├── config/                # ⚙️  Runtime configuration
-│   ├── shell/             #     p10k preset
-│   ├── langs/             #     Python requirements seed
-│   └── automation/        # 🤖  Minimal headless ZSH profile for Copilot / CI
+│   ├── shell/             #    p10k preset
+│   ├── langs/             #    Python requirements seed
+│   └── automation/        # 🤖 Minimal headless ZSH profile for Copilot / CI
 ├── data/                  # 📦 Data assets
 │   ├── zsh.yaml           # 🗂  Source of truth (plugins, theme, options, language deps)
 │   ├── Brewfile           # 🍺 Homebrew bundle
 │   ├── quotes.yaml        # 💭 Splash quotes
 │   ├── images/            # 🖼  Branding (black-sun)
-│   ├── configs/           #     Terminal + shell config snapshots
+│   ├── configs/           #    Terminal + shell config snapshots
 │   └── sbom/              # 🛡  VS Code SBOM + OSV scanner extension
-├── vendor/                # 🌱 Vendored submodules (oh-my-zsh, oh-my-tmux, fzf-git, …)
-├── scripts/               # 🔄 Submodule sync + repo automation
-├── modules/               # 🧠 (covered above)
 ├── test/                  # 🧪 Smoke tests for toolchains and shell behaviour
 └── docs/                  # 📚 Documentation tree
 ```
+
+### 🪨 Static vs 🌀 Dynamic Modules
+
+| Tier          | Path                 | Loaded                                        | Purpose                                                                                                                                                             |
+| ------------- | -------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🪨 **Static**  | `modules/static/`    | First — sourced explicitly by `zshrc`         | Foundational env (`DOT_*` vars, paths, autoloads, ulimits, ssh keys, `dot.shell`). Always available; consumed by every dynamic module **and** by scripts in `bin/`. |
+| 🌀 **Dynamic** | `modules/NNN-x-*.sh` | Lex order via `loadModules` after the statics | Targeted, individually disable-able snippets (homebrew, git, mac, podman, p10k, tmux, node, python, rust, java, sre, …).                                            |
+
+Both tiers are plain `.sh` files. See [modules/README.md](./modules/README.md) for the full inventory and the `DOT_DISABLE_*` flags that toggle each dynamic module off.
 
 > The `turtle/` path is **scheduled for excision** and is not part of `dot`'s supported surface.
 
@@ -125,18 +154,57 @@ See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough o
 
 ## 🧰 `dot.shell` Command
 
-After loading, the `dot.shell` command is available in your shell:
+`dot.shell` is the framework's built-in CLI. It's defined in the static module [`modules/static/dot.sh`](./modules/static/dot.sh), so it's available in **every** shell that loads `dot` — no opt-out, no plugin to enable.
 
 ```text
-dot.shell [command]
+dot.shell <command> [options]
+```
 
-Commands:
-  version       Print branch, revision, date, and author
-  update        Pull the latest changes from the remote
-  reload          Re-source all modules
-  changelog       Print the git changelog
-  printenv        Print dot-related environment variables
-  refresh-modules Re-source all modules manually
+| Command              | Purpose                                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `version`            | Print current branch, short revision, last-commit date, and author (default action).                                     |
+| `help`               | Show inline usage for every command (also `-h` / `--help`).                                                              |
+| `update`             | `git pull` the `dot` repo, then `omz update`.                                                                            |
+| `reload [-d]`        | Re-source the shell via `omz reload`. `-d`/`--debug` enables `set -x` tracing.                                           |
+| `refresh-modules`    | Re-run `loadModules` to re-source every dynamic module in the current shell.                                             |
+| `load-options`       | Re-apply the curated zsh options (`loadZshOptions`).                                                                     |
+| `printenv`           | Dump every `DOT_*` variable, masking anything that looks like a secret.                                                  |
+| `changelog [-a\|-d]` | Pretty-printed git log (last 7 commits by default; `-a` for all, `-d` for diffs).                                        |
+| `secrets <action>`   | Manage `~/Library/Mobile Documents/.../dot/secrets.json` — see below.                                                    |
+| `add-plugin <url>`   | Add an OMZ plugin as a submodule under `vendor/oh-my-zsh/custom/plugins/`.                                               |
+| `add-theme  <url>`   | Add an OMZ theme  as a submodule under `vendor/oh-my-zsh/custom/themes/`.                                                |
+| `vendor <action>`    | Forward to [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) — manage every vendored submodule (root + nested). |
+
+### 🔐 `dot.shell secrets`
+
+Read/write/import secrets stored as JSON in iCloud (`$ICLOUD/dot/secrets.json`).
+
+```text
+dot.shell secrets <action> [--key <name>] [--value <val>]
+```
+
+| Action      | Effect                                                                      |
+| ----------- | --------------------------------------------------------------------------- |
+| `--list`    | List every secret key.                                                      |
+| `--all`     | Print `key=********` for every secret (masked).                             |
+| `--details` | Print `key=value` for every secret (**unmasked** — use with care).          |
+| `--get`     | Print one secret value. Requires `--key`.                                   |
+| `--set`     | Upsert a secret. Requires `--key` and `--value`.                            |
+| `--add`     | Add a new secret; fails if the key already exists.                          |
+| `--update`  | Update an existing secret; fails if the key does not exist.                 |
+| `--remove`  | Delete a secret. Requires `--key`.                                          |
+| `--import`  | Load secrets into the live shell environment (populates `DOT_SECRET_KEYS`). |
+| `--export`  | Dump the raw `secrets.json` to stdout.                                      |
+
+### 📦 `dot.shell vendor`
+
+Thin pass-through to the submodule manager. Same flags as `scripts/submodule-sync.sh`:
+
+```bash
+dot.shell vendor status              # show every submodule + nested submodule
+dot.shell vendor init    -j 8        # parallel first-time fetch
+dot.shell vendor update  -n -v       # dry-run, verbose
+dot.shell vendor list                # list configured submodules
 ```
 
 ---

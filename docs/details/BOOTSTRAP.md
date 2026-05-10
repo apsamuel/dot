@@ -4,7 +4,43 @@
 
 [`bin/dot-bootstrap.sh`](../../bin/dot-bootstrap.sh) is the first-run script that installs and configures `dot` from scratch. It is **idempotent** — running it again is safe and converges on the same state.
 
-## 🧪 Usage
+## � Full Setup (clone → first run)
+
+End-to-end, on a fresh machine:
+
+```bash
+# 1. Clone with every vendored submodule (root + nested) in one shot
+git clone --recurse-submodules https://github.com/apsamuel/dot.git ~/.dot
+cd ~/.dot
+
+# 2. (Skip if step 1 used --recurse-submodules) Initialise + fetch submodules.
+#    Two-pass: root submodules first, then their nested submodules
+#    (e.g. oh-my-zsh's custom plugins/themes). SSH→HTTPS rewrite is automatic.
+./scripts/submodule-sync.sh init      # parallel first-time fetch (-j N tunes jobs)
+./scripts/submodule-sync.sh status    # confirm every submodule is checked out
+
+# 3. (Optional) Preview every bootstrap action — touches nothing
+DOT_DRY_RUN=1 source ./bin/dot-bootstrap.sh
+
+# 4. Bootstrap for real — installs deps, symlinks ~/.zshrc + ~/.p10k.zsh,
+#    wires up vendored oh-my-zsh / oh-my-tmux, builds applevm-helper
+source ./bin/dot-bootstrap.sh
+
+# 5. (First time) Pull language deps declared in data/zsh.yaml
+DOT_INSTALL_LANG_DEPS=1 source ./bin/dot-bootstrap.sh
+
+# 6. Make ZSH your default shell if it isn't
+chsh -s "$(which zsh)"
+
+# 7. First run — open a new shell. Static modules from modules/static/ load
+#    first (always, no opt-out), then the numbered dynamic modules in lex
+#    order via loadModules. Bin scripts are now on $PATH.
+exec zsh
+```
+
+> 🛟 Re-running step 4 at any time is safe — bootstrap is idempotent. To refresh vendored submodules later: `./scripts/submodule-sync.sh update`.
+
+## �🧪 Usage
 
 ```bash
 # Clone with submodules

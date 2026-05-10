@@ -1,6 +1,6 @@
 # 🛠 bin/
 
-> Scripts in this directory are prepended to `$PATH` by `dot` at shell startup (via [`modules/000-aa-paths.sh`](../modules/000-aa-paths.sh)). Drop a new executable here and it's available in the next shell.
+> General-purpose tooling that becomes available in any shell that loads `dot`. Scripts in this directory are prepended to `$PATH` at shell startup by the static-tier path module ([`modules/000-a-paths.sh`](../modules/000-a-paths.sh)). Drop a new executable here and it's on `$PATH` in the next shell.
 
 ---
 

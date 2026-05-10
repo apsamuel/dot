@@ -281,7 +281,7 @@ These are **not** set by any `modules/` file. They are meant to be set by the ca
 - **Example:** `DOT_NVM_INSTALL_LTS=1 source bin/dot-bootstrap.sh`
 
 ### `DOT_LIBS_DIR`
-- **Consumed in:** `modules/000-b-dot.sh` — the `dot.shell` command sources all `*.sh` files found under this path
+- **Consumed in:** [`modules/static/dot.sh`](../../modules/static/dot.sh) — the `dot.shell` command sources all `*.sh` files found under this path
 - **Effect:** Allows injecting additional shell libraries into the `dot` environment without modifying the repo
 - **Example:** `export DOT_LIBS_DIR="$HOME/.local/dot-extras"` in a machine-local rc snippet
 

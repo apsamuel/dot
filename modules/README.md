@@ -1,12 +1,15 @@
-# modules — ZSH Modules
+# modules — The dot Module Library
 
-`modules/` is the heart of the `dot` framework. It contains all ZSH modules that are sourced automatically when a new shell session starts. Each module is a plain `.sh` file.
+`modules/` is the heart of the `dot` framework. It contains every ZSH module sourced when a new shell starts. Modules come in two flavours:
+
+- 🪨 **Static modules** — files under [`modules/static/`](./static/). Foundational functions and variables that are **always** loaded (no opt-out), sourced explicitly by [`zshrc`](../zshrc) **before** anything else. They are the substrate consumed by every dynamic module and by the helper scripts in [`bin/`](../bin/README.md).
+- 🌀 **Dynamic modules** — the numbered `NNN-x-name.sh` files at the top of `modules/`. Loaded in lex order by `loadModules`. Each one is a self-contained, narrowly-scoped snippet of functionality (a tool integration, a language environment, a set of aliases). Most can be turned off individually via a `DOT_DISABLE_*` env var.
 
 ---
 
-## Loading Order
+## 🌀 Dynamic Module Loading Order
 
-Files are sourced in lexicographic order based on their filename prefix. Two levels of prefixing control load order:
+Dynamic module files are sourced in lexicographic order based on their filename prefix. Two levels of prefixing control load order:
 
 ```
 NNN-x-name.sh
@@ -21,48 +24,52 @@ Lower numbers are foundational (variables, paths, helpers). Higher numbers are i
 
 ---
 
-## Disabling Modules
+## Disabling Dynamic Modules
 
-Most modules respect a `DOT_DISABLE_*` flag. Set the variable to `1` to skip that module at shell startup:
+Most dynamic modules respect a `DOT_DISABLE_*` flag. Set the variable to `1` to skip that module at shell startup:
 
 ```bash
 export DOT_DISABLE_NODE=1       # skip Node.js setup
 export DOT_DISABLE_EXTENSIONS=1 # skip iTerm2, thefuck, autosuggestions
 ```
 
+Static modules cannot be disabled — the rest of the framework depends on them.
+
 ---
 
-## Module Reference
+## 🌀 Dynamic Module Reference
 
 ### Tier 000 — Foundation
 
 | File                  | Description                                                                                                                                                       |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `000-a-base.sh`       | Sets base variables: CPU brand/cores/architecture, OS type, shell versions (bash, zsh, git)                                                                       |
-| `000-a-brewster.sh`   | Homebrew helper functions: `brewInstall`, `brewUpdate`, `brewUpgrade`, `brewDump`, `brewLoad`, `brewJson`, etc.                                                   |
 | `000-a-config.sh`     | Loads and exports base configuration variables                                                                                                                    |
 | `000-a-emulation.sh`  | Functions to emulate or spawn other shells: `emulateZsh`, `emulateBash`, `spawnArm`, `spawnIntel`, etc.                                                           |
 | `000-a-foundation.sh` | Baseline environment wiring: terminal info, `getShellName`, `getSecureString`                                                                                     |
+| `000-a-homebrew.sh`   | Homebrew helper functions: `brewInstall`, `brewUpdate`, `brewUpgrade`, `brewDump`, `brewLoad`, `brewJson`, etc.                                                   |
 | `000-a-math.sh`       | Math utility: `bcSolve` — evaluate arbitrary expressions via `bc`                                                                                                 |
 | `000-a-output.sh`     | Terminal output helpers: `printLevel`, `printPretty`, `termLogo`, `termImage`, `termQuote`, `randomQuote`, `toFiglet`, `showcolors256`                            |
+| `000-a-paths.sh`      | PATH configuration and path manipulation helpers (prepends `bin/` so its scripts are available in every shell)                                                    |
 | `000-a-plugins.sh`    | Defines environment variables required for oh-my-zsh plugin loading                                                                                               |
 | `000-a-secrets.sh`    | Secrets management: `loadSecrets`, `maskSecrets`, `__mask_secrets__`, `reloadOptions`                                                                             |
 | `000-a-tools.sh`      | General utilities: `splitString`, `joinList`, `GetPreview` (fzf file picker with `bat` preview), and string manipulation helpers                                  |
 | `000-a-vendor.sh`     | Vendor integration — sources third-party libraries from `vendor/` (fzf-git, figlet-fonts, etc.)                                                                   |
-| `000-aa-paths.sh`     | PATH configuration and path manipulation helpers                                                                                                                  |
 | `000-b-aliases.sh`    | Shell aliases: `cat='bat'`, `ls='ls --color=always'`, `less='bat --paging=always'`                                                                                |
 | `000-b-zstyle.sh`     | Zstyle configuration for zsh subsystems (compsys, oh-my-zsh, plugins). Provides `zstyleList`, `zstyleShow`, `zstyleDump` helpers. Guarded by `DOT_DISABLE_ZSTYLE` |
-| `000-b-dot.sh`        | The `dot.shell` command; iCloud path exports; TMUX session detection                                                                                              |
 | `000-c-git.sh`        | Git configuration: `gitConfig`, default branch settings, default user/email                                                                                       |
 | `000-c-mac.sh`        | macOS-specific helpers: `osCpuCores`, `osCpuBrand`; guarded by `DOT_DISABLE_MAC`                                                                                  |
 | `000-d-extensions.sh` | Shell extensions: iTerm2 shell integration, `thefuck`, `zsh-autosuggestions`; guarded by `DOT_DISABLE_EXTENSIONS`                                                 |
 | `000-d-notes.sh`      | Notes utilities (placeholder for future expansion)                                                                                                                |
 | `000-d-podman.sh`     | Sets `PODMAN_COMPOSE_WARNING_LOGS=False`                                                                                                                          |
 
+> `000-c-network.sh.deprecated` is retained on disk for reference only and is **not** sourced (the `.deprecated` suffix excludes it from `loadModules`).
+
 ### Tier 001 — Language & Environment
 
 | File              | Description                                                                                                           |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `001-a-ai.sh`     | Wires the LM Studio CLI onto `PATH` when `~/.lmstudio/bin` exists                                                     |
 | `001-a-p10k.sh`   | Sources `~/.p10k.zsh` to activate the powerlevel10k prompt                                                            |
 | `001-a-tmux.sh`   | Tmux helpers: `tmuxCreateSessionFromCwd`, `tmuxHasSession`, `tmuxGetSafeSessionName`, `tmuxKillUnattached`            |
 | `001-d-node.sh`   | Node.js environment: detects architecture, sets `N_PREFIX`, adds Homebrew node to PATH; guarded by `DOT_DISABLE_NODE` |
@@ -88,9 +95,9 @@ export DOT_DISABLE_EXTENSIONS=1 # skip iTerm2, thefuck, autosuggestions
 
 ---
 
-## `static/` — Static Helpers
+## 🪨 Static Modules — `static/`
 
-Files in `modules/static/` are sourced directly by `zshrc` before the numbered modules, providing foundational infrastructure the rest of the framework depends on.
+Files in `modules/static/` are sourced directly by `zshrc` **before** the numbered dynamic modules. They provide foundational infrastructure the rest of the framework depends on (and which `bin/` scripts also import). They cannot be disabled.
 
 | File                   | Description                                                                                                                                                       |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -126,7 +133,7 @@ Sourced exclusively by `dot-bootstrap.sh` and other low-level scripts. Not inten
 
 ---
 
-## Adding a New Module
+## Adding a New Dynamic Module
 
 1. Create `modules/NNN-x-name.sh` (pick a tier that fits)
 2. Start with the standard header:
