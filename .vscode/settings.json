@@ -30,13 +30,11 @@
     "**/node_modules/**": true,
     "**/target/**": true
   },
+  "git.autoRepositoryDetection": "subFolders",
   "git.detectSubmodules": true,
+  "git.detectSubmodulesLimit": 50, // Increase the limit for submodule detection to 50 (default is 10).
   "git.repositoryScanIgnoredFolders": [
-    "node_modules",
-    // "vendor/oh-my-tmux/plugins",
-    // "vendor/oh-my-zsh/custom/plugins",
-    // "vendor/oh-my-zsh/custom/themes",
-    // "vendor/vim/pack"
+    "node_modules"
   ],
   "python.analysis.typeCheckingMode": "standard",
   "rust-analyzer.linkedProjects": [
@@ -56,7 +54,7 @@
   // Bypasses the full interactive .zshrc (no oh-my-zsh, p10k, plugins, banners).
   "terminal.integrated.automationProfile.osx": {
     "env": {
-      "ZDOTDIR": "/Users/Aaron.Samuel/.dot/config/automation"
+      "ZDOTDIR": "${environment:HOME}/.dot/config/automation"
     },
     "path": "/bin/zsh"
   },
