@@ -1,8 +1,11 @@
 # shellcheck shell=bash
 # Test: modules/000-a-paths.sh — PATH management
-source "${0:A:h}/../framework.sh"
-source "${0:A:h}/../mocks/env.sh"
-source "${0:A:h}/../mocks/tools.sh"
+# Portable bootstrap — works under bash and zsh
+if [ -n "${ZSH_VERSION:-}" ]; then _test_dir="${0:A:h}"
+else _test_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"; fi
+source "${_test_dir}/../framework.sh"
+source "${_test_dir}/../mocks/env.sh"
+source "${_test_dir}/../mocks/tools.sh"
 
 # Provide stub implementations for splitString/joinList used by addPath/deletePath
 # (these may come from a plugin or were removed — stub them for testing)

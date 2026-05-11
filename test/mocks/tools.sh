@@ -2,12 +2,13 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # Mock external tools — shell-function stubs that shadow real binaries.
 #
+# Portable across bash (>=4.0) and zsh (>=5.0).
 # Each stub:
 #   1. Records the invocation in TEST_TMPDIR/.mock_calls_<name>
 #   2. Returns canned data appropriate for the module under test
 #
 # Source AFTER env.sh:
-#   source "${0:A:h}/../mocks/tools.sh"
+#   source "${FRAMEWORK_DIR}/mocks/tools.sh"
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Helper: record a mock call ────────────────────────────────────────────────

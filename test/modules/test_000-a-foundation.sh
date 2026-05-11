@@ -1,8 +1,11 @@
 # shellcheck shell=bash
 # Test: modules/000-a-foundation.sh — baseline env + utility functions
-source "${0:A:h}/../framework.sh"
-source "${0:A:h}/../mocks/env.sh"
-source "${0:A:h}/../mocks/tools.sh"
+# Portable bootstrap — works under bash and zsh
+if [ -n "${ZSH_VERSION:-}" ]; then _test_dir="${0:A:h}"
+else _test_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"; fi
+source "${_test_dir}/../framework.sh"
+source "${_test_dir}/../mocks/env.sh"
+source "${_test_dir}/../mocks/tools.sh"
 
 # Source the module under test
 source_module "000-a-foundation.sh"
@@ -15,13 +18,13 @@ test_get_shell_name_returns_string() {
     # getShellName references $fish_pid which fails under NO_UNSET
     # Temporarily allow unset variables for this function
     local result=""
-    setopt LOCAL_OPTIONS UNSET
+    if [ -n "${ZSH_VERSION:-}" ]; then setopt LOCAL_OPTIONS UNSET; else set +u; fi
     result="$(getShellName 2>/dev/null)"
-    [[ -n "${result}" ]] || { echo "getShellName returned empty" >&2; return 1; }
+    [ -n "${result}" ] || { printf 'getShellName returned empty\n' >&2; return 1; }
 }
 
 test_get_shell_name_lowercase() {
-    setopt LOCAL_OPTIONS UNSET
+    if [ -n "${ZSH_VERSION:-}" ]; then setopt LOCAL_OPTIONS UNSET; else set +u; fi
     local result=""
     result="$(getShellName 2>/dev/null)"
     local lower=""

@@ -3,13 +3,13 @@
 # Mock environment — sets up an isolated sandbox so modules can be sourced
 # without touching the real filesystem or user config.
 #
-# Source AFTER framework.sh:
-#   source "${0:A:h}/../framework.sh"
-#   source "${0:A:h}/../mocks/env.sh"
+# Portable across bash (>=4.0) and zsh (>=5.0).
+# Source AFTER framework.sh (which exports FRAMEWORK_DIR):
+#   source "${FRAMEWORK_DIR}/mocks/env.sh"
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Resolve paths ─────────────────────────────────────────────────────────────
-# TEST_TMPDIR is set by framework.sh
+# TEST_TMPDIR is set by framework.sh; FRAMEWORK_DIR is the test/ directory.
 export MOCK_HOME="${TEST_TMPDIR}/home"
 export MOCK_ICLOUD="${TEST_TMPDIR}/icloud"
 export MOCK_DOT="${TEST_TMPDIR}/dot"
@@ -17,8 +17,8 @@ export MOCK_DOT="${TEST_TMPDIR}/dot"
 mkdir -p "${MOCK_HOME}" "${MOCK_ICLOUD}/dot" "${MOCK_DOT}/modules"
 
 # ── Real repo root (read-only reference) ──────────────────────────────────────
-# Resolve from this file's location: mocks/ -> test/ -> repo root
-export DOT_REAL_ROOT="${0:A:h}/../../"
+# Derived from FRAMEWORK_DIR (test/) -> repo root
+export DOT_REAL_ROOT="${FRAMEWORK_DIR}/.."
 
 # ── Override env vars that modules read ───────────────────────────────────────
 export HOME="${MOCK_HOME}"
@@ -43,7 +43,7 @@ export DOT_DISABLE_SECRETS=1
 export DOT_DISABLE_VENDOR=1
 
 # ── Provide fixture paths ────────────────────────────────────────────────────
-export DOT_TEST_FIXTURES="${0:A:h}/../fixtures"
+export DOT_TEST_FIXTURES="${FRAMEWORK_DIR}/fixtures"
 export DOT_SHELL_DATA="${DOT_TEST_FIXTURES}/zsh.yaml"
 
 # ── Minimal XDG dirs ──────────────────────────────────────────────────────────
@@ -53,10 +53,10 @@ export XDG_DATA_HOME="${MOCK_HOME}/.local/share"
 mkdir -p "${XDG_CACHE_HOME}" "${XDG_CONFIG_HOME}" "${XDG_DATA_HOME}"
 
 # ── Copy fixture data into mock iCloud ────────────────────────────────────────
-if [[ -f "${DOT_TEST_FIXTURES}/secrets.json" ]]; then
+if [ -f "${DOT_TEST_FIXTURES}/secrets.json" ]; then
     cp "${DOT_TEST_FIXTURES}/secrets.json" "${MOCK_ICLOUD}/dot/secrets.json"
 fi
-if [[ -f "${DOT_TEST_FIXTURES}/zsh.yaml" ]]; then
+if [ -f "${DOT_TEST_FIXTURES}/zsh.yaml" ]; then
     mkdir -p "${MOCK_ICLOUD}/dot/shell/zsh"
     cp "${DOT_TEST_FIXTURES}/zsh.yaml" "${MOCK_ICLOUD}/dot/shell/zsh/zsh.yaml"
 fi
@@ -65,9 +65,10 @@ fi
 source_module() {
     local module_name="$1"
     local module_path="${DOT_MODULES}/${module_name}"
-    if [[ ! -f "${module_path}" ]]; then
-        echo "ERROR: module not found: ${module_path}" >&2
+    if [ ! -f "${module_path}" ]; then
+        printf 'ERROR: module not found: %s\n' "${module_path}" >&2
         return 1
     fi
-    source "${module_path}"
+    # shellcheck disable=SC1090
+    . "${module_path}"
 }
