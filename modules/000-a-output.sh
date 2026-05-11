@@ -11,6 +11,16 @@ directory=$(dirname "$0")
 library=$(basename "$0")
 
 
+if [[ "${DOT_DEBUG}" -eq 1 ]]; then
+    echo "loading: ${library} (${directory})"
+fi
+
+
+if [[ "${DOT_DISABLE_OUTPUTS}" -eq 1 ]]; then
+    return
+fi
+
+
 # default colors for output
 info_color="$(tput setab 238)$(tput setaf 250)"
 error_color="$(tput setab 232)$(tput setaf 160)"
@@ -30,15 +40,6 @@ levels=(
     "error"
     "debug"
 )
-
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
-
-
-if [[ "${DOT_DISABLE_OUTPUTS}" -eq 1 ]]; then
-    return
-fi
 
 function availableColorTab() {
 	for ((i=0; i<256; i++)) ;do
