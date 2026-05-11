@@ -26,17 +26,17 @@
 
 if [ -z "$HOME"  ]; then
     echo "Error: HOME environment variable not set"
-    exit 1
+    return 1
 fi
 
 if [ -z "$USER" ]; then
     echo "Error: USER environment variable not set"
-    exit 1
+    return 1
 fi
 
 if [ -z "$SHELL" ]; then
     echo "Error: SHELL environment variable not set"
-    exit 1
+    return 1
 fi
 
 
@@ -161,7 +161,9 @@ loadZshOptions
 
 loadModules
 
-compileTermInfo
+if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
+    compileTermInfo
+fi
 
 if [[ "${DOT_DEBUG}" -gt 0 ]]; then
     echo "configuring: $OPERATING_SYSTEM/$CPU_ARCHITECTURE"
@@ -308,11 +310,13 @@ export ITERM2_SQUELCH_MARK=1
 
 
 
-getTmuxWindowName() {
-    ("$TMUX_PLUGIN_MANAGER_PATH"/tmux-window-name/scripts/rename_session_windows.py &)
-}
+if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
+    getTmuxWindowName() {
+        ("$TMUX_PLUGIN_MANAGER_PATH"/tmux-window-name/scripts/rename_session_windows.py &)
+    }
 
-add-zsh-hook chpwd getTmuxWindowName
+    add-zsh-hook chpwd getTmuxWindowName
+fi
 
 # zle
 zle -N create_completion
