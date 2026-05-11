@@ -1,4 +1,43 @@
 {
+  "[bash]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format",
+    "editor.formatOnSave": true
+  },
+  "[dockercompose]": {
+    "editor.autoIndent": "advanced",
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.insertSpaces": true,
+    "editor.quickSuggestions": {
+      "comments": false,
+      "other": true,
+      "strings": true
+    },
+    "editor.tabSize": 2
+  },
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "[glsl]": {
+    "editor.defaultFormatter": "raczzalan.webgl-glsl-editor"
+  },
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.formatOnSave": true
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2
+  },
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features",
     "editor.formatOnSave": true
@@ -7,14 +46,58 @@
     "editor.defaultFormatter": "vscode.json-language-features",
     "editor.formatOnSave": true
   },
+  "[jupyter]": {
+    "diffEditor.maxComputationTime": 0
+  },
+  "[markdown]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll.markdownlint": "explicit"
+    },
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+    "editor.formatOnSave": true,
+    "editor.inlineSuggest.enabled": false,
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "other": "on",
+      "strings": "off"
+    }
+  },
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.wordBasedSuggestions": "off",
+    "gitlens.codeLens.symbolScopes": [
+      "!Module"
+    ]
+  },
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "other": "on",
+      "strings": "off"
+    }
   },
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format",
     "editor.insertSpaces": true,
     "editor.tabSize": 2
+  },
+  "[svg]": {
+    "editor.defaultFormatter": "jock.svg"
+  },
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.tabSize": 2
+  },
+  "[xml]": {
+    "editor.defaultFormatter": "redhat.vscode-xml"
   },
   "[yaml]": {
     "editor.insertSpaces": true,
@@ -50,14 +133,103 @@
     "-x"
   ],
   "shellcheck.enable": true,
-  // Automation terminal: used by Copilot, tasks, and extensions.
-  // Bypasses the full interactive .zshrc (no oh-my-zsh, p10k, plugins, banners).
+  // Headless automation tasks (build/test runners, extension automations) also
+  // use the minimal dot profile via ZDOTDIR so output capture is reliable.
   "terminal.integrated.automationProfile.osx": {
+    "args": [
+      "-l"
+    ],
     "env": {
-      "ZDOTDIR": "${environment:HOME}/.dot/config/automation"
+      "COPILOT_AGENT_TERMINAL": "1",
+      "DOT_DISABLE_TMUX": "1",
+      "DOT_INTERACTIVE": "0",
+      "TERM": "xterm-256color",
+      "ZDOTDIR": "${env:HOME}/.dot/config/automation"
     },
-    "path": "/bin/zsh"
+    "icon": "light-bulb",
+    "path": "/opt/homebrew/bin/zsh"
   },
   "terminal.integrated.cwd": "${workspaceFolder}",
-  "terminal.integrated.defaultProfile.osx": "zsh"
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.profiles.osx": {
+    "bash": {
+      "icon": "terminal-bash",
+      "path": "bash"
+    },
+    "fish": {
+      "color": "terminal.ansiBlack",
+      "icon": "terminal",
+      "path": "fish"
+    },
+    "pwsh": {
+      "args": [
+        "-arch",
+        "x86_64",
+        "/usr/local/bin/pwsh",
+        "-Login",
+        "-NoLogo",
+        "-Interactive"
+      ],
+      "color": "terminal.ansiBlack",
+      "icon": "terminal-powershell",
+      "path": "/usr/bin/arch"
+    },
+    "tmux-arm": {
+      "args": [],
+      "color": "terminal.ansiCyan",
+      "icon": "terminal-tmux",
+      "path": "${env:HOME}/.dot/bin/tmux-code.sh"
+    },
+    "tmux-x86_64": {
+      "args": [
+        "-arch",
+        "x86_64",
+        "/usr/local/bin/zsh",
+        "-c",
+        "${env:HOME}/.dot/bin/tmux-code.sh"
+      ],
+      "color": "terminal.ansiBlack",
+      "icon": "terminal-tmux",
+      "overrideName": true,
+      "path": "/usr/bin/arch"
+    },
+    "zsh-arm": {
+      "args": [
+        "-arch",
+        "arm64",
+        "/opt/homebrew/bin/zsh",
+        "-l"
+      ],
+      "icon": "light-bulb",
+      "overrideName": true,
+      "path": "/usr/bin/arch"
+    },
+    "zsh-copilot": {
+      "args": [
+        "-l"
+      ],
+      "color": "terminal.ansiMagenta",
+      "env": {
+        "COPILOT_AGENT_TERMINAL": "1",
+        "DOT_DISABLE_TMUX": "1",
+        "DOT_INTERACTIVE": "0",
+        "TERM": "xterm-256color",
+        "ZDOTDIR": "${env:HOME}/.dot/config/automation"
+      },
+      "icon": "copilot",
+      "overrideName": true,
+      "path": "/opt/homebrew/bin/zsh"
+    },
+    "zsh-x86_64": {
+      "args": [
+        "-arch",
+        "x86_64",
+        "/usr/local/bin/zsh",
+        "-l"
+      ],
+      "icon": "lightbulb",
+      "overrideName": true,
+      "path": "/usr/bin/arch"
+    }
+  }
 }
