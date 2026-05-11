@@ -28,8 +28,17 @@ icloud_link="${HOME}/iCloud"
 ICLOUD=${ICLOUD:-${icloud_link}}
 
 
-# Detect whether this file is being sourced or executed.
-# Safe under both bash and zsh; never call `exit` from a sourced file.
+# -----------------------------------------------------------------------------
+# _dot_bootstrap_is_sourced - detect whether this file is being sourced
+#
+# Description:
+#   Returns 0 (true) when the file is being sourced, 1 when executed
+#   directly.  Safe under both bash and zsh; uses BASH_SOURCE / $0
+#   comparison (bash) or ZSH_EVAL_CONTEXT (zsh).
+#
+# Usage:    if _dot_bootstrap_is_sourced; then ...
+# Returns:  0 when sourced; 1 when executed directly.
+# -----------------------------------------------------------------------------
 _dot_bootstrap_is_sourced () {
     # bash: BASH_SOURCE[0] differs from $0 when sourced
     if [ -n "${BASH_SOURCE[0]:-}" ]; then
@@ -56,7 +65,17 @@ if [ -r "${dot_bootstrap_directory}/modules/static/lib/internal.sh" ]; then
     . "${dot_bootstrap_directory}/modules/static/lib/internal.sh"
 fi
 
-# resolve the in-repo Brewfile (CLI dependencies)
+# -----------------------------------------------------------------------------
+# resolveBrewfilePath - resolve path to the in-repo CLI Brewfile
+#
+# Description:
+#   Echoes the absolute path to the CLI-formula Brewfile (data/Brewfile).
+#   Accepts an optional override path; falls back to the repo default.
+#
+# Usage:    resolveBrewfilePath [path]
+# Stdout:   Absolute path to the Brewfile, or an error message.
+# Returns:  0 when the file exists; 1 otherwise.
+# -----------------------------------------------------------------------------
 function resolveBrewfilePath () {
     local file="${1:-${dot_bootstrap_directory}/data/Brewfile}"
     if [[ -f "$file" ]]; then
@@ -68,7 +87,18 @@ function resolveBrewfilePath () {
     fi
 }
 
-# resolve the in-repo Brewfile.cask (graphical / cask dependencies)
+# -----------------------------------------------------------------------------
+# resolveBrewfileCaskPath - resolve path to the in-repo cask Brewfile
+#
+# Description:
+#   Echoes the absolute path to the graphical/cask Brewfile
+#   (data/Brewfile.cask). Accepts an optional override path; falls back
+#   to the repo default.
+#
+# Usage:    resolveBrewfileCaskPath [path]
+# Stdout:   Absolute path to the Brewfile.cask, or an error message.
+# Returns:  0 when the file exists; 1 otherwise.
+# -----------------------------------------------------------------------------
 function resolveBrewfileCaskPath () {
     local file="${1:-${dot_bootstrap_directory}/data/Brewfile.cask}"
     if [[ -f "$file" ]]; then
@@ -87,6 +117,12 @@ function resolveBrewfileCaskPath () {
 # ──────────────────────────────────────────────────────────────────────────────
 DOT_DRY_RUN="${DOT_DRY_RUN:-0}"
 
+# -----------------------------------------------------------------------------
+# _is_dry - test whether dry-run mode is active
+#
+# Usage:    if _is_dry; then ...
+# Returns:  0 when DOT_DRY_RUN > 0; 1 otherwise.
+# -----------------------------------------------------------------------------
 function _is_dry () { [[ "${DOT_DRY_RUN:-0}" -gt 0 ]]; }
 
 # 🗣 status helpers
@@ -100,7 +136,16 @@ function say_err  () { echo "🔴 $*"; }
 function say_plan () { echo "🔮 plan » $*"; }   # printed in dry-run instead of acting
 function say_done () { echo "🎉 $*"; }
 
-# ⚫️ dry-run wrapper: in DRY mode, ANNOUNCE the planned command and DO NOT run.
+# -----------------------------------------------------------------------------
+# dryrun - dry-run wrapper for commands
+#
+# Description:
+#   In DRY mode (DOT_DRY_RUN > 0), prints the planned command via say_plan
+#   and returns 0 without executing. Otherwise, runs the command normally.
+#
+# Usage:    dryrun <command> [args...]
+# Returns:  0 in dry-run mode; exit status of command otherwise.
+# -----------------------------------------------------------------------------
 function dryrun () {
     if _is_dry; then
         say_plan "$*"
@@ -164,8 +209,16 @@ function _dot_require_cmd () {
     return "${_missing}"
 }
 
-# 🧱 idempotent + dry-aware filesystem primitives.
-# Each one inspects the current state first; only mutates when needed.
+# -----------------------------------------------------------------------------
+# dry_mkdir / dry_rm / dry_rmrf / dry_mv / dry_cp - idempotent filesystem ops
+#
+# Description:
+#   Dry-run-aware filesystem primitives. Each inspects current state first
+#   and only mutates when needed.  In dry-run mode, prints the planned
+#   action via say_plan without executing.
+#
+# Returns:  0 on success or no-op; propagates underlying command errors.
+# -----------------------------------------------------------------------------
 function dry_mkdir () {
     local d="${1:?dry_mkdir requires a path}"
     if [[ -d "${d}" ]]; then
@@ -208,7 +261,17 @@ function dry_cp () {
     cp "${src}" "${dst}"
 }
 
-# defaults write — idempotent: read current value first, only write if it differs.
+# -----------------------------------------------------------------------------
+# dry_defaults_write - idempotent defaults write (macOS)
+#
+# Description:
+#   Reads the current value of a macOS defaults key; only writes when the
+#   value differs.  Normalizes bool representations for comparison.
+#   Dry-run aware.
+#
+# Usage:    dry_defaults_write <domain> <key> <type> <value>
+# Returns:  0 on success or no-op.
+# -----------------------------------------------------------------------------
 function dry_defaults_write () {
     local domain="${1:?}" key="${2:?}" type="${3:?}" value="${4:?}"
     local current
@@ -231,6 +294,17 @@ function dry_defaults_write () {
     defaults write "${domain}" "${key}" "${type}" "${value}"
 }
 
+# -----------------------------------------------------------------------------
+# ensureSymlink - idempotent symlink creation with backup
+#
+# Description:
+#   Creates a symlink from source_path to target_path. Idempotent: returns
+#   immediately if the link already points correctly. Backs up existing
+#   files/directories before replacing. Dry-run aware.
+#
+# Usage:    ensureSymlink <source_path> <target_path>
+# Returns:  0 on success; 1 on missing arguments or source.
+# -----------------------------------------------------------------------------
 function ensureSymlink () {
     local source_path="${1}"
     local target_path="${2}"
@@ -272,7 +346,17 @@ function ensureSymlink () {
 }
 
 
-# ⚫️ preflight checks and information
+# -----------------------------------------------------------------------------
+# bootstrapInfo - display preflight system information
+#
+# Description:
+#   Prints architecture, macOS version, login shell, ICLOUD status, and
+#   versions of critical CLI tools (brew, git, jq, curl). Purely
+#   informational; does not mutate state.
+#
+# Usage:    bootstrapInfo
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapInfo () {
     say_step "preflight"
     echo "🖥️  arch: $(uname -m)"
@@ -307,7 +391,16 @@ function bootstrapInfo () {
     done
 }
 
-# prints ⚫️ start banner
+# -----------------------------------------------------------------------------
+# bootstrapPrint - print the bootstrap start banner
+#
+# Description:
+#   Announces that bootstrap execution has begun. Includes a dry-run
+#   notice when DOT_DRY_RUN is active.
+#
+# Usage:    bootstrapPrint
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapPrint () {
     if _is_dry; then
         echo "🔮 DRY-RUN MODE — no system changes will be made"
@@ -316,7 +409,16 @@ function bootstrapPrint () {
 }
 
 
-# installs ⚫️ dependencies
+# -----------------------------------------------------------------------------
+# bootstrapDeps - install CLI dependencies via brew bundle
+#
+# Description:
+#   Resolves the in-repo Brewfile and runs `brew bundle install`.
+#   Dry-run aware via the `dryrun` wrapper.
+#
+# Usage:    bootstrapDeps
+# Returns:  0 on success; 1 when Brewfile missing or install fails.
+# -----------------------------------------------------------------------------
 function bootstrapDeps () {
     local brewfile
     brewfile="$(resolveBrewfilePath)"
@@ -386,7 +488,17 @@ function bootstrapCheckDependencies () {
     return ${rc}
 }
 
-# installs ⚫️ dependencies
+# -----------------------------------------------------------------------------
+# installDependencies - run brew bundle install for CLI formulae
+#
+# Description:
+#   Lower-level helper that resolves the Brewfile and executes
+#   `brew bundle install`. Called by bootstrapCheckDependencies.
+#   Dry-run aware.
+#
+# Usage:    installDependencies
+# Returns:  0 on success; 1 when Brewfile missing or install fails.
+# -----------------------------------------------------------------------------
 function installDependencies () {
     local brewfile
     brewfile="$(resolveBrewfilePath)"
@@ -447,7 +559,17 @@ function bootstrapCheckCaskDependencies () {
     return ${rc}
 }
 
-# installs ⚫️ cask (graphical) dependencies
+# -----------------------------------------------------------------------------
+# installCaskDependencies - run brew bundle install for cask formulae
+#
+# Description:
+#   Lower-level helper that resolves the cask Brewfile and executes
+#   `brew bundle install`. Called by bootstrapCheckCaskDependencies.
+#   Dry-run aware.
+#
+# Usage:    installCaskDependencies
+# Returns:  0 on success; 1 when Brewfile.cask missing or install fails.
+# -----------------------------------------------------------------------------
 function installCaskDependencies () {
     local cask_brewfile
     cask_brewfile="$(resolveBrewfileCaskPath)"
@@ -607,7 +729,6 @@ function bootstrapCheckCloud () {
     return ${rc}
 }
 
-# ⚫️ installs and configures Oh My Tmux
 # -----------------------------------------------------------------------------
 # bootstrapCheckOhMyTmux - link oh-my-tmux config + install tpm plugins
 #
@@ -686,7 +807,15 @@ function bootstrapConfigFiglet () {
     if [[ ${_opt_help} -eq 1 ]]; then
         echo "Usage: bootstrapConfigFiglet [-n] [-x] [-h]"; return 0
     fi
-    say_skip "🅰️ figlet fonts is configures as a vendored module ./vendor/figlet-fonts"
+    [[ ${_opt_debug} -eq 1 ]] && set -x
+
+    local vendor_dir="${dot_bootstrap_directory}/vendor/figlet-fonts"
+    if [[ ! -d "${vendor_dir}" ]]; then
+        say_warn "🅰️ vendor/figlet-fonts not found — run bootstrapInitSubmodules first"
+        [[ ${_opt_debug} -eq 1 ]] && set +x; return 1
+    fi
+    say_ok "🅰️ figlet fonts present (vendored: ${vendor_dir})"
+    [[ ${_opt_debug} -eq 1 ]] && set +x
     return 0
 }
 
@@ -816,9 +945,17 @@ function bootstrapConfigGit () {
     return 0
 }
 
-# ⚫️ configures gh (idempotent via ensureSymlink + dry-run safe)
+# -----------------------------------------------------------------------------
+# bootstrapConfigGh - link gh CLI config from iCloud
+#
+# Description:
+#   Symlinks `~/.config/gh/{config.yml,hosts.yml}` to the iCloud-tracked
+#   gh configuration directory. Idempotent via ensureSymlink. Dry-run safe.
+#
+# Usage:    bootstrapConfigGh
+# Returns:  0 on success; 1 when symlink fails.
+# -----------------------------------------------------------------------------
 function bootstrapConfigGh () {
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     local git_config_dir_dot="${icloud_directory}/dot/git/gh"
     local git_config_dir="${HOME}/.config/gh"
 
@@ -827,14 +964,16 @@ function bootstrapConfigGh () {
     ensureSymlink "${git_config_dir_dot}/hosts.yml"  "${git_config_dir}/hosts.yml"  || return 1
 
     say_ok "🐱 your gh installation is configured"
+    return 0
 }
 
-# ⚫️ configures zsh
+# -----------------------------------------------------------------------------
+# bootstrapConfigureZsh - configure zsh as the login shell
 #
-# Links the git-tracked zshrc (`$DOT_DIRECTORY/zshrc`) to `~/.zshrc` and,
-# optionally, mirrors `data/zsh.yaml` into iCloud (the only zsh artifact we
-# still duplicate there). The legacy iCloud `rc` file is no longer written;
-# git is the source of truth for the rc.
+# Description:
+#   Links the git-tracked zshrc (`$DOT_DIRECTORY/zshrc`) to `~/.zshrc` and,
+#   optionally, mirrors `data/zsh.yaml` into iCloud. The legacy iCloud `rc`
+#   file is no longer written; git is the source of truth for the rc.
 #
 # Flags:
 #   -r   link `$DOT_DIRECTORY/zshrc` -> `~/.zshrc` (default when neither
@@ -844,11 +983,6 @@ function bootstrapConfigGh () {
 #   -n   dry-run
 #   -x   debug / xtrace
 #   -h   show usage
-# -----------------------------------------------------------------------------
-# bootstrapConfigureZsh - configure zsh as the login shell
-#
-# Description:
-#   By default, links the repo's `zshrc` -> ~/.zshrc and ensures the user's
 #   login shell is zsh. With -d, also mirrors `data/zsh.yaml` to the iCloud
 #   tracked copy used by remote shells. Idempotent throughout (ensureSymlink,
 #   `-nt` test, chsh only when shell differs).
@@ -948,10 +1082,10 @@ EOF
             [[ ${debug} -gt 0 ]] && set +x
             return 1
         fi
-        [[ ! -d "${data_dest_dir}" ]] && dryrun mkdir -p "${data_dest_dir}"
+        [[ ! -d "${data_dest_dir}" ]] && dry_mkdir "${data_dest_dir}"
 
         if [[ ! -f "${data_dest}" || "${data_source}" -nt "${data_dest}" ]]; then
-            dryrun cp "${data_source}" "${data_dest}"
+            dry_cp "${data_source}" "${data_dest}"
             [[ ${debug} -gt 0 ]] && say_ok "${data_source} -> ${data_dest}"
         else
             [[ ${debug} -gt 0 ]] && say_skip "${data_dest} is up to date"
@@ -992,9 +1126,18 @@ function bootstrapConfigBash () {
     return 0
 }
 
-# ⚫️ configures fish
+# -----------------------------------------------------------------------------
+# bootstrapConfigFish - link fish shell config from tracked rc
+#
+# Description:
+#   Symlinks the tracked fish rc to `~/.config/fish/config.fish`.
+#   Creates the parent directory when absent. Idempotent + dry-run aware.
+#
+# Usage:    bootstrapConfigFish [-n] [-h]
+# Returns:  0 on success; 1 when source missing or link fails.
+# -----------------------------------------------------------------------------
 function bootstrapConfigFish () {
-    local OPTIND=1
+    local opt="" OPTIND=1
     local dry_mode=0
     while getopts ":nh" opt; do
         case "${opt}" in
@@ -1025,11 +1168,20 @@ function bootstrapConfigFish () {
     dry_mkdir "$(dirname "${rc}")"
     ensureSymlink "${rc_source}" "${rc}" || return 1
     say_ok "🐟 fish shell is configured (restart open shells)"
+    return 0
 }
 
-# ⚫️ configures ksh
+# -----------------------------------------------------------------------------
+# bootstrapConfigKsh - link ksh shell config from tracked rc
+#
+# Description:
+#   Symlinks the tracked ksh rc to `~/.kshrc`. Idempotent + dry-run aware.
+#
+# Usage:    bootstrapConfigKsh [-n] [-h]
+# Returns:  0 on success; 1 when source missing or link fails.
+# -----------------------------------------------------------------------------
 function bootstrapConfigKsh () {
-    local OPTIND=1
+    local opt="" OPTIND=1
     local dry_mode=0
     while getopts ":nh" opt; do
         case "${opt}" in
@@ -1059,11 +1211,20 @@ function bootstrapConfigKsh () {
 
     ensureSymlink "${rc_source}" "${rc}" || return 1
     say_ok "🐘 ksh shell is configured (restart open shells)"
+    return 0
 }
 
-# ⚫️ configures csh
+# -----------------------------------------------------------------------------
+# bootstrapConfigCsh - link csh shell config from tracked rc
+#
+# Description:
+#   Symlinks the tracked csh rc to `~/.cshrc`. Idempotent + dry-run aware.
+#
+# Usage:    bootstrapConfigCsh [-n] [-h]
+# Returns:  0 on success; 1 when source missing or link fails.
+# -----------------------------------------------------------------------------
 function bootstrapConfigCsh () {
-    local OPTIND=1
+    local opt="" OPTIND=1
     local dry_mode=0
     while getopts ":nh" opt; do
         case "${opt}" in
@@ -1093,14 +1254,32 @@ function bootstrapConfigCsh () {
 
     ensureSymlink "${rc_source}" "${rc}" || return 1
     say_ok "🦜 csh shell is configured (restart open shells)"
+    return 0
 }
 
-# ⚫️ configures pwsh
+# -----------------------------------------------------------------------------
+# bootstrapConfigPwsh - configure PowerShell (placeholder)
+#
+# Description:
+#   Reserved hook for PowerShell configuration. Currently a no-op.
+#
+# Usage:    bootstrapConfigPwsh
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapConfigPwsh () {
     return 0
 }
 
-# ⚫️ configures oh-my-zsh
+# -----------------------------------------------------------------------------
+# bootstrapConfigOhMyZsh - configure oh-my-zsh symlink
+#
+# Description:
+#   Symlinks the vendored oh-my-zsh directory to $ZSH. Idempotent via
+#   ensureSymlink.
+#
+# Usage:    bootstrapConfigOhMyZsh
+# Returns:  0 on success; 1 when vendor directory missing or link fails.
+# -----------------------------------------------------------------------------
 function bootstrapConfigOhMyZsh () {
     local vendor_omz="${dot_bootstrap_directory}/vendor/oh-my-zsh"
     if [[ ! -d "${vendor_omz}" ]]; then
@@ -1115,15 +1294,34 @@ function bootstrapConfigOhMyZsh () {
     return 1
 }
 
-# ⚫️ (DEPRECATED) custom plugin loader — was clobbering ~/.zshrc; replaced by
-# bootstrapInstallOhMyZshCustomPlugins which uses the vendored ohmyzsh submodule.
+# -----------------------------------------------------------------------------
+# bootstrapConfigZshCustomPlugins - DEPRECATED custom plugin loader
+#
+# Description:
+#   Formerly installed custom zsh plugins by clobbering ~/.zshrc. Replaced
+#   by bootstrapInstallOhMyZshCustomPlugins which uses vendored submodules.
+#   Emits a deprecation warning and returns immediately.
+#
+# Usage:    bootstrapConfigZshCustomPlugins
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapConfigZshCustomPlugins () {
     say_warn "bootstrapConfigZshCustomPlugins is deprecated — use bootstrapInstallOhMyZshCustomPlugins"
     return 0
 }
 
-# ⚫️ checks oh-my-zsh plugin
+# -----------------------------------------------------------------------------
+# bootstrapCheckOhMyZshPlugin - validate a single oh-my-zsh plugin
+#
+# Description:
+#   Checks that a plugin identified by -o <org> -r <repo> is valid.
+#   Currently only validates that both arguments are supplied.
+#
+# Usage:    bootstrapCheckOhMyZshPlugin -o <org> -r <repo>
+# Returns:  0 when args are valid; 1 on missing org or repo.
+# -----------------------------------------------------------------------------
 function bootstrapCheckOhMyZshPlugin () {
+    local org="" repo="" opt="" OPTIND=1
     while getopts ":o:r:" opt; do
         case ${opt} in
             o)
@@ -1146,39 +1344,58 @@ function bootstrapCheckOhMyZshPlugin () {
         echo "❌  org or repo not set"
         return 1
     fi
+    return 0
 }
 
-# ⚫️ lists oh-my-zsh configured plugins
+# -----------------------------------------------------------------------------
+# bootstrapListOhMyZshPluginConfiguredPlugins - list installed custom plugins
+#
+# Description:
+#   Lists directories under ~/.oh-my-zsh/custom/plugins/ to show which
+#   custom plugins are physically present on disk.
+#
+# Usage:    bootstrapListOhMyZshPluginConfiguredPlugins
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapListOhMyZshPluginConfiguredPlugins () {
-    # get plugins from j
-    plugins=$(
+    local _plugins="" plugin=""
+    _plugins=$(
         find "${HOME}/.oh-my-zsh/custom/plugins/" -maxdepth 1 -type d -exec basename {} \;
     )
-    if [[ -n "${plugins}" ]]; then
+    if [[ -n "${_plugins}" ]]; then
         echo "🛠️  configured oh-my-zsh plugins:"
-        for plugin in ${plugins}; do
+        while IFS= read -r plugin; do
+            [[ -z "${plugin}" ]] && continue
             echo " - ${plugin}"
-        done
+        done <<< "${_plugins}"
     else
         echo "❌  no configured oh-my-zsh plugins found"
     fi
+    return 0
 }
 
-# ⚫️ lists oh-my-zsh plugins
+# -----------------------------------------------------------------------------
+# bootstrapListOhMyZshPlugin - list available oh-my-zsh plugins
+#
+# Description:
+#   With -l, lists local custom plugins on disk. With -c, lists plugins
+#   declared in data/zsh.yaml. Supports -h for usage.
+#
+# Usage:    bootstrapListOhMyZshPlugin [-l] [-c] [-h]
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapListOhMyZshPlugin () {
-    listLocal=0
+    local list_local=0 list_configured=0 opt="" OPTIND=1
     while getopts ":lch" opt; do
         case ${opt} in
             l)
-                # echo "listing local plugins"
-                listLocal=1
+                list_local=1
                 ;;
             c)
-                # echo "listing configured plugins"
-                listConfigured=1
+                list_configured=1
                 ;;
             h)
-                echo "Usage: ${0} [-l] [-h]"
+                echo "Usage: bootstrapListOhMyZshPlugin [-l] [-c] [-h]"
                 return 0
                 ;;
             \?)
@@ -1192,23 +1409,30 @@ function bootstrapListOhMyZshPlugin () {
 
     echo "🛠️  available oh-my-zsh plugins"
 
-    # list all plugins
-    if [ "${listLocal}" -gt 0 ]; then
-        # list local plugins
-        find "${HOME}/.oh-my-zsh/custom/plugins/" -maxdepth 1 -type d -exec basename {} \;
+    if [[ "${list_local}" -gt 0 ]]; then
+        find "${dot_bootstrap_directory}/vendor/oh-my-zsh/custom/plugins" -maxdepth 1 -type d -exec basename {} \;
     fi
 
-    if [ "${listConfigured}" -gt 0 ]; then
-        # get plugins from file
+    if [[ "${list_configured}" -gt 0 ]]; then
+        local plugin=""
         yq '.plugins.custom[].owner' "${HOME}/.dot/data/zsh.yaml" | \
         while IFS= read -r plugin; do
             echo " - ${plugin}"
         done
     fi
-
+    return 0
 }
 
-# ⚫️ installs oh-my-zsh plugin (idempotent)
+# -----------------------------------------------------------------------------
+# bootstrapInstallOhMyZshPlugin - clone a single oh-my-zsh custom plugin
+#
+# Description:
+#   Clones an oh-my-zsh plugin from GitHub into $ZSH_CUSTOM/plugins/<repo>.
+#   Idempotent: skips if the target directory already exists. Dry-run aware.
+#
+# Usage:    bootstrapInstallOhMyZshPlugin <org> <repo>
+# Returns:  0 on success or already installed; 1 on missing args or clone failure.
+# -----------------------------------------------------------------------------
 function bootstrapInstallOhMyZshPlugin() {
     local org="${1}"
     local repo="${2}"
@@ -1225,13 +1449,24 @@ function bootstrapInstallOhMyZshPlugin() {
         say_err "🧩 failed to install ${repo}"
         return 1
     fi
+    say_ok "🧩 ${repo} installed"
+    return 0
 }
 
-# ⚫️ installs powerlevel10k
+# -----------------------------------------------------------------------------
+# bootstrapConfigPowershell10K - link powerlevel10k config from iCloud
+#
+# Description:
+#   Symlinks `~/.p10k.zsh` to the iCloud-tracked powerlevel10k rc.
+#   Idempotent via ensureSymlink.
+#
+# Usage:    bootstrapConfigPowershell10K
+# Returns:  0 on success; 1 when link fails.
+# -----------------------------------------------------------------------------
 function bootstrapConfigPowershell10K () {
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
     ensureSymlink "${icloud_directory}/dot/shell/powerlevel/rc.zsh" "${HOME}/.p10k.zsh" || return 1
     say_ok "✨ powerlevel10k is configured"
+    return 0
 }
 
 # -----------------------------------------------------------------------------
@@ -1267,37 +1502,66 @@ function bootstrapCheckBrew () {
     return ${rc}
 }
 
-# ⚫️ checks zsh installation (DEPRECATED — handled by data/Brewfile)
+# -----------------------------------------------------------------------------
+# bootstrapCheckZsh - DEPRECATED zsh check (handled by data/Brewfile)
+#
+# Usage:    bootstrapCheckZsh
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapCheckZsh () {
     say_skip "🐢 bootstrapCheckZsh deprecated — zsh provided by data/Brewfile"
     return 0
 }
 
-# ⚫️ checks jq installation (DEPRECATED — handled by data/Brewfile)
+# -----------------------------------------------------------------------------
+# bootstrapCheckJq - DEPRECATED jq check (handled by data/Brewfile)
+#
+# Usage:    bootstrapCheckJq
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapCheckJq () {
     say_skip "🧪 bootstrapCheckJq deprecated — jq provided by data/Brewfile"
     return 0
 }
 
-# ⚫️ checks iterm2 installation (DEPRECATED — handled by data/Brewfile.cask)
+# -----------------------------------------------------------------------------
+# bootstrapCheckIterm - DEPRECATED iterm2 check (handled by data/Brewfile.cask)
+#
+# Usage:    bootstrapCheckIterm [-n] [-x] [-h]
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapCheckIterm () {
+    local _opt_dry _opt_debug _opt_help OPTIND=1
+    _dot_std_opts "bootstrapCheckIterm" "$@" || return $?
+    if [[ ${_opt_help} -eq 1 ]]; then
+        echo "Usage: bootstrapCheckIterm [-n] [-x] [-h]"; return 0
+    fi
     say_skip "🖥️  bootstrapCheckIterm deprecated — iterm2 provided by data/Brewfile.cask"
     return 0
 }
 
-# ⚫️ checks fonts installation (DEPRECATED — handled by data/Brewfile.cask)
+# -----------------------------------------------------------------------------
+# bootstrapCheckFonts - DEPRECATED fonts check (handled by data/Brewfile.cask)
+#
+# Usage:    bootstrapCheckFonts
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapCheckFonts () {
     say_skip "🔤 bootstrapCheckFonts deprecated — fonts provided by data/Brewfile.cask"
     return 0
 }
 
-# ⚫️ checks iterm2 themes installation (DEPRECATED — handled by data/Brewfile.cask)
+# -----------------------------------------------------------------------------
+# bootstrapCheckThemes - DEPRECATED themes check (vendor submodule)
+#
+# Usage:    bootstrapCheckThemes
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapCheckThemes () {
     say_skip "🎨 bootstrapCheckThemes deprecated — vendor submodule iterm-themes provides themes"
     return 0
 }
 
-# ⚫️ checks oh-my-zsh installation
 # -----------------------------------------------------------------------------
 # bootstrapCheckOhMyZsh - ensure oh-my-zsh is installed and configured
 #
@@ -1322,35 +1586,27 @@ function bootstrapCheckOhMyZsh () {
     local omz_home="$HOME/.oh-my-zsh"
 
     if [[ -L "${omz_home}" ]]; then
-        local link_target
+        local link_target=""
         link_target="$(readlink "${omz_home}")"
         if [[ "${link_target}" == "${vendor_omz}" ]]; then
             say_skip "🧙 oh-my-zsh already linked to vendor"
         elif [[ "${link_target}" == *"iCloud"* || "${link_target}" == *"Mobile Documents"* ]]; then
             say_warn "🧙 oh-my-zsh linked to iCloud (${link_target}) — relinking to vendor"
             dry_rm "${omz_home}"
-            if ! _is_dry; then
-                ln -s "${vendor_omz}" "${omz_home}"
-            else
-                say_plan "ln -s ${vendor_omz} ${omz_home}"
-            fi
+            ensureSymlink "${vendor_omz}" "${omz_home}" || rc=1
         else
             say_warn "🧙 oh-my-zsh linked to unexpected target (${link_target}) — relinking to vendor"
             dry_rm "${omz_home}"
-            if ! _is_dry; then
-                ln -s "${vendor_omz}" "${omz_home}"
-            else
-                say_plan "ln -s ${vendor_omz} ${omz_home}"
-            fi
+            ensureSymlink "${vendor_omz}" "${omz_home}" || rc=1
         fi
     elif [[ -d "${omz_home}" ]]; then
         say_warn "🧙 oh-my-zsh is a directory, not a symlink — relinking to vendor"
-        ensureSymlink "${vendor_omz}" "${omz_home}"
+        ensureSymlink "${vendor_omz}" "${omz_home}" || rc=1
     else
         say_work "🧙 installing oh-my-zsh"
         bootstrapInstallOhMyZsh || rc=$?
         if [[ ${rc} -eq 0 && ! -L "${omz_home}" ]]; then
-            ln -s "${vendor_omz}" "${omz_home}"
+            ensureSymlink "${vendor_omz}" "${omz_home}" || rc=1
         fi
     fi
     if [[ ${rc} -eq 0 ]]; then
@@ -1360,9 +1616,19 @@ function bootstrapCheckOhMyZsh () {
     return ${rc}
 }
 
-# ⚫️ checks powerlevel10k installation
+# -----------------------------------------------------------------------------
+# bootstrapCheckPowershell10K - check powerlevel10k installation (WIP)
+#
+# Description:
+#   Placeholder for powerlevel10k installation verification.
+#   Currently emits a skip notice.
+#
+# Usage:    bootstrapCheckPowershell10K
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapCheckPowershell10K () {
     say_skip "✨ powerlevel10k installation is a work in progress"
+    return 0
     # if [[ ! -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]]; then
     #     say_work "✨ installing powerlevel10k"
     #     bootstrapInstallPowershell10K || return 1
@@ -1412,22 +1678,55 @@ function bootstrapInstallBrew () {
     return 1
 }
 
-# ⚫️ installs zsh
+# -----------------------------------------------------------------------------
+# bootstrapInstallZsh - DEPRECATED (handled by data/Brewfile)
+#
+# Usage:    bootstrapInstallZsh
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapInstallZsh () {
     say_skip "🐢 zsh installation is handled by data/Brewfile"
+    return 0
 }
 
-# ⚫️ installs jq
+# -----------------------------------------------------------------------------
+# bootstrapInstallJq - DEPRECATED (handled by data/Brewfile)
+#
+# Usage:    bootstrapInstallJq
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapInstallJq () {
     say_skip "🧪 jq installation is handled by data/Brewfile"
+    return 0
 }
 
-# ⚫️ installs iterm2
+# -----------------------------------------------------------------------------
+# bootstrapInstallIterm - DEPRECATED (handled by data/Brewfile.cask)
+#
+# Usage:    bootstrapInstallIterm [-n] [-x] [-h]
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 function bootstrapInstallIterm () {
+    local _opt_dry _opt_debug _opt_help OPTIND=1
+    _dot_std_opts "bootstrapInstallIterm" "$@" || return $?
+    if [[ ${_opt_help} -eq 1 ]]; then
+        echo "Usage: bootstrapInstallIterm [-n] [-x] [-h]"; return 0
+    fi
     say_skip "🖥️  iterm2 installation is handled by data/Brewfile.cask"
+    return 0
 }
 
-# ⚫️ installs fonts (idempotent: only copies fonts not already present in ~/Library/Fonts)
+# -----------------------------------------------------------------------------
+# bootstrapInstallFonts - install custom fonts from iCloud
+#
+# Description:
+#   Copies font files from `$ICLOUD/dot/terminal/fonts/` into
+#   `~/Library/Fonts/`. Idempotent: only copies fonts not already present.
+#   Dry-run aware.
+#
+# Usage:    bootstrapInstallFonts
+# Returns:  0 on success; 1 when source directory is missing.
+# -----------------------------------------------------------------------------
 function bootstrapInstallFonts () {
     local src_dir="${ICLOUD}/dot/terminal/fonts"
     local dst_dir="${HOME}/Library/Fonts"
@@ -1450,7 +1749,17 @@ function bootstrapInstallFonts () {
     return 0
 }
 
-# ⚫️ installs iterm2 themes (idempotent: only clones if missing)
+# -----------------------------------------------------------------------------
+# bootstrapInstallThemes - verify iterm2 themes vendor submodule
+#
+# Description:
+#   Checks that the iterm-themes vendor submodule is present. Iterm2
+#   imports directly from the vendor directory; no linking needed.
+#   Idempotent.
+#
+# Usage:    bootstrapInstallThemes
+# Returns:  0 when present; 1 when vendor directory is missing.
+# -----------------------------------------------------------------------------
 function bootstrapInstallThemes () {
     local vendor_dir="${dot_bootstrap_directory}/vendor/iterm-themes"
     if [[ ! -d "${vendor_dir}" ]]; then
@@ -1463,7 +1772,16 @@ function bootstrapInstallThemes () {
     return 0
 }
 
-# ⚫️ installs oh-my-zsh
+# -----------------------------------------------------------------------------
+# bootstrapInstallOhMyZsh - symlink vendored oh-my-zsh to $ZSH
+#
+# Description:
+#   Ensures `vendor/oh-my-zsh` is symlinked to `$ZSH`. Requires the
+#   submodule to have been initialized first. Idempotent via ensureSymlink.
+#
+# Usage:    bootstrapInstallOhMyZsh
+# Returns:  0 on success; 1 when vendor directory is missing.
+# -----------------------------------------------------------------------------
 function bootstrapInstallOhMyZsh () {
     local vendor_omz="${dot_bootstrap_directory}/vendor/oh-my-zsh"
     if [[ ! -d "${vendor_omz}" ]]; then
@@ -1480,7 +1798,16 @@ function bootstrapInstallOhMyZsh () {
 
 # NOTE: bootstrapInstallOhMyTmux was consolidated into bootstrapCheckOhMyTmux
 
-# ⚫️ installs powerlevel10k
+# -----------------------------------------------------------------------------
+# bootstrapInstallPowershell10K - ensure powerlevel10k theme is present
+#
+# Description:
+#   Validates that the powerlevel10k theme exists inside the vendored
+#   oh-my-zsh custom themes directory. Reports installation status.
+#
+# Usage:    bootstrapInstallPowershell10K
+# Returns:  0 when theme directory exists; 1 when missing.
+# -----------------------------------------------------------------------------
 function bootstrapInstallPowershell10K () {
     local vendor_omz="${dot_bootstrap_directory}/vendor/oh-my-zsh"
     local p10k_path="${vendor_omz}/custom/themes/powerlevel10k"
@@ -1489,48 +1816,121 @@ function bootstrapInstallPowershell10K () {
         say_err "✨ powerlevel10k not found in vendor/oh-my-zsh/custom/themes — run bootstrapInitSubmodules first"
         return 1
     fi
-    say_skip "✨ powerlevel10k is bundled in vendor/oh-my-zsh custom themes"
     return 0
 }
 
-# ⚫️ checks vim installation
+# -----------------------------------------------------------------------------
+# bootstrapCheckVim - check & configure vim + neovim (vendored)
+#
+# Description:
+#   The vendored vendor/vim submodule provides a unified configuration for
+#   both vim and neovim.  This function verifies the vendor directory exists,
+#   runs `make install` (which symlinks ~/.vim and ~/.config/nvim, syncs
+#   plugin submodules, generates helptags, and builds native artifacts),
+#   then verifies the resulting symlinks.
+#
+# Usage:    bootstrapCheckVim [-n] [-x] [-h]
+# Returns:  0 on success; 1 on failure.
+# -----------------------------------------------------------------------------
 function bootstrapCheckVim () {
-    if command -v vim &> /dev/null; then
-        say_skip "📝 vim already installed"
-        return 0
+    local _opt_dry _opt_debug _opt_help OPTIND=1
+    _dot_std_opts "bootstrapCheckVim" "$@" || return $?
+    if [[ ${_opt_help} -eq 1 ]]; then
+        echo "Usage: bootstrapCheckVim [-n] [-x] [-h]"; return 0
     fi
-    say_work "📝 installing vim"
-    bootstrapInstallVim
+    local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"; [[ ${_opt_dry} -eq 1 ]] && DOT_DRY_RUN=1
+    [[ ${_opt_debug} -eq 1 ]] && set -x
+
+    local rc=0
+    bootstrapInstallVim || rc=$?
+    if [[ ${rc} -eq 0 ]]; then
+        bootstrapConfigVim || rc=$?
+    fi
+
+    [[ ${_opt_debug} -eq 1 ]] && set +x
+    return ${rc}
 }
 
-# ⚫️ installs vim
+# -----------------------------------------------------------------------------
+# bootstrapInstallVim - install vim + neovim via vendored Makefile
+#
+# Description:
+#   Runs `make install` in `vendor/vim` to symlink ~/.vim + ~/.config/nvim,
+#   sync plugins, and build native artifacts. Requires the vendor submodule
+#   to be initialized. Dry-run aware.
+#
+# Usage:    bootstrapInstallVim [-n] [-x] [-h]
+# Returns:  0 on success; 1 when vendor is missing or make fails.
+# -----------------------------------------------------------------------------
 function bootstrapInstallVim () {
-    say_skip "📝 vim installation is handled by data/Brewfile"
-}
-
-# ⚫️ configures vim (idempotent: ensureSymlink for each artifact)
-function bootstrapConfigVim () {
-    say_skip "📝 vim configuration is handled by data/Brewfile and vendor submodules... we need to run the 'make install'"
-}
-
-# ⚫️ checks neovim installation
-function bootstrapInstallNeovim () {
-    say_skip "🌱 neovim installation is handled by data/Brewfile and vendor submodules... we need to run the 'make install'"
-}
-
-# ⚫️ checks neovim installation
-function bootstrapCheckNeovim () {
-    if command -v nvim > /dev/null 2>&1; then
-        say_skip "🌱 Neovim already installed"
-        return 0
+    local _opt_dry _opt_debug _opt_help OPTIND=1
+    _dot_std_opts "bootstrapInstallVim" "$@" || return $?
+    if [[ ${_opt_help} -eq 1 ]]; then
+        echo "Usage: bootstrapInstallVim [-n] [-x] [-h]"; return 0
     fi
-    say_work "🌱 installing Neovim"
-    bootstrapInstallNeovim
+    local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"; [[ ${_opt_dry} -eq 1 ]] && DOT_DRY_RUN=1
+    [[ ${_opt_debug} -eq 1 ]] && set -x
+
+    local vendor_dir="${dot_bootstrap_directory}/vendor/vim"
+    if [[ ! -d "${vendor_dir}" ]]; then
+        say_err "📝 vendor/vim not found — run bootstrapInitSubmodules first"
+        [[ ${_opt_debug} -eq 1 ]] && set +x; return 1
+    fi
+    if [[ ! -f "${vendor_dir}/Makefile" ]]; then
+        say_err "📝 vendor/vim/Makefile not found"
+        [[ ${_opt_debug} -eq 1 ]] && set +x; return 1
+    fi
+    if _is_dry; then
+        say_plan "make -C ${vendor_dir} install  (symlink ~/.vim + ~/.config/nvim, sync plugins, build native artifacts)"
+        [[ ${_opt_debug} -eq 1 ]] && set +x; return 0
+    fi
+    say_work "📝 running make install in vendor/vim (vim + neovim)"
+    if ! make -C "${vendor_dir}" install; then
+        say_err "📝 make install failed in vendor/vim"
+        [[ ${_opt_debug} -eq 1 ]] && set +x; return 1
+    fi
+    say_ok "📝 vim + neovim installed via vendor/vim"
+    [[ ${_opt_debug} -eq 1 ]] && set +x
+    return 0
 }
 
-# ⚫️ configures neovim
-function bootstrapConfigNeovim () {
-    say_skip "🌱 Neovim configuration is handled by data/Brewfile and vendor submodules... we need to run the 'make install'"
+# -----------------------------------------------------------------------------
+# bootstrapConfigVim - verify vim + neovim symlinks from make install
+#
+# Description:
+#   Validates that ~/.vim (or ~/.config/nvim) symlinks created by
+#   `bootstrapInstallVim` are healthy. Reports broken/missing links.
+#   Read-only check; no writes.
+#
+# Usage:    bootstrapConfigVim [-n] [-x] [-h]
+# Returns:  0 when symlinks are valid; 1 when checks fail.
+# -----------------------------------------------------------------------------
+function bootstrapConfigVim () {
+    local _opt_dry _opt_debug _opt_help OPTIND=1
+    _dot_std_opts "bootstrapConfigVim" "$@" || return $?
+    if [[ ${_opt_help} -eq 1 ]]; then
+        echo "Usage: bootstrapConfigVim [-n] [-x] [-h]"; return 0
+    fi
+    [[ ${_opt_debug} -eq 1 ]] && set -x
+
+    local vendor_dir="${dot_bootstrap_directory}/vendor/vim"
+    local nvim_config="${XDG_CONFIG_HOME:-${HOME}/.config}/nvim"
+
+    local rc=0
+    if [[ -L "${HOME}/.vim" ]]; then
+        say_ok "📝 ~/.vim symlink present"
+    else
+        say_warn "📝 ~/.vim is not a symlink — expected link to ${vendor_dir}"
+        rc=1
+    fi
+    if [[ -L "${nvim_config}" ]]; then
+        say_ok "📝 ${nvim_config} symlink present"
+    else
+        say_warn "📝 ${nvim_config} is not a symlink — expected link to ${vendor_dir}"
+        rc=1
+    fi
+    [[ ${_opt_debug} -eq 1 ]] && set +x
+    return ${rc}
 }
 
 # -----------------------------------------------------------------------------
@@ -1647,7 +2047,6 @@ function bootstrapConfigNode () {
     return 0
 }
 
-# ⚫️ installs oh-my-zsh custom plugins via vendor/ohmyzsh nested submodules
 # -----------------------------------------------------------------------------
 # bootstrapInstallOhMyZshCustomPlugins - sync vendored OMZ custom plugins
 #
@@ -1669,7 +2068,7 @@ function bootstrapInstallOhMyZshCustomPlugins () {
     local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"; [[ ${_opt_dry} -eq 1 ]] && DOT_DRY_RUN=1
     [[ ${_opt_debug} -eq 1 ]] && set -x
 
-    local vendor_omz="${dot_bootstrap_directory}/vendor/ohmyzsh"
+    local vendor_omz="${dot_bootstrap_directory}/vendor/oh-my-zsh"
     local zsh_yaml="${dot_bootstrap_directory}/data/zsh.yaml"
 
     if [[ ! -d "${vendor_omz}" ]]; then
@@ -1780,6 +2179,7 @@ EOF
     [[ ${rc} -eq 0 ]] && { bootstrapCheckOhMyZsh              || { rc=$?; say_err "bootstrapCheckOhMyZsh failed (rc=${rc})"; } }
     [[ ${rc} -eq 0 ]] && { bootstrapInstallOhMyZshCustomPlugins || { rc=$?; say_err "bootstrapInstallOhMyZshCustomPlugins failed (rc=${rc})"; } }
     [[ ${rc} -eq 0 ]] && { bootstrapCheckOhMyTmux             || { rc=$?; say_err "bootstrapCheckOhMyTmux failed (rc=${rc})"; } }
+    [[ ${rc} -eq 0 ]] && { bootstrapCheckVim                   || { rc=$?; say_err "bootstrapCheckVim failed (rc=${rc})"; } }
 
     [[ ${_opt_debug} -eq 1 ]] && set +x
     if [[ ${rc} -eq 0 ]]; then
@@ -1789,9 +2189,17 @@ EOF
     return ${rc}
 }
 
-# Export every defined function so sub-shells (bash) inherit them when this
-# file has been sourced. zsh does not support `export -f`; use `typeset -fx`
-# there so the same names are marked exported within the current zsh session.
+# -----------------------------------------------------------------------------
+# _dot_bootstrap_export_functions - export all bootstrap functions
+#
+# Description:
+#   Exports every defined function so sub-shells (bash) inherit them when
+#   this file has been sourced. In zsh, uses `typeset -fx` since zsh does
+#   not support `export -f`.
+#
+# Usage:    _dot_bootstrap_export_functions   (called internally)
+# Returns:  0 always.
+# -----------------------------------------------------------------------------
 _dot_bootstrap_export_functions () {
     local fn
     local fns=(
@@ -1823,7 +2231,6 @@ _dot_bootstrap_export_functions () {
         bootstrapCheckThemes bootstrapInstallThemes
         bootstrapCheckFonts bootstrapInstallFonts
         bootstrapCheckVim bootstrapInstallVim bootstrapConfigVim
-        bootstrapCheckNeovim bootstrapInstallNeovim bootstrapConfigNeovim
         bootstrapInitSubmodules
         bootstrapSystem
     )
