@@ -32,7 +32,7 @@ function __load_secrets () {
         rm -f "$TMPDIR"/.secrets
     else
         echo "no secrets file found"
-        exit 1
+        return 1
     fi
     export DOT_SECRETS_LOADED=1
     echo "🛻  loaded ${#secret_keys[@]} secrets"

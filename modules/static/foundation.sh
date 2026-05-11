@@ -55,17 +55,59 @@ function loadZshOptions() {
     done
 }
 
+function sourceModule() {
+    local mod="$1"
+    local mod_name=""
+    mod_name="$(basename "$mod")"
+
+    if [[ ! -r "$mod" ]]; then
+        DOT_FAILED_MODULES+=("$mod_name")
+        if [[ "${DOT_DEBUG:-0}" == "1" || "${DOT_DEBUG:-}" == "true" ]]; then
+            echo "skip source: $mod (not readable)"
+        fi
+        return 0
+    fi
+
+    local rc=0
+    local t0=""
+    if [[ "${DOT_DEBUG:-0}" == "1" || "${DOT_DEBUG:-}" == "true" ]]; then
+        t0="$EPOCHREALTIME"
+    fi
+
+    . "$mod"
+    rc=$?
+
+    if [[ $rc -ne 0 ]]; then
+        DOT_FAILED_MODULES+=("$mod_name")
+        if [[ "${DOT_DEBUG:-0}" == "1" || "${DOT_DEBUG:-}" == "true" ]]; then
+            echo "FAIL source: $mod (rc=$rc)"
+        fi
+    else
+        DOT_LOADED_MODULES+=("$mod_name")
+        if [[ "${DOT_DEBUG:-0}" == "1" || "${DOT_DEBUG:-}" == "true" ]]; then
+            local elapsed=""
+            elapsed="$(( EPOCHREALTIME - t0 ))"
+            printf "load source: %s (%.3fs)\n" "$mod" "$elapsed"
+        fi
+    fi
+
+    return 0
+}
+
 function loadModules() {
+    DOT_LOADED_MODULES=()
+    DOT_FAILED_MODULES=()
+
     if [ -d "$DOT_LIBS_DIR" ]; then
         for lib in $(find "${DOT_LIBS_DIR}" -maxdepth 1 -type f -name "[0-9][0-9][0-9]-*-*.sh" | sort -d); do
-            if [[ ! "${DOT_DEBUG}x" == "x" && "${DOT_DEBUG}" == true ]]; then
-                echo "load source: $lib"
-            fi
-            . "$lib" || true
+            sourceModule "$lib"
         done
     else
         echo "Warning: DOT_LIBS_DIR not found: $DOT_LIBS_DIR"
     fi
+
+    export DOT_LOADED_MODULES
+    export DOT_FAILED_MODULES
 }
 
 function loadSecrets () {

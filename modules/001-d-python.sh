@@ -36,10 +36,10 @@ fi
 # check for our base venv and create it if it does not exist, using uv
 venv_name="${desired_version}-${arch}-base"
 if [[ ! -d "${HOME}/.venv/${venv_name}" ]]; then
-    pushd "${HOME}/.venv" || exit 1
+    pushd "${HOME}/.venv" || return 1
     echo "creating python venv: ${venv_name}"
     uv venv --seed --python "${desired_version}" "${venv_name}"
-    popd || exit 1
+    popd || return 1
 fi
 
 # by default, we want to source the base venv on startup — but never clobber
