@@ -1,6 +1,6 @@
 # 📜 scripts/
 
-Repository maintenance scripts. Unlike [`bin/`](../bin/README.md) (user-facing tooling on `$PATH`), `scripts/` contains **maintainer utilities** that operate on the `dot` repository itself — first-run bootstrap, iCloud config deployment, submodule management, and host dependency auditing.
+Repository maintenance scripts. Unlike [`bin/`](../bin/README.md) (general user-facing tooling), `scripts/` contains **internal dot utilities** for bootstrap, deploy, sync, and audits. `modules/000-a-paths.sh` prepends this directory to `$PATH`, so these commands are callable directly in a loaded `dot` shell.
 
 ---
 

@@ -1,76 +1,79 @@
-# 📦 data/
+# data/
 
-> Static assets and runtime data for the `dot` framework.
-> Anything that isn't code lives here: YAML config, Brewfile, SBOMs, branding, and pre-baked terminal/shell snapshots.
+Runtime data and static assets consumed by `dot`.
 
----
+## Directory Map
 
-## 🗂️ Layout
+| Path | Purpose |
+| --- | --- |
+| `zsh.yaml` | Canonical shell runtime config (theme, paths, conditions, languages, options, plugins, themes). |
+| `zsh.json` | Legacy JSON mirror of shell config values. |
+| `Brewfile` | Homebrew formula bundle used by bootstrap. |
+| `Brewfile.cask` | Homebrew cask bundle for GUI apps/tools. |
+| `quotes.yaml` / `quotes.json` | Quote sources for splash/output helpers. |
+| `images/` | Branding and visual assets. |
+| `configs/` | Shell/terminal config snapshots and related files. |
+| `sbom/` | SBOM + vulnerability scanning extension project. |
 
-| Path                                          | Purpose                                                                                                                                                |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 🧾 [`zsh.yaml`](./zsh.yaml)                   | **Source of truth** for the ZSH environment — theme, plugins (with `enabled` flags), splash screen settings, language deps. Parsed at runtime by `yq`. |
-| 🪞 [`zsh.json`](./zsh.json)                   | Legacy JSON mirror of `zsh.yaml` (kept for backward compatibility — _YAML wins_).                                                                      |
-| 🍺 [`Brewfile`](./Brewfile)                   | Homebrew bundle consumed by `scripts/dot-bootstrap.sh` (and resolvable from iCloud).                                                                       |
-| 💭 [`quotes.yaml`](./quotes.yaml)             | Splash-screen quotes (rendered by `termQuote`).                                                                                                        |
-| 🪞 `quotes.json`                              | Legacy JSON mirror of `quotes.yaml`.                                                                                                                   |
-| 🖼 [`images/`](./images/)                     | Branding assets (`black-sun.jpg`, etc.) used in docs.                                                                                                  |
-| 🛡 [`sbom/`](./sbom/)                         | VS Code extension — generates CycloneDX/SPDX SBOMs and scans them for vulnerabilities via OSV.dev. See [`sbom/README.md`](./sbom/README.md).           |
-| 🖥 [`configs/terminal/`](./configs/terminal/) | Pre-baked terminal emulator profiles (iTerm2 dynamic profiles, color schemes).                                                                         |
-| 🐚 [`configs/shell/`](./configs/shell/)       | Snapshot of shell-level config drops (referenced by the deploy scripts).                                                                               |
+## `zsh.yaml` Schema (Current)
 
----
+`data/zsh.yaml` is parsed directly by runtime modules and bootstrap tooling.
 
-## 🧾 `zsh.yaml` — the heart
+Current top-level keys:
 
-`zsh.yaml` defines the shape of every interactive `dot` shell. It is parsed by `yq` (a hard bootstrap dependency) and consulted by:
+- `theme`
+- `path`
+- `conditions`
+- `languages`
+- `options`
+- `plugins`
+- `themes`
 
-- 🐚 `zshrc` → reads `.theme` to set `$ZSH_THEME`
-- 🚀 `scripts/dot-bootstrap.sh` → reads `.zsh.plugins.builtin` & `.zsh.plugins.custom` to enable / disable oh-my-zsh modules
-- 🐍 `scripts/dot-bootstrap.sh` → reads `.languages.python.packages` (when `DOT_INSTALL_LANG_DEPS=1`) to seed the base venv
-- 🪟 `scripts/dot-bootstrap.sh` → reads `.tmux.*` to wire up oh-my-tmux + TPM
-
-Top-level keys:
+Example shape:
 
 ```yaml
-theme: powerlevel10k
-zsh:
-  plugins:
-    builtin: [git, fzf, ssh-agent, …] # ships with oh-my-zsh
-    custom: # vendored under vendor/oh-my-zsh/custom
-      - { name: powerlevel10k, enabled: true, type: theme }
-      - { name: zsh-autosuggestions, enabled: true, type: plugin }
-      - { name: zsh_codex, enabled: false, type: plugin }
-tmux:
-  plugins:
-    - tmux-plugins/tpm
-    - tmux-plugins/tmux-sensible
+theme: powerlevel10k/powerlevel10k
+path: []
+conditions:
+  network:
+    home: 192.168.0.1
 languages:
   python:
-    packages: [uv, pipx, ruff, …]
+    version: 3.11.13
+    pip:
+      requirements:
+        - libtmux==0.36.0
+plugins:
+  builtin:
+    - git
+    - fzf
+  custom:
+    - owner: zsh-users
+      repo: zsh-autosuggestions
+      enabled: true
+themes:
+  custom:
+    - owner: romkatv
+      repo: powerlevel10k
+      enabled: true
 ```
 
-> Each `enabled` flag controls _runtime activation_ — you can disable a plugin without removing the submodule from disk.
+## Where `zsh.yaml` Is Used
 
----
+- `zshrc`: reads `.theme` to set `ZSH_THEME`.
+- `modules/static/foundation.sh`: `loadZshOptions` reads `.options[]`.
+- `scripts/dot-bootstrap.sh`: installs language dependencies from `.languages.*`.
 
-## 🚚 Deployment
+## Deploy Flow
 
-Two scripts under `bin/` ship local data into the iCloud-backed live config tree (so multiple machines stay in sync):
+Use scripts in `scripts/` to mirror runtime config to iCloud-backed locations.
 
-| Script                                                       | Effect                                              |
-| ------------------------------------------------------------ | --------------------------------------------------- |
-| 🌥 [`scripts/dot-deploy-config.sh`](../scripts/dot-deploy-config.sh) | `cp data/zsh.yaml → $ICLOUD/dot/shell/zsh/zsh.yaml` |
-| 🌥 [`scripts/dot-deploy-rc.sh`](../scripts/dot-deploy-rc.sh)         | `cp zshrc → $ICLOUD/dot/shell/zsh/rc`               |
+| Script | Effect |
+| --- | --- |
+| `scripts/dot-deploy-config.sh` | Copies `data/zsh.yaml` to `$ICLOUD/dot/shell/zsh/zsh.yaml`. |
+| `scripts/dot-deploy-rc.sh` | Copies `zshrc` to `$ICLOUD/dot/shell/zsh/rc`. |
 
----
+## Notes
 
-## 🛡️ SBOM Subproject
-
-[`data/sbom/`](./sbom/) is a self-contained TypeScript VS Code extension. It uses [Syft](https://github.com/anchore/syft) to generate **CycloneDX** and **SPDX** SBOMs and scans them against [OSV.dev](https://osv.dev/) for known CVEs. See its [own README](./sbom/README.md) for build & install instructions.
-
----
-
-## 🖼️ Images
-
-Branding lives in [`images/`](./images/) — `black-sun.jpg` is the canonical logo (`⚫️`).
+- `data/zsh.yaml` is the source-of-truth for shell behavior.
+- Legacy JSON/YAML mirrors are kept for compatibility/reference.

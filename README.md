@@ -41,7 +41,7 @@
 | 🧩   | Modular Library       | Two-tier `modules/` library: **static** helpers always loaded, plus 30+ **dynamic** snippets in lex order — disable any with a `DOT_DISABLE_*` flag |
 | 🗂   | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                                                  |
 | 🔐   | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                                        |
-| 🛠   | Language Environments | Python (`uv`), Node.js (`fnm`/`n`), Rust (`rustup`), Java (`jenv`) all from one place                                                               |
+| 🛠   | Language Environments | Python (`uv`), Node.js (`n`/`npm`), Rust (`rustup`), Java (`jenv`) all from one place                                                               |
 | 🌱   | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                                         |
 | 🔄   | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                                       |
 | 🛡   | SBOM + OSV Scanner    | [`data/sbom/`](./data/sbom/) — VS Code extension that generates CycloneDX/SPDX SBOMs and scans them via OSV.dev                                     |
@@ -116,14 +116,14 @@ See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough o
 │   │                      #    sourced first so later modules + bin/ tools can rely on them
 │   └── NNN-x-name.sh      # 🌀 DYNAMIC modules — loaded in lex order; each is a
 │                          #    self-contained snippet of targeted functionality
-├── bin/                   # 🛠  General-purpose tooling prepended to $PATH at shell startup
-│   │                      #    (dot-bootstrap, ivm, ictl, secret-*, git-*, applevm-helper, …)
+├── bin/                   # 🛠  User-facing tooling prepended to $PATH at shell startup
+│   │                      #    (ivm, ictl, secret-*, git-*, applevm-helper, …)
 │   └── apple-vm-helper/   #    Swift sources for the native Apple VM helper binary
 ├── vendor/                # 🌱 Vendored git submodules — keep dot self-contained
 │                          #    (oh-my-zsh, oh-my-tmux, fzf-git, bash-commons, figlet-fonts,
 │                          #     plus nested oh-my-zsh custom plugins/themes)
-├── scripts/               # 🔧 Maintainer scripts that operate on the dot repo itself
-│                          #    (submodule-sync.sh — init/update/status for every submodule)
+├── scripts/               # 🔧 Internal dot maintenance tooling (bootstrap, deploy, sync, audits)
+│                          #    prepended to $PATH for easy invocation after shell startup
 ├── config/                # ⚙️  Runtime configuration
 │   ├── shell/             #    p10k preset
 │   ├── langs/             #    Python requirements seed
@@ -141,12 +141,37 @@ See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough o
 
 ### 🪨 Static vs 🌀 Dynamic Modules
 
-| Tier          | Path                 | Loaded                                        | Purpose                                                                                                                                                             |
-| ------------- | -------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🪨 **Static**  | `modules/static/`    | First — sourced explicitly by `zshrc`         | Foundational env (`DOT_*` vars, paths, autoloads, ulimits, ssh keys, `dot.shell`). Always available; consumed by every dynamic module **and** by scripts in `bin/`. |
-| 🌀 **Dynamic** | `modules/NNN-x-*.sh` | Lex order via `loadModules` after the statics | Targeted, individually disable-able snippets (homebrew, git, mac, podman, p10k, tmux, node, python, rust, java, sre, …).                                            |
+| Tier          | Path                 | Loaded                                        | Purpose                                                                                                                                                   |
+| ------------- | -------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🪨 **Static**  | `modules/static/`    | First — sourced explicitly by `zshrc`         | Foundational env (`DOT_*` vars, autoloads, limits, ssh helpers, `dot.shell`). Always available; consumed by every dynamic module and by internal tooling. |
+| 🌀 **Dynamic** | `modules/NNN-x-*.sh` | Lex order via `loadModules` after the statics | Targeted, individually disable-able snippets (homebrew, git, mac, podman, p10k, tmux, node, python, rust, java, sre, …).                                  |
 
 Both tiers are plain `.sh` files. See [modules/README.md](./modules/README.md) for the full inventory and the `DOT_DISABLE_*` flags that toggle each dynamic module off.
+
+### 🧭 Startup Load Order
+
+`zshrc` loads in this order:
+
+1. `modules/static/dotenv.sh`
+2. `scripts/dot-bootstrap.sh` (if present)
+3. `modules/static/foundation.sh`
+4. `modules/static/ssh.sh`
+5. `modules/static/limits.sh`
+6. `modules/static/autoload.sh`
+7. `modules/static/dot.sh`
+8. `loadZshOptions` from `data/zsh.yaml`
+9. `loadModules` (every `modules/NNN-*-*.sh` in lexical order)
+
+### 🛣 PATH Contributions
+
+At startup, `modules/000-a-paths.sh` prepends these directories (when present):
+
+1. `$HOME/Tools/edirect`
+2. `$DOT_DIR/bin`
+3. `$DOT_DIR/scripts`
+4. `$HOME/bin` (created automatically if missing)
+
+This means user-facing commands in `bin/` and internal-maintainer commands in `scripts/` are directly callable in interactive shells.
 
 > The `turtle/` path is **scheduled for excision** and is not part of `dot`'s supported surface.
 
