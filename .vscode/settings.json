@@ -103,6 +103,38 @@
     "editor.insertSpaces": true,
     "editor.tabSize": 2
   },
+  "chat.mcp.access": "all",
+  "chat.mcp.gallery.enabled": true,
+  "chat.tools.urls.autoApprove": {
+    "https://*.cdc.gov": true,
+    "https://*.getutm.app": {
+      "approveRequest": true,
+      "approveResponse": true
+    },
+    "https://api.stlouisfed.org": true,
+    "https://canonical-subiquity.readthedocs-hosted.com": true,
+    "https://cdimage.ubuntu.com": {
+      "approveRequest": true,
+      "approveResponse": true
+    },
+    "https://code.visualstudio.com": true,
+    "https://developer.hashicorp.com": true,
+    "https://formulae.brew.sh": {
+      "approveRequest": true,
+      "approveResponse": true
+    },
+    "https://fred.stlouisfed.org": {
+      "approveRequest": true,
+      "approveResponse": true
+    },
+    "https://github.com": true,
+    "https://github.com/microsoft/vscode/wiki/*": true,
+    "https://ubuntu.com": {
+      "approveRequest": true,
+      "approveResponse": true
+    },
+    "https://www.stlouisfed.org": true
+  },
   "editor.formatOnSave": true,
   "editor.insertSpaces": true,
   "editor.tabSize": 2,
