@@ -1,4 +1,5 @@
 # shellcheck shell=bash
+# shellcheck source=/dev/null
 # Test: modules/000-a-config.sh — config access layer
 # Portable bootstrap — works under bash and zsh
 if [ -n "${ZSH_VERSION:-}" ]; then _test_dir="${0:A:h}"
