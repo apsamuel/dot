@@ -12,10 +12,12 @@
 #   make tmux-status                  # vendor passthrough (oh-my-tmux)
 #   make tmux-add-plugin PLUGIN=owner/repo   # add a tmux plugin
 #   make tmux-sync-plugins            # reconcile tmux plugins
+#   make dry-run-verify               # CI target: verify zero mutations in DRY=1 mode
 #
 # Parameters (env vars, combinable):
 #   DRY=1         safe dry-run mode (sets DOT_DRY_RUN=1)
 #   DEBUG=1       enable bash xtrace (-x)
+#   VERBOSE=1     enable verbose output in vendor flows
 #   DEPS=1        force reinstall brew bundle even if satisfied
 #   LANG_DEPS=1   install pip/npm packages from data/zsh.yaml
 #
@@ -45,6 +47,7 @@ VENDOR_TMUX := $(DOT_DIR)/vendor/oh-my-tmux
 # ── Parameter passthrough ─────────────────────────────────────────────────────
 DRY       ?= 0
 DEBUG     ?= 0
+VERBOSE   ?= 0
 DEPS      ?= 0
 LANG_DEPS ?= 0
 
@@ -63,6 +66,9 @@ EXEC   ?=
 BOOT := export DOT_DRY_RUN="$(DRY)" DOT_DEPS="$(DEPS)" DOT_INSTALL_LANG_DEPS="$(LANG_DEPS)" DOT_DIRECTORY="$(DOT_DIR)"; \
         source "$(BOOTSTRAP)"; \
         if [[ "$(DEBUG)" == "1" ]]; then set -x; fi
+
+# Shared env propagation for all vendor sub-makes.
+VENDOR_FLAGS := DRY="$(DRY)" DEBUG="$(DEBUG)" VERBOSE="$(VERBOSE)" DOT_DRY_RUN="$(DRY)" DOT_DEBUG="$(DEBUG)" DOT_VERBOSE="$(VERBOSE)"
 
 # ── Phony declarations ────────────────────────────────────────────────────────
 .PHONY: help \
@@ -94,6 +100,7 @@ help: ## Show this help
 	@echo "Parameters (env vars):"
 	@echo "  DRY=1         dry-run mode (no filesystem mutations)"
 	@echo "  DEBUG=1       enable xtrace"
+	@echo "  VERBOSE=1     enable verbose vendor output"
 	@echo "  DEPS=1        force reinstall brew bundle"
 	@echo "  LANG_DEPS=1   install pip/npm packages"
 	@echo ""
@@ -175,13 +182,13 @@ dot-bootstrap-omz: ## Ensure oh-my-zsh is installed and linked
 	@$(BOOT); bootstrapCheckOhMyZsh
 
 dot-bootstrap-omz-plugins: ## Sync oh-my-zsh custom plugins (vendor dispatch)
-	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins
+	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins $(VENDOR_FLAGS)
 
 dot-bootstrap-tmux: ## Configure oh-my-tmux + tpm plugins (vendor dispatch)
-	@$(MAKE) -C "$(VENDOR_TMUX)" install
+	@$(MAKE) -C "$(VENDOR_TMUX)" install $(VENDOR_FLAGS)
 
 dot-bootstrap-vim: ## Configure vim + neovim (vendor dispatch)
-	@$(MAKE) -C "$(VENDOR_VIM)" install
+	@$(MAKE) -C "$(VENDOR_VIM)" install $(VENDOR_FLAGS)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Convenience groups
@@ -205,84 +212,116 @@ dot-bootstrap: ## Full install (all steps, fails fast)
 # ══════════════════════════════════════════════════════════════════════════════
 
 vim-install: ## [vim] Run install.sh (symlinks + submodules + build)
-	@$(MAKE) -C "$(VENDOR_VIM)" install
+	@$(MAKE) -C "$(VENDOR_VIM)" install $(VENDOR_FLAGS)
 
 vim-build: ## [vim] Compile native artifacts
-	@$(MAKE) -C "$(VENDOR_VIM)" build
+	@$(MAKE) -C "$(VENDOR_VIM)" build $(VENDOR_FLAGS)
 
 vim-update: ## [vim] Pull latest submodules, then rebuild
-	@$(MAKE) -C "$(VENDOR_VIM)" update
+	@$(MAKE) -C "$(VENDOR_VIM)" update $(VENDOR_FLAGS)
 
 vim-helptags: ## [vim] Regenerate vim/nvim helptags
-	@$(MAKE) -C "$(VENDOR_VIM)" helptags
+	@$(MAKE) -C "$(VENDOR_VIM)" helptags $(VENDOR_FLAGS)
 
 vim-doctor: ## [vim] Run plugin-status + :checkhealth
-	@$(MAKE) -C "$(VENDOR_VIM)" doctor
+	@$(MAKE) -C "$(VENDOR_VIM)" doctor $(VENDOR_FLAGS)
 
 vim-list: ## [vim] List vendored plugins
-	@$(MAKE) -C "$(VENDOR_VIM)" list
+	@$(MAKE) -C "$(VENDOR_VIM)" list $(VENDOR_FLAGS)
 
 vim-plugins: ## [vim] Show staged plugins each editor loads
-	@$(MAKE) -C "$(VENDOR_VIM)" plugins
+	@$(MAKE) -C "$(VENDOR_VIM)" plugins $(VENDOR_FLAGS)
 
 vim-add: ## [vim] Vendor a new plugin (PLUGIN=owner/repo BUNDLE=shared|nvim)
-	@$(MAKE) -C "$(VENDOR_VIM)" add PLUGIN="$(PLUGIN)" BUNDLE="$(BUNDLE)"
+	@$(MAKE) -C "$(VENDOR_VIM)" add PLUGIN="$(PLUGIN)" BUNDLE="$(BUNDLE)" $(VENDOR_FLAGS)
 
 vim-rm: ## [vim] Remove a vendored plugin (PLUGIN=name BUNDLE=shared|nvim)
-	@$(MAKE) -C "$(VENDOR_VIM)" rm PLUGIN="$(PLUGIN)" BUNDLE="$(BUNDLE)"
+	@$(MAKE) -C "$(VENDOR_VIM)" rm PLUGIN="$(PLUGIN)" BUNDLE="$(BUNDLE)" $(VENDOR_FLAGS)
 
 vim-clean: ## [vim] Remove ~/.vim and ~/.config/nvim symlinks
-	@$(MAKE) -C "$(VENDOR_VIM)" clean
+	@$(MAKE) -C "$(VENDOR_VIM)" clean $(VENDOR_FLAGS)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Vendor passthrough — oh-my-zsh  (vendor/oh-my-zsh/Makefile)
 # ══════════════════════════════════════════════════════════════════════════════
 
 omz-install: ## [omz] Initialize and update all submodules
-	@$(MAKE) -C "$(VENDOR_OMZ)" install
+	@$(MAKE) -C "$(VENDOR_OMZ)" install $(VENDOR_FLAGS)
 
 omz-add-plugin: ## [omz] Add a custom plugin (OWNER, REPO required; EXEC optional)
-	@$(MAKE) -C "$(VENDOR_OMZ)" add-plugin OWNER="$(OWNER)" REPO="$(REPO)" EXEC="$(EXEC)"
+	@$(MAKE) -C "$(VENDOR_OMZ)" add-plugin OWNER="$(OWNER)" REPO="$(REPO)" EXEC="$(EXEC)" $(VENDOR_FLAGS)
 
 omz-add-theme: ## [omz] Add a custom theme (OWNER, REPO required; EXEC optional)
-	@$(MAKE) -C "$(VENDOR_OMZ)" add-theme OWNER="$(OWNER)" REPO="$(REPO)" EXEC="$(EXEC)"
+	@$(MAKE) -C "$(VENDOR_OMZ)" add-theme OWNER="$(OWNER)" REPO="$(REPO)" EXEC="$(EXEC)" $(VENDOR_FLAGS)
 
 omz-remove-plugin: ## [omz] Remove a custom plugin (OWNER, REPO required)
-	@$(MAKE) -C "$(VENDOR_OMZ)" remove-plugin OWNER="$(OWNER)" REPO="$(REPO)"
+	@$(MAKE) -C "$(VENDOR_OMZ)" remove-plugin OWNER="$(OWNER)" REPO="$(REPO)" $(VENDOR_FLAGS)
 
 omz-remove-theme: ## [omz] Remove a custom theme (OWNER, REPO required)
-	@$(MAKE) -C "$(VENDOR_OMZ)" remove-theme OWNER="$(OWNER)" REPO="$(REPO)"
+	@$(MAKE) -C "$(VENDOR_OMZ)" remove-theme OWNER="$(OWNER)" REPO="$(REPO)" $(VENDOR_FLAGS)
 
 omz-sync-plugins: ## [omz] Reconcile plugin submodules from data file
-	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins
+	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins $(VENDOR_FLAGS)
 
 omz-sync-themes: ## [omz] Reconcile theme submodules from data file
-	@$(MAKE) -C "$(VENDOR_OMZ)" sync-themes
+	@$(MAKE) -C "$(VENDOR_OMZ)" sync-themes $(VENDOR_FLAGS)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Vendor passthrough — oh-my-tmux  (vendor/oh-my-tmux/Makefile)
 # ══════════════════════════════════════════════════════════════════════════════
 
 tmux-install: ## [tmux] Link configs → ~ + sync plugin submodules
-	@$(MAKE) -C "$(VENDOR_TMUX)" install
+	@$(MAKE) -C "$(VENDOR_TMUX)" install $(VENDOR_FLAGS)
 
 tmux-clean: ## [tmux] Remove tmux config symlinks
-	@$(MAKE) -C "$(VENDOR_TMUX)" clean
+	@$(MAKE) -C "$(VENDOR_TMUX)" clean $(VENDOR_FLAGS)
 
 tmux-update: ## [tmux] Update declared plugin submodules
-	@$(MAKE) -C "$(VENDOR_TMUX)" update
+	@$(MAKE) -C "$(VENDOR_TMUX)" update $(VENDOR_FLAGS)
 
 tmux-status: ## [tmux] Check tmux config health + plugin status
-	@$(MAKE) -C "$(VENDOR_TMUX)" status
+	@$(MAKE) -C "$(VENDOR_TMUX)" status $(VENDOR_FLAGS)
 
 tmux-add-plugin: ## [tmux] Declare + clone a plugin (PLUGIN=owner/repo)
-	@$(MAKE) -C "$(VENDOR_TMUX)" add-plugin PLUGIN="$(PLUGIN)"
+	@$(MAKE) -C "$(VENDOR_TMUX)" add-plugin PLUGIN="$(PLUGIN)" $(VENDOR_FLAGS)
 
 tmux-remove-plugin: ## [tmux] Undeclare + remove a plugin (PLUGIN=owner/repo)
-	@$(MAKE) -C "$(VENDOR_TMUX)" remove-plugin PLUGIN="$(PLUGIN)"
+	@$(MAKE) -C "$(VENDOR_TMUX)" remove-plugin PLUGIN="$(PLUGIN)" $(VENDOR_FLAGS)
 
 tmux-sync-plugins: ## [tmux] Reconcile declared ↔ on-disk plugin submodules
-	@$(MAKE) -C "$(VENDOR_TMUX)" sync-plugins
+	@$(MAKE) -C "$(VENDOR_TMUX)" sync-plugins $(VENDOR_FLAGS)
 
 tmux-list-plugins: ## [tmux] Show declared vs installed plugins
-	@$(MAKE) -C "$(VENDOR_TMUX)" list-plugins
+	@$(MAKE) -C "$(VENDOR_TMUX)" list-plugins $(VENDOR_FLAGS)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CI / Verification targets
+# ══════════════════════════════════════════════════════════════════════════════
+
+.PHONY: dry-run-verify
+
+dry-run-verify: ## Verify that DRY=1 produces zero mutations (for CI/pre-commit)
+	@echo "🔍 Verifying dry-run idempotency..."
+	@git status --short > /tmp/git-status-before.txt 2>&1 || true
+	@echo "  Running: DRY=1 make vim-install"
+	@DRY=1 make vim-install > /dev/null 2>&1
+	@echo "  Running: DRY=1 make omz-sync-plugins"
+	@DRY=1 make omz-sync-plugins > /dev/null 2>&1
+	@echo "  Running: DRY=1 make tmux-install"
+	@DRY=1 make tmux-install > /dev/null 2>&1
+	@echo "  Running: DRY=1 make tmux-sync-plugins"
+	@DRY=1 make tmux-sync-plugins > /dev/null 2>&1
+	@git status --short > /tmp/git-status-after.txt 2>&1 || true
+	@if diff -q /tmp/git-status-before.txt /tmp/git-status-after.txt > /dev/null 2>&1; then \
+		echo "✅ PASS: All dry-run operations produced zero mutations"; \
+		exit 0; \
+	else \
+		echo "❌ FAIL: Dry-run operations produced mutations:"; \
+		echo "--- Before ---"; \
+		cat /tmp/git-status-before.txt; \
+		echo "--- After ---"; \
+		cat /tmp/git-status-after.txt; \
+		echo "--- Diff ---"; \
+		diff /tmp/git-status-before.txt /tmp/git-status-after.txt || true; \
+		exit 1; \
+	fi
