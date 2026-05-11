@@ -32,6 +32,11 @@ if [ -d "$DOT_DIR/bin" ] ; then
   PATH="${DOT_DIR}/bin:${PATH}"
 fi
 
+# source $DOT_DIR/scripts
+if [ -d "$DOT_DIR/scripts" ] ; then
+  PATH="${DOT_DIR}/scripts:${PATH}"
+fi
+
 # theoretical $HOME/bin
 if [ ! -d "${HOME}/bin" ] ; then
   mkdir -p "${HOME}/bin"
