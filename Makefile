@@ -325,3 +325,17 @@ dry-run-verify: ## Verify that DRY=1 produces zero mutations (for CI/pre-commit)
 		diff /tmp/git-status-before.txt /tmp/git-status-after.txt || true; \
 		exit 1; \
 	fi
+
+# ── Unit Tests ────────────────────────────────────────────────────────────────
+
+.PHONY: test test-verbose test-module
+
+test: ## Run all unit tests
+	@zsh test/run_unit.sh
+
+test-verbose: ## Run all unit tests with verbose TAP output
+	@zsh test/run_unit.sh -v
+
+test-module: ## Run a single test module (MODULE=name)
+	@if [ -z "$(MODULE)" ]; then echo "Usage: make test-module MODULE=<filter>"; exit 1; fi
+	@zsh test/run_unit.sh "$(MODULE)"
