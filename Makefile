@@ -3,10 +3,10 @@
 #
 # Usage:
 #   make                              # print help
-#   make install                      # full install (mirrors bootstrapSystem)
-#   DRY=1 make install                # dry-run — prints planned actions, zero mutations
-#   make install-brew install-deps install-cloud   # run specific steps
-#   DEBUG=1 make bootstrap-zsh        # enable xtrace for a single step
+#   make dot-bootstrap                # full install (mirrors bootstrapSystem)
+#   DRY=1 make dot-bootstrap          # dry-run — prints planned actions, zero mutations
+#   make dot-bootstrap-brew dot-bootstrap-deps dot-bootstrap-cloud   # run specific steps
+#   DEBUG=1 make dot-bootstrap-zsh    # enable xtrace for a single step
 #   make vim-list                     # vendor passthrough (vim)
 #   make omz-sync-plugins             # vendor passthrough (oh-my-zsh)
 #   make tmux-status                  # vendor passthrough (oh-my-tmux)
@@ -66,14 +66,14 @@ BOOT := export DOT_DRY_RUN="$(DRY)" DOT_DEPS="$(DEPS)" DOT_INSTALL_LANG_DEPS="$(
 
 # ── Phony declarations ────────────────────────────────────────────────────────
 .PHONY: help \
-        install-info install-brew install-deps install-cask-deps \
-        install-cloud install-submodules \
-        install-zsh install-bash install-shells \
-        install-ssh install-git install-gh install-configs \
-        install-python install-node install-langs \
-        install-iterm install-figlet install-fonts install-p10k \
-        install-omz install-omz-plugins install-tmux install-vim \
-        install \
+        dot-bootstrap-info dot-bootstrap-brew dot-bootstrap-deps dot-bootstrap-cask-deps \
+        dot-bootstrap-cloud dot-bootstrap-submodules \
+        dot-bootstrap-zsh dot-bootstrap-bash dot-bootstrap-shells \
+        dot-bootstrap-ssh dot-bootstrap-git dot-bootstrap-gh dot-bootstrap-configs \
+        dot-bootstrap-python dot-bootstrap-node dot-bootstrap-langs \
+        dot-bootstrap-iterm dot-bootstrap-figlet dot-bootstrap-fonts dot-bootstrap-p10k \
+        dot-bootstrap-omz dot-bootstrap-omz-plugins dot-bootstrap-tmux dot-bootstrap-vim \
+        dot-bootstrap \
         vim-install vim-build vim-update vim-helptags vim-doctor \
         vim-list vim-plugins vim-add vim-rm vim-clean \
         omz-install omz-add-plugin omz-add-theme \
@@ -109,95 +109,95 @@ help: ## Show this help
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-24s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Examples:"
-	@echo "  make install                          # full install"
-	@echo "  DRY=1 make install                    # plan everything, change nothing"
-	@echo "  make install-brew install-deps        # run specific steps"
-	@echo "  make vim-list                           # list vendored vim plugins"
-	@echo "  make omz-sync-plugins                   # reconcile oh-my-zsh plugins"
-	@echo "  make tmux-status                        # check tmux config health"
+	@echo "  make dot-bootstrap                    # full install"
+	@echo "  DRY=1 make dot-bootstrap              # plan everything, change nothing"
+	@echo "  make dot-bootstrap-brew dot-bootstrap-deps  # run specific steps"
+	@echo "  make vim-list                         # list vendored vim plugins"
+	@echo "  make omz-sync-plugins                 # reconcile oh-my-zsh plugins"
+	@echo "  make tmux-status                      # check tmux config health"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Install targets (pipeline order matches bootstrapSystem)
 # ══════════════════════════════════════════════════════════════════════════════
 
-install-info: ## Preflight checks (arch, os, tools)
+dot-bootstrap-info: ## Preflight checks (arch, os, tools)
 	@$(BOOT); bootstrapInfo
 
-install-brew: ## Ensure Homebrew is installed
+dot-bootstrap-brew: ## Ensure Homebrew is installed
 	@$(BOOT); bootstrapCheckBrew
 
-install-deps: ## Reconcile CLI dependencies (data/Brewfile)
+dot-bootstrap-deps: ## Reconcile CLI dependencies (data/Brewfile)
 	@$(BOOT); bootstrapCheckDependencies
 
-install-cask-deps: ## Reconcile cask dependencies (data/Brewfile.cask)
+dot-bootstrap-cask-deps: ## Reconcile cask dependencies (data/Brewfile.cask)
 	@$(BOOT); bootstrapCheckCaskDependencies
 
-install-cloud: ## Verify iCloud Drive and link ~/iCloud
+dot-bootstrap-cloud: ## Verify iCloud Drive and link ~/iCloud
 	@$(BOOT); bootstrapCheckCloud
 
-install-submodules: ## Initialize git submodules
+dot-bootstrap-submodules: ## Initialize git submodules
 	@$(BOOT); bootstrapInitSubmodules
 
-install-zsh: ## Configure zsh (link zshrc, set login shell)
+dot-bootstrap-zsh: ## Configure zsh (link zshrc, set login shell)
 	@$(BOOT); bootstrapConfigureZsh
 
-install-bash: ## Configure bash (link bashrc)
+dot-bootstrap-bash: ## Configure bash (link bashrc)
 	@$(BOOT); bootstrapConfigBash
 
-install-ssh: ## Link SSH config + keys from iCloud
+dot-bootstrap-ssh: ## Link SSH config + keys from iCloud
 	@$(BOOT); bootstrapCheckCloud && bootstrapConfigSsh
 
-install-git: ## Link gitconfig from iCloud
+dot-bootstrap-git: ## Link gitconfig from iCloud
 	@$(BOOT); bootstrapCheckCloud && bootstrapConfigGit
 
-install-gh: ## Link gh CLI config from iCloud
+dot-bootstrap-gh: ## Link gh CLI config from iCloud
 	@$(BOOT); bootstrapConfigGh
 
-install-python: ## Provision Python venv (uv)
+dot-bootstrap-python: ## Provision Python venv (uv)
 	@$(BOOT); bootstrapConfigPython
 
-install-node: ## Provision Node via n
+dot-bootstrap-node: ## Provision Node via n
 	@$(BOOT); bootstrapConfigNode
 
-install-iterm: ## Configure iTerm2
+dot-bootstrap-iterm: ## Configure iTerm2
 	@$(BOOT); bootstrapConfigIterm
 
-install-figlet: ## Verify figlet fonts (vendored)
+dot-bootstrap-figlet: ## Verify figlet fonts (vendored)
 	@$(BOOT); bootstrapConfigFiglet
 
-install-fonts: ## Install fonts from iCloud
+dot-bootstrap-fonts: ## Install fonts from iCloud
 	@$(BOOT); bootstrapCheckCloud && bootstrapInstallFonts
 
-install-p10k: ## Configure Powerlevel10k
+dot-bootstrap-p10k: ## Configure Powerlevel10k
 	@$(BOOT); bootstrapCheckCloud && bootstrapConfigPowershell10K
 
-install-omz: ## Ensure oh-my-zsh is installed and linked
+dot-bootstrap-omz: ## Ensure oh-my-zsh is installed and linked
 	@$(BOOT); bootstrapCheckOhMyZsh
 
-install-omz-plugins: ## Sync oh-my-zsh custom plugins (vendor dispatch)
+dot-bootstrap-omz-plugins: ## Sync oh-my-zsh custom plugins (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins
 
-install-tmux: ## Configure oh-my-tmux + tpm plugins (vendor dispatch)
+dot-bootstrap-tmux: ## Configure oh-my-tmux + tpm plugins (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_TMUX)" install
 
-install-vim: ## Configure vim + neovim (vendor dispatch)
+dot-bootstrap-vim: ## Configure vim + neovim (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_VIM)" install
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Convenience groups
 # ══════════════════════════════════════════════════════════════════════════════
 
-install-shells: install-zsh install-bash ## Configure all shells (zsh + bash)
+dot-bootstrap-shells: dot-bootstrap-zsh dot-bootstrap-bash ## Configure all shells (zsh + bash)
 
-install-configs: install-ssh install-git install-gh ## Link all configs (ssh, git, gh)
+dot-bootstrap-configs: dot-bootstrap-ssh dot-bootstrap-git dot-bootstrap-gh ## Link all configs (ssh, git, gh)
 
-install-langs: install-python install-node ## Provision language toolchains (python, node)
+dot-bootstrap-langs: dot-bootstrap-python dot-bootstrap-node ## Provision language toolchains (python, node)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Full install (mirrors bootstrapSystem pipeline)
 # ══════════════════════════════════════════════════════════════════════════════
 
-install: ## Full install (all steps, fails fast)
+dot-bootstrap: ## Full install (all steps, fails fast)
 	@$(BOOT); bootstrapPrint; bootstrapInfo; bootstrapSystem
 
 # ══════════════════════════════════════════════════════════════════════════════
