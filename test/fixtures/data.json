@@ -1,0 +1,11 @@
+{
+  "zsh": {
+    "theme": "powerlevel10k/powerlevel10k",
+    "options": [
+      "autopushd",
+      "extendedglob",
+      "share_history"
+    ]
+  },
+  "version": "1.0.0-test"
+}

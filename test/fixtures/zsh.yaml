@@ -1,0 +1,33 @@
+theme: 'powerlevel10k/powerlevel10k'
+path:
+  - '/usr/local/bin'
+  - '/usr/bin'
+conditions:
+  network:
+    home: '192.168.0.1'
+  host:
+    home: 'testhost'
+languages:
+  python:
+    version: '3.11.13'
+    pip:
+      requirements:
+        - 'requests==2.31.0'
+  node:
+    version: '20.11.0'
+    npm:
+      requirements:
+        - 'typescript'
+options:
+  - 'autopushd'
+  - 'extendedglob'
+  - 'share_history'
+plugins:
+  builtin:
+    - 'git'
+    - 'fzf'
+  custom:
+    - owner: 'zsh-users'
+      repo: 'zsh-autosuggestions'
+      exec: ''
+      enabled: true
