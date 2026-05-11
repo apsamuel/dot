@@ -192,3 +192,6 @@ bin/apple-vm-helper/.build
 # Unit test artifacts
 test/tmp/
 test/*.log
+
+.zcompiled
+.zcompdump*
