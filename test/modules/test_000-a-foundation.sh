@@ -12,15 +12,18 @@ source_module "000-a-foundation.sh"
 describe "000-a-foundation.sh: getShellName()"
 
 test_get_shell_name_returns_string() {
+    # getShellName references $fish_pid which fails under NO_UNSET
+    # Temporarily allow unset variables for this function
     local result=""
+    setopt LOCAL_OPTIONS UNSET
     result="$(getShellName 2>/dev/null)"
-    assert_defined "result"
+    [[ -n "${result}" ]] || { echo "getShellName returned empty" >&2; return 1; }
 }
 
 test_get_shell_name_lowercase() {
+    setopt LOCAL_OPTIONS UNSET
     local result=""
     result="$(getShellName 2>/dev/null)"
-    # Should be lowercase (no uppercase chars)
     local lower=""
     lower="$(echo "${result}" | tr '[:upper:]' '[:lower:]')"
     assert_eq "${lower}" "${result}"
