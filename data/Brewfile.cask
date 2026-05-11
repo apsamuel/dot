@@ -8,6 +8,7 @@ cask "crystalfetch"
 cask "dash"
 # Browser for SQLite databases
 cask "db-browser-for-sqlite"
+# Meslo LG Nerd Font
 cask "font-meslo-lg-nerd-font"
 # Set of tools to manage resources and applications hosted on Google Cloud
 cask "gcloud-cli"
