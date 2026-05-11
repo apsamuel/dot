@@ -188,3 +188,7 @@ test/flycheck*/stdout
 .zombie
 bin/apple-vm-helper/.build
 .zsh_history
+
+# Unit test artifacts
+test/tmp/
+test/*.log
