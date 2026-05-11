@@ -749,6 +749,8 @@ function bootstrapCheckOhMyTmux () {
     local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"; [[ ${_opt_dry} -eq 1 ]] && DOT_DRY_RUN=1
     [[ ${_opt_debug} -eq 1 ]] && set -x
 
+    say_warn "DEPRECATED: use 'make bootstrap-tmux' or 'make tmux-install' instead"
+
     local vendor_tmux="${dot_bootstrap_directory}/vendor/oh-my-tmux"
     local plugin_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/tmux/plugins"
 
@@ -1841,6 +1843,8 @@ function bootstrapCheckVim () {
     local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"; [[ ${_opt_dry} -eq 1 ]] && DOT_DRY_RUN=1
     [[ ${_opt_debug} -eq 1 ]] && set -x
 
+    say_warn "DEPRECATED: use 'make bootstrap-vim' or 'make vim-install' instead"
+
     local rc=0
     bootstrapInstallVim || rc=$?
     if [[ ${rc} -eq 0 ]]; then
@@ -2067,6 +2071,8 @@ function bootstrapInstallOhMyZshCustomPlugins () {
     fi
     local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"; [[ ${_opt_dry} -eq 1 ]] && DOT_DRY_RUN=1
     [[ ${_opt_debug} -eq 1 ]] && set -x
+
+    say_warn "DEPRECATED: use 'make bootstrap-omz-plugins' or 'make omz-sync-plugins' instead"
 
     local vendor_omz="${dot_bootstrap_directory}/vendor/oh-my-zsh"
     local zsh_yaml="${dot_bootstrap_directory}/data/zsh.yaml"

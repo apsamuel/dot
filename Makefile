@@ -1,18 +1,30 @@
 # ──────────────────────────────────────────────────────────────────────────────
-# ⚫️ dot Makefile — idempotent bootstrap orchestration
+# ⚫️ dot Makefile — idempotent bootstrap orchestration & vendor management
 #
 # Usage:
-#   make                     # print help
-#   make bootstrap           # full bootstrap (mirrors bootstrapSystem)
-#   DRY=1 make bootstrap     # dry-run — prints planned actions, zero mutations
-#   make brew deps cloud     # run specific targets in order
-#   DEBUG=1 make zsh         # enable xtrace for a single step
+#   make                              # print help
+#   make bootstrap                    # full bootstrap (mirrors bootstrapSystem)
+#   DRY=1 make bootstrap              # dry-run — prints planned actions, zero mutations
+#   make bootstrap-brew bootstrap-deps bootstrap-cloud   # run specific steps
+#   DEBUG=1 make bootstrap-zsh        # enable xtrace for a single step
+#   make vim-list                     # vendor passthrough (vim)
+#   make omz-sync-plugins             # vendor passthrough (oh-my-zsh)
+#   make tmux-status                  # vendor passthrough (oh-my-tmux)
+#   make tmux-add-plugin PLUGIN=owner/repo   # add a tmux plugin
+#   make tmux-sync-plugins             # reconcile tmux plugins
 #
 # Parameters (env vars, combinable):
 #   DRY=1         safe dry-run mode (sets DOT_DRY_RUN=1)
 #   DEBUG=1       enable bash xtrace (-x)
 #   DEPS=1        force reinstall brew bundle even if satisfied
 #   LANG_DEPS=1   install pip/npm packages from data/zsh.yaml
+#
+# Vendor passthrough parameters:
+#   PLUGIN=owner/repo   for vim-add / vim-rm
+#   BUNDLE=shared|nvim  for vim-add / vim-rm
+#   OWNER=<org>         for omz-add-plugin / omz-add-theme / omz-remove-*
+#   REPO=<name>         for omz-add-plugin / omz-add-theme / omz-remove-*
+#   EXEC=<cmd>          optional post-init command for omz-add-*
 #
 # Requires: GNU Make 3.81+ and /bin/bash
 # ──────────────────────────────────────────────────────────────────────────────
@@ -25,11 +37,23 @@ SHELL := /bin/bash
 DOT_DIR := $(shell cd "$(dir $(lastword $(MAKEFILE_LIST)))" && pwd)
 BOOTSTRAP := $(DOT_DIR)/scripts/dot-bootstrap.sh
 
+# ── Vendor directories ────────────────────────────────────────────────────────
+VENDOR_VIM  := $(DOT_DIR)/vendor/vim
+VENDOR_OMZ  := $(DOT_DIR)/vendor/oh-my-zsh
+VENDOR_TMUX := $(DOT_DIR)/vendor/oh-my-tmux
+
 # ── Parameter passthrough ─────────────────────────────────────────────────────
 DRY       ?= 0
 DEBUG     ?= 0
 DEPS      ?= 0
 LANG_DEPS ?= 0
+
+# Vendor passthrough parameters
+PLUGIN ?=
+BUNDLE ?=
+OWNER  ?=
+REPO   ?=
+EXEC   ?=
 
 # Single-line preamble sourced at the start of every recipe.
 # Sources dot-bootstrap.sh (defines all bootstrap* functions) and maps Make
@@ -41,19 +65,29 @@ BOOT := export DOT_DRY_RUN="$(DRY)" DOT_DEPS="$(DEPS)" DOT_INSTALL_LANG_DEPS="$(
         if [[ "$(DEBUG)" == "1" ]]; then set -x; fi
 
 # ── Phony declarations ────────────────────────────────────────────────────────
-.PHONY: help info brew deps cask-deps cloud submodules \
-        zsh bash shells ssh git gh configs \
-        python node langs \
-        iterm figlet fonts p10k \
-        omz omz-plugins tmux vim \
-        bootstrap
+.PHONY: help \
+        bootstrap-info bootstrap-brew bootstrap-deps bootstrap-cask-deps \
+        bootstrap-cloud bootstrap-submodules \
+        bootstrap-zsh bootstrap-bash bootstrap-shells \
+        bootstrap-ssh bootstrap-git bootstrap-gh bootstrap-configs \
+        bootstrap-python bootstrap-node bootstrap-langs \
+        bootstrap-iterm bootstrap-figlet bootstrap-fonts bootstrap-p10k \
+        bootstrap-omz bootstrap-omz-plugins bootstrap-tmux bootstrap-vim \
+        bootstrap \
+        vim-install vim-build vim-update vim-helptags vim-doctor \
+        vim-list vim-plugins vim-add vim-rm vim-clean \
+        omz-install omz-add-plugin omz-add-theme \
+        omz-remove-plugin omz-remove-theme \
+        omz-sync-plugins omz-sync-themes \
+        tmux-install tmux-clean tmux-update tmux-status \
+        tmux-add-plugin tmux-remove-plugin tmux-sync-plugins tmux-list-plugins
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Help
 # ══════════════════════════════════════════════════════════════════════════════
 
 help: ## Show this help
-	@echo "⚫️  dot bootstrap — Makefile interface"
+	@echo "⚫️  dot — bootstrap orchestration & vendor management"
 	@echo ""
 	@echo "Usage:  [PARAMS] make <target> [target...]"
 	@echo ""
@@ -63,92 +97,101 @@ help: ## Show this help
 	@echo "  DEPS=1        force reinstall brew bundle"
 	@echo "  LANG_DEPS=1   install pip/npm packages"
 	@echo ""
+	@echo "Vendor parameters:"
+	@echo "  PLUGIN=owner/repo   vim-add / vim-rm"
+	@echo "  BUNDLE=shared|nvim  vim-add / vim-rm"
+	@echo "  OWNER=<org>         omz-add-plugin / omz-add-theme"
+	@echo "  REPO=<name>         omz-add-plugin / omz-add-theme"
+	@echo "  EXEC=<cmd>          omz-add-* post-init command"
+	@echo ""
 	@echo "Targets:"
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-24s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Examples:"
-	@echo "  make bootstrap            # full bootstrap"
-	@echo "  DRY=1 make bootstrap      # plan everything, change nothing"
-	@echo "  make brew deps cloud      # run specific steps"
-	@echo "  DRY=1 make ssh git        # preview config linking"
+	@echo "  make bootstrap                         # full bootstrap"
+	@echo "  DRY=1 make bootstrap                   # plan everything, change nothing"
+	@echo "  make bootstrap-brew bootstrap-deps     # run specific steps"
+	@echo "  make vim-list                           # list vendored vim plugins"
+	@echo "  make omz-sync-plugins                   # reconcile oh-my-zsh plugins"
+	@echo "  make tmux-status                        # check tmux config health"
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Individual targets (pipeline order matches bootstrapSystem)
+# Bootstrap targets (pipeline order matches bootstrapSystem)
 # ══════════════════════════════════════════════════════════════════════════════
 
-info: ## Preflight checks (arch, os, tools)
+bootstrap-info: ## Preflight checks (arch, os, tools)
 	@$(BOOT); bootstrapInfo
 
-brew: ## Ensure Homebrew is installed
+bootstrap-brew: ## Ensure Homebrew is installed
 	@$(BOOT); bootstrapCheckBrew
 
-deps: ## Reconcile CLI dependencies (data/Brewfile)
+bootstrap-deps: ## Reconcile CLI dependencies (data/Brewfile)
 	@$(BOOT); bootstrapCheckDependencies
 
-cask-deps: ## Reconcile cask dependencies (data/Brewfile.cask)
+bootstrap-cask-deps: ## Reconcile cask dependencies (data/Brewfile.cask)
 	@$(BOOT); bootstrapCheckCaskDependencies
 
-cloud: ## Verify iCloud Drive and link ~/iCloud
+bootstrap-cloud: ## Verify iCloud Drive and link ~/iCloud
 	@$(BOOT); bootstrapCheckCloud
 
-submodules: ## Initialize git submodules
+bootstrap-submodules: ## Initialize git submodules
 	@$(BOOT); bootstrapInitSubmodules
 
-zsh: ## Configure zsh (link zshrc, set login shell)
+bootstrap-zsh: ## Configure zsh (link zshrc, set login shell)
 	@$(BOOT); bootstrapConfigureZsh
 
-bash: ## Configure bash (link bashrc)
+bootstrap-bash: ## Configure bash (link bashrc)
 	@$(BOOT); bootstrapConfigBash
 
-ssh: ## Link SSH config + keys from iCloud
+bootstrap-ssh: ## Link SSH config + keys from iCloud
 	@$(BOOT); bootstrapCheckCloud && bootstrapConfigSsh
 
-git: ## Link gitconfig from iCloud
+bootstrap-git: ## Link gitconfig from iCloud
 	@$(BOOT); bootstrapCheckCloud && bootstrapConfigGit
 
-gh: ## Link gh CLI config from iCloud
+bootstrap-gh: ## Link gh CLI config from iCloud
 	@$(BOOT); bootstrapConfigGh
 
-python: ## Provision Python venv (uv)
+bootstrap-python: ## Provision Python venv (uv)
 	@$(BOOT); bootstrapConfigPython
 
-node: ## Provision Node via n
+bootstrap-node: ## Provision Node via n
 	@$(BOOT); bootstrapConfigNode
 
-iterm: ## Configure iTerm2
+bootstrap-iterm: ## Configure iTerm2
 	@$(BOOT); bootstrapConfigIterm
 
-figlet: ## Verify figlet fonts (vendored)
+bootstrap-figlet: ## Verify figlet fonts (vendored)
 	@$(BOOT); bootstrapConfigFiglet
 
-fonts: ## Install fonts from iCloud
+bootstrap-fonts: ## Install fonts from iCloud
 	@$(BOOT); bootstrapCheckCloud && bootstrapInstallFonts
 
-p10k: ## Configure Powerlevel10k
+bootstrap-p10k: ## Configure Powerlevel10k
 	@$(BOOT); bootstrapCheckCloud && bootstrapConfigPowershell10K
 
-omz: ## Ensure oh-my-zsh is installed and linked
+bootstrap-omz: ## Ensure oh-my-zsh is installed and linked
 	@$(BOOT); bootstrapCheckOhMyZsh
 
-omz-plugins: ## Sync oh-my-zsh custom plugin submodules
-	@$(BOOT); bootstrapInstallOhMyZshCustomPlugins
+bootstrap-omz-plugins: ## Sync oh-my-zsh custom plugins (vendor dispatch)
+	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins
 
-tmux: ## Configure oh-my-tmux + tpm plugins
-	@$(BOOT); bootstrapCheckOhMyTmux
+bootstrap-tmux: ## Configure oh-my-tmux + tpm plugins (vendor dispatch)
+	@$(MAKE) -C "$(VENDOR_TMUX)" install
 
-vim: ## Configure vim + neovim (vendored)
-	@$(BOOT); bootstrapCheckVim
+bootstrap-vim: ## Configure vim + neovim (vendor dispatch)
+	@$(MAKE) -C "$(VENDOR_VIM)" install
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Convenience groups
 # ══════════════════════════════════════════════════════════════════════════════
 
-shells: zsh bash ## Configure all shells (zsh + bash)
+bootstrap-shells: bootstrap-zsh bootstrap-bash ## Configure all shells (zsh + bash)
 
-configs: ssh git gh ## Link all configs (ssh, git, gh)
+bootstrap-configs: bootstrap-ssh bootstrap-git bootstrap-gh ## Link all configs (ssh, git, gh)
 
-langs: python node ## Provision language toolchains (python, node)
+bootstrap-langs: bootstrap-python bootstrap-node ## Provision language toolchains (python, node)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Full bootstrap (mirrors bootstrapSystem pipeline)
@@ -156,3 +199,90 @@ langs: python node ## Provision language toolchains (python, node)
 
 bootstrap: ## Full bootstrap (all steps, fails fast)
 	@$(BOOT); bootstrapPrint; bootstrapInfo; bootstrapSystem
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Vendor passthrough — vim  (vendor/vim/Makefile)
+# ══════════════════════════════════════════════════════════════════════════════
+
+vim-install: ## [vim] Run install.sh (symlinks + submodules + build)
+	@$(MAKE) -C "$(VENDOR_VIM)" install
+
+vim-build: ## [vim] Compile native artifacts
+	@$(MAKE) -C "$(VENDOR_VIM)" build
+
+vim-update: ## [vim] Pull latest submodules, then rebuild
+	@$(MAKE) -C "$(VENDOR_VIM)" update
+
+vim-helptags: ## [vim] Regenerate vim/nvim helptags
+	@$(MAKE) -C "$(VENDOR_VIM)" helptags
+
+vim-doctor: ## [vim] Run plugin-status + :checkhealth
+	@$(MAKE) -C "$(VENDOR_VIM)" doctor
+
+vim-list: ## [vim] List vendored plugins
+	@$(MAKE) -C "$(VENDOR_VIM)" list
+
+vim-plugins: ## [vim] Show staged plugins each editor loads
+	@$(MAKE) -C "$(VENDOR_VIM)" plugins
+
+vim-add: ## [vim] Vendor a new plugin (PLUGIN=owner/repo BUNDLE=shared|nvim)
+	@$(MAKE) -C "$(VENDOR_VIM)" add PLUGIN="$(PLUGIN)" BUNDLE="$(BUNDLE)"
+
+vim-rm: ## [vim] Remove a vendored plugin (PLUGIN=name BUNDLE=shared|nvim)
+	@$(MAKE) -C "$(VENDOR_VIM)" rm PLUGIN="$(PLUGIN)" BUNDLE="$(BUNDLE)"
+
+vim-clean: ## [vim] Remove ~/.vim and ~/.config/nvim symlinks
+	@$(MAKE) -C "$(VENDOR_VIM)" clean
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Vendor passthrough — oh-my-zsh  (vendor/oh-my-zsh/Makefile)
+# ══════════════════════════════════════════════════════════════════════════════
+
+omz-install: ## [omz] Initialize and update all submodules
+	@$(MAKE) -C "$(VENDOR_OMZ)" install
+
+omz-add-plugin: ## [omz] Add a custom plugin (OWNER, REPO required; EXEC optional)
+	@$(MAKE) -C "$(VENDOR_OMZ)" add-plugin OWNER="$(OWNER)" REPO="$(REPO)" EXEC="$(EXEC)"
+
+omz-add-theme: ## [omz] Add a custom theme (OWNER, REPO required; EXEC optional)
+	@$(MAKE) -C "$(VENDOR_OMZ)" add-theme OWNER="$(OWNER)" REPO="$(REPO)" EXEC="$(EXEC)"
+
+omz-remove-plugin: ## [omz] Remove a custom plugin (OWNER, REPO required)
+	@$(MAKE) -C "$(VENDOR_OMZ)" remove-plugin OWNER="$(OWNER)" REPO="$(REPO)"
+
+omz-remove-theme: ## [omz] Remove a custom theme (OWNER, REPO required)
+	@$(MAKE) -C "$(VENDOR_OMZ)" remove-theme OWNER="$(OWNER)" REPO="$(REPO)"
+
+omz-sync-plugins: ## [omz] Reconcile plugin submodules from data file
+	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins
+
+omz-sync-themes: ## [omz] Reconcile theme submodules from data file
+	@$(MAKE) -C "$(VENDOR_OMZ)" sync-themes
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Vendor passthrough — oh-my-tmux  (vendor/oh-my-tmux/Makefile)
+# ══════════════════════════════════════════════════════════════════════════════
+
+tmux-install: ## [tmux] Link configs → ~ + sync plugin submodules
+	@$(MAKE) -C "$(VENDOR_TMUX)" install
+
+tmux-clean: ## [tmux] Remove tmux config symlinks
+	@$(MAKE) -C "$(VENDOR_TMUX)" clean
+
+tmux-update: ## [tmux] Update declared plugin submodules
+	@$(MAKE) -C "$(VENDOR_TMUX)" update
+
+tmux-status: ## [tmux] Check tmux config health + plugin status
+	@$(MAKE) -C "$(VENDOR_TMUX)" status
+
+tmux-add-plugin: ## [tmux] Declare + clone a plugin (PLUGIN=owner/repo)
+	@$(MAKE) -C "$(VENDOR_TMUX)" add-plugin PLUGIN="$(PLUGIN)"
+
+tmux-remove-plugin: ## [tmux] Undeclare + remove a plugin (PLUGIN=owner/repo)
+	@$(MAKE) -C "$(VENDOR_TMUX)" remove-plugin PLUGIN="$(PLUGIN)"
+
+tmux-sync-plugins: ## [tmux] Reconcile declared ↔ on-disk plugin submodules
+	@$(MAKE) -C "$(VENDOR_TMUX)" sync-plugins
+
+tmux-list-plugins: ## [tmux] Show declared vs installed plugins
+	@$(MAKE) -C "$(VENDOR_TMUX)" list-plugins
