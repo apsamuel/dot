@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+# shellcheck shell=bash
 # Test: modules/000-a-output.sh — color/emoji output helpers
 source "${0:A:h}/../framework.sh"
 source "${0:A:h}/../mocks/env.sh"

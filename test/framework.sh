@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+# shellcheck shell=bash
 # ──────────────────────────────────────────────────────────────────────────────
 # dot unit-test framework — TAP-producing test harness for zsh modules
 #
@@ -46,7 +46,8 @@ typeset -g  _TAP_SKIP_REASON=""
 typeset -gi _TAP_PLAN_PRINTED=0
 
 # Temp directory for this test run — cleaned on exit
-export TEST_TMPDIR="$(mktemp -d "${TMPDIR:-/tmp}/dot-test.XXXXXX")"
+export TEST_TMPDIR
+TEST_TMPDIR="$(mktemp -d "${TMPDIR:-/tmp}/dot-test.XXXXXX")"
 
 _tap_cleanup() {
     [[ -d "${TEST_TMPDIR}" ]] && rm -rf "${TEST_TMPDIR}"

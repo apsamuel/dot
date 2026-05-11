@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+# shellcheck shell=bash
 # ──────────────────────────────────────────────────────────────────────────────
 # Mock external tools — shell-function stubs that shadow real binaries.
 #

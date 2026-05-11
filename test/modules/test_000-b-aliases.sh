@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+# shellcheck shell=bash
 # Test: modules/000-b-aliases.sh — alias definitions
 source "${0:A:h}/../framework.sh"
 source "${0:A:h}/../mocks/env.sh"

@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+# shellcheck shell=bash
 # ──────────────────────────────────────────────────────────────────────────────
 # Mock environment — sets up an isolated sandbox so modules can be sourced
 # without touching the real filesystem or user config.
