@@ -1,17 +1,17 @@
 # ──────────────────────────────────────────────────────────────────────────────
-# ⚫️ dot Makefile — idempotent bootstrap orchestration & vendor management
+# ⚫️ dot Makefile — idempotent install orchestration & vendor management
 #
 # Usage:
 #   make                              # print help
-#   make bootstrap                    # full bootstrap (mirrors bootstrapSystem)
-#   DRY=1 make bootstrap              # dry-run — prints planned actions, zero mutations
-#   make bootstrap-brew bootstrap-deps bootstrap-cloud   # run specific steps
+#   make install                      # full install (mirrors bootstrapSystem)
+#   DRY=1 make install                # dry-run — prints planned actions, zero mutations
+#   make install-brew install-deps install-cloud   # run specific steps
 #   DEBUG=1 make bootstrap-zsh        # enable xtrace for a single step
 #   make vim-list                     # vendor passthrough (vim)
 #   make omz-sync-plugins             # vendor passthrough (oh-my-zsh)
 #   make tmux-status                  # vendor passthrough (oh-my-tmux)
 #   make tmux-add-plugin PLUGIN=owner/repo   # add a tmux plugin
-#   make tmux-sync-plugins             # reconcile tmux plugins
+#   make tmux-sync-plugins            # reconcile tmux plugins
 #
 # Parameters (env vars, combinable):
 #   DRY=1         safe dry-run mode (sets DOT_DRY_RUN=1)
@@ -66,14 +66,14 @@ BOOT := export DOT_DRY_RUN="$(DRY)" DOT_DEPS="$(DEPS)" DOT_INSTALL_LANG_DEPS="$(
 
 # ── Phony declarations ────────────────────────────────────────────────────────
 .PHONY: help \
-        bootstrap-info bootstrap-brew bootstrap-deps bootstrap-cask-deps \
-        bootstrap-cloud bootstrap-submodules \
-        bootstrap-zsh bootstrap-bash bootstrap-shells \
-        bootstrap-ssh bootstrap-git bootstrap-gh bootstrap-configs \
-        bootstrap-python bootstrap-node bootstrap-langs \
-        bootstrap-iterm bootstrap-figlet bootstrap-fonts bootstrap-p10k \
-        bootstrap-omz bootstrap-omz-plugins bootstrap-tmux bootstrap-vim \
-        bootstrap \
+        install-info install-brew install-deps install-cask-deps \
+        install-cloud install-submodules \
+        install-zsh install-bash install-shells \
+        install-ssh install-git install-gh install-configs \
+        install-python install-node install-langs \
+        install-iterm install-figlet install-fonts install-p10k \
+        install-omz install-omz-plugins install-tmux install-vim \
+        install \
         vim-install vim-build vim-update vim-helptags vim-doctor \
         vim-list vim-plugins vim-add vim-rm vim-clean \
         omz-install omz-add-plugin omz-add-theme \
@@ -87,7 +87,7 @@ BOOT := export DOT_DRY_RUN="$(DRY)" DOT_DEPS="$(DEPS)" DOT_INSTALL_LANG_DEPS="$(
 # ══════════════════════════════════════════════════════════════════════════════
 
 help: ## Show this help
-	@echo "⚫️  dot — bootstrap orchestration & vendor management"
+	@echo "⚫️  dot — install orchestration & vendor management"
 	@echo ""
 	@echo "Usage:  [PARAMS] make <target> [target...]"
 	@echo ""
@@ -109,95 +109,95 @@ help: ## Show this help
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-24s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Examples:"
-	@echo "  make bootstrap                         # full bootstrap"
-	@echo "  DRY=1 make bootstrap                   # plan everything, change nothing"
-	@echo "  make bootstrap-brew bootstrap-deps     # run specific steps"
+	@echo "  make install                          # full install"
+	@echo "  DRY=1 make install                    # plan everything, change nothing"
+	@echo "  make install-brew install-deps        # run specific steps"
 	@echo "  make vim-list                           # list vendored vim plugins"
 	@echo "  make omz-sync-plugins                   # reconcile oh-my-zsh plugins"
 	@echo "  make tmux-status                        # check tmux config health"
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Bootstrap targets (pipeline order matches bootstrapSystem)
+# Install targets (pipeline order matches bootstrapSystem)
 # ══════════════════════════════════════════════════════════════════════════════
 
-bootstrap-info: ## Preflight checks (arch, os, tools)
+install-info: ## Preflight checks (arch, os, tools)
 	@$(BOOT); bootstrapInfo
 
-bootstrap-brew: ## Ensure Homebrew is installed
+install-brew: ## Ensure Homebrew is installed
 	@$(BOOT); bootstrapCheckBrew
 
-bootstrap-deps: ## Reconcile CLI dependencies (data/Brewfile)
+install-deps: ## Reconcile CLI dependencies (data/Brewfile)
 	@$(BOOT); bootstrapCheckDependencies
 
-bootstrap-cask-deps: ## Reconcile cask dependencies (data/Brewfile.cask)
+install-cask-deps: ## Reconcile cask dependencies (data/Brewfile.cask)
 	@$(BOOT); bootstrapCheckCaskDependencies
 
-bootstrap-cloud: ## Verify iCloud Drive and link ~/iCloud
+install-cloud: ## Verify iCloud Drive and link ~/iCloud
 	@$(BOOT); bootstrapCheckCloud
 
-bootstrap-submodules: ## Initialize git submodules
+install-submodules: ## Initialize git submodules
 	@$(BOOT); bootstrapInitSubmodules
 
-bootstrap-zsh: ## Configure zsh (link zshrc, set login shell)
+install-zsh: ## Configure zsh (link zshrc, set login shell)
 	@$(BOOT); bootstrapConfigureZsh
 
-bootstrap-bash: ## Configure bash (link bashrc)
+install-bash: ## Configure bash (link bashrc)
 	@$(BOOT); bootstrapConfigBash
 
-bootstrap-ssh: ## Link SSH config + keys from iCloud
+install-ssh: ## Link SSH config + keys from iCloud
 	@$(BOOT); bootstrapCheckCloud && bootstrapConfigSsh
 
-bootstrap-git: ## Link gitconfig from iCloud
+install-git: ## Link gitconfig from iCloud
 	@$(BOOT); bootstrapCheckCloud && bootstrapConfigGit
 
-bootstrap-gh: ## Link gh CLI config from iCloud
+install-gh: ## Link gh CLI config from iCloud
 	@$(BOOT); bootstrapConfigGh
 
-bootstrap-python: ## Provision Python venv (uv)
+install-python: ## Provision Python venv (uv)
 	@$(BOOT); bootstrapConfigPython
 
-bootstrap-node: ## Provision Node via n
+install-node: ## Provision Node via n
 	@$(BOOT); bootstrapConfigNode
 
-bootstrap-iterm: ## Configure iTerm2
+install-iterm: ## Configure iTerm2
 	@$(BOOT); bootstrapConfigIterm
 
-bootstrap-figlet: ## Verify figlet fonts (vendored)
+install-figlet: ## Verify figlet fonts (vendored)
 	@$(BOOT); bootstrapConfigFiglet
 
-bootstrap-fonts: ## Install fonts from iCloud
+install-fonts: ## Install fonts from iCloud
 	@$(BOOT); bootstrapCheckCloud && bootstrapInstallFonts
 
-bootstrap-p10k: ## Configure Powerlevel10k
+install-p10k: ## Configure Powerlevel10k
 	@$(BOOT); bootstrapCheckCloud && bootstrapConfigPowershell10K
 
-bootstrap-omz: ## Ensure oh-my-zsh is installed and linked
+install-omz: ## Ensure oh-my-zsh is installed and linked
 	@$(BOOT); bootstrapCheckOhMyZsh
 
-bootstrap-omz-plugins: ## Sync oh-my-zsh custom plugins (vendor dispatch)
+install-omz-plugins: ## Sync oh-my-zsh custom plugins (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins
 
-bootstrap-tmux: ## Configure oh-my-tmux + tpm plugins (vendor dispatch)
+install-tmux: ## Configure oh-my-tmux + tpm plugins (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_TMUX)" install
 
-bootstrap-vim: ## Configure vim + neovim (vendor dispatch)
+install-vim: ## Configure vim + neovim (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_VIM)" install
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Convenience groups
 # ══════════════════════════════════════════════════════════════════════════════
 
-bootstrap-shells: bootstrap-zsh bootstrap-bash ## Configure all shells (zsh + bash)
+install-shells: install-zsh install-bash ## Configure all shells (zsh + bash)
 
-bootstrap-configs: bootstrap-ssh bootstrap-git bootstrap-gh ## Link all configs (ssh, git, gh)
+install-configs: install-ssh install-git install-gh ## Link all configs (ssh, git, gh)
 
-bootstrap-langs: bootstrap-python bootstrap-node ## Provision language toolchains (python, node)
+install-langs: install-python install-node ## Provision language toolchains (python, node)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Full bootstrap (mirrors bootstrapSystem pipeline)
+# Full install (mirrors bootstrapSystem pipeline)
 # ══════════════════════════════════════════════════════════════════════════════
 
-bootstrap: ## Full bootstrap (all steps, fails fast)
+install: ## Full install (all steps, fails fast)
 	@$(BOOT); bootstrapPrint; bootstrapInfo; bootstrapSystem
 
 # ══════════════════════════════════════════════════════════════════════════════

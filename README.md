@@ -71,24 +71,25 @@
 
 Full end-to-end setup, from a bare machine to a working `dot` shell:
 
+### Quick Start (Makefile)
+
 ```bash
 # 1. Clone to ~/.dot — pull every vendored submodule (root + nested) in one shot
 git clone --recurse-submodules https://github.com/apsamuel/dot.git ~/.dot
 cd ~/.dot
 
 # 2. (Already cloned without --recurse-submodules?) Initialise + fetch them now
-./scripts/submodule-sync.sh init     # parallel, two-pass (root → nested)
-./scripts/submodule-sync.sh status   # confirm every submodule is checked out
+make install-submodules
 
-# 3. (Optional) Preview every bootstrap action without changing your system
-DOT_DRY_RUN=1 source ./scripts/dot-bootstrap.sh
+# 3. (Optional) Preview every install action without changing your system
+DRY=1 make install
 
-# 4. Run bootstrap for real — installs deps, symlinks ~/.zshrc + ~/.p10k.zsh,
+# 4. Run install for real — installs deps, symlinks ~/.zshrc + ~/.p10k.zsh,
 #    wires up vendored oh-my-zsh / oh-my-tmux, builds applevm-helper
-source ./scripts/dot-bootstrap.sh
+make install
 
 # 5. (First time only) Pull language deps declared in data/zsh.yaml
-DOT_INSTALL_LANG_DEPS=1 source ./scripts/dot-bootstrap.sh
+LANG_DEPS=1 make install
 
 # 6. Make ZSH your default shell if it isn't
 chsh -s "$(which zsh)"
@@ -98,9 +99,50 @@ chsh -s "$(which zsh)"
 exec zsh
 ```
 
-> 🔁 Re-running step 4 is always safe — `dot-bootstrap.sh` is idempotent.
+> 🔁 Re-running `make install` is always safe — install is idempotent.
 
-See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough of what bootstrap does, and [scripts/README.md](./scripts/README.md) for the submodule sync details.
+### Install Parameters
+
+| Flag          | Effect                                                        |
+| ------------- | ------------------------------------------------------------- |
+| `DRY=1`       | Preview all actions without changing your system              |
+| `DEBUG=1`     | Enable bash xtrace for detailed debugging                     |
+| `DEPS=1`      | Force reinstall Homebrew bundle                               |
+| `LANG_DEPS=1` | Install language deps (Python/Node/Rust) from `data/zsh.yaml` |
+
+### Individual Install Steps
+
+Run specific install steps instead of the full pipeline:
+
+```bash
+make install-info         # Preflight checks
+make install-brew         # Ensure Homebrew
+make install-deps         # CLI dependencies
+make install-submodules   # Git submodules
+make install-zsh          # Configure ZSH
+make install-langs        # Python + Node
+make install-vim          # Vim/Neovim config
+make install-tmux         # Tmux config
+```
+
+See `make` (or `make help`) for the complete list of targets.
+
+### Manual Alternative (Scripts)
+
+If you prefer direct script invocation without Make:
+
+```bash
+# Preview install
+DOT_DRY_RUN=1 source ./scripts/dot-bootstrap.sh
+
+# Run install
+source ./scripts/dot-bootstrap.sh
+
+# Install language deps
+DOT_INSTALL_LANG_DEPS=1 source ./scripts/dot-bootstrap.sh
+```
+
+See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough and [scripts/README.md](./scripts/README.md) for submodule management details.
 
 ---
 
