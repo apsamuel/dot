@@ -26,17 +26,17 @@
 
 if [ -z "$HOME"  ]; then
     echo "Error: HOME environment variable not set"
-    return 1
+    exit 1
 fi
 
 if [ -z "$USER" ]; then
     echo "Error: USER environment variable not set"
-    return 1
+    exit 1
 fi
 
 if [ -z "$SHELL" ]; then
     echo "Error: SHELL environment variable not set"
-    return 1
+    exit 1
 fi
 
 
@@ -120,45 +120,38 @@ fi
 # ssh configuration (keys, config file parsing, etc.)
 . "${DOT_MODULES}"/static/ssh.sh || {
     echo "Error: unable to load SSH configuration"
-    exit 1
+    return 1
 }
 
 # shell limits (user)
 . "${DOT_MODULES}"/static/limits.sh || {
     echo "Error: unable to load shell limits"
-    exit 1
+    return 1
 }
 
 # shell autoloads (ZSH)
 . "${DOT_MODULES}"/static/autoload.sh || {
     echo "Error: unable to configure autoloads"
-    exit 1
+    return 1
 }
 
 # dot.shell command + iCloud/TMUX exports (formerly modules/000-b-dot.sh)
 . "${DOT_MODULES}"/static/dot.sh || {
     echo "Error: unable to load dot.shell"
-    exit 1
+    return 1
 }
 
 # declare -a SSH_KEYS
-SSH_KEYS=()
 # prepare files in .ssh directory for the ssh-agent
 # (getSshIdentities is defined in modules/static/foundation.sh)
+SSH_KEYS=()
 getSshIdentities --format array --var SSH_KEYS
-
 export SSH_KEYS
-
-
 
 # enable zsh options
 loadZshOptions
 
-# make MODULES available to shell
-
-# zstyle configuration lives in modules/000-b-zstyle.sh (sourced via loadModules above,
-# which runs before oh-my-zsh.sh — required so plugins read the right styles).
-
+# load dot dynamic modules available
 loadModules
 
 if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
