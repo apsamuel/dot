@@ -199,3 +199,22 @@ function brewLoadCask () {
 function brewJson () {
     brew info --json "$@"
 }
+
+function brewListUninstalledFiles() {
+  local input="$1"
+  if [[ -z "$input" ]]; then
+    echo "No package name provided"
+    return 1
+  fi
+  if ! brew fetch --formula "$input"; then
+    echo "Failed to fetch bottle for '$input'"
+    return 1
+  fi
+  local cached
+  cached="$(brew --cache --formula "$input")"
+  if [[ ! -f "$cached" ]]; then
+    echo "Cached bottle not found for '$input'"
+    return 1
+  fi
+  tar tf "$cached"
+}
