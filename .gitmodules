@@ -16,3 +16,6 @@
 [submodule "vendor/vim"]
 	path = vendor/vim
 	url = git@github-personal.com:apsamuel/vim.git
+[submodule "vendor/iterm-themes"]
+	path = vendor/iterm-themes
+	url = git@github.com:mbadolato/iTerm2-Color-Schemes.git
