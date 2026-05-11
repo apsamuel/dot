@@ -1889,7 +1889,10 @@ function bootstrapInstallVim () {
         [[ ${_opt_debug} -eq 1 ]] && set +x; return 0
     fi
     say_work "📝 running make install in vendor/vim (vim + neovim)"
-    if ! make -C "${vendor_dir}" install; then
+    if ! make -C "${vendor_dir}" install \
+        DOT_DRY_RUN="${DOT_DRY_RUN:-0}" \
+        DOT_DEBUG="${DOT_DEBUG:-0}" \
+        DOT_VERBOSE="${DOT_VERBOSE:-0}"; then
         say_err "📝 make install failed in vendor/vim"
         [[ ${_opt_debug} -eq 1 ]] && set +x; return 1
     fi
