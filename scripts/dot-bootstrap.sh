@@ -1293,7 +1293,7 @@ function bootstrapCheckFonts () {
 
 # ⚫️ checks iterm2 themes installation (DEPRECATED — handled by data/Brewfile.cask)
 function bootstrapCheckThemes () {
-    say_skip "🎨 bootstrapCheckThemes deprecated — themes provided by data/Brewfile.cask"
+    say_skip "🎨 bootstrapCheckThemes deprecated — vendor submodule iterm-themes provides themes"
     return 0
 }
 
@@ -1318,11 +1318,40 @@ function bootstrapCheckOhMyZsh () {
     [[ ${_opt_debug} -eq 1 ]] && set -x
 
     local rc=0
-    if [[ -d "$HOME/.oh-my-zsh" || -L "$HOME/.oh-my-zsh" ]]; then
-        say_skip "🧙 oh-my-zsh already present"
+    local vendor_omz="${dot_bootstrap_directory}/vendor/oh-my-zsh"
+    local omz_home="$HOME/.oh-my-zsh"
+
+    if [[ -L "${omz_home}" ]]; then
+        local link_target
+        link_target="$(readlink "${omz_home}")"
+        if [[ "${link_target}" == "${vendor_omz}" ]]; then
+            say_skip "🧙 oh-my-zsh already linked to vendor"
+        elif [[ "${link_target}" == *"iCloud"* || "${link_target}" == *"Mobile Documents"* ]]; then
+            say_warn "🧙 oh-my-zsh linked to iCloud (${link_target}) — relinking to vendor"
+            dry_rm "${omz_home}"
+            if ! _is_dry; then
+                ln -s "${vendor_omz}" "${omz_home}"
+            else
+                say_plan "ln -s ${vendor_omz} ${omz_home}"
+            fi
+        else
+            say_warn "🧙 oh-my-zsh linked to unexpected target (${link_target}) — relinking to vendor"
+            dry_rm "${omz_home}"
+            if ! _is_dry; then
+                ln -s "${vendor_omz}" "${omz_home}"
+            else
+                say_plan "ln -s ${vendor_omz} ${omz_home}"
+            fi
+        fi
+    elif [[ -d "${omz_home}" ]]; then
+        say_warn "🧙 oh-my-zsh is a directory, not a symlink — relinking to vendor"
+        ensureSymlink "${vendor_omz}" "${omz_home}"
     else
         say_work "🧙 installing oh-my-zsh"
         bootstrapInstallOhMyZsh || rc=$?
+        if [[ ${rc} -eq 0 && ! -L "${omz_home}" ]]; then
+            ln -s "${vendor_omz}" "${omz_home}"
+        fi
     fi
     if [[ ${rc} -eq 0 ]]; then
         bootstrapConfigOhMyZsh || rc=$?
@@ -1333,17 +1362,18 @@ function bootstrapCheckOhMyZsh () {
 
 # ⚫️ checks powerlevel10k installation
 function bootstrapCheckPowershell10K () {
-    if [[ ! -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]]; then
-        say_work "✨ installing powerlevel10k"
-        bootstrapInstallPowershell10K || return 1
-    fi
-    if [[ -L "${HOME}/.p10k.zsh" || -f "${HOME}/.p10k.zsh" ]]; then
-        # let bootstrapConfigPowershell10K resolve idempotency via ensureSymlink
-        bootstrapConfigPowershell10K
-    else
-        say_work "✨ powerlevel10k is not configured — configuring"
-        bootstrapConfigPowershell10K
-    fi
+    say_skip "✨ powerlevel10k installation is a work in progress"
+    # if [[ ! -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]]; then
+    #     say_work "✨ installing powerlevel10k"
+    #     bootstrapInstallPowershell10K || return 1
+    # fi
+    # if [[ -L "${HOME}/.p10k.zsh" || -f "${HOME}/.p10k.zsh" ]]; then
+    #     # let bootstrapConfigPowershell10K resolve idempotency via ensureSymlink
+    #     bootstrapConfigPowershell10K
+    # else
+    #     say_work "✨ powerlevel10k is not configured — configuring"
+    #     bootstrapConfigPowershell10K
+    # fi
 }
 
 # -----------------------------------------------------------------------------
@@ -1384,32 +1414,17 @@ function bootstrapInstallBrew () {
 
 # ⚫️ installs zsh
 function bootstrapInstallZsh () {
-    if dryrun brew install zsh; then
-        say_ok "🐢 zsh is installed"
-        return 0
-    fi
-    say_err "🐢 zsh installation failed"
-    return 1
+    say_skip "🐢 zsh installation is handled by data/Brewfile"
 }
 
 # ⚫️ installs jq
 function bootstrapInstallJq () {
-    if dryrun brew install jq; then
-        say_ok "🧪 jq is installed"
-        return 0
-    fi
-    say_err "🧪 jq installation failed"
-    return 1
+    say_skip "🧪 jq installation is handled by data/Brewfile"
 }
 
 # ⚫️ installs iterm2
 function bootstrapInstallIterm () {
-    if dryrun brew install --cask iterm2; then
-        say_ok "🖥️  iterm2 is installed"
-        return 0
-    fi
-    say_err "🖥️  iterm2 installation failed"
-    return 1
+    say_skip "🖥️  iterm2 installation is handled by data/Brewfile.cask"
 }
 
 # ⚫️ installs fonts (idempotent: only copies fonts not already present in ~/Library/Fonts)
@@ -1437,20 +1452,14 @@ function bootstrapInstallFonts () {
 
 # ⚫️ installs iterm2 themes (idempotent: only clones if missing)
 function bootstrapInstallThemes () {
-    if [[ -d "${HOME}/.themes" ]]; then
-        say_skip "🎨 ~/.themes already exists"
-        return 0
-    fi
-    if ! dryrun gh repo clone apsamuel/iTerm2-Color-Schemes "${HOME}/.themes"; then
-        say_err "🎨 iterm2 themes installation failed"
+    local vendor_dir="${dot_bootstrap_directory}/vendor/iterm-themes"
+    if [[ ! -d "${vendor_dir}" ]]; then
+        say_err "🎨 themes source not found: ${vendor_dir} — run bootstrapInitSubmodules first"
         return 1
     fi
-    if ! _is_dry; then
-        bash "${HOME}/.themes/tools/import-scheme.sh" >/dev/null
-    else
-        say_plan "bash ${HOME}/.themes/tools/import-scheme.sh"
-    fi
-    say_ok "🎨 iterm2 themes are installed"
+    # no link needed since iterm2 imports directly from the vendor directory; just check presence
+    say_ok "🎨 iterm2 themes are available (via vendor submodule)"
+
     return 0
 }
 
@@ -1496,32 +1505,17 @@ function bootstrapCheckVim () {
 
 # ⚫️ installs vim
 function bootstrapInstallVim () {
-    if dryrun brew install vim; then
-        say_ok "📝 vim is installed"
-        return 0
-    fi
-    say_err "📝 vim installation failed"
-    return 1
+    say_skip "📝 vim installation is handled by data/Brewfile"
 }
 
 # ⚫️ configures vim (idempotent: ensureSymlink for each artifact)
 function bootstrapConfigVim () {
-    say_step "configuring vim"
-    local icloud_directory="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
-    ensureSymlink "${icloud_directory}/dot/shell/vim/rc"          "${HOME}/.vimrc"        || return 1
-    ensureSymlink "${icloud_directory}/dot/shell/vim/rc-dir"      "${HOME}/.vim"          || return 1
-    ensureSymlink "${icloud_directory}/dot/shell/vim/vim_runtime" "${HOME}/.vim_runtime" || return 1
-    say_ok "📝 vim is configured"
+    say_skip "📝 vim configuration is handled by data/Brewfile and vendor submodules... we need to run the 'make install'"
 }
 
 # ⚫️ checks neovim installation
 function bootstrapInstallNeovim () {
-    if dryrun brew install neovim; then
-        say_ok "🌱 Neovim is installed"
-        return 0
-    fi
-    say_err "🌱 Neovim installation failed"
-    return 1
+    say_skip "🌱 neovim installation is handled by data/Brewfile and vendor submodules... we need to run the 'make install'"
 }
 
 # ⚫️ checks neovim installation
@@ -1536,7 +1530,7 @@ function bootstrapCheckNeovim () {
 
 # ⚫️ configures neovim
 function bootstrapConfigNeovim () {
-    echo "🛠️ configuring Neovim..."
+    say_skip "🌱 Neovim configuration is handled by data/Brewfile and vendor submodules... we need to run the 'make install'"
 }
 
 # -----------------------------------------------------------------------------
