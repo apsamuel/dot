@@ -111,7 +111,7 @@ set EDITOR vim
 set ZSH_COLORIZE_TOOL pygmentize
 set PAGER 'bat '
 set MANPAGER "sh -c 'col -bx | bat -l man -p'"
-set TMUX_PLUGIN_MANAGER_PATH "$HOME/.tmux/plugins"
+set TMUX_PLUGIN_MANAGER_PATH "$DOT_ROOT/vendor/oh-my-tmux/plugins"
 set arch "$(arch)"
 set ARCH "${arch}"
 

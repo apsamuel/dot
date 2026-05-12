@@ -752,7 +752,7 @@ function bootstrapCheckOhMyTmux () {
     say_warn "DEPRECATED: use 'make bootstrap-tmux' or 'make tmux-install' instead"
 
     local vendor_tmux="${dot_bootstrap_directory}/vendor/oh-my-tmux"
-    local plugin_dir="${XDG_DATA_HOME:-${HOME}/.local/share}/tmux/plugins"
+    local plugin_dir="${dot_bootstrap_directory}/vendor/oh-my-tmux/plugins"
 
     if [[ ! -d "${vendor_tmux}" ]]; then
         say_err "🪴 vendor/oh-my-tmux not found — run bootstrapInitSubmodules first"
