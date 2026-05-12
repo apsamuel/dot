@@ -13,6 +13,7 @@
 #   make tmux-add-plugin PLUGIN=owner/repo   # add a tmux plugin
 #   make tmux-sync-plugins            # reconcile tmux plugins
 #   make dry-run-verify               # CI target: verify zero mutations in DRY=1 mode
+#   make doctor                       # read-only health check: deps, symlinks, submodules
 #
 # Parameters (env vars, combinable):
 #   DRY=1         safe dry-run mode (sets DOT_DRY_RUN=1)
@@ -84,9 +85,10 @@ VENDOR_FLAGS := DRY="$(DRY)" DEBUG="$(DEBUG)" VERBOSE="$(VERBOSE)" DOT_DRY_RUN="
         vim-list vim-plugins vim-add vim-rm vim-clean \
         omz-install omz-add-plugin omz-add-theme \
         omz-remove-plugin omz-remove-theme \
-        omz-sync-plugins omz-sync-themes \
-        tmux-install tmux-clean tmux-update tmux-status \
-        tmux-add-plugin tmux-remove-plugin tmux-sync-plugins tmux-list-plugins
+        omz-sync-plugins omz-sync-themes omz-doctor \
+        tmux-install tmux-clean tmux-update tmux-status tmux-doctor \
+        tmux-add-plugin tmux-remove-plugin tmux-sync-plugins tmux-list-plugins \
+        doctor
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Help
@@ -122,6 +124,7 @@ help: ## Show this help
 	@echo "  make vim-list                         # list vendored vim plugins"
 	@echo "  make omz-sync-plugins                 # reconcile oh-my-zsh plugins"
 	@echo "  make tmux-status                      # check tmux config health"
+	@echo "  make doctor                           # read-only system health check"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Install targets (pipeline order matches bootstrapSystem)
@@ -266,6 +269,9 @@ omz-sync-plugins: ## [omz] Reconcile plugin submodules from data file
 omz-sync-themes: ## [omz] Reconcile theme submodules from data file
 	@$(MAKE) -C "$(VENDOR_OMZ)" sync-themes $(VENDOR_FLAGS)
 
+omz-doctor: ## [omz] Read-only health check (plugins, themes, submodules)
+	@$(MAKE) -C "$(VENDOR_OMZ)" doctor $(VENDOR_FLAGS)
+
 # ══════════════════════════════════════════════════════════════════════════════
 # Vendor passthrough — oh-my-tmux  (vendor/oh-my-tmux/Makefile)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -293,6 +299,86 @@ tmux-sync-plugins: ## [tmux] Reconcile declared ↔ on-disk plugin submodules
 
 tmux-list-plugins: ## [tmux] Show declared vs installed plugins
 	@$(MAKE) -C "$(VENDOR_TMUX)" list-plugins $(VENDOR_FLAGS)
+
+tmux-doctor: ## [tmux] Read-only health check (tmux, symlinks, plugins)
+	@$(MAKE) -C "$(VENDOR_TMUX)" doctor $(VENDOR_FLAGS)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Doctor — non-mutating health check
+# ══════════════════════════════════════════════════════════════════════════════
+
+doctor: ## Non-mutating health check: deps, symlinks, submodules, vendors
+	@$(BOOT); \
+	fails=0; \
+	echo ""; \
+	say_step "dot doctor"; \
+	echo ""; \
+	say_step "tier-0 dependencies"; \
+	if "$(DOT_DIR)/scripts/dot-deps-report.sh" --tier 0 -q; then \
+		say_ok "all tier-0 dependencies present"; \
+	else \
+		say_err "tier-0 dependency check failed"; \
+		fails=$$((fails + 1)); \
+	fi; \
+	echo ""; \
+	say_step "core symlinks"; \
+	for pair in "$$HOME/.zshrc:$(DOT_DIR)/zshrc" "$$HOME/.oh-my-zsh:$(VENDOR_OMZ)"; do \
+		link="$${pair%%:*}"; expected="$${pair#*:}"; \
+		if [ -L "$$link" ]; then \
+			target=$$(readlink "$$link"); \
+			if [ "$$target" = "$$expected" ]; then \
+				say_ok "$$link → $$target"; \
+			else \
+				say_err "$$link → $$target (expected $$expected)"; \
+				fails=$$((fails + 1)); \
+			fi; \
+		elif [ -e "$$link" ]; then \
+			say_err "$$link exists but is NOT a symlink"; \
+			fails=$$((fails + 1)); \
+		else \
+			say_err "$$link missing"; \
+			fails=$$((fails + 1)); \
+		fi; \
+	done; \
+	if [ -d "$$HOME/iCloud" ]; then \
+		say_ok "~/iCloud exists"; \
+	else \
+		say_warn "~/iCloud not found (optional)"; \
+	fi; \
+	echo ""; \
+	say_step "git submodules"; \
+	submod_issues=0; \
+	while IFS= read -r line; do \
+		prefix="$${line:0:1}"; \
+		mod_path="$${line#* }"; \
+		mod_path="$${mod_path%% (*}"; \
+		mod_path="$${mod_path## }"; \
+		case "$$prefix" in \
+			-) say_err "$$mod_path — not initialized"; submod_issues=$$((submod_issues + 1)) ;; \
+			+) say_warn "$$mod_path — checked out but SHA differs from index" ;; \
+		esac; \
+	done < <(git -C "$(DOT_DIR)" submodule status 2>/dev/null); \
+	if [ $$submod_issues -gt 0 ]; then \
+		fails=$$((fails + submod_issues)); \
+	else \
+		say_ok "all submodules initialized"; \
+	fi; \
+	echo ""
+	@vfails=0; \
+	echo "── vendor health checks ──"; \
+	echo ""; \
+	$(MAKE) -C "$(VENDOR_VIM)"  doctor $(VENDOR_FLAGS) || vfails=$$((vfails + 1)); \
+	echo ""; \
+	$(MAKE) -C "$(VENDOR_OMZ)"  doctor $(VENDOR_FLAGS) || vfails=$$((vfails + 1)); \
+	echo ""; \
+	$(MAKE) -C "$(VENDOR_TMUX)" doctor $(VENDOR_FLAGS) || vfails=$$((vfails + 1)); \
+	echo ""; \
+	if [ $$vfails -gt 0 ]; then \
+		echo "✘ $$vfails vendor doctor(s) reported issues"; \
+		exit 1; \
+	else \
+		echo "✔ all vendor health checks passed"; \
+	fi
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CI / Verification targets
