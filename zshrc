@@ -326,3 +326,6 @@ test -e "${HOME}/.iterm2_shell_integration.zsh" && . "${HOME}/.iterm2_shell_inte
 # Zsh will override CTRL-R & provide its builtin reverse-history-search if this line is not executed here
 # https://github.com/junegunn/fzf/issues/1812
 configureFzf
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || . ~/.p10k.zsh
