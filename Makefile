@@ -3,7 +3,7 @@
 #
 # Usage:
 #   make                              # print help
-#   make dot-bootstrap                # full install (mirrors bootstrapSystem)
+#   make dot-bootstrap                # full install (mirrors run)
 #   DRY=1 make dot-bootstrap          # dry-run — prints planned actions, zero mutations
 #   make dot-bootstrap-brew dot-bootstrap-deps dot-bootstrap-cloud   # run specific steps
 #   DEBUG=1 make dot-bootstrap-zsh    # enable xtrace for a single step
@@ -127,62 +127,62 @@ help: ## Show this help
 	@echo "  make doctor                           # read-only system health check"
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Install targets (pipeline order matches bootstrapSystem)
+# Install targets (pipeline order matches run)
 # ══════════════════════════════════════════════════════════════════════════════
 
 dot-bootstrap-info: ## Preflight checks (arch, os, tools)
-	@$(BOOT); bootstrapInfo
+	@$(BOOT); preflight
 
 dot-bootstrap-brew: ## Ensure Homebrew is installed
-	@$(BOOT); bootstrapCheckBrew
+	@$(BOOT); check_brew
 
 dot-bootstrap-deps: ## Reconcile CLI dependencies (data/Brewfile)
-	@$(BOOT); bootstrapCheckDependencies
+	@$(BOOT); check_deps
 
 dot-bootstrap-cask-deps: ## Reconcile cask dependencies (data/Brewfile.cask)
-	@$(BOOT); bootstrapCheckCaskDependencies
+	@$(BOOT); check_cask_deps
 
 dot-bootstrap-cloud: ## Verify iCloud Drive and link ~/iCloud
-	@$(BOOT); bootstrapCheckCloud
+	@$(BOOT); check_cloud
 
 dot-bootstrap-submodules: ## Initialize git submodules
-	@$(BOOT); bootstrapInitSubmodules
+	@$(BOOT); init_submodules
 
 dot-bootstrap-zsh: ## Configure zsh (link zshrc, set login shell)
-	@$(BOOT); bootstrapConfigureZsh
+	@$(BOOT); config_zsh
 
 dot-bootstrap-bash: ## Configure bash (link bashrc)
-	@$(BOOT); bootstrapConfigBash
+	@$(BOOT); config_bash
 
 dot-bootstrap-ssh: ## Link SSH config + keys from iCloud
-	@$(BOOT); bootstrapCheckCloud && bootstrapConfigSsh
+	@$(BOOT); check_cloud && config_ssh
 
 dot-bootstrap-git: ## Link gitconfig from iCloud
-	@$(BOOT); bootstrapCheckCloud && bootstrapConfigGit
+	@$(BOOT); check_cloud && config_git
 
 dot-bootstrap-gh: ## Link gh CLI config from iCloud
-	@$(BOOT); bootstrapConfigGh
+	@$(BOOT); config_gh
 
 dot-bootstrap-python: ## Provision Python venv (uv)
-	@$(BOOT); bootstrapConfigPython
+	@$(BOOT); config_python
 
 dot-bootstrap-node: ## Provision Node via n
-	@$(BOOT); bootstrapConfigNode
+	@$(BOOT); config_node
 
 dot-bootstrap-iterm: ## Configure iTerm2
-	@$(BOOT); bootstrapConfigIterm
+	@$(BOOT); config_iterm
 
 dot-bootstrap-figlet: ## Verify figlet fonts (vendored)
-	@$(BOOT); bootstrapConfigFiglet
+	@$(BOOT); config_figlet
 
 dot-bootstrap-fonts: ## Install fonts from iCloud
-	@$(BOOT); bootstrapCheckCloud && bootstrapInstallFonts
+	@$(BOOT); check_cloud && install_fonts
 
 dot-bootstrap-p10k: ## Configure Powerlevel10k
-	@$(BOOT); bootstrapCheckCloud && bootstrapConfigPowershell10K
+	@$(BOOT); check_cloud && config_p10k
 
 dot-bootstrap-omz: ## Ensure oh-my-zsh is installed and linked
-	@$(BOOT); bootstrapCheckOhMyZsh
+	@$(BOOT); check_omz
 
 dot-bootstrap-omz-plugins: ## Sync oh-my-zsh custom plugins (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins $(VENDOR_FLAGS)
@@ -204,11 +204,11 @@ dot-bootstrap-configs: dot-bootstrap-ssh dot-bootstrap-git dot-bootstrap-gh ## L
 dot-bootstrap-langs: dot-bootstrap-python dot-bootstrap-node ## Provision language toolchains (python, node)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# Full install (mirrors bootstrapSystem pipeline)
+# Full install (mirrors run pipeline)
 # ══════════════════════════════════════════════════════════════════════════════
 
 dot-bootstrap: ## Full install (all steps, fails fast)
-	@$(BOOT); bootstrapPrint; bootstrapInfo; bootstrapSystem
+	@$(BOOT); print_banner; preflight; run
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Vendor passthrough — vim  (vendor/vim/Makefile)

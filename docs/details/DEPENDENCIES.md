@@ -19,7 +19,7 @@ These must exist before [`scripts/dot-bootstrap.sh`](../../scripts/dot-bootstrap
 | `jq`      | Brew JSON parsing in [`modules/000-a-homebrew.sh`](../../modules/000-a-homebrew.sh), `brew info` consumers | `brew install jq` (in [Brewfile](../../data/Brewfile))   |
 | `yq`      | Reads [`data/zsh.yaml`](../../data/zsh.yaml) at every shell start (theme, plugins, language versions)      | `brew install yq` (in [Brewfile](../../data/Brewfile))   |
 | `brew`    | All Tier 1/2 installs flow through it                                                                      | `bash bin/brew-bootstrap.sh install`                     |
-| `tmux`    | [`bootstrapCheckOhMyTmux`](../../scripts/dot-bootstrap.sh) installs TPM plugins via a transient session    | `brew install tmux`                                      |
+| `tmux`    | [`check_omtmux`](../../scripts/dot-bootstrap.sh) installs TPM plugins via a transient session    | `brew install tmux`                                      |
 | Xcode CLT | `/usr/bin/git`, `swift build` for [`bin/applevm-helper`](../../bin/apple-vm-helper/)                       | `xcode-select --install`                                 |
 
 The [`Brewfile`](../../data/Brewfile) intentionally lists only `yq` and `jq` — everything else is either OS-shipped, installed by sub-bootstrappers, or feature-gated and looked up via `command -v`.
@@ -28,7 +28,7 @@ The [`Brewfile`](../../data/Brewfile) intentionally lists only `yq` and `jq` —
 
 ## 🏷️ Tier 0 — bootstrap essentials
 
-Each tool below is **assumed present**. If missing, [`bootstrapInfo`](../../scripts/dot-bootstrap.sh) prints `🔴 not installed` and downstream steps fail.
+Each tool below is **assumed present**. If missing, [`preflight`](../../scripts/dot-bootstrap.sh) prints `🔴 not installed` and downstream steps fail.
 
 | Tool      | Referenced from                                                                                                                                                                                                      | Failure mode if missing                   |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
@@ -39,7 +39,7 @@ Each tool below is **assumed present**. If missing, [`bootstrapInfo`](../../scri
 | `jq`      | [`modules/000-a-homebrew.sh`](../../modules/000-a-homebrew.sh), [`modules/999-a-terminal.sh`](../../modules/999-a-terminal.sh) (fzf cellar lookup)                                                                   | Brew helpers and fzf wiring break         |
 | `yq`      | [`zshrc`](../../zshrc), [`modules/001-d-python.sh`](../../modules/001-d-python.sh), [`modules/001-d-node.sh`](../../modules/001-d-node.sh), [`modules/000-a-output.sh`](../../modules/000-a-output.sh) `randomQuote` | Theme + plugin list cannot be resolved    |
 | `brew`    | [`modules/000-a-homebrew.sh`](../../modules/000-a-homebrew.sh) `eval shellenv`, every `brew*` helper                                                                                                                 | Tier 1+ installs unavailable              |
-| `tmux`    | [`bootstrapCheckOhMyTmux`](../../scripts/dot-bootstrap.sh), [`modules/001-a-tmux.sh`](../../modules/001-a-tmux.sh)                                                                                                   | TPM plugin install is skipped             |
+| `tmux`    | [`check_omtmux`](../../scripts/dot-bootstrap.sh), [`modules/001-a-tmux.sh`](../../modules/001-a-tmux.sh)                                                                                                   | TPM plugin install is skipped             |
 | Xcode CLT | [`bin/apple-vm-helper/`](../../bin/apple-vm-helper/), `git`                                                                                                                                                          | Apple VM helper cannot be built           |
 
 ---
@@ -50,9 +50,9 @@ Gated by `command -v` and/or `DOT_DISABLE_*` flags. Each is required only when y
 
 | Tool               | Used by                                                                                                                                                | Required for                                                                   | Install                                                            |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| `uv`               | [`bootstrapConfigPython`](../../scripts/dot-bootstrap.sh), [`modules/001-d-python.sh`](../../modules/001-d-python.sh)                                  | Python venvs (`~/.venv/<ver>-<arch>-base`)                                     | `brew install uv`                                                  |
+| `uv`               | [`config_python`](../../scripts/dot-bootstrap.sh), [`modules/001-d-python.sh`](../../modules/001-d-python.sh)                                  | Python venvs (`~/.venv/<ver>-<arch>-base`)                                     | `brew install uv`                                                  |
 | `python3` (≥3.11)  | Default venv interpreter; [`bin/*.py`](../../bin/) (`ivm.py`, `ictl.py`, `isync.py`, `git-import-org.py`)                                              | Bin scripts + venv seed                                                        | macOS ships `python3` (Xcode CLT); pin via `uv venv --python 3.11` |
-| `n`                | [`modules/001-d-node.sh`](../../modules/001-d-node.sh), [`bootstrapConfigNode`](../../scripts/dot-bootstrap.sh)                                        | Switch to `languages.node.version` from [`data/zsh.yaml`](../../data/zsh.yaml) | `brew install n`                                                   |
+| `n`                | [`modules/001-d-node.sh`](../../modules/001-d-node.sh), [`config_node`](../../scripts/dot-bootstrap.sh)                                        | Switch to `languages.node.version` from [`data/zsh.yaml`](../../data/zsh.yaml) | `brew install n`                                                   |
 | `node` / `npm`     | [`modules/001-d-node.sh`](../../modules/001-d-node.sh), `npm install -g` for `@google/gemini-cli`, `@openai/codex`                                     | Anything Node-flavored                                                         | Installed by `n`                                                   |
 | `rustup` + `cargo` | [`modules/001-d-rust.sh`](../../modules/001-d-rust.sh), [`bin/turtle-run.sh`](../../bin/turtle-run.sh), [`turtle/Cargo.toml`](../../turtle/Cargo.toml) | Building [`turtle/`](../../turtle/) and Rust crates                            | `brew install rustup-init && rustup-init`                          |
 | `jenv` + `java`    | [`modules/001-z-java.sh`](../../modules/001-z-java.sh)                                                                                                 | `JAVA_HOME` resolution + JDK switching                                         | `brew install jenv openjdk`                                        |
@@ -184,8 +184,8 @@ Bootstrap will only seed these when explicitly opted in.
 | Command          | Used by                                                                                                                  | Purpose                               |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
 | `defaults`       | [`scripts/dot-bootstrap.sh`](../../scripts/dot-bootstrap.sh) `dry_defaults_write`                                        | macOS preference writes               |
-| `dscl`           | [`bootstrapInfo`](../../scripts/dot-bootstrap.sh)                                                                        | Resolve login shell                   |
-| `sw_vers`        | [`bootstrapInfo`](../../scripts/dot-bootstrap.sh)                                                                        | macOS version banner                  |
+| `dscl`           | [`preflight`](../../scripts/dot-bootstrap.sh)                                                                        | Resolve login shell                   |
+| `sw_vers`        | [`preflight`](../../scripts/dot-bootstrap.sh)                                                                        | macOS version banner                  |
 | `osascript`      | Various helpers                                                                                                          | AppleScript bridges                   |
 | `pmset`          | macOS power helpers                                                                                                      | Battery / sleep state                 |
 | `arch`           | [`modules/000-a-emulation.sh`](../../modules/000-a-emulation.sh), [`modules/001-d-node.sh`](../../modules/001-d-node.sh) | `arch -arm64` / `arch -x86_64` shells |
@@ -206,7 +206,7 @@ brew install --cask font-meslo-lg-nerd-font
 
 ## ☁️ Optional services
 
-- **iCloud Drive** — when `~/Library/Mobile Documents/com~apple~CloudDocs` exists, [`bootstrapCheckCloud`](../../scripts/dot-bootstrap.sh) symlinks it as `~/iCloud` and `dot` uses `$ICLOUD/dot/` for splash images, override Brewfiles, and shared secrets. Disable: leave iCloud off; the bootstrap step will warn and continue with local-only data.
+- **iCloud Drive** — when `~/Library/Mobile Documents/com~apple~CloudDocs` exists, [`check_cloud`](../../scripts/dot-bootstrap.sh) symlinks it as `~/iCloud` and `dot` uses `$ICLOUD/dot/` for splash images, override Brewfiles, and shared secrets. Disable: leave iCloud off; the bootstrap step will warn and continue with local-only data.
 - **GitHub SSH agent** — [`scripts/submodule-sync.sh`](../../scripts/submodule-sync.sh) auto-rewrites SSH submodule URLs to HTTPS when no agent is loaded, but having a key loaded is faster.
 
 ---

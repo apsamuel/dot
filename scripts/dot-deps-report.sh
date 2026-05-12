@@ -119,7 +119,7 @@ TIERS=(
 
   # Tier 4 — vendor framework runtime
   "4|defaults|no|apple|macOS preference writes (bootstrap)|ships on macOS"
-  "4|dscl|no|apple|bootstrapInfo login-shell lookup|ships on macOS"
+  "4|dscl|no|apple|preflight login-shell lookup|ships on macOS"
   "4|sw_vers|no|apple|macOS version banner|ships on macOS"
   "4|arch|no|apple|spawnArm / spawnIntel multi-arch shells|ships on macOS"
   "4|pbcopy|no|apple|tmux-yank / oh-my-zsh copypath|ships on macOS"

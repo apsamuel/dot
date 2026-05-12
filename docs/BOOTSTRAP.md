@@ -8,11 +8,11 @@ This document describes the bootstrap process, dry-run/debug/verbose modes, and 
 
 **`dot`** uses a hierarchical Makefile + bash architecture to ensure **100% idempotent**, **atomic**, and **non-mutating** behavior in dry-run mode. All core install/update operations across the root, oh-my-zsh, oh-my-tmux, and vim subsystems support three control modes:
 
-| Flag      | Env Var        | Purpose                                          |
-|-----------|----------------|--------------------------------------------------|
-| `DRY=1`   | `DOT_DRY_RUN=1` | Dry-run: print planned actions, zero mutations   |
-| `DEBUG=1` | `DOT_DEBUG=1`   | Enable bash xtrace (`set -x`) for visibility     |
-| `VERBOSE=1` | `DOT_VERBOSE=1` | Verbose output in git/yq/cmake operations        |
+| Flag        | Env Var         | Purpose                                        |
+| ----------- | --------------- | ---------------------------------------------- |
+| `DRY=1`     | `DOT_DRY_RUN=1` | Dry-run: print planned actions, zero mutations |
+| `DEBUG=1`   | `DOT_DEBUG=1`   | Enable bash xtrace (`set -x`) for visibility   |
+| `VERBOSE=1` | `DOT_VERBOSE=1` | Verbose output in git/yq/cmake operations      |
 
 ---
 
@@ -271,11 +271,11 @@ The root bootstrap script houses the core logic for orchestrating install steps 
 
 ### Function Signature
 ```bash
-bootstrapSystem [--dry-run | -n] [--debug] [--verbose]
+run [--dry-run | -n] [--debug] [--verbose]
 ```
 
 ### Environment Variables
-The script sets `DOT_DRY_RUN`, `DOT_DEBUG`, and `DOT_VERBOSE` based on flags, then sources all `bootstrap*` functions:
+The script sets `DOT_DRY_RUN`, `DOT_DEBUG`, and `DOT_VERBOSE` based on flags, then sources all bootstrap functions (`check_*`, `config_*`, `install_*`, etc.):
 
 ```bash
 DOT_DRY_RUN=0
@@ -342,13 +342,13 @@ The control flow is:
 
 All major install/update operations are **guaranteed idempotent**:
 
-| Operation                 | Idempotent? | Verification                             |
-|---------------------------|-------------|-----------------------------------------|
-| `make vim-install`        | ✅ Yes      | Run twice, zero file changes            |
-| `make omz-sync-plugins`   | ✅ Yes      | Reconciles to YAML, then stable         |
-| `make tmux-install`       | ✅ Yes      | Symlinks exist, re-link is no-op        |
-| `make dot-bootstrap-zsh`  | ✅ Yes      | Same symlinks, zero overwrites          |
-| `DRY=1 make <anything>`   | ✅ Yes      | Zero mutations, all planned             |
+| Operation                | Idempotent? | Verification                     |
+| ------------------------ | ----------- | -------------------------------- |
+| `make vim-install`       | ✅ Yes       | Run twice, zero file changes     |
+| `make omz-sync-plugins`  | ✅ Yes       | Reconciles to YAML, then stable  |
+| `make tmux-install`      | ✅ Yes       | Symlinks exist, re-link is no-op |
+| `make dot-bootstrap-zsh` | ✅ Yes       | Same symlinks, zero overwrites   |
+| `DRY=1 make <anything>`  | ✅ Yes       | Zero mutations, all planned      |
 
 **Verification Approach:**
 ```bash
