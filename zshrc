@@ -53,7 +53,7 @@ fi
 #   2. Tmux-only suppression: any VSCode terminal (human or agent) → never
 #      auto-attach tmux, since each tmux pane uses the alt screen and that
 #      breaks VSCode shell integration (OSC 633) capture.
-if [[ $- != *i* ]] || [[ "$TERM" == "dumb" ]] || [[ -n "$COPILOT_AGENT_TERMINAL" ]]; then
+if [[ $- != *i* ]] || [[ "$TERM" = "dumb" ]] || [[ -n "$COPILOT_AGENT_TERMINAL" ]]; then
     export DOT_INTERACTIVE=0
     export DOT_DISABLE_P10K=1
     export DOT_DISABLE_OUTPUTS=1
@@ -64,7 +64,7 @@ if [[ $- != *i* ]] || [[ "$TERM" == "dumb" ]] || [[ -n "$COPILOT_AGENT_TERMINAL"
     export DOT_DISABLE_VIMODE=1
     export DOT_DISABLE_TMUX=1
     export DOT_SPLASH_SCREEN=false
-elif [[ "$TERM_PROGRAM" == "vscode" ]]; then
+elif [[ "$TERM_PROGRAM" = "vscode" ]]; then
     # Heavy profile is fine for human VSCode terminals, but tmux's per-pane
     # alt-screen still confuses VSCode's shell-integration capture. Suppress
     # only tmux auto-attach; leave p10k / plugins alone.
@@ -171,10 +171,10 @@ fi
 if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
     loadUserSecrets
 
-    if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "quote" ]]; then
+    if [[ ${DOT_SPLASH_SCREEN} = true && "${DOT_SPLASH_TYPE}" = "quote" ]]; then
         termQuote
     fi
-    if [[ ${DOT_SPLASH_SCREEN} == true && "${DOT_SPLASH_TYPE}" == "ascii" ]]; then
+    if [[ ${DOT_SPLASH_SCREEN} = true && "${DOT_SPLASH_TYPE}" = "ascii" ]]; then
         termLogo
     fi
 fi
