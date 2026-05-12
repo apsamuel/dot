@@ -50,14 +50,15 @@ export DOT_DISABLE_VIMODE="${DOT_DISABLE_VIMODE:-0}"
 export DOT_PYTHON_UV_DEFAULT_VERSION="${DOT_PYTHON_UV_DEFAULT_VERSION:-3.13}"
 
 # --- anaconda ---
-if [ "$(uname -m)" = "x86_64" ]; then
-    export DOT_ANACONDA_DIR="${DOT_ANACONDA_DIR:-/usr/local/anaconda3}"
-    export ANACONDA_DIR="${DOT_ANACONDA_DIR}"
-else
-    export DOT_ANACONDA_DIR="${DOT_ANACONDA_DIR:-/opt/homebrew/anaconda3}"
-    export ANACONDA_DIR="${DOT_ANACONDA_DIR}"
-fi
-export DOT_ANACONDA_ENV="${DOT_ANACONDA_ENV:-base}"
+# anaconda is has been deprecated in favor of uv/pyenv
+# if [ "$(uname -m)" = "x86_64" ]; then
+#     export DOT_ANACONDA_DIR="${DOT_ANACONDA_DIR:-/usr/local/anaconda3}"
+#     export ANACONDA_DIR="${DOT_ANACONDA_DIR}"
+# else
+#     export DOT_ANACONDA_DIR="${DOT_ANACONDA_DIR:-/opt/homebrew/anaconda3}"
+#     export ANACONDA_DIR="${DOT_ANACONDA_DIR}"
+# fi
+# export DOT_ANACONDA_ENV="${DOT_ANACONDA_ENV:-base}"
 
 # --- notes / vaults ---
 export DOT_MARKDOWN_VAULT="${DOT_MARKDOWN_VAULT:-${HOME}/Library/Mobile Documents/iCloud~md~obsidian/Documents}"
