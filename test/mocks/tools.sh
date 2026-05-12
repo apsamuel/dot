@@ -27,6 +27,8 @@ jq() {
     local arg_name=""
     local arg_val=""
     local raw=0
+    local _pat_secret="\$secret_key"
+    local _pat_dollar="\$"
 
     # Parse args (simplified)
     while [[ $# -gt 0 ]]; do
@@ -61,7 +63,7 @@ jq() {
                 echo "SECRET_VALUE"
             fi
             ;;
-        *'$secret_key'*|*'$'*)
+        *"${_pat_secret}"*|*"${_pat_dollar}"*)
             # Return a canned secret value for the requested key
             case "${arg_val}" in
                 API_KEY)       echo "test-api-key-12345" ;;
@@ -236,7 +238,7 @@ bc() {
     # Simple: read expression from stdin and try to evaluate with zsh
     local expr=""
     read -r expr
-    echo $(( ${expr} )) 2>/dev/null || echo "0"
+    echo $(( expr )) 2>/dev/null || echo "0"
 }
 
 # ── setopt (zsh builtin — wrap to prevent errors on invalid options) ──────────
