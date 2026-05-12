@@ -44,7 +44,7 @@ elif [ -n "${BASH_VERSION:-}" ]; then
     _FRAMEWORK_SHELL="bash"
 else
     printf 'FATAL: framework.sh requires bash (>=4.0) or zsh (>=5.0)\n' >&2
-    return 1 2>/dev/null || exit 1
+    return 1 2>/dev/null
 fi
 export _FRAMEWORK_SHELL
 
@@ -183,7 +183,8 @@ it() {
 assert_eq() {
     local expected="$1"
     local actual="$2"
-    local msg="${3:-expected '${expected}', got '${actual}'}"
+    local msg="$3"
+    [ -z "${msg}" ] && msg="expected '${expected}', got '${actual}'"
     if [ "${expected}" != "${actual}" ]; then
         printf '%s\n' "${msg}" >&2
         return 1
@@ -194,7 +195,8 @@ assert_eq() {
 assert_neq() {
     local val1="$1"
     local val2="$2"
-    local msg="${3:-expected values to differ, both are '${val1}'}"
+    local msg="$3"
+    [ -z "${msg}" ] && msg="expected values to differ, both are '${val1}'"
     if [ "${val1}" = "${val2}" ]; then
         printf '%s\n' "${msg}" >&2
         return 1
@@ -205,7 +207,8 @@ assert_neq() {
 assert_match() {
     local pattern="$1"
     local actual="$2"
-    local msg="${3:-'${actual}' does not match pattern '${pattern}'}"
+    local msg="$3"
+    [ -z "${msg}" ] && msg="'${actual}' does not match pattern '${pattern}'"
     if ! printf '%s' "${actual}" | command grep -qE "${pattern}"; then
         printf '%s\n' "${msg}" >&2
         return 1
@@ -216,7 +219,8 @@ assert_match() {
 assert_contains() {
     local haystack="$1"
     local needle="$2"
-    local msg="${3:-'${haystack}' does not contain '${needle}'}"
+    local msg="$3"
+    [ -z "${msg}" ] && msg="'${haystack}' does not contain '${needle}'"
     case "${haystack}" in
         *"${needle}"*) return 0 ;;
     esac
@@ -226,7 +230,8 @@ assert_contains() {
 
 assert_defined() {
     local varname="$1"
-    local msg="${2:-variable '${varname}' is not defined}"
+    local msg="$2"
+    [ -z "${msg}" ] && msg="variable '${varname}' is not defined"
     local _val=""
     _val="$(_deref "${varname}")"
     if [ -z "${_val}" ]; then
@@ -238,7 +243,8 @@ assert_defined() {
 
 assert_undefined() {
     local varname="$1"
-    local msg="${2:-variable '${varname}' should not be defined}"
+    local msg="$2"
+    [ -z "${msg}" ] && msg="variable '${varname}' should not be defined"
     local _val=""
     _val="$(_deref "${varname}")"
     if [ -n "${_val}" ]; then
@@ -275,7 +281,8 @@ assert_output_contains() {
 
 assert_called() {
     local mock_name="$1"
-    local msg="${2:-mock '${mock_name}' was never called}"
+    local msg="$2"
+    [ -z "${msg}" ] && msg="mock '${mock_name}' was never called"
     local call_log="${TEST_TMPDIR}/.mock_calls_${mock_name}"
     if [ ! -f "${call_log}" ] || [ ! -s "${call_log}" ]; then
         printf '%s\n' "${msg}" >&2
@@ -286,7 +293,8 @@ assert_called() {
 
 assert_not_called() {
     local mock_name="$1"
-    local msg="${2:-mock '${mock_name}' was unexpectedly called}"
+    local msg="$2"
+    [ -z "${msg}" ] && msg="mock '${mock_name}' was unexpectedly called"
     local call_log="${TEST_TMPDIR}/.mock_calls_${mock_name}"
     if [ -f "${call_log}" ] && [ -s "${call_log}" ]; then
         printf '%s\n' "${msg}" >&2
