@@ -445,6 +445,8 @@ function preflight () {
         "${dot_bootstrap_directory}/data/configs/shell/csh/rc|${HOME}/.cshrc"
         "${dot_bootstrap_directory}/vendor/oh-my-tmux/.tmux.conf|${HOME}/.tmux.conf"
         "${dot_bootstrap_directory}/vendor/oh-my-tmux/.tmux.conf.local|${HOME}/.tmux.conf.local"
+        "${dot_bootstrap_directory}/vendor/vim|${HOME}/.vim"
+        "${dot_bootstrap_directory}/vendor/vim|${HOME}/.config/nvim"
     )
     local _pair
     for _pair in "${_links[@]}"; do
