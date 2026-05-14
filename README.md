@@ -125,7 +125,34 @@ make install-vim          # Vim/Neovim config
 make install-tmux         # Tmux config
 ```
 
-See `make` (or `make help`) for the complete list of targets.
+### Vendor Management
+
+Each vendor under `vendor/` has its own Makefile with a consistent interface.
+The root Makefile provides passthrough targets that propagate `DRY`, `DEBUG`,
+and `VERBOSE` flags automatically:
+
+```bash
+# Vim/Neovim plugins
+make vim-list                         # list vendored plugins
+make vim-add PLUGIN=owner/repo BUNDLE=shared  # vendor a new plugin
+make vim-rm  PLUGIN=name BUNDLE=shared        # remove a plugin
+
+# oh-my-zsh custom plugins/themes
+make omz-add-plugin OWNER=org REPO=name       # add a custom plugin
+make omz-sync-plugins                         # reconcile from data/zsh.yaml
+make omz-doctor                               # read-only health check
+
+# tmux plugins
+make tmux-install                     # link configs + sync plugins
+make tmux-add-plugin PLUGIN=owner/repo
+make tmux-status                      # check config health
+
+# Dry-run works end-to-end through all vendors
+DRY=1 make vim-add PLUGIN=owner/repo BUNDLE=shared
+```
+
+You can also `cd` into any vendor directory and invoke `make help` directly.
+See [`vendor/README.md`](./vendor/README.md) for the full interface reference.
 
 ### Manual Alternative (Scripts)
 
