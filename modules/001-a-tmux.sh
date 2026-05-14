@@ -53,3 +53,11 @@ tmuxCreateSessionFromCwd() {
         tmux -2 new-session -s "${session_name}" -c "${current_directory}"
     fi
 }
+
+if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
+    getTmuxWindowName() {
+        ("$TMUX_PLUGIN_MANAGER_PATH"/tmux-window-name/scripts/rename_session_windows.py &)
+    }
+
+    add-zsh-hook chpwd getTmuxWindowName
+fi
