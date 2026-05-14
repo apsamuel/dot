@@ -5,8 +5,8 @@
 #   make                              # print help
 #   make dot-bootstrap                # full install (mirrors run)
 #   DRY=1 make dot-bootstrap          # dry-run — prints planned actions, zero mutations
-#   make dot-bootstrap-brew dot-bootstrap-deps dot-bootstrap-cloud   # run specific steps
-#   DEBUG=1 make dot-bootstrap-zsh    # enable xtrace for a single step
+#   make check-brew check-deps check-cloud   # run specific steps
+#   DEBUG=1 make config-zsh           # enable xtrace for a single step
 #   make vim-list                     # vendor passthrough (vim)
 #   make omz-sync-plugins             # vendor passthrough (oh-my-zsh)
 #   make tmux-status                  # vendor passthrough (oh-my-tmux)
@@ -73,13 +73,13 @@ VENDOR_FLAGS := DRY="$(DRY)" DEBUG="$(DEBUG)" VERBOSE="$(VERBOSE)" DOT_DRY_RUN="
 
 # ── Phony declarations ────────────────────────────────────────────────────────
 .PHONY: help \
-        dot-bootstrap-info dot-bootstrap-brew dot-bootstrap-deps dot-bootstrap-cask-deps \
-        dot-bootstrap-cloud dot-bootstrap-submodules \
-        dot-bootstrap-zsh dot-bootstrap-bash dot-bootstrap-shells \
-        dot-bootstrap-ssh dot-bootstrap-git dot-bootstrap-gh dot-bootstrap-configs \
-        dot-bootstrap-python dot-bootstrap-node dot-bootstrap-langs \
-        dot-bootstrap-iterm dot-bootstrap-figlet dot-bootstrap-fonts dot-bootstrap-p10k \
-        dot-bootstrap-omz dot-bootstrap-omz-plugins dot-bootstrap-tmux dot-bootstrap-vim \
+        preflight check-brew check-deps check-cask-deps \
+        check-cloud init-submodules \
+        config-zsh config-bash config-shells \
+        config-ssh config-git config-gh config-configs \
+        config-python config-node config-langs \
+        config-iterm config-figlet install-fonts config-p10k check-p10k \
+        check-omz check-omtmux config-omz-plugins config-tmux config-vim \
         dot-bootstrap \
         vim-install vim-build vim-update vim-helptags vim-doctor \
         vim-list vim-plugins vim-add vim-rm vim-clean \
@@ -120,7 +120,7 @@ help: ## Show this help
 	@echo "Examples:"
 	@echo "  make dot-bootstrap                    # full install"
 	@echo "  DRY=1 make dot-bootstrap              # plan everything, change nothing"
-	@echo "  make dot-bootstrap-brew dot-bootstrap-deps  # run specific steps"
+	@echo "  make check-brew check-deps  # run specific steps"
 	@echo "  make vim-list                         # list vendored vim plugins"
 	@echo "  make omz-sync-plugins                 # reconcile oh-my-zsh plugins"
 	@echo "  make tmux-status                      # check tmux config health"
@@ -130,78 +130,87 @@ help: ## Show this help
 # Install targets (pipeline order matches run)
 # ══════════════════════════════════════════════════════════════════════════════
 
-dot-bootstrap-info: ## Preflight checks (arch, os, tools)
+preflight: ## Preflight checks (arch, os, tools)
 	@$(BOOT); preflight
 
-dot-bootstrap-brew: ## Ensure Homebrew is installed
+check-brew: ## Ensure Homebrew is installed
 	@$(BOOT); check_brew
 
-dot-bootstrap-deps: ## Reconcile CLI dependencies (data/Brewfile)
+check-deps: ## Reconcile CLI dependencies (data/Brewfile)
 	@$(BOOT); check_deps
 
-dot-bootstrap-cask-deps: ## Reconcile cask dependencies (data/Brewfile.cask)
+check-cask-deps: ## Reconcile cask dependencies (data/Brewfile.cask)
 	@$(BOOT); check_cask_deps
 
-dot-bootstrap-cloud: ## Verify iCloud Drive and link ~/iCloud
+check-cloud: ## Verify iCloud Drive and link ~/iCloud
 	@$(BOOT); check_cloud
 
-dot-bootstrap-submodules: ## Initialize git submodules
+init-submodules: ## Initialize git submodules
 	@$(BOOT); init_submodules
 
-dot-bootstrap-zsh: ## Configure zsh (link zshrc, set login shell)
+config-zsh: ## Configure zsh (link zshrc, set login shell)
 	@$(BOOT); config_zsh
 
-dot-bootstrap-bash: ## Configure bash (link bashrc)
+config-bash: ## Configure bash (link bashrc)
 	@$(BOOT); config_bash
 
-dot-bootstrap-ssh: ## Link SSH config + keys from iCloud
+config-ssh: ## Link SSH config + keys from iCloud
 	@$(BOOT); check_cloud && config_ssh
 
-dot-bootstrap-git: ## Link gitconfig from iCloud
+config-git: ## Link gitconfig from iCloud
 	@$(BOOT); check_cloud && config_git
 
-dot-bootstrap-gh: ## Link gh CLI config from iCloud
-	@$(BOOT); config_gh
+config-xdg: ## Link iCloud configs into XDG_CONFIG_HOME
+	@$(BOOT); check_cloud && config_xdg
 
-dot-bootstrap-python: ## Provision Python venv (uv)
+config-gh: ## Link gh CLI config from iCloud (via config_xdg)
+	@$(BOOT); check_cloud && config_xdg gh
+
+config-python: ## Provision Python venv (uv)
 	@$(BOOT); config_python
 
-dot-bootstrap-node: ## Provision Node via n
+config-node: ## Provision Node via n
 	@$(BOOT); config_node
 
-dot-bootstrap-iterm: ## Configure iTerm2
+config-iterm: ## Configure iTerm2
 	@$(BOOT); config_iterm
 
-dot-bootstrap-figlet: ## Verify figlet fonts (vendored)
+config-figlet: ## Verify figlet fonts (vendored)
 	@$(BOOT); config_figlet
 
-dot-bootstrap-fonts: ## Install fonts from iCloud
+install-fonts: ## Install fonts from iCloud
 	@$(BOOT); check_cloud && install_fonts
 
-dot-bootstrap-p10k: ## Configure Powerlevel10k
+config-p10k: ## Configure Powerlevel10k
 	@$(BOOT); check_cloud && config_p10k
 
-dot-bootstrap-omz: ## Ensure oh-my-zsh is installed and linked
+check-p10k: ## Verify p10k config symlink (~/.p10k.zsh)
+	@$(BOOT); check_p10k
+
+check-omz: ## Ensure oh-my-zsh is installed and linked
 	@$(BOOT); check_omz
 
-dot-bootstrap-omz-plugins: ## Sync oh-my-zsh custom plugins (vendor dispatch)
+check-omtmux: ## Verify oh-my-tmux config + tpm plugins
+	@$(BOOT); check_omtmux
+
+config-omz-plugins: ## Sync oh-my-zsh custom plugins (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_OMZ)" sync-plugins $(VENDOR_FLAGS)
 
-dot-bootstrap-tmux: ## Configure oh-my-tmux + tpm plugins (vendor dispatch)
+config-tmux: ## Configure oh-my-tmux + tpm plugins (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_TMUX)" install $(VENDOR_FLAGS)
 
-dot-bootstrap-vim: ## Configure vim + neovim (vendor dispatch)
+config-vim: ## Configure vim + neovim (vendor dispatch)
 	@$(MAKE) -C "$(VENDOR_VIM)" install $(VENDOR_FLAGS)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Convenience groups
 # ══════════════════════════════════════════════════════════════════════════════
 
-dot-bootstrap-shells: dot-bootstrap-zsh dot-bootstrap-bash ## Configure all shells (zsh + bash)
+config-shells: config-zsh config-bash ## Configure all shells (zsh + bash)
 
-dot-bootstrap-configs: dot-bootstrap-ssh dot-bootstrap-git dot-bootstrap-gh ## Link all configs (ssh, git, gh)
+config-configs: config-ssh config-git config-gh ## Link all configs (ssh, git, gh)
 
-dot-bootstrap-langs: dot-bootstrap-python dot-bootstrap-node ## Provision language toolchains (python, node)
+config-langs: config-python config-node ## Provision language toolchains (python, node)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Full install (mirrors run pipeline)

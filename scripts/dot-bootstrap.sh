@@ -1026,26 +1026,80 @@ function config_git () {
 }
 
 # -----------------------------------------------------------------------------
-# config_gh - link gh CLI config from iCloud
+# config_xdg - link iCloud-tracked configs into XDG_CONFIG_HOME
 #
 # Description:
-#   Symlinks `~/.config/gh/{config.yml,hosts.yml}` to the iCloud-tracked
-#   gh configuration directory. Idempotent via ensureSymlink. Dry-run safe.
+#   Iterates entries in `$ICLOUD/dot/config/` and symlinks each one into
+#   `$XDG_CONFIG_HOME` (~/.config). Handles files and directories alike.
+#   Existing non-symlink entries are backed up to `.bak` (or `.bak.<epoch>`).
+#   Wrong symlinks are relinked. Correct symlinks are skipped (idempotent).
+#   Optionally accepts a positional argument to target a single app.
 #
-# Usage:    config_gh
-# Returns:  0 on success; 1 when symlink fails.
+# Usage:    config_xdg [-n] [-x] [-h] [<app>]
+# Options:  -n dry-run  -x xtrace  -h help
+# Args:     <app>  optional name of a single entry to link (e.g. "gh")
+# Returns:  0 on success; 1 when ICLOUD missing, source dir missing, or any
+#           link operation fails.
 # -----------------------------------------------------------------------------
-function config_gh () {
-    local git_config_dir_dot="${icloud_directory}/dot/git/gh"
-    local git_config_dir="${HOME}/.config/gh"
+function config_xdg () {
+    local _opt_dry _opt_debug _opt_help OPTIND=1
+    _dot_std_opts "config_xdg" "$@" || return $?
+    shift $((OPTIND - 1))
+    if [[ ${_opt_help} -eq 1 ]]; then
+        echo "Usage: config_xdg [-n] [-x] [-h] [<app>]"; return 0
+    fi
+    local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"; [[ ${_opt_dry} -eq 1 ]] && DOT_DRY_RUN=1
+    [[ ${_opt_debug} -eq 1 ]] && set -x
 
-    dry_mkdir "${git_config_dir}"
-    ensureSymlink "${git_config_dir_dot}/config.yml" "${git_config_dir}/config.yml" || return 1
-    ensureSymlink "${git_config_dir_dot}/hosts.yml"  "${git_config_dir}/hosts.yml"  || return 1
+    local filter="${1:-}"
+    local xdg_home="${XDG_CONFIG_HOME:-${HOME}/.config}"
+    local cloud_config="${ICLOUD}/dot/config"
 
-    say_ok "🐱 your gh installation is configured"
+    if [[ -z "${ICLOUD:-}" ]]; then
+        say_err "📂 ICLOUD is not set — run check_cloud first"
+        [[ ${_opt_debug} -eq 1 ]] && set +x; return 1
+    fi
+
+    if [[ ! -d "${cloud_config}" ]]; then
+        say_err "📂 iCloud config directory not found: ${cloud_config}"
+        [[ ${_opt_debug} -eq 1 ]] && set +x; return 1
+    fi
+
+    dry_mkdir "${xdg_home}"
+
+    local linked=0 failed=0 entry name
+
+    for entry in "${cloud_config}"/*; do
+        [[ -e "${entry}" || -L "${entry}" ]] || continue
+        name="${entry##*/}"
+        # If a filter was supplied, skip non-matching entries
+        if [[ -n "${filter}" && "${name}" != "${filter}" ]]; then
+            continue
+        fi
+        if ensureSymlink "${entry}" "${xdg_home}/${name}"; then
+            (( linked++ ))
+        else
+            (( failed++ ))
+        fi
+    done
+
+    if [[ -n "${filter}" && ${linked} -eq 0 && ${failed} -eq 0 ]]; then
+        say_err "📂 no entry named '${filter}' found in ${cloud_config}"
+        [[ ${_opt_debug} -eq 1 ]] && set +x; return 1
+    fi
+
+    if [[ ${failed} -gt 0 ]]; then
+        say_err "📂 ${failed} config link(s) failed"
+        [[ ${_opt_debug} -eq 1 ]] && set +x; return 1
+    fi
+
+    say_ok "📂 XDG configs linked (${linked} entries)"
+    [[ ${_opt_debug} -eq 1 ]] && set +x
     return 0
 }
+
+# config_gh - convenience wrapper for config_xdg targeting gh CLI
+function config_gh () { config_xdg "$@" gh; }
 
 # -----------------------------------------------------------------------------
 # config_zsh - configure zsh as the login shell
@@ -1638,7 +1692,7 @@ function check_fonts () {
 # Returns:  0 always.
 # -----------------------------------------------------------------------------
 function check_themes () {
-    say_skip "🎨 check_themes deprecated — vendor submodule iterm-themes provides themes"
+    say_skip "🎨 check_themes deprecated — vendor/iterm2 submodule provides iterm-themes"
     return 0
 }
 
@@ -1697,29 +1751,31 @@ function check_omz () {
 }
 
 # -----------------------------------------------------------------------------
-# check_p10k - check powerlevel10k installation (WIP)
+# check_p10k - verify powerlevel10k config symlink
 #
 # Description:
-#   Placeholder for powerlevel10k installation verification.
-#   Currently emits a skip notice.
+#   Checks that ~/.p10k.zsh is a symlink pointing to the repo-managed config
+#   at ${dot_bootstrap_directory}/data/configs/shell/p10k.zsh. If the link is
+#   missing or incorrect, delegates to config_p10k to (re)create it.
 #
-# Usage:    check_p10k
-# Returns:  0 always.
+# Usage:    check_p10k [-n] [-x] [-h]
+# Options:  -n dry-run   -x xtrace   -h help
+# Returns:  0 when the symlink is correct; 1 on failure.
 # -----------------------------------------------------------------------------
 function check_p10k () {
-    say_skip "✨ powerlevel10k installation is a work in progress"
-    return 0
-    # if [[ ! -d "${ZSH_CUSTOM}/themes/powerlevel10k" ]]; then
-    #     say_work "✨ installing powerlevel10k"
-    #     install_p10k || return 1
-    # fi
-    # if [[ -L "${HOME}/.p10k.zsh" || -f "${HOME}/.p10k.zsh" ]]; then
-    #     # let config_p10k resolve idempotency via ensureSymlink
-    #     config_p10k
-    # else
-    #     say_work "✨ powerlevel10k is not configured — configuring"
-    #     config_p10k
-    # fi
+    local _opt_dry _opt_debug _opt_help OPTIND=1
+    _dot_std_opts "check_p10k" "$@" || return $?
+
+    local _target="${dot_bootstrap_directory}/data/configs/shell/p10k.zsh"
+    local _link="${HOME}/.p10k.zsh"
+
+    if [[ -L "$_link" ]] && [[ "$(readlink "$_link")" == "$_target" ]]; then
+        say_ok "✨ powerlevel10k config symlink is correct"
+        return 0
+    fi
+
+    say_work "✨ powerlevel10k config symlink missing or incorrect — linking"
+    config_p10k
 }
 
 # -----------------------------------------------------------------------------
@@ -1833,21 +1889,21 @@ function install_fonts () {
 # install_themes - verify iterm2 themes vendor submodule
 #
 # Description:
-#   Checks that the iterm-themes vendor submodule is present. Iterm2
-#   imports directly from the vendor directory; no linking needed.
+#   Checks that iterm-themes is available via the vendor/iterm2 submodule.
+#   Iterm2 imports directly from the vendor directory; no linking needed.
 #   Idempotent.
 #
 # Usage:    install_themes
 # Returns:  0 when present; 1 when vendor directory is missing.
 # -----------------------------------------------------------------------------
 function install_themes () {
-    local vendor_dir="${dot_bootstrap_directory}/vendor/iterm-themes"
+    local vendor_dir="${dot_bootstrap_directory}/vendor/iterm2/vendor/iterm-themes"
     if [[ ! -d "${vendor_dir}" ]]; then
         say_err "🎨 themes source not found: ${vendor_dir} — run init_submodules first"
         return 1
     fi
     # no link needed since iterm2 imports directly from the vendor directory; just check presence
-    say_ok "🎨 iterm2 themes are available (via vendor submodule)"
+    say_ok "🎨 iterm2 themes are available (via vendor/iterm2 submodule)"
 
     return 0
 }
@@ -2305,7 +2361,7 @@ _dot_bootstrap_export_functions () {
         check_zsh install_zsh config_zsh
         config_bash config_csh config_ksh
         config_fish config_pwsh
-        config_ssh config_git config_gh
+        config_ssh config_git config_xdg config_gh
         config_python config_node
         check_iterm install_iterm config_iterm
         config_figlet
