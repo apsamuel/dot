@@ -371,3 +371,338 @@ EOF
         printf ']\n'
     fi
 }
+
+# createSshKey: generate a new SSH key pair
+#
+# Usage:
+#   createSshKey --name NAME [--type TYPE] [--bits BITS] [--comment COMMENT]
+#                [--dir DIR] [--passphrase PASS] [-h|--help]
+#
+# Options:
+#   --name NAME        Key filename (required). Created inside --dir.
+#   --type TYPE        Key type: ed25519 (default), rsa, ecdsa.
+#   --bits BITS        Key size (only applies to rsa/ecdsa; default: 4096/521).
+#   --comment COMMENT  Key comment (default: user@hostname).
+#   --dir DIR          Directory to write the key (default: $HOME/.ssh).
+#   --passphrase PASS  Passphrase for the key. Empty string means no passphrase.
+#                      If omitted, ssh-keygen will prompt interactively.
+#   -h, --help         Show this help.
+function createSshKey () {
+    local name="" ktype="ed25519" bits="" comment="" dir="${HOME}/.ssh" passphrase_arg=()
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --name)       name="$2"; shift 2 ;;
+            --type)       ktype="$2"; shift 2 ;;
+            --bits)       bits="$2"; shift 2 ;;
+            --comment)    comment="$2"; shift 2 ;;
+            --dir)        dir="$2"; shift 2 ;;
+            --passphrase) passphrase_arg=(-N "$2"); shift 2 ;;
+            -h|--help)
+                cat <<'EOF'
+Usage: createSshKey --name NAME [--type TYPE] [--bits BITS] [--comment COMMENT]
+                    [--dir DIR] [--passphrase PASS]
+
+  --name NAME        Key filename (required)
+  --type TYPE        ed25519 (default), rsa, ecdsa
+  --bits BITS        Key size (rsa default: 4096, ecdsa default: 521)
+  --comment COMMENT  Key comment (default: user@hostname)
+  --dir DIR          Output directory (default: $HOME/.ssh)
+  --passphrase PASS  Passphrase (empty string = no passphrase; omit to prompt)
+  -h, --help         Show this help
+EOF
+                return 0
+                ;;
+            *)
+                echo "createSshKey: unknown argument: $1" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if [[ -z "${name}" ]]; then
+        echo "createSshKey: --name is required" >&2
+        return 2
+    fi
+
+    local keypath="${dir}/${name}"
+    if [[ -e "${keypath}" ]]; then
+        echo "createSshKey: key already exists: ${keypath}" >&2
+        return 1
+    fi
+
+    [[ -d "${dir}" ]] || mkdir -p "${dir}"
+
+    [[ -z "${comment}" ]] && comment="${USER}@$(hostname -s)"
+
+    local -a cmd=(ssh-keygen -t "${ktype}" -C "${comment}" -f "${keypath}")
+
+    # bits: apply defaults for types that need them
+    if [[ -z "${bits}" ]]; then
+        case "${ktype}" in
+            rsa)   bits=4096 ;;
+            ecdsa) bits=521 ;;
+        esac
+    fi
+    [[ -n "${bits}" ]] && cmd+=(-b "${bits}")
+
+    # passphrase: only pass -N if explicitly provided
+    if [[ ${#passphrase_arg[@]} -gt 0 ]]; then
+        cmd+=("${passphrase_arg[@]}")
+    fi
+
+    "${cmd[@]}" || return $?
+
+    chmod 600 "${keypath}"
+    chmod 644 "${keypath}.pub"
+
+    echo "Created: ${keypath}"
+    echo "Public:  ${keypath}.pub"
+    ssh-keygen -lf "${keypath}.pub"
+}
+
+# getSshKeyFingerprint: display the fingerprint of an SSH key
+#
+# Usage:
+#   getSshKeyFingerprint --name NAME [--hash md5|sha256] [--dir DIR]
+#
+# Options:
+#   --name NAME     Key filename or full path (required).
+#   --hash ALGO     Hash algorithm: sha256 (default) or md5.
+#   --dir DIR       Directory to look in (default: $HOME/.ssh).
+function getSshKeyFingerprint () {
+    local name="" hash="sha256" dir="${HOME}/.ssh"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --name) name="$2"; shift 2 ;;
+            --hash) hash="$2"; shift 2 ;;
+            --dir)  dir="$2"; shift 2 ;;
+            -h|--help)
+                cat <<'EOF'
+Usage: getSshKeyFingerprint --name NAME [--hash md5|sha256] [--dir DIR]
+
+  --name NAME   Key filename or full path (required)
+  --hash ALGO   sha256 (default) or md5
+  --dir DIR     Directory to look in (default: $HOME/.ssh)
+EOF
+                return 0
+                ;;
+            *)
+                echo "getSshKeyFingerprint: unknown argument: $1" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if [[ -z "${name}" ]]; then
+        echo "getSshKeyFingerprint: --name is required" >&2
+        return 2
+    fi
+
+    # resolve path
+    local keypath="${name}"
+    if [[ "${keypath:0:1}" != "/" ]]; then
+        keypath="${dir}/${name}"
+    fi
+
+    # prefer .pub if available
+    local target="${keypath}.pub"
+    [[ -f "${target}" ]] || target="${keypath}"
+
+    if [[ ! -f "${target}" ]]; then
+        echo "getSshKeyFingerprint: not found: ${keypath}" >&2
+        return 1
+    fi
+
+    ssh-keygen -lf "${target}" -E "${hash}"
+}
+
+# getSshKeyType: show the type and bit length of an SSH key
+#
+# Usage:
+#   getSshKeyType --name NAME [--dir DIR]
+function getSshKeyType () {
+    local name="" dir="${HOME}/.ssh"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --name) name="$2"; shift 2 ;;
+            --dir)  dir="$2"; shift 2 ;;
+            -h|--help)
+                echo "Usage: getSshKeyType --name NAME [--dir DIR]"
+                return 0
+                ;;
+            *)
+                echo "getSshKeyType: unknown argument: $1" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if [[ -z "${name}" ]]; then
+        echo "getSshKeyType: --name is required" >&2
+        return 2
+    fi
+
+    local keypath="${name}"
+    [[ "${keypath:0:1}" != "/" ]] && keypath="${dir}/${name}"
+
+    local target="${keypath}.pub"
+    [[ -f "${target}" ]] || target="${keypath}"
+
+    if [[ ! -f "${target}" ]]; then
+        echo "getSshKeyType: not found: ${keypath}" >&2
+        return 1
+    fi
+
+    # ssh-keygen -l outputs: bits hash comment (type)
+    local info
+    info="$(ssh-keygen -lf "${target}" 2>/dev/null)" || {
+        echo "getSshKeyType: unable to read key: ${target}" >&2
+        return 1
+    }
+    # extract bits (first field) and type (last field in parens)
+    local bits="${info%% *}"
+    local ktype="${info##*(}"
+    ktype="${ktype%)}"
+    printf '%s %s-bit\n' "${ktype}" "${bits}"
+}
+
+# getSshPublicKey: output the public key contents (for copying to services)
+#
+# Usage:
+#   getSshPublicKey --name NAME [--dir DIR]
+function getSshPublicKey () {
+    local name="" dir="${HOME}/.ssh"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --name) name="$2"; shift 2 ;;
+            --dir)  dir="$2"; shift 2 ;;
+            -h|--help)
+                echo "Usage: getSshPublicKey --name NAME [--dir DIR]"
+                return 0
+                ;;
+            *)
+                echo "getSshPublicKey: unknown argument: $1" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if [[ -z "${name}" ]]; then
+        echo "getSshPublicKey: --name is required" >&2
+        return 2
+    fi
+
+    local keypath="${name}"
+    [[ "${keypath:0:1}" != "/" ]] && keypath="${dir}/${name}"
+
+    local pubpath="${keypath}.pub"
+    if [[ ! -f "${pubpath}" ]]; then
+        echo "getSshPublicKey: public key not found: ${pubpath}" >&2
+        return 1
+    fi
+
+    cat "${pubpath}"
+}
+
+# removeSshKey: delete a key pair (private + public) after confirmation
+#
+# Usage:
+#   removeSshKey --name NAME [--dir DIR] [--force]
+function removeSshKey () {
+    local name="" dir="${HOME}/.ssh" force=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --name)  name="$2"; shift 2 ;;
+            --dir)   dir="$2"; shift 2 ;;
+            --force) force=1; shift ;;
+            -h|--help)
+                echo "Usage: removeSshKey --name NAME [--dir DIR] [--force]"
+                return 0
+                ;;
+            *)
+                echo "removeSshKey: unknown argument: $1" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if [[ -z "${name}" ]]; then
+        echo "removeSshKey: --name is required" >&2
+        return 2
+    fi
+
+    local keypath="${name}"
+    [[ "${keypath:0:1}" != "/" ]] && keypath="${dir}/${name}"
+
+    if [[ ! -f "${keypath}" && ! -f "${keypath}.pub" ]]; then
+        echo "removeSshKey: key not found: ${keypath}" >&2
+        return 1
+    fi
+
+    if (( ! force )); then
+        printf 'Remove key pair %s? [y/N] ' "${keypath}"
+        local reply=""
+        read -r reply
+        if [[ "${reply}" != [yY]* ]]; then
+            echo "Aborted."
+            return 0
+        fi
+    fi
+
+    [[ -f "${keypath}" ]] && rm -f "${keypath}"
+    [[ -f "${keypath}.pub" ]] && rm -f "${keypath}.pub"
+    echo "Removed: ${keypath}"
+}
+
+# addSshKeyToAgent: add a key to the running ssh-agent
+#
+# Usage:
+#   addSshKeyToAgent --name NAME [--dir DIR] [--lifetime SECONDS]
+function addSshKeyToAgent () {
+    local name="" dir="${HOME}/.ssh" lifetime=""
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --name)     name="$2"; shift 2 ;;
+            --dir)      dir="$2"; shift 2 ;;
+            --lifetime) lifetime="$2"; shift 2 ;;
+            -h|--help)
+                echo "Usage: addSshKeyToAgent --name NAME [--dir DIR] [--lifetime SECONDS]"
+                return 0
+                ;;
+            *)
+                echo "addSshKeyToAgent: unknown argument: $1" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if [[ -z "${name}" ]]; then
+        echo "addSshKeyToAgent: --name is required" >&2
+        return 2
+    fi
+
+    local keypath="${name}"
+    [[ "${keypath:0:1}" != "/" ]] && keypath="${dir}/${name}"
+
+    if [[ ! -f "${keypath}" ]]; then
+        echo "addSshKeyToAgent: not found: ${keypath}" >&2
+        return 1
+    fi
+
+    local -a cmd=(ssh-add)
+    [[ -n "${lifetime}" ]] && cmd+=(-t "${lifetime}")
+
+    # on macOS, store passphrase in Keychain
+    if [[ "$(uname)" == "Darwin" ]]; then
+        cmd+=(--apple-use-keychain)
+    fi
+
+    cmd+=("${keypath}")
+    "${cmd[@]}"
+}
