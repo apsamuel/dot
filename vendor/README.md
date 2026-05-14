@@ -11,35 +11,34 @@ All entries are git submodules so bootstrap remains reproducible and determinist
 
 ### Managed by `apsamuel` Origin
 
-| Directory | Upstream URL | Origin Type | Purpose |
-| --- | --- | --- | --- |
-| `oh-my-zsh/` | `git@github.com:apsamuel/ohmyzsh.git` | Fork maintained by `apsamuel` | Core plugin/theme framework used by `zshrc`. |
-| `oh-my-tmux/` | `git@github.com:apsamuel/.tmux.git` | Fork maintained by `apsamuel` | Tmux framework + TPM integration baseline. |
-| `vim/` | `git@github-personal.com:apsamuel/vim.git` | Private/managed by `apsamuel` | Personal Vim config integration repository. |
+| Directory     | Upstream URL                               | Origin Type                   | Purpose                                      |
+| ------------- | ------------------------------------------ | ----------------------------- | -------------------------------------------- |
+| `oh-my-zsh/`  | `git@github.com:apsamuel/ohmyzsh.git`      | Fork maintained by `apsamuel` | Core plugin/theme framework used by `zshrc`. |
+| `oh-my-tmux/` | `git@github.com:apsamuel/.tmux.git`        | Fork maintained by `apsamuel` | Tmux framework + TPM integration baseline.   |
+| `vim/`        | `git@github-personal.com:apsamuel/vim.git` | Private/managed by `apsamuel` | Personal Vim config integration repository.  |
 
 ### Public Upstream Projects
 
-| Directory | Upstream URL | Origin Type | Purpose |
-| --- | --- | --- | --- |
-| `fzf-git/` | `git@github.com:junegunn/fzf-git.sh.git` | Public upstream | Fuzzy git workflow helpers. |
-| `bash-commons/` | `git@github.com:gruntwork-io/bash-commons.git` | Public upstream | Reusable shell utility library. |
-| `figlet-fonts/` | `git@github.com:xero/figlet-fonts.git` | Public upstream | Fonts used by output/splash helpers. |
-| `iterm-themes/` | `git@github.com:mbadolato/iTerm2-Color-Schemes.git` | Public upstream | iTerm2 color scheme catalog. |
+| Directory       | Upstream URL                                   | Origin Type     | Purpose                              |
+| --------------- | ---------------------------------------------- | --------------- | ------------------------------------ |
+| `fzf-git/`      | `git@github.com:junegunn/fzf-git.sh.git`       | Public upstream | Fuzzy git workflow helpers.          |
+| `bash-commons/` | `git@github.com:gruntwork-io/bash-commons.git` | Public upstream | Reusable shell utility library.      |
+| `figlet-fonts/` | `git@github.com:xero/figlet-fonts.git`         | Public upstream | Fonts used by output/splash helpers. |
 
 ## Nested oh-my-zsh Submodules
 
 These live under `vendor/oh-my-zsh/custom/`.
 
-| Path | Upstream | Kind | Default in `data/zsh.yaml` |
-| --- | --- | --- | --- |
-| `custom/themes/powerlevel10k` | `romkatv/powerlevel10k` | Theme | Enabled |
-| `custom/plugins/zsh-autosuggestions` | `zsh-users/zsh-autosuggestions` | Plugin | Enabled |
-| `custom/plugins/F-Sy-H` | `z-shell/F-Sy-H` | Plugin | Enabled |
-| `custom/plugins/fzf-tab` | `Aloxaf/fzf-tab` | Plugin | Disabled |
-| `custom/plugins/navi` | `denisidoro/navi` | Plugin | Disabled |
-| `custom/plugins/zsh-vi-mode` | `jeffreytse/zsh-vi-mode` | Plugin | Disabled |
-| `custom/plugins/zsh_codex` | `tom-doerr/zsh_codex` | Plugin | Disabled |
-| `custom/plugins/conda-zsh-completion` | `esc/conda-zsh-completion` | Plugin | Disabled |
+| Path                                  | Upstream                        | Kind   | Default in `data/zsh.yaml` |
+| ------------------------------------- | ------------------------------- | ------ | -------------------------- |
+| `custom/themes/powerlevel10k`         | `romkatv/powerlevel10k`         | Theme  | Enabled                    |
+| `custom/plugins/zsh-autosuggestions`  | `zsh-users/zsh-autosuggestions` | Plugin | Enabled                    |
+| `custom/plugins/F-Sy-H`               | `z-shell/F-Sy-H`                | Plugin | Enabled                    |
+| `custom/plugins/fzf-tab`              | `Aloxaf/fzf-tab`                | Plugin | Disabled                   |
+| `custom/plugins/navi`                 | `denisidoro/navi`               | Plugin | Disabled                   |
+| `custom/plugins/zsh-vi-mode`          | `jeffreytse/zsh-vi-mode`        | Plugin | Disabled                   |
+| `custom/plugins/zsh_codex`            | `tom-doerr/zsh_codex`           | Plugin | Disabled                   |
+| `custom/plugins/conda-zsh-completion` | `esc/conda-zsh-completion`      | Plugin | Disabled                   |
 
 ## Submodule Management
 

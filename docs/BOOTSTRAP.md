@@ -29,11 +29,11 @@ DRY=1 make dot-bootstrap
 make dot-bootstrap
 
 # Run specific subsystems
-make dot-bootstrap-brew          # install/update Homebrew packages
-make dot-bootstrap-zsh           # symlink ~/.zshrc, load modules
-make dot-bootstrap-vim           # vendor vim plugins, build natives
-make dot-bootstrap-omz-plugins   # sync oh-my-zsh custom plugins
-make dot-bootstrap-tmux          # sync oh-my-tmux plugins, link configs
+make check-brew               # install/update Homebrew packages
+make config-zsh               # symlink ~/.zshrc, load modules
+make config-vim               # vendor vim plugins, build natives
+make config-omz-plugins       # sync oh-my-zsh custom plugins
+make config-tmux              # sync oh-my-tmux plugins, link configs
 ```
 
 #### Vendor Passthroughs
@@ -118,7 +118,7 @@ Flags can be combined for maximum visibility during troubleshooting:
 
 ```bash
 # Dry-run with full debug output
-DRY=1 DEBUG=1 VERBOSE=1 make dot-bootstrap-vim
+DRY=1 DEBUG=1 VERBOSE=1 make config-vim
 
 # Output will show every planned action with xtrace expansion
 + [[ 1 -eq 1 ]]  # DOT_DRY_RUN check
@@ -342,13 +342,13 @@ The control flow is:
 
 All major install/update operations are **guaranteed idempotent**:
 
-| Operation                | Idempotent? | Verification                     |
-| ------------------------ | ----------- | -------------------------------- |
-| `make vim-install`       | ✅ Yes       | Run twice, zero file changes     |
-| `make omz-sync-plugins`  | ✅ Yes       | Reconciles to YAML, then stable  |
-| `make tmux-install`      | ✅ Yes       | Symlinks exist, re-link is no-op |
-| `make dot-bootstrap-zsh` | ✅ Yes       | Same symlinks, zero overwrites   |
-| `DRY=1 make <anything>`  | ✅ Yes       | Zero mutations, all planned      |
+| Operation               | Idempotent? | Verification                     |
+| ----------------------- | ----------- | -------------------------------- |
+| `make vim-install`      | ✅ Yes       | Run twice, zero file changes     |
+| `make omz-sync-plugins` | ✅ Yes       | Reconciles to YAML, then stable  |
+| `make tmux-install`     | ✅ Yes       | Symlinks exist, re-link is no-op |
+| `make config-zsh`       | ✅ Yes       | Same symlinks, zero overwrites   |
+| `DRY=1 make <anything>` | ✅ Yes       | Zero mutations, all planned      |
 
 **Verification Approach:**
 ```bash
