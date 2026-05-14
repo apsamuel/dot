@@ -209,7 +209,7 @@ export ZSH_THEME
 # Setting this variable when ZSH_THEME=random will cause zsh to load
 # a theme from this variable instead of looking in $ZSH/themes/
 # If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -252,11 +252,6 @@ export HIST_STAMPS="dd.mm.yyyy"
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
 
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
 # shellcheck disable=SC2046
 export plugins=(
     $(
@@ -301,31 +296,17 @@ export ITERM2_SQUELCH_MARK=1
 #source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
 
 
-
-
-if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
-    getTmuxWindowName() {
-        ("$TMUX_PLUGIN_MANAGER_PATH"/tmux-window-name/scripts/rename_session_windows.py &)
-    }
-
-    add-zsh-hook chpwd getTmuxWindowName
-fi
-
 # zle
 zle -N create_completion
 
 
-# post exports
-DOT_INIT_END_TIME=$(date +%s)
-DOT_LOAD_TIME="$((DOT_INIT_END_TIME - DOT_INIT_START_TIME))"
-export DOT_INIT_DIR DOT_INIT_START_TIME DOT_INIT_END_TIME DOT_LOAD_TIME DOT_LIBS_DIR DOT_DIR DOT_DEBUG DOT_SPLASH_SCREEN DOT_SPLASH_TYPE DOT_CLOUD_DIR DOT_SHELL_DATA DOT_SECRETS_DATA
 # export PATH="$PATH:$HOME/.dot/bin"
-
-test -e "${HOME}/.iterm2_shell_integration.zsh" && . "${HOME}/.iterm2_shell_integration.zsh"
 
 # Zsh will override CTRL-R & provide its builtin reverse-history-search if this line is not executed here
 # https://github.com/junegunn/fzf/issues/1812
 configureFzf
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || . ~/.p10k.zsh
+# calculate total load time and export it as an environment variable for use in the shell
+DOT_INIT_END_TIME=$(date +%s)
+DOT_LOAD_TIME="$((DOT_INIT_END_TIME - DOT_INIT_START_TIME))"
+export DOT_INIT_DIR DOT_INIT_START_TIME DOT_INIT_END_TIME DOT_LOAD_TIME DOT_LIBS_DIR DOT_DIR DOT_DEBUG DOT_SPLASH_SCREEN DOT_SPLASH_TYPE DOT_CLOUD_DIR DOT_SHELL_DATA DOT_SECRETS_DATA
