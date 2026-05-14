@@ -21,6 +21,7 @@ This document describes the bootstrap process, dry-run/debug/verbose modes, and 
 ### Entry Points
 
 #### Full Bootstrap
+
 ```bash
 # Preview everything without changes
 DRY=1 make dot-bootstrap
@@ -37,6 +38,7 @@ make config-tmux              # sync oh-my-tmux plugins, link configs
 ```
 
 #### Vendor Passthroughs
+
 All vendor management targets are passthrough to the respective vendor Makefiles:
 
 ```bash
@@ -67,6 +69,7 @@ make tmux-list-plugins                     # show declared vs installed
 ### Control Flags
 
 #### `DRY=1` — Dry-run Mode
+
 When `DRY=1` is set at the root level, it is automatically propagated to all vendor sub-makes via the `VENDOR_FLAGS` macro:
 
 ```makefile
@@ -75,6 +78,7 @@ VENDOR_FLAGS := DRY="$(DRY)" DEBUG="$(DEBUG)" VERBOSE="$(VERBOSE)" \
 ```
 
 **Behavior in dry-run:**
+
 - ✅ All planned actions are printed with `🔮 plan »` prefix
 - ✅ No files are created, moved, symlinked, or deleted
 - ✅ No git submodule operations execute
@@ -84,6 +88,7 @@ VENDOR_FLAGS := DRY="$(DRY)" DEBUG="$(DEBUG)" VERBOSE="$(VERBOSE)" \
 - ✅ No native builds (fzf, jsregexp, treesitter) compile
 
 **Example:**
+
 ```bash
 $ DRY=1 make dot-bootstrap
 🔮 plan » mkdir -p ~/.config/nvim
@@ -94,6 +99,7 @@ $ DRY=1 make dot-bootstrap
 ```
 
 #### `DEBUG=1` — Xtrace Mode
+
 When `DEBUG=1` is set, bash xtrace (`set -x`) is enabled in all scripts and Makefile recipes:
 
 ```bash
@@ -105,6 +111,7 @@ DEBUG=1 make vim-install
 ```
 
 #### `VERBOSE=1` — Verbose Output
+
 When `VERBOSE=1` is set, all subcommands (git, yq, cmake, make) receive verbose flags:
 
 ```bash
@@ -114,6 +121,7 @@ yq -i '.plugins |= ...' --verbose data/zsh.yaml
 ```
 
 #### Combined Flags
+
 Flags can be combined for maximum visibility during troubleshooting:
 
 ```bash
@@ -136,6 +144,7 @@ Each vendor subsystem has its own Makefile that enforces dry-run idempotency at 
 ### oh-my-zsh (`vendor/oh-my-zsh/Makefile`)
 
 #### Targets
+
 ```bash
 make add-plugin OWNER=org REPO=name [EXEC="post-init-cmd"]
 make add-theme OWNER=org REPO=name
@@ -148,13 +157,16 @@ make help
 ```
 
 #### Dry-run Behavior
+
 In `DOT_DRY_RUN=1` mode:
+
 - ✅ All `git submodule add/deinit` operations are skipped (printed instead)
 - ✅ All `yq -i` YAML mutations are skipped
 - ✅ `EXEC` post-init commands are NOT executed (printed as preview)
 - ✅ All planned mutations output `[dry-run] <cmd>` prefix
 
 **Example:**
+
 ```bash
 $ DRY=1 make omz-add-plugin OWNER=zsh-users REPO=zsh-autosuggestions
 [dry-run] git submodule add https://github.com/zsh-users/zsh-autosuggestions vendor/oh-my-zsh/plugins/zsh-autosuggestions
@@ -162,6 +174,7 @@ $ DRY=1 make omz-add-plugin OWNER=zsh-users REPO=zsh-autosuggestions
 ```
 
 #### Idempotency Guarantees
+
 - ✅ `sync-plugins` is **fully idempotent** — running it twice yields zero mutations
 - ✅ Plugins already installed are checked via git submodule status before adding
 - ✅ Removed plugins are validated via `git submodule deinit` with `--force`
@@ -171,6 +184,7 @@ $ DRY=1 make omz-add-plugin OWNER=zsh-users REPO=zsh-autosuggestions
 ### oh-my-tmux (`vendor/oh-my-tmux/Makefile` + `lib/tmux-helpers.sh`)
 
 #### Targets
+
 ```bash
 make install                 # symlink configs, sync plugins
 make update                  # pull latest plugins
@@ -184,13 +198,16 @@ make help
 ```
 
 #### Dry-run Behavior
+
 In `DOT_DRY_RUN=1` mode:
+
 - ✅ All symlinks (`ln -snf`) are skipped (printed as plan)
 - ✅ All `git submodule` operations are skipped
 - ✅ All `tmux display-message` notifications are suppressed (no noise in dry-run)
 - ✅ Plugin sync/clean operations show planned git commands
 
 **Example:**
+
 ```bash
 $ DRY=1 make tmux-install
 [dry-run] ln -snf ~/.dot/vendor/oh-my-tmux/.tmux.conf ~/.tmux.conf
@@ -199,6 +216,7 @@ $ DRY=1 make tmux-install
 ```
 
 #### Runtime Helper (`lib/tmux-helpers.sh`)
+
 The tmux plugin manager is implemented in `lib/tmux-helpers.sh`, which is invoked both by the Makefile and at runtime (inside `.tmux.conf`). It respects `DOT_DRY_RUN` and `DOT_DEBUG` environment variables:
 
 ```bash
@@ -212,6 +230,7 @@ bind-key I run-shell "DOT_DRY_RUN=$DOT_DRY_RUN $DOTFILES/vendor/oh-my-tmux/lib/t
 ### vim (`vendor/vim/Makefile` + `install.sh`)
 
 #### Targets
+
 ```bash
 make install        # symlinks ~/.vim + submodule init + build natives
 make update         # pull latest plugins + rebuild
@@ -226,7 +245,9 @@ make help
 ```
 
 #### Dry-run Behavior
+
 In `DOT_DRY_RUN=1` mode:
+
 - ✅ All symlinks (`ln -snf`, `mv`) are skipped
 - ✅ All `mkdir` operations are skipped
 - ✅ All `git submodule init/update` operations are skipped
@@ -235,6 +256,7 @@ In `DOT_DRY_RUN=1` mode:
 - ✅ All planned mutations output `[dry-run] <cmd>` prefix
 
 **Example:**
+
 ```bash
 $ DRY=1 make vim-install
 [dry-run] mkdir -p ~/.config/nvim
@@ -246,6 +268,7 @@ $ DRY=1 make vim-install
 ```
 
 #### Install Script (`install.sh`)
+
 The actual installation logic lives in `install.sh`, which is driven by the Makefile. All mutations are guarded by the `dry_run()` function:
 
 ```bash
@@ -270,11 +293,13 @@ dry_run git submodule update --init --recursive
 The root bootstrap script houses the core logic for orchestrating install steps and provides dry-run-aware primitives.
 
 ### Function Signature
+
 ```bash
 run [--dry-run | -n] [--debug] [--verbose]
 ```
 
 ### Environment Variables
+
 The script sets `DOT_DRY_RUN`, `DOT_DEBUG`, and `DOT_VERBOSE` based on flags, then sources all bootstrap functions (`check_*`, `config_*`, `install_*`, etc.):
 
 ```bash
@@ -293,6 +318,7 @@ done
 ```
 
 ### Dry-run Primitives
+
 The script provides dry-run-safe helpers for common operations:
 
 ```bash
@@ -305,6 +331,7 @@ dryrun()      # generic wrapper: print "[plan »]", return 0 in dry-run
 ```
 
 ### Example: Invoke with Flags
+
 ```bash
 # Dry-run from command line
 scripts/dot-bootstrap.sh --dry-run --debug
@@ -351,6 +378,7 @@ All major install/update operations are **guaranteed idempotent**:
 | `DRY=1 make <anything>` | ✅ Yes       | Zero mutations, all planned      |
 
 **Verification Approach:**
+
 ```bash
 # Before and after dry-run should be identical
 git status > /tmp/before.txt
@@ -366,6 +394,7 @@ diff /tmp/before.txt /tmp/after.txt  # should be empty
 ### "Why didn't `DRY=1` prevent a mutation?"
 
 Ensure the flag is passed all the way through:
+
 1. Check that root Makefile receives `DRY=1` (confirm with `make -n`)
 2. Confirm vendor Makefile receives `DOT_DRY_RUN=1` (add `@echo DOT_DRY_RUN=$(DOT_DRY_RUN)` to target)
 3. Verify backing script checks `[[ ${DOT_DRY_RUN} -eq 1 ]]` before mutations
@@ -373,11 +402,13 @@ Ensure the flag is passed all the way through:
 ### "I need to see every command being executed."
 
 Use `DEBUG=1`:
+
 ```bash
 DEBUG=1 make vim-install  # shows xtrace output
 ```
 
 Or combine with dry-run:
+
 ```bash
 DRY=1 DEBUG=1 make vim-install  # planned actions + xtrace
 ```
@@ -385,11 +416,13 @@ DRY=1 DEBUG=1 make vim-install  # planned actions + xtrace
 ### "Help! I accidentally ran without dry-run and want to undo."
 
 Mutations in `dot` are designed to be safe:
+
 - Symlinks can be safely re-created (`ln -snf` overwrites)
 - Submodule additions/removals are reversible (check `git status`)
 - Brew packages can be uninstalled via `brew uninstall <pkg>`
 
 If needed, use `git diff` and `git checkout` to revert changes to tracked files:
+
 ```bash
 git status
 git diff data/zsh.yaml    # review what changed
