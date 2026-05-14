@@ -406,6 +406,10 @@ dry-run-verify: ## Verify that DRY=1 produces zero mutations (for CI/pre-commit)
 	@DRY=1 make tmux-install > /dev/null 2>&1
 	@echo "  Running: DRY=1 make tmux-sync-plugins"
 	@DRY=1 make tmux-sync-plugins > /dev/null 2>&1
+	@echo "  Running: DRY=1 make omz-install"
+	@DRY=1 make omz-install > /dev/null 2>&1
+	@echo "  Running: DRY=1 make vim-build"
+	@DRY=1 make vim-build > /dev/null 2>&1
 	@git status --short > /tmp/git-status-after.txt 2>&1 || true
 	@if diff -q /tmp/git-status-before.txt /tmp/git-status-after.txt > /dev/null 2>&1; then \
 		echo "✅ PASS: All dry-run operations produced zero mutations"; \
