@@ -1694,7 +1694,7 @@ function check_fonts () {
 # Returns:  0 always.
 # -----------------------------------------------------------------------------
 function check_themes () {
-    say_skip "🎨 check_themes deprecated — vendor/iterm2 submodule provides iterm-themes"
+    say_skip "🎨 check_themes deprecated — vendor/themes submodule provides themes"
     return 0
 }
 
@@ -1888,24 +1888,24 @@ function install_fonts () {
 }
 
 # -----------------------------------------------------------------------------
-# install_themes - verify iterm2 themes vendor submodule
+# install_themes - verify themes vendor submodule
 #
 # Description:
-#   Checks that iterm-themes is available via the vendor/iterm2 submodule.
-#   Iterm2 imports directly from the vendor directory; no linking needed.
+#   Checks that vendor/themes (mbadolato/iTerm2-Color-Schemes) is available.
+#   Contains themes for iTerm2, Alacritty, Kitty, VS Code, and more.
 #   Idempotent.
 #
 # Usage:    install_themes
 # Returns:  0 when present; 1 when vendor directory is missing.
 # -----------------------------------------------------------------------------
 function install_themes () {
-    local vendor_dir="${dot_bootstrap_directory}/vendor/iterm2/vendor/iterm-themes"
+    local vendor_dir="${dot_bootstrap_directory}/vendor/themes"
     if [[ ! -d "${vendor_dir}" ]]; then
         say_err "🎨 themes source not found: ${vendor_dir} — run init_submodules first"
         return 1
     fi
-    # no link needed since iterm2 imports directly from the vendor directory; just check presence
-    say_ok "🎨 iterm2 themes are available (via vendor/iterm2 submodule)"
+    # no link needed; tools import directly from the vendor directory; just check presence
+    say_ok "🎨 themes are available (via vendor/themes submodule)"
 
     return 0
 }

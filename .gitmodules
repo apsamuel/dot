@@ -19,3 +19,6 @@
 [submodule "vendor/iterm2"]
 	path = vendor/iterm2
 	url = git@github-personal.com:apsamuel/iterm2
+[submodule "vendor/themes"]
+	path = vendor/themes
+	url = git@github.com:mbadolato/iTerm2-Color-Schemes.git
