@@ -103,6 +103,12 @@ DOT_MODULES="${DOT_MODULES:-${DOT_ROOT}/modules}"
 # load all DOT_* environment variables from the canonical source
 . "${DOT_MODULES}/static/dotenv.sh" || { echo "Error: unable to load environment variables from dotenv.sh"; exit 1; }
 
+# dot:: structured logging helpers (must load before foundation.sh / dynamic modules)
+. "${DOT_MODULES}"/static/logging.sh || {
+    echo "Error: unable to load logging helpers"
+    return 1
+}
+
 if [ -f "${DOT_BOOTSTRAP}" ]; then
     . "${DOT_BOOTSTRAP}" || {
         echo "Error: unable to load bootstrapper"
