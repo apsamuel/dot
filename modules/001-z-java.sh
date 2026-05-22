@@ -5,9 +5,7 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 if command -v jenv >/dev/null 2>&1; then
     eval "$(jenv init -)" >/dev/null 2>&1

@@ -10,9 +10,7 @@ DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 # we need to source the mac.sh file first
 source "${DOT_MODULES}"/static/lib/mac.sh

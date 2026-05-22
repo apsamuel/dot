@@ -7,26 +7,37 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 if [[ "${DOT_DISABLE_BREW}" -eq 1 ]]; then
-    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-        echo "brew is disabled"
-    fi
+    dot::skip "brew" "disabled"
     return
 fi
 
 
 if [[ "$OPERATING_SYSTEM" == "linux-gnu"* ]]; then
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    else
+        dot::error "brew not found at /home/linuxbrew/.linuxbrew/bin/brew"
+        return 1
+    fi
 elif [[ $OPERATING_SYSTEM == "darwin" && "$CPU_ARCHITECTURE" == "arm64" ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
+    if [[ -x /opt/homebrew/bin/brew ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    else
+        dot::error "brew not found at /opt/homebrew/bin/brew"
+        return 1
+    fi
 elif [[ $OPERATING_SYSTEM == "darwin" && ("$CPU_ARCHITECTURE" == "i386" || "$CPU_ARCHITECTURE" == "x86_64") ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
+    if [[ -x /usr/local/bin/brew ]]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    else
+        dot::error "brew not found at /usr/local/bin/brew"
+        return 1
+    fi
 else
-    echo "Warning: problem detecting OPERATING_SYSTEM!"
+    dot::warn "problem detecting OPERATING_SYSTEM for brew"
 fi
 
 function brewInstalledVersion() {

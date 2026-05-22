@@ -5,9 +5,7 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 
 # enable zsh completions

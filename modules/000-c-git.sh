@@ -9,14 +9,10 @@ DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 if [[ "${DOT_DISABLE_GIT}" -eq 1 ]]; then
-    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-        echo "git is disabled"
-    fi
+    dot::skip "git" "disabled"
     return
 fi
 

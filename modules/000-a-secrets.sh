@@ -9,9 +9,7 @@ DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 
 function __load_secrets () {
@@ -193,12 +191,10 @@ function reloadOptions () {
         )
     )
     for option in "${zsh_options[@]}"; do
-        if [[ "${DOT_DEBUG}" -gt 0 ]]; then
-            echo "setting option: ${option}"
-        fi
+        dot::debug "setting option: ${option}"
 
         setopt "${option}" 2>/dev/null || {
-            echo "Failed to set option: ${option}"
+            dot::warn "Failed to set option: ${option}"
             continue
         }
     done

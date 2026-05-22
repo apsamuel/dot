@@ -4,23 +4,17 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 
 if [[ "${DOT_DISABLE_P10K}" -eq 1 ]]; then
-    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-        echo "powerlevel10k is disabled"
-    fi
+    dot::skip "powerlevel10k" "disabled"
     return
 fi
 
 # check if powerlevel10k is instlled as a ZSH theme ZSH_CUSTOM/themes/powerlevel10k
 if [[ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k" ]]; then
-    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-        echo "powerlevel10k is not installed"
-    fi
+    dot::debug "powerlevel10k is not installed"
 fi
 
 export POWERLEVEL9K_INSTANT_PROMPT=quiet

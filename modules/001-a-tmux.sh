@@ -5,9 +5,7 @@
 # Skip tmux helpers entirely when DOT_DISABLE_TMUX=1 (set automatically in
 # VSCode/Copilot terminals — tmux's per-pane alt-screen breaks output capture).
 if [[ "${DOT_DISABLE_TMUX}" -eq 1 ]]; then
-    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-        echo "tmux module disabled (DOT_DISABLE_TMUX=1)"
-    fi
+    dot::skip "tmux" "DOT_DISABLE_TMUX=1"
     return 0
 fi
 

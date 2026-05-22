@@ -8,14 +8,10 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 if [[ "${DOT_DISABLE_ZSTYLE}" -eq 1 ]]; then
-    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-        echo "zstyle setup is disabled"
-    fi
+    dot::skip "zstyle" "disabled"
     return
 fi
 

@@ -11,9 +11,7 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 
 inPath() {
@@ -69,27 +67,27 @@ addPath() {
     if [ -d "${path}" ]; then
       # check if the path is already in the PATH array
       if [[ "${path_array[*]}" =~ ${path} ]]; then
-        echo "skipping existing path: '${path}'"
+        dot::debug "skipping existing path: '${path}'"
         continue  # skip if the path is already in the PATH
       fi
 
       # skip paths that are not executable
       if [[ ! -x "${path}" ]]; then
-        echo "skipping inaccessible path: ${path}"
+        dot::debug "skipping inaccessible path: ${path}"
         continue  # skip if the path does not exist
       fi
 
       # skip paths that do not contain any executable files ...
       if [[ -z "$(find "${path}" -maxdepth 1 -type f -executable)" ]]; then
-        echo "skipping path with no executables: ${path}"
+        dot::debug "skipping path with no executables: ${path}"
         continue  # skip if the path does not contain any executable files
       fi
 
-      echo "adding path: ${path}"
+      dot::debug "adding path: ${path}"
       # add the path to the array
       path_array+=("${path}")
     else
-      echo "skipping non-directory path: ${path}"
+      dot::debug "skipping non-directory path: ${path}"
       continue  # skip if the path is not a directory
     fi
 
@@ -114,13 +112,13 @@ deletePath() {
   for path in "${path_array[@]}"; do
     # skip empty paths
     if [[ -z "${path}" ]]; then
-      echo "skipping empty path: '${path}'"
+      dot::debug "skipping empty path: '${path}'"
       continue  # skip empty paths
     fi
 
     # check if the path is in the arguments to delete
     if [[ " $* " =~ " ${path} " ]]; then
-      echo "deleting path: ${path}"
+      dot::debug "deleting path: ${path}"
       continue  # skip if the path is in the arguments to delete
     fi
 

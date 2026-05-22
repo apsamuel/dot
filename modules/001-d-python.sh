@@ -5,9 +5,7 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-    echo "loading: ${library} (${directory})"
-fi
+dot::loading "${library}" "${directory}"
 
 ## we use uv to create python virtual environments by default
 ## depending on the current shell arch, we should load the correct python version
@@ -36,9 +34,17 @@ fi
 # check for our base venv and create it if it does not exist, using uv
 venv_name="${desired_version}-${arch}-base"
 if [[ ! -d "${HOME}/.venv/${venv_name}" ]]; then
+    if ! command -v uv >/dev/null 2>&1; then
+        dot::error "uv not found — cannot create python venv"
+        return 1
+    fi
     pushd "${HOME}/.venv" || return 1
-    echo "creating python venv: ${venv_name}"
-    uv venv --seed --python "${desired_version}" "${venv_name}"
+    dot::info "creating python venv: ${venv_name}"
+    if ! uv venv --seed --python "${desired_version}" "${venv_name}"; then
+        dot::error "failed to create python venv: ${venv_name}"
+        popd || return 1
+        return 1
+    fi
     popd || return 1
 fi
 
@@ -47,11 +53,13 @@ fi
 #   - VIRTUAL_ENV is set by `activate` scripts (venv/virtualenv/uv) and direnv layouts
 #   - DOT_PY_FORCE_BASE=1 forces re-activation of the base venv anyway
 if [[ -n "${VIRTUAL_ENV}" && -x "${VIRTUAL_ENV}/bin/python" && "${DOT_PY_FORCE_BASE:-0}" -ne 1 ]]; then
-    if [[ "${DOT_DEBUG}" -eq 1 ]]; then
-        echo "python venv already active: ${VIRTUAL_ENV} (skipping base venv activation)"
-    fi
+    dot::debug "python venv already active: ${VIRTUAL_ENV} (skipping base venv activation)"
 else
-    source "${HOME}/.venv/${venv_name}/bin/activate"
+    if [[ -f "${HOME}/.venv/${venv_name}/bin/activate" ]]; then
+        source "${HOME}/.venv/${venv_name}/bin/activate"
+    else
+        dot::warn "base venv activate script missing: ${HOME}/.venv/${venv_name}/bin/activate"
+    fi
 fi
 
 # pyenv — create a python virtual environment using uv (preferred) or venv module
