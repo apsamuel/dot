@@ -2303,8 +2303,8 @@ EOF
     [[ ${_opt_debug} -eq 1 ]] && set -x
 
     # load secrets (best-effort; missing secrets must not abort bootstrap)
-    if command -v __load_secrets >/dev/null 2>&1; then
-        __load_secrets || say_warn "__load_secrets reported non-zero"
+    if command -v dot::secrets::_load >/dev/null 2>&1; then
+        dot::secrets::_load || say_warn "dot::secrets::_load reported non-zero"
     fi
 
     local rc=0

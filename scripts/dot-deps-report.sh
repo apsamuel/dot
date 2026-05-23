@@ -69,7 +69,7 @@ TIERS=(
   "0|bash|yes|shell|bootstrap interpreter|brew install bash (macOS ships 3.2)"
   "0|zsh|yes|shell|login shell dot configures|brew install zsh"
   "0|git|yes|vcs|submodule sync, fugitive, secrets|xcode-select --install or brew install git"
-  "0|curl|yes|net|brew installer, getNodeJS, fzf, secrets|ships on macOS"
+  "0|curl|yes|net|brew installer, dot::node::get, fzf, secrets|ships on macOS"
   "0|jq|yes|data|JSON parsing in modules and brew helpers|brew install jq"
   "0|yq|yes|data|reads data/zsh.yaml at every shell start|brew install yq"
   "0|brew|yes|pkg|host for tier 1+ installs|bash bin/brew-bootstrap.sh install"
@@ -89,10 +89,10 @@ TIERS=(
 
   # Tier 2 — daily-use CLI
   "2|fzf|no|tui|key-bindings, completion widgets, fzf-git|brew install fzf"
-  "2|figlet|no|output|termQuote / splash banners|brew install figlet"
+  "2|figlet|no|output|dot::output::term-quote / splash banners|brew install figlet"
   "2|lolcat|no|output|colorized quote pipe|brew install lolcat"
-  "2|jp2a|no|output|termLogo iCloud splash images|brew install jp2a"
-  "2|kitty|no|term|termImage helper|brew install --cask kitty"
+  "2|jp2a|no|output|dot::output::logo iCloud splash images|brew install jp2a"
+  "2|kitty|no|term|dot::output::image helper|brew install --cask kitty"
   "2|shuf|no|util|splash + quote selection (gshuf on macOS)|brew install coreutils"
   "2|thefuck|no|util|fuck alias (DOT_DISABLE_THEFUCK opt-out)|brew install thefuck"
   "2|direnv|no|env|oh-my-zsh direnv plugin|brew install direnv"
