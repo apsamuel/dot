@@ -9,27 +9,27 @@
 # we need to source the mac.sh file first
 source "${DOT_MODULES}"/000-c-mac.sh
 
-function getShellName () {
+function dot::static::foundation::shell-name () {
     currentShell="$(command ps -p $$ -ocomm=)"
     echo "$currentShell"
 }
 
-function getSecureString () {
+function dot::static::foundation::secure-string () {
     len="${1:-15}"
     secureString="$(pwgen -n -y "${len}" 1)"
     echo "$secureString"
 }
 
 
-function getProcessorCores() {
+function dot::static::foundation::cpu-cores() {
     sysctl -n machdep.cpu.core_count
 }
 
-function getProcessorBrand() {
+function dot::static::foundation::cpu-brand() {
     sysctl -n machdep.cpu.brand_string
 }
 
-function loadZshOptions() {
+function dot::static::foundation::load-zsh-options() {
     # if $ICLOUD is inaccessible, fall back to the .dot directory copy
     if [[ -f "$ICLOUD"/dot/shell/zsh/zsh.yaml ]]; then
         ZSH_OPTIONS=(
@@ -55,7 +55,7 @@ function loadZshOptions() {
     done
 }
 
-function sourceModule() {
+function dot::static::foundation::source-module() {
     local mod="$1"
     local mod_name=""
     mod_name="$(basename "$mod")"
@@ -94,13 +94,13 @@ function sourceModule() {
     return 0
 }
 
-function loadModules() {
+function dot::static::foundation::load-modules() {
     DOT_LOADED_MODULES=()
     DOT_FAILED_MODULES=()
 
     if [ -d "$DOT_LIBS_DIR" ]; then
         for lib in $(find "${DOT_LIBS_DIR}" -maxdepth 1 -type f -name "[0-9][0-9][0-9]-*-*.sh" | sort -d); do
-            sourceModule "$lib"
+            dot::static::foundation::source-module "$lib"
         done
     else
         echo "Warning: DOT_LIBS_DIR not found: $DOT_LIBS_DIR"
@@ -110,7 +110,7 @@ function loadModules() {
     export DOT_FAILED_MODULES
 }
 
-function loadSecrets () {
+function dot::static::foundation::load-secrets () {
     local secret_keys=()
     # declare -A secrets
     while IFS=' ' read -r -d ' ' secret_key; do
@@ -132,11 +132,11 @@ function loadSecrets () {
     fi
 }
 
-# loadUserSecrets: loads secrets from $ICLOUD/dot/secrets.json into the current
+# dot::static::foundation::load-user-secrets: loads secrets from $ICLOUD/dot/secrets.json into the current
 # shell environment. Each JSON key is exported as an environment variable and
 # the key names are collected in DOT_SECRET_KEYS. The intermediate file is
 # written to $TMPDIR and removed after sourcing so secrets never persist on disk.
-function loadUserSecrets () {
+function dot::static::foundation::load-user-secrets () {
     local secrets_file="${ICLOUD}/dot/secrets.json"
     if [[ ! -d "${ICLOUD}/dot" || ! -f "${secrets_file}" ]]; then
         return 0
@@ -167,12 +167,12 @@ function loadUserSecrets () {
     fi
 }
 
-# getSshIdentities: scan an SSH directory for private key files and return the
+# dot::static::foundation::ssh-identities: scan an SSH directory for private key files and return the
 # basenames in a form suitable for `zstyle :omz:plugins:ssh-agent identities`
 # (or any other consumer).
 #
 # Usage:
-#   getSshIdentities [--dir DIR] [--format array|string] [--var VARNAME]
+#   dot::static::foundation::ssh-identities [--dir DIR] [--format array|string] [--var VARNAME]
 #                    [--exclude REGEX] [--absolute]
 #
 # Options:
@@ -189,12 +189,12 @@ function loadUserSecrets () {
 #
 # Examples:
 #   # populate a zsh array and pass to zstyle
-#   getSshIdentities --format array --var SSH_KEYS
+#   dot::static::foundation::ssh-identities --format array --var SSH_KEYS
 #   zstyle :omz:plugins:ssh-agent identities "${SSH_KEYS[@]}"
 #
 #   # capture as a string
-#   getSshIdentities --format string --var SSH_KEYS_STR
-function getSshIdentities () {
+#   dot::static::foundation::ssh-identities --format string --var SSH_KEYS_STR
+function dot::static::foundation::ssh-identities () {
     local dir="${HOME}/.ssh"
     local format="array"
     local outVar=""
@@ -210,7 +210,7 @@ function getSshIdentities () {
             --absolute) absolute=1; shift ;;
             -h|--help)
                 cat <<'EOF'
-Usage: getSshIdentities [--dir DIR] [--format array|string] [--var VARNAME]
+Usage: dot::static::foundation::ssh-identities [--dir DIR] [--format array|string] [--var VARNAME]
                         [--exclude REGEX] [--absolute]
 
 Scan an SSH directory for private key files and return their basenames
@@ -229,20 +229,20 @@ Options:
   -h, --help       Show this help
 
 Examples:
-  getSshIdentities --format array --var SSH_KEYS
-  getSshIdentities --format string --var SSH_KEYS_STR
+  dot::static::foundation::ssh-identities --format array --var SSH_KEYS
+  dot::static::foundation::ssh-identities --format string --var SSH_KEYS_STR
 EOF
                 return 0
                 ;;
             *)
-                echo "getSshIdentities: unknown argument: $1" >&2
+                echo "dot::static::foundation::ssh-identities: unknown argument: $1" >&2
                 return 2
                 ;;
         esac
     done
 
     if [[ "${format}" != "array" && "${format}" != "string" ]]; then
-        echo "getSshIdentities: --format must be 'array' or 'string'" >&2
+        echo "dot::static::foundation::ssh-identities: --format must be 'array' or 'string'" >&2
         return 2
     fi
 

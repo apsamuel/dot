@@ -14,15 +14,15 @@ _DOT_EMOJI_SKIP="⏭️ "
 
 # --- lightweight structured logging helpers (dot:: namespace) ---
 
-# dot::debug <message> — only prints when DOT_DEBUG=1
-function dot::debug() {
+# dot::static::logging::debug <message> — only prints when DOT_DEBUG=1
+function dot::static::logging::debug() {
     [[ "${DOT_DEBUG:-0}" -eq 1 ]] || return 0
     local prefix="${_DOT_EMOJI_DEBUG} [DEBUG]"
     printf '%s %s\n' "${prefix}" "$*" >&2
 }
 
-# dot::info <message> — informational, always prints
-function dot::info() {
+# dot::static::logging::info <message> — informational, always prints
+function dot::static::logging::info() {
     if [[ "${DOT_DEBUG:-0}" -eq 1 ]]; then
         printf '%s %s\n' "${_DOT_EMOJI_INFO} [INFO]" "$*"
     else
@@ -30,8 +30,8 @@ function dot::info() {
     fi
 }
 
-# dot::warn <message> — warning, always prints to stderr
-function dot::warn() {
+# dot::static::logging::warn <message> — warning, always prints to stderr
+function dot::static::logging::warn() {
     if [[ "${DOT_DEBUG:-0}" -eq 1 ]]; then
         printf '%s %s\n' "${_DOT_EMOJI_WARN}[WARN]" "$*" >&2
     else
@@ -39,8 +39,8 @@ function dot::warn() {
     fi
 }
 
-# dot::error <message> — error, always prints to stderr
-function dot::error() {
+# dot::static::logging::error <message> — error, always prints to stderr
+function dot::static::logging::error() {
     if [[ "${DOT_DEBUG:-0}" -eq 1 ]]; then
         printf '%s %s\n' "${_DOT_EMOJI_ERROR} [ERROR]" "$*" >&2
     else
@@ -48,8 +48,8 @@ function dot::error() {
     fi
 }
 
-# dot::success <message> — success confirmation
-function dot::success() {
+# dot::static::logging::success <message> — success confirmation
+function dot::static::logging::success() {
     if [[ "${DOT_DEBUG:-0}" -eq 1 ]]; then
         printf '%s %s\n' "${_DOT_EMOJI_SUCCESS} [OK]" "$*"
     else
@@ -57,8 +57,8 @@ function dot::success() {
     fi
 }
 
-# dot::loading <library> <directory> — module load announcement (debug only)
-function dot::loading() {
+# dot::static::logging::loading <library> <directory> — module load announcement (debug only)
+function dot::static::logging::loading() {
     [[ "${DOT_DEBUG:-0}" -eq 1 ]] || return 0
     local _lib="${1:-unknown}"
     local _dir="${2:-}"
@@ -69,8 +69,8 @@ function dot::loading() {
     fi
 }
 
-# dot::skip <feature> [reason] — skipped feature (debug only)
-function dot::skip() {
+# dot::static::logging::skip <feature> [reason] — skipped feature (debug only)
+function dot::static::logging::skip() {
     [[ "${DOT_DEBUG:-0}" -eq 1 ]] || return 0
     local _feat="${1:-unknown}"
     local _reason="${2:-disabled}"

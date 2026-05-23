@@ -6,12 +6,12 @@
 # shellcheck source=/dev/null
 # shellcheck disable=SC2207
 
-_exec_location() {
+dot::static::internal::_exec-location() {
   loc="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
   echo "${loc}"
 }
 
-_list_zsh_plugins() {
+dot::static::internal::_list-zsh-plugins() {
   local plugins=()
   for plugin in "${ZSH_CUSTOM}"/plugins/*; do
     echo "$(basename "${plugin}") - $(git -C "${plugin}" config --get remote.origin.url)"
@@ -24,12 +24,12 @@ _list_zsh_plugins() {
   done
 }
 
-_update_zsh_plugins() {
+dot::static::internal::_update-zsh-plugins() {
   local plugin="${1}"
   git -C "${ZSH_CUSTOM}/plugins/$(basename "${plugin}")" pull
 }
 
-_install_zsh_plugins() {
+dot::static::internal::_install-zsh-plugins() {
   for plugin in $(yq '.plugins.custom | map(.owner + "/" + .repo) | .[]' "${DOT_DIRECTORY}"/data/zsh.yaml); do
     if [ -d "${ZSH_CUSTOM}/plugins/$(basename "${plugin}")" ]; then
       continue
@@ -39,11 +39,11 @@ _install_zsh_plugins() {
   done
 }
 
-_update_custom_plugins() {
+dot::static::internal::_update-custom-plugins() {
   for plugin in $(yq '.plugins.custom | map(.owner + "/" + .repo) | .[]' "${DOT_DIRECTORY}"/data/zsh.yaml); do
     if [ -d "${ZSH_CUSTOM}/plugins/$(basename "${plugin}")" ]; then
       echo "Updating oh-my-zsh plugin: ${plugin}"
-      _update_zsh_plugins "${plugin}"
+      dot::static::internal::_update-zsh-plugins "${plugin}"
       continue
     fi
   done

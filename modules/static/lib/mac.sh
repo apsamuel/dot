@@ -10,10 +10,10 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
 
-getProcessorCores() {
+dot::static::foundation::cpu-cores() {
     sysctl -n machdep.cpu.core_count
 }
 
-getProcessorBrand() {
+dot::static::foundation::cpu-brand() {
     sysctl -n machdep.cpu.brand_string
 }

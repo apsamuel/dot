@@ -35,12 +35,12 @@ fi
 
 export SSH_KEYS
 
-# listSshKeys: enumerate private SSH keys in a directory and report metadata
+# dot::static::ssh::list-keys: enumerate private SSH keys in a directory and report metadata
 # (name, fingerprint, created/modified timestamps) along with any Host/Match
 # bindings from an ssh config file that reference each key via IdentityFile.
 #
 # Usage:
-#   listSshKeys [--dir DIR] [--config FILE] [--exclude REGEX]
+#   dot::static::ssh::list-keys [--dir DIR] [--config FILE] [--exclude REGEX]
 #               [--format text|json] [-h|--help]
 #
 # Options:
@@ -52,7 +52,7 @@ export SSH_KEYS
 #                    entries (same as SSH_KEY_EXCLUDE_REGEX).
 #   --format FMT     Output format: "text" (default) or "json".
 #   -h, --help       Show this help.
-function listSshKeys () {
+function dot::static::ssh::list-keys () {
     local dir="${HOME}/.ssh"
     local config=""
     local exclude="${SSH_KEY_EXCLUDE_REGEX}"
@@ -66,7 +66,7 @@ function listSshKeys () {
             --format)  format="$2"; shift 2 ;;
             -h|--help)
                 cat <<'EOF'
-Usage: listSshKeys [--dir DIR] [--config FILE] [--exclude REGEX]
+Usage: dot::static::ssh::list-keys [--dir DIR] [--config FILE] [--exclude REGEX]
                    [--format text|json]
 
   --dir DIR        Directory to scan (default: $HOME/.ssh)
@@ -78,7 +78,7 @@ EOF
                 return 0
                 ;;
             *)
-                echo "listSshKeys: unknown argument: $1" >&2
+                echo "dot::static::ssh::list-keys: unknown argument: $1" >&2
                 return 2
                 ;;
         esac
@@ -89,12 +89,12 @@ EOF
     fi
 
     if [[ "${format}" != "text" && "${format}" != "json" ]]; then
-        echo "listSshKeys: --format must be 'text' or 'json'" >&2
+        echo "dot::static::ssh::list-keys: --format must be 'text' or 'json'" >&2
         return 2
     fi
 
     if [[ ! -d "${dir}" ]]; then
-        echo "listSshKeys: directory not found: ${dir}" >&2
+        echo "dot::static::ssh::list-keys: directory not found: ${dir}" >&2
         return 1
     fi
 
@@ -208,7 +208,7 @@ EOF
     if [[ -f "${config}" ]]; then
         _parse_ssh_config "${config}"
     else
-        echo "listSshKeys: config not found, bindings will be empty: ${config}" >&2
+        echo "dot::static::ssh::list-keys: config not found, bindings will be empty: ${config}" >&2
     fi
 
     # collect keys
@@ -372,10 +372,10 @@ EOF
     fi
 }
 
-# createSshKey: generate a new SSH key pair
+# dot::static::ssh::create-key: generate a new SSH key pair
 #
 # Usage:
-#   createSshKey --name NAME [--type TYPE] [--bits BITS] [--comment COMMENT]
+#   dot::static::ssh::create-key --name NAME [--type TYPE] [--bits BITS] [--comment COMMENT]
 #                [--dir DIR] [--passphrase PASS] [-h|--help]
 #
 # Options:
@@ -387,7 +387,7 @@ EOF
 #   --passphrase PASS  Passphrase for the key. Empty string means no passphrase.
 #                      If omitted, ssh-keygen will prompt interactively.
 #   -h, --help         Show this help.
-function createSshKey () {
+function dot::static::ssh::create-key () {
     local name="" ktype="ed25519" bits="" comment="" dir="${HOME}/.ssh" passphrase_arg=()
 
     while [[ $# -gt 0 ]]; do
@@ -400,7 +400,7 @@ function createSshKey () {
             --passphrase) passphrase_arg=(-N "$2"); shift 2 ;;
             -h|--help)
                 cat <<'EOF'
-Usage: createSshKey --name NAME [--type TYPE] [--bits BITS] [--comment COMMENT]
+Usage: dot::static::ssh::create-key --name NAME [--type TYPE] [--bits BITS] [--comment COMMENT]
                     [--dir DIR] [--passphrase PASS]
 
   --name NAME        Key filename (required)
@@ -414,20 +414,20 @@ EOF
                 return 0
                 ;;
             *)
-                echo "createSshKey: unknown argument: $1" >&2
+                echo "dot::static::ssh::create-key: unknown argument: $1" >&2
                 return 2
                 ;;
         esac
     done
 
     if [[ -z "${name}" ]]; then
-        echo "createSshKey: --name is required" >&2
+        echo "dot::static::ssh::create-key: --name is required" >&2
         return 2
     fi
 
     local keypath="${dir}/${name}"
     if [[ -e "${keypath}" ]]; then
-        echo "createSshKey: key already exists: ${keypath}" >&2
+        echo "dot::static::ssh::create-key: key already exists: ${keypath}" >&2
         return 1
     fi
 
@@ -461,16 +461,16 @@ EOF
     ssh-keygen -lf "${keypath}.pub"
 }
 
-# getSshKeyFingerprint: display the fingerprint of an SSH key
+# dot::static::ssh::key-fingerprint: display the fingerprint of an SSH key
 #
 # Usage:
-#   getSshKeyFingerprint --name NAME [--hash md5|sha256] [--dir DIR]
+#   dot::static::ssh::key-fingerprint --name NAME [--hash md5|sha256] [--dir DIR]
 #
 # Options:
 #   --name NAME     Key filename or full path (required).
 #   --hash ALGO     Hash algorithm: sha256 (default) or md5.
 #   --dir DIR       Directory to look in (default: $HOME/.ssh).
-function getSshKeyFingerprint () {
+function dot::static::ssh::key-fingerprint () {
     local name="" hash="sha256" dir="${HOME}/.ssh"
 
     while [[ $# -gt 0 ]]; do
@@ -480,7 +480,7 @@ function getSshKeyFingerprint () {
             --dir)  dir="$2"; shift 2 ;;
             -h|--help)
                 cat <<'EOF'
-Usage: getSshKeyFingerprint --name NAME [--hash md5|sha256] [--dir DIR]
+Usage: dot::static::ssh::key-fingerprint --name NAME [--hash md5|sha256] [--dir DIR]
 
   --name NAME   Key filename or full path (required)
   --hash ALGO   sha256 (default) or md5
@@ -489,14 +489,14 @@ EOF
                 return 0
                 ;;
             *)
-                echo "getSshKeyFingerprint: unknown argument: $1" >&2
+                echo "dot::static::ssh::key-fingerprint: unknown argument: $1" >&2
                 return 2
                 ;;
         esac
     done
 
     if [[ -z "${name}" ]]; then
-        echo "getSshKeyFingerprint: --name is required" >&2
+        echo "dot::static::ssh::key-fingerprint: --name is required" >&2
         return 2
     fi
 
@@ -511,18 +511,18 @@ EOF
     [[ -f "${target}" ]] || target="${keypath}"
 
     if [[ ! -f "${target}" ]]; then
-        echo "getSshKeyFingerprint: not found: ${keypath}" >&2
+        echo "dot::static::ssh::key-fingerprint: not found: ${keypath}" >&2
         return 1
     fi
 
     ssh-keygen -lf "${target}" -E "${hash}"
 }
 
-# getSshKeyType: show the type and bit length of an SSH key
+# dot::static::ssh::key-type: show the type and bit length of an SSH key
 #
 # Usage:
-#   getSshKeyType --name NAME [--dir DIR]
-function getSshKeyType () {
+#   dot::static::ssh::key-type --name NAME [--dir DIR]
+function dot::static::ssh::key-type () {
     local name="" dir="${HOME}/.ssh"
 
     while [[ $# -gt 0 ]]; do
@@ -530,18 +530,18 @@ function getSshKeyType () {
             --name) name="$2"; shift 2 ;;
             --dir)  dir="$2"; shift 2 ;;
             -h|--help)
-                echo "Usage: getSshKeyType --name NAME [--dir DIR]"
+                echo "Usage: dot::static::ssh::key-type --name NAME [--dir DIR]"
                 return 0
                 ;;
             *)
-                echo "getSshKeyType: unknown argument: $1" >&2
+                echo "dot::static::ssh::key-type: unknown argument: $1" >&2
                 return 2
                 ;;
         esac
     done
 
     if [[ -z "${name}" ]]; then
-        echo "getSshKeyType: --name is required" >&2
+        echo "dot::static::ssh::key-type: --name is required" >&2
         return 2
     fi
 
@@ -552,14 +552,14 @@ function getSshKeyType () {
     [[ -f "${target}" ]] || target="${keypath}"
 
     if [[ ! -f "${target}" ]]; then
-        echo "getSshKeyType: not found: ${keypath}" >&2
+        echo "dot::static::ssh::key-type: not found: ${keypath}" >&2
         return 1
     fi
 
     # ssh-keygen -l outputs: bits hash comment (type)
     local info
     info="$(ssh-keygen -lf "${target}" 2>/dev/null)" || {
-        echo "getSshKeyType: unable to read key: ${target}" >&2
+        echo "dot::static::ssh::key-type: unable to read key: ${target}" >&2
         return 1
     }
     # extract bits (first field) and type (last field in parens)
@@ -569,11 +569,11 @@ function getSshKeyType () {
     printf '%s %s-bit\n' "${ktype}" "${bits}"
 }
 
-# getSshPublicKey: output the public key contents (for copying to services)
+# dot::static::ssh::public-key: output the public key contents (for copying to services)
 #
 # Usage:
-#   getSshPublicKey --name NAME [--dir DIR]
-function getSshPublicKey () {
+#   dot::static::ssh::public-key --name NAME [--dir DIR]
+function dot::static::ssh::public-key () {
     local name="" dir="${HOME}/.ssh"
 
     while [[ $# -gt 0 ]]; do
@@ -581,18 +581,18 @@ function getSshPublicKey () {
             --name) name="$2"; shift 2 ;;
             --dir)  dir="$2"; shift 2 ;;
             -h|--help)
-                echo "Usage: getSshPublicKey --name NAME [--dir DIR]"
+                echo "Usage: dot::static::ssh::public-key --name NAME [--dir DIR]"
                 return 0
                 ;;
             *)
-                echo "getSshPublicKey: unknown argument: $1" >&2
+                echo "dot::static::ssh::public-key: unknown argument: $1" >&2
                 return 2
                 ;;
         esac
     done
 
     if [[ -z "${name}" ]]; then
-        echo "getSshPublicKey: --name is required" >&2
+        echo "dot::static::ssh::public-key: --name is required" >&2
         return 2
     fi
 
@@ -601,18 +601,18 @@ function getSshPublicKey () {
 
     local pubpath="${keypath}.pub"
     if [[ ! -f "${pubpath}" ]]; then
-        echo "getSshPublicKey: public key not found: ${pubpath}" >&2
+        echo "dot::static::ssh::public-key: public key not found: ${pubpath}" >&2
         return 1
     fi
 
     cat "${pubpath}"
 }
 
-# removeSshKey: delete a key pair (private + public) after confirmation
+# dot::static::ssh::remove-key: delete a key pair (private + public) after confirmation
 #
 # Usage:
-#   removeSshKey --name NAME [--dir DIR] [--force]
-function removeSshKey () {
+#   dot::static::ssh::remove-key --name NAME [--dir DIR] [--force]
+function dot::static::ssh::remove-key () {
     local name="" dir="${HOME}/.ssh" force=0
 
     while [[ $# -gt 0 ]]; do
@@ -621,18 +621,18 @@ function removeSshKey () {
             --dir)   dir="$2"; shift 2 ;;
             --force) force=1; shift ;;
             -h|--help)
-                echo "Usage: removeSshKey --name NAME [--dir DIR] [--force]"
+                echo "Usage: dot::static::ssh::remove-key --name NAME [--dir DIR] [--force]"
                 return 0
                 ;;
             *)
-                echo "removeSshKey: unknown argument: $1" >&2
+                echo "dot::static::ssh::remove-key: unknown argument: $1" >&2
                 return 2
                 ;;
         esac
     done
 
     if [[ -z "${name}" ]]; then
-        echo "removeSshKey: --name is required" >&2
+        echo "dot::static::ssh::remove-key: --name is required" >&2
         return 2
     fi
 
@@ -640,7 +640,7 @@ function removeSshKey () {
     [[ "${keypath:0:1}" != "/" ]] && keypath="${dir}/${name}"
 
     if [[ ! -f "${keypath}" && ! -f "${keypath}.pub" ]]; then
-        echo "removeSshKey: key not found: ${keypath}" >&2
+        echo "dot::static::ssh::remove-key: key not found: ${keypath}" >&2
         return 1
     fi
 
@@ -659,11 +659,11 @@ function removeSshKey () {
     echo "Removed: ${keypath}"
 }
 
-# addSshKeyToAgent: add a key to the running ssh-agent
+# dot::static::ssh::add-key-to-agent: add a key to the running ssh-agent
 #
 # Usage:
-#   addSshKeyToAgent --name NAME [--dir DIR] [--lifetime SECONDS]
-function addSshKeyToAgent () {
+#   dot::static::ssh::add-key-to-agent --name NAME [--dir DIR] [--lifetime SECONDS]
+function dot::static::ssh::add-key-to-agent () {
     local name="" dir="${HOME}/.ssh" lifetime=""
 
     while [[ $# -gt 0 ]]; do
@@ -672,18 +672,18 @@ function addSshKeyToAgent () {
             --dir)      dir="$2"; shift 2 ;;
             --lifetime) lifetime="$2"; shift 2 ;;
             -h|--help)
-                echo "Usage: addSshKeyToAgent --name NAME [--dir DIR] [--lifetime SECONDS]"
+                echo "Usage: dot::static::ssh::add-key-to-agent --name NAME [--dir DIR] [--lifetime SECONDS]"
                 return 0
                 ;;
             *)
-                echo "addSshKeyToAgent: unknown argument: $1" >&2
+                echo "dot::static::ssh::add-key-to-agent: unknown argument: $1" >&2
                 return 2
                 ;;
         esac
     done
 
     if [[ -z "${name}" ]]; then
-        echo "addSshKeyToAgent: --name is required" >&2
+        echo "dot::static::ssh::add-key-to-agent: --name is required" >&2
         return 2
     fi
 
@@ -691,7 +691,7 @@ function addSshKeyToAgent () {
     [[ "${keypath:0:1}" != "/" ]] && keypath="${dir}/${name}"
 
     if [[ ! -f "${keypath}" ]]; then
-        echo "addSshKeyToAgent: not found: ${keypath}" >&2
+        echo "dot::static::ssh::add-key-to-agent: not found: ${keypath}" >&2
         return 1
     fi
 

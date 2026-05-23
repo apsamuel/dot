@@ -13,7 +13,7 @@ function __load_configuration () {
     true
 }
 
-function __load_secrets () {
+function dot::secrets::_load () {
     local secret_keys=()
     # declare -A secrets
     while IFS=' ' read -r -d ' ' secret_key; do
@@ -42,5 +42,5 @@ function __reload_secrets () {
     if [[ -n "${DOT_SECRETS_LOADED}" ]]; then
         unset DOT_SECRETS_LOADED
     fi
-    __load_secrets
+    dot::secrets::_load
 }

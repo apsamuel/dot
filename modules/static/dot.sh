@@ -31,7 +31,7 @@ export ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
 
 . "${DOT_DIR}"/modules/static/lib/internal.sh
 
-function dot.shell {
+function dot::static::shell {
     local command="${1:-version}"
     shift 2>/dev/null || true
 
@@ -254,7 +254,7 @@ USAGE
                     echo "Secret '${opt_key}' removed."
                     ;;
                 import)
-                    loadUserSecrets
+                    dot::static::foundation::load-user-secrets
                     echo "Secrets imported into environment (${#DOT_SECRET_KEYS[@]} keys)."
                     ;;
                 export)
@@ -265,12 +265,12 @@ USAGE
             ;;
 
         refresh-modules)
-            loadModules
+            dot::static::foundation::load-modules
             return $?
             ;;
 
         load-options)
-            loadZshOptions
+            dot::static::foundation::load-zsh-options
             return $?
             ;;
 
