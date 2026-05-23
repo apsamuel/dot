@@ -110,7 +110,7 @@ These variables establish the filesystem layout of the framework and are used th
 ### `DOT_CONFIGURATION`
 - **Default:** `$ICLOUD/dot/data.json`
 - **Set in:** `modules/static/config.sh`
-- **Used in:** `modules/000-a-config.sh` — `getTheme()` and `getCondition()` query this file via `jq`
+- **Used in:** `modules/000-a-config.sh` — `dot::config::theme()` and `dot::config::condition()` query this file via `jq`
 - **Notes:** Points to the **live** runtime config (in iCloud), not the repo template at `config/data.json`. `scripts/dot-deploy-config.sh` copies the repo template to this location.
 
 ---
@@ -190,9 +190,9 @@ Set any of these to `1` to skip the corresponding module or feature. All default
 | ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------ |
 | `DOT_DISABLE_BREW`       | `modules/000-a-brewster.sh`   | Skips Homebrew helper function definitions                                                       |
 | `DOT_DISABLE_EXTENSIONS` | `modules/000-d-extensions.sh` | Skips all of: iTerm2 shell integration, thefuck, zsh-autosuggestions, zsh-syntax-highlighting, z |
-| `DOT_DISABLE_GIT`        | `modules/000-c-git.sh`        | Skips git configuration and `gitConfig` function                                                 |
-| `DOT_DISABLE_MAC`        | `modules/000-c-mac.sh`        | Skips macOS-specific helpers (`osCpuCores`, `osCpuBrand`)                                        |
-| `DOT_DISABLE_OUTPUTS`    | `modules/000-a-output.sh`     | Skips terminal decoration functions (`termLogo`, `termQuote`, `showcolors256`, etc.)             |
+| `DOT_DISABLE_GIT`        | `modules/000-c-git.sh`        | Skips git configuration and `dot::git::config` function                                                 |
+| `DOT_DISABLE_MAC`        | `modules/000-c-mac.sh`        | Skips macOS-specific helpers (`dot::mac::cpu-cores`, `dot::mac::cpu-brand`)                                        |
+| `DOT_DISABLE_OUTPUTS`    | `modules/000-a-output.sh`     | Skips terminal decoration functions (`dot::output::logo`, `dot::output::term-quote`, `dot::output::colors256`, etc.)             |
 | `DOT_DISABLE_P10K`       | `modules/001-a-p10k.sh`       | Skips Powerlevel10k prompt activation                                                            |
 | `DOT_DISABLE_NODE`       | `modules/001-d-node.sh`       | Skips Node.js environment setup (`N_PREFIX`, PATH)                                               |
 
@@ -218,7 +218,7 @@ These are checked **after** `DOT_DISABLE_EXTENSIONS` — if the parent flag is `
 
 ## 5. Git Default Variables
 
-Set in `modules/000-c-git.sh`. Used by the `gitConfig` function in the same file to configure git globally or locally.
+Set in `modules/000-c-git.sh`. Used by the `dot::git::config` function in the same file to configure git globally or locally.
 
 | Variable                             | Default                     | Description                                  |
 | ------------------------------------ | --------------------------- | -------------------------------------------- |
@@ -230,7 +230,7 @@ Set in `modules/000-c-git.sh`. Used by the `gitConfig` function in the same file
 | `DOT_GIT_DEFAULT_REBASE_BRANCH`      | `0`                         | Use rebase strategy (0 = no)                 |
 | `DOT_GIT_DEFAULT_STASH_COMMITS`      | `0`                         | Auto-stash before branch operations (0 = no) |
 
-**Note:** `DOT_GIT_DEFAULT_EMAIL` has a bug in `modules/000-c-git.sh` — the `gitConfig` function calls `git config user.DOT_GIT_DEFAULT_EMAIL` (literal string) instead of `git config user.email "$DOT_GIT_DEFAULT_EMAIL"`.
+**Note:** `DOT_GIT_DEFAULT_EMAIL` has a bug in `modules/000-c-git.sh` — the `dot::git::config` function calls `git config user.DOT_GIT_DEFAULT_EMAIL` (literal string) instead of `git config user.email "$DOT_GIT_DEFAULT_EMAIL"`.
 
 ---
 
@@ -281,7 +281,7 @@ These are **not** set by any `modules/` file. They are meant to be set by the ca
 - **Example:** `DOT_NVM_INSTALL_LTS=1 source scripts/dot-bootstrap.sh`
 
 ### `DOT_LIBS_DIR`
-- **Consumed in:** [`modules/static/dot.sh`](../../modules/static/dot.sh) — the `dot.shell` command sources all `*.sh` files found under this path
+- **Consumed in:** [`modules/static/dot.sh`](../../modules/static/dot.sh) — the `dot::static::shell` command sources all `*.sh` files found under this path
 - **Effect:** Allows injecting additional shell libraries into the `dot` environment without modifying the repo
 - **Example:** `export DOT_LIBS_DIR="$HOME/.local/dot-extras"` in a machine-local rc snippet
 
@@ -294,6 +294,6 @@ These are **not** set by any `modules/` file. They are meant to be set by the ca
 | **Remove** (never read, no planned use)       | `DOT_BOOT`, `DOT_DEBUG_RC`, `DOT_INTERACTIVE`, `DOT_BOOTED`, `DOT_ENABLED`, `DOT_DIRECTORY_NAME`, `DOT_DISABLE_ANACONDA`, `DOT_DISABLE_NETWORK`, `DOT_ANACONDA_ENABLED`, `DOT_ANACONDA_DIR`, `DOT_ANACONDA_ENV` |
 | **Remove duplicate** (same `ulimit -n` value) | `DOT_OPEN_FILES_LIMIT` (keep `DOT_FILE_DESCRIPTOR_LIMIT`)                                                                                                                                                       |
 | **Consolidate alias**                         | `DOT_DIR` → replace all references with `DOT_DIRECTORY`                                                                                                                                                         |
-| **Fix bug**                                   | `000-c-git.sh` `gitConfig` calls `git config user.DOT_GIT_DEFAULT_EMAIL` instead of `git config user.email`                                                                                                     |
+| **Fix bug**                                   | `000-c-git.sh` `dot::git::config` calls `git config user.DOT_GIT_DEFAULT_EMAIL` instead of `git config user.email`                                                                                                     |
 | **Implement or remove**                       | `DOT_BOOTED` — useful if set to `true` at end of zshrc; `DOT_INTERACTIVE` — useful if set from `[[ $- == *i* ]]`; `DOT_ENABLED` — useful if modules guard on iCloud availability                                |
 | **Keep as-is**                                | All actively used path, debug, feature flag, and git default variables                                                                                                                                          |

@@ -34,7 +34,7 @@ chsh -s "$(which zsh)"
 
 # 7. First run — open a new shell. Static modules from modules/static/ load
 #    first (always, no opt-out), then the numbered dynamic modules in lex
-#    order via loadModules. Bin scripts are now on $PATH.
+#    order via dot::static::foundation::load-modules. Bin scripts are now on $PATH.
 exec zsh
 ```
 

@@ -61,7 +61,7 @@ themes:
 ## Where `zsh.yaml` Is Used
 
 - `zshrc`: reads `.theme` to set `ZSH_THEME`.
-- `modules/static/foundation.sh`: `loadZshOptions` reads `.options[]`.
+- `modules/static/foundation.sh`: `dot::static::foundation::load-zsh-options` reads `.options[]`.
 - `scripts/dot-bootstrap.sh`: installs language dependencies from `.languages.*`.
 
 ## Deploy Flow

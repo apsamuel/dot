@@ -212,8 +212,8 @@ See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough a
 
 | Tier          | Path                 | Loaded                                        | Purpose                                                                                                                                                   |
 | ------------- | -------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🪨 **Static**  | `modules/static/`    | First — sourced explicitly by `zshrc`         | Foundational env (`DOT_*` vars, autoloads, limits, ssh helpers, `dot.shell`). Always available; consumed by every dynamic module and by internal tooling. |
-| 🌀 **Dynamic** | `modules/NNN-x-*.sh` | Lex order via `loadModules` after the statics | Targeted, individually disable-able snippets (homebrew, git, mac, podman, p10k, tmux, node, python, rust, java, sre, …).                                  |
+| 🪨 **Static**  | `modules/static/`    | First — sourced explicitly by `zshrc`         | Foundational env (`DOT_*` vars, autoloads, limits, ssh helpers, `dot::static::shell`). Always available; consumed by every dynamic module and by internal tooling. |
+| 🌀 **Dynamic** | `modules/NNN-x-*.sh` | Lex order via `dot::static::foundation::load-modules` after the statics | Targeted, individually disable-able snippets (homebrew, git, mac, podman, p10k, tmux, node, python, rust, java, sre, …).                                  |
 
 Both tiers are plain `.sh` files. See [modules/README.md](./modules/README.md) for the full inventory and the `DOT_DISABLE_*` flags that toggle each dynamic module off.
 
@@ -228,8 +228,8 @@ Both tiers are plain `.sh` files. See [modules/README.md](./modules/README.md) f
 5. `modules/static/limits.sh`
 6. `modules/static/autoload.sh`
 7. `modules/static/dot.sh`
-8. `loadZshOptions` from `data/zsh.yaml`
-9. `loadModules` (every `modules/NNN-*-*.sh` in lexical order)
+8. `dot::static::foundation::load-zsh-options` from `data/zsh.yaml`
+9. `dot::static::foundation::load-modules` (every `modules/NNN-*-*.sh` in lexical order)
 
 ### 🛣 PATH Contributions
 
@@ -246,9 +246,9 @@ This means user-facing commands in `bin/` and internal-maintainer commands in `s
 
 ---
 
-## 🧰 `dot.shell` Command
+## 🧰 `dot::static::shell` Command
 
-`dot.shell` is the framework's built-in CLI. It's defined in the static module [`modules/static/dot.sh`](./modules/static/dot.sh), so it's available in **every** shell that loads `dot` — no opt-out, no plugin to enable.
+`dot::static::shell` is the framework's built-in CLI. It's defined in the static module [`modules/static/dot.sh`](./modules/static/dot.sh), so it's available in **every** shell that loads `dot` — no opt-out, no plugin to enable.
 
 ```text
 dot.shell <command> [options]
@@ -260,8 +260,8 @@ dot.shell <command> [options]
 | `help`               | Show inline usage for every command (also `-h` / `--help`).                                                              |
 | `update`             | `git pull` the `dot` repo, then `omz update`.                                                                            |
 | `reload [-d]`        | Re-source the shell via `omz reload`. `-d`/`--debug` enables `set -x` tracing.                                           |
-| `refresh-modules`    | Re-run `loadModules` to re-source every dynamic module in the current shell.                                             |
-| `load-options`       | Re-apply the curated zsh options (`loadZshOptions`).                                                                     |
+| `refresh-modules`    | Re-run `dot::static::foundation::load-modules` to re-source every dynamic module in the current shell.                                             |
+| `load-options`       | Re-apply the curated zsh options (`dot::static::foundation::load-zsh-options`).                                                                     |
 | `printenv`           | Dump every `DOT_*` variable, masking anything that looks like a secret.                                                  |
 | `changelog [-a\|-d]` | Pretty-printed git log (last 7 commits by default; `-a` for all, `-d` for diffs).                                        |
 | `secrets <action>`   | Manage `~/Library/Mobile Documents/.../dot/secrets.json` — see below.                                                    |

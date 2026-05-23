@@ -135,7 +135,7 @@ Never in the repo. Use [`modules/000-a-secrets.sh`](../modules/000-a-secrets.sh)
 
 `DOT_DEBUG=1 zsh` to see what's loading. Disable unused language modules.
 
-> **`dot.shell` command not found?**
+> **`dot::static::shell` command not found?**
 
 `ls -la ~/.zshrc` — should symlink to `~/.dot/zshrc`. Re-run bootstrap if not.
 

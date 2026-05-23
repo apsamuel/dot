@@ -61,7 +61,7 @@ Reusable, tested bash helpers (logging, assertions, OS detection, string manipul
 
 ## 🔠 [figlet-fonts](https://github.com/xero/figlet-fonts)
 
-Curated figlet font collection used by the `toFiglet` helper.
+Curated figlet font collection used by the `dot::output::figlet` helper.
 
 - 📍 **Location:** `vendor/figlet-fonts/`
 

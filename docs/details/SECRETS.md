@@ -6,7 +6,7 @@
 
 ## How It Works
 
-Secrets are stored in a JSON file **outside the repository** (e.g. `~/.secrets.json` or in iCloud). The `loadSecrets` function reads the file and exports each key–value pair as an environment variable. The `maskSecrets` function then replaces the values in any shell output so they are never accidentally printed.
+Secrets are stored in a JSON file **outside the repository** (e.g. `~/.secrets.json` or in iCloud). The `dot::secrets::load` function reads the file and exports each key–value pair as an environment variable. The `dot::secrets::mask` function then replaces the values in any shell output so they are never accidentally printed.
 
 ### Secret File Format
 
@@ -26,10 +26,10 @@ All functions are defined in `modules/000-a-secrets.sh`.
 
 | Function             | Description                                                                                               |
 | -------------------- | --------------------------------------------------------------------------------------------------------- |
-| `loadSecrets [path]` | Loads a JSON secrets file and exports each key as an environment variable. Defaults to `~/.secrets.json`. |
-| `maskSecrets`        | Masks the values of all loaded secrets in subsequent shell output.                                        |
-| `__mask_secrets__`   | Internal function called by `maskSecrets`.                                                                |
-| `reloadOptions`      | Reloads shell options after secrets are masked.                                                           |
+| `dot::secrets::load [path]` | Loads a JSON secrets file and exports each key as an environment variable. Defaults to `~/.secrets.json`. |
+| `dot::secrets::mask`        | Masks the values of all loaded secrets in subsequent shell output.                                        |
+| `__mask_secrets__`   | Internal function called by `dot::secrets::mask`.                                                                |
+| `dot::secrets::reload-options`      | Reloads shell options after secrets are masked.                                                           |
 
 ---
 
@@ -37,13 +37,13 @@ All functions are defined in `modules/000-a-secrets.sh`.
 
 ```bash
 # Load secrets from the default location (~/.secrets.json)
-loadSecrets
+dot::secrets::load
 
 # Load from a specific path
-loadSecrets ~/iCloud/secrets/work.json
+dot::secrets::load ~/iCloud/secrets/work.json
 
 # Mask secrets in output
-maskSecrets
+dot::secrets::mask
 
 # Your secret is now available
 echo $GITHUB_TOKEN   # Output will be masked: ****
@@ -60,6 +60,6 @@ echo $GITHUB_TOKEN   # Output will be masked: ****
 
 ---
 
-## How `maskSecrets` Works
+## How `dot::secrets::mask` Works
 
-`maskSecrets` iterates over all known secret variable names loaded by `loadSecrets` and registers a ZSH preexec hook that replaces their values with `****` in command output. This prevents secrets from appearing in `set`, `env`, or accidental `echo $VAR` calls.
+`dot::secrets::mask` iterates over all known secret variable names loaded by `dot::secrets::load` and registers a ZSH preexec hook that replaces their values with `****` in command output. This prevents secrets from appearing in `set`, `env`, or accidental `echo $VAR` calls.
