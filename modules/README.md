@@ -3,7 +3,7 @@
 The `modules/` directory is the runtime shell framework for `dot`.
 
 - `modules/static/` contains foundational files sourced explicitly by `zshrc`.
-- `modules/NNN-*.sh` contains dynamic modules sourced by `loadModules` in lexical order.
+- `modules/NNN-*.sh` contains dynamic modules sourced by `dot::static::foundation::load-modules` in lexical order.
 
 ## Startup Sequence
 
@@ -16,9 +16,9 @@ The `modules/` directory is the runtime shell framework for `dot`.
 5. `modules/static/limits.sh`
 6. `modules/static/autoload.sh`
 7. `modules/static/dot.sh`
-8. `loadZshOptions` (reads options from `data/zsh.yaml`)
-9. `loadModules` (all dynamic modules below)
-10. `compileTermInfo`
+8. `dot::static::foundation::load-zsh-options` (reads options from `data/zsh.yaml`)
+9. `dot::static::foundation::load-modules` (all dynamic modules below)
+10. `dot::foundation::compile-terminfo`
 
 ## Dynamic Modules (Load Order)
 
@@ -83,7 +83,7 @@ Dynamic modules are discovered using:
 | File | Purpose |
 | --- | --- |
 | `static/dotenv.sh` | Canonical `DOT_*` path/runtime/feature-flag exports. |
-| `static/foundation.sh` | Foundational functions (`loadZshOptions`, `loadModules`, ssh key helpers). |
+| `static/foundation.sh` | Foundational functions (`dot::static::foundation::load-zsh-options`, `dot::static::foundation::load-modules`, ssh key helpers). |
 | `static/ssh.sh` | SSH environment and key helper setup. |
 | `static/limits.sh` | Shell limit discovery/exports. |
 | `static/autoload.sh` | ZSH autoload wiring. |

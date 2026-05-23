@@ -8,15 +8,15 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 if [[ "${DOT_DISABLE_ZSTYLE}" -eq 1 ]]; then
-    dot::skip "zstyle" "disabled"
+    dot::static::logging::skip "zstyle" "disabled"
     return
 fi
 
 # zstyle is a zsh-only builtin; bail out for other shells.
-# Note: don't use getShellName() here — it has inverted logic and would skip zsh.
+# Note: don't use dot::foundation::shell-name() here — it has inverted logic and would skip zsh.
 if [[ -z "${ZSH_VERSION}" ]]; then
     return
 fi
@@ -25,17 +25,17 @@ fi
 # Helpers — introspect zstyle at runtime
 # ---------------------------------------------------------------------------
 
-# zstyleList [pattern] — list all zstyle entries (or those matching pattern)
-# in re-sourceable form. Example: zstyleList ':completion:*'
-zstyleList() {
+# dot::zstyle::list [pattern] — list all zstyle entries (or those matching pattern)
+# in re-sourceable form. Example: dot::zstyle::list ':completion:*'
+dot::zstyle::list() {
     zstyle -L "$@"
 }
 
-# zstyleShow <context> <style> — pretty-print the value of a single style.
-# Example: zstyleShow ':omz:plugins:ssh-agent' identities
-zstyleShow() {
+# dot::zstyle::show <context> <style> — pretty-print the value of a single style.
+# Example: dot::zstyle::show ':omz:plugins:ssh-agent' identities
+dot::zstyle::show() {
     if [[ $# -lt 2 ]]; then
-        echo "usage: zstyleShow <context> <style>" >&2
+        echo "usage: dot::zstyle::show <context> <style>" >&2
         return 2
     fi
     local __ctx="$1" __style="$2" __val
@@ -47,8 +47,8 @@ zstyleShow() {
     fi
 }
 
-# zstyleDump [file] — dump all zstyle entries to stdout or to a file.
-zstyleDump() {
+# dot::zstyle::dump [file] — dump all zstyle entries to stdout or to a file.
+dot::zstyle::dump() {
     if [[ -n "$1" ]]; then
         zstyle -L > "$1"
     else
@@ -71,7 +71,7 @@ zstyle ':omz:update' frequency "${DOT_OMZ_UPDATE_FREQUENCY:-7}"
 zstyle ':omz:plugins:iterm2' shell-integration yes
 
 # ssh-agent — keys to load and forwarding behaviour.
-# SSH_KEYS is populated in zshrc via getSshIdentities before loadModules runs.
+# SSH_KEYS is populated in zshrc via dot::static::foundation::ssh-identities before dot::static::foundation::load-modules runs.
 if (( ${#SSH_KEYS[@]} > 0 )); then
     zstyle ':omz:plugins:ssh-agent' identities "${SSH_KEYS[@]}"
 fi

@@ -6,67 +6,54 @@ DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
-function emulateIntepreter() {
-    local emulation="${1:-sh}"
-    local code="${1:-echo "Hello World"}"
-    command zsh -c "emulate ${emulation}; $code"
+# Usage: dot::emulation::run [--spawn] [--arch arm64|x86_64] [--shell sh|bash|csh|ksh|zsh] [--login] [code...]
+#   --spawn   Launch a real shell process instead of using zsh emulation mode
+#   --arch    Run under a specific architecture (macOS only, implies --spawn --login)
+#   --shell   Target shell (default: zsh)
+#   --login   Start a login shell (no code execution)
+#   code      Code to execute (default: echo "Hello World")
+function dot::emulation::run() {
+    local mode="emulate" shell="zsh" architecture="" login=0
+    local args=()
 
-}
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --spawn)  mode="spawn"; shift ;;
+            --arch)   architecture="${2:?architecture required (arm64|x86_64)}"; mode="spawn"; login=1; shift 2 ;;
+            --shell)  shell="${2:?shell name required}"; shift 2 ;;
+            --login)  login=1; shift ;;
+            --)       shift; args+=("$@"); break ;;
+            *)        args+=("$1"); shift ;;
+        esac
+    done
 
-function emulateZsh() {
-    local code="${1:-echo "Hello World"}"
-    command zsh -c "emulate bash; ${code}"
-    # return $?
-}
+    local code="${args[*]:-echo \"Hello World\"}"
 
-function spawnSh() {
-    local code="${1:-echo "Hello World"}"
-    command sh -c "$code"
-}
+    # Architecture-specific login shell
+    if [[ -n "$architecture" ]]; then
+        local shell_path
+        case "$architecture" in
+            arm64)  shell_path="/opt/homebrew/bin/${shell}" ;;
+            x86_64) shell_path="/usr/local/bin/${shell}" ;;
+            *)      echo "dot::emulation::run: unsupported arch '${architecture}'" >&2; return 1 ;;
+        esac
+        exec arch "-${architecture}" "$shell_path" -l
+    fi
 
-function emulateBash() {
-    local code="${1:-echo "Hello World"}"
-    emulateZsh "$code"
-}
+    # Login shell (no code)
+    if [[ $login -eq 1 ]]; then
+        command "$shell" -l
+        return $?
+    fi
 
-function spawnBash() {
-    local code="${1:-echo "Hello World"}"
-    command bash -c "$code"
-}
+    # Spawn a real shell process
+    if [[ "$mode" == "spawn" ]]; then
+        command "$shell" -c "$code"
+        return $?
+    fi
 
-function emulateCsh() {
-    local code="${1:-echo "Hello World"}"
-    command zsh -c "emulate csh; $code"
-}
-
-function spawnCsh () {
-    local code="${1:-echo "Hello World"}"
-    command csh -c "$code"
-}
-
-function emulateKsh () {
-    local code="${1:-echo "Hello World"}"
-    command zsh -c "emulate ksh; $code"
-}
-
-function spawnKsh () {
-    local code="${1:-echo "Hello World"}"
-    command ksh -c "$code"
-}
-
-function emulateZsh () {
-    local code="${1:-echo "Hello World"}"
-    command zsh -l -c "emulate zsh; $code"
-}
-
-function spawnArm () {
-    local code="${1:-uname}"
-    exec arch -arm64 /opt/homebrew/bin/zsh -l
-}
-
-function spawnIntel () {
-    local code="${1:-uname}"
-    exec arch -x86_64 /usr/local/bin/zsh -l
+    # Default: zsh emulation mode
+    command zsh -c "emulate ${shell}; ${code}"
 }

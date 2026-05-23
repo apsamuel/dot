@@ -10,18 +10,18 @@ DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 # we need to source the mac.sh file first
 source "${DOT_MODULES}"/static/lib/mac.sh
 
 
-function compileTermInfo() {
+function dot::foundation::compile-terminfo() {
     infocmp -x xterm-256color
     printf '\t%s\n' 'ncv@,'
 } >/tmp/t && tic -x /tmp/t
 
-function getShellName () {
+function dot::foundation::shell-name () {
     if [[ -z "$fish_pid" ]]; then
         echo "fish"
     else
@@ -31,7 +31,7 @@ function getShellName () {
     fi
 }
 
-function getSecureString () {
+function dot::foundation::secure-string () {
     len="${1:-15}"
     secureString="$(pwgen -n -y "${len}" 1)"
     echo "$secureString"

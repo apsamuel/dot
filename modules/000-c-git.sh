@@ -9,10 +9,10 @@ DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 if [[ "${DOT_DISABLE_GIT}" -eq 1 ]]; then
-    dot::skip "git" "disabled"
+    dot::static::logging::skip "git" "disabled"
     return
 fi
 
@@ -24,7 +24,7 @@ DOT_GIT_DEFAULT_DESTINATION_BRANCH="staging"
 DOT_GIT_DEFAULT_USER="apsamuel"
 DOT_GIT_DEFAULT_EMAIL="aaron.psamuel@gmail.com"
 
-ghAuth() {
+dot::git::auth() {
     # If GH_TOKEN is set (from secrets), inject it; otherwise fall back to interactive
     if [[ -n "${GH_TOKEN}" ]]; then
         echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null \
@@ -35,7 +35,7 @@ ghAuth() {
     fi
 }
 
-gitConfig() {
+dot::git::config() {
 
     # use getops to parse arguments to this function
     # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -72,20 +72,20 @@ gitConfig() {
     fi
 }
 
-gitChanges() {
+dot::git::changes() {
     git log --pretty="%C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset))%x09 %C(Cyan)%an: %C(reset)%s" --date=short
 }
 
-gitDiff() {
+dot::git::diff() {
     preview="git diff $* --color=always -- {-1}"
-    git diff --name-only | fzf -m --ansi --preview "$preview"
+    git diff $* --name-only | fzf -m --ansi --preview "$preview" --preview-window=right:70%:wrap
 }
 
-gitPreview() {
+dot::git::preview() {
     fzf --preview "git show {1} | bat --color=always"
 }
 
-gitLog() {
+dot::git::log() {
     git log --color=always --pretty=format:"%C(yellow)%h %C(reset)%ad (%C(green)%cr%C(reset))%x09%C(cyan)%an%C(reset): %s" --date=short | fzf --ansi --preview "echo {} | cut -d' ' -f1 | xargs git show --color=always" --preview-window=up:30%:wrap
 }
 

@@ -5,10 +5,10 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 if [[ "${DOT_DISABLE_NODE}" -eq 1 ]]; then
-    dot::skip "node" "disabled"
+    dot::static::logging::skip "node" "disabled"
     return
 fi
 
@@ -35,11 +35,11 @@ fi
 
 # ensure desired node version is active via n
 if command -v n >/dev/null 2>&1; then
-    mkdir -p "${N_PREFIX}" || { dot::error "cannot create N_PREFIX: ${N_PREFIX}"; return 1; }
+    mkdir -p "${N_PREFIX}" || { dot::static::logging::error "cannot create N_PREFIX: ${N_PREFIX}"; return 1; }
     current_node="$(node --version 2>/dev/null | sed 's/^v//')"
     if [[ "${current_node}" != "${desired_version}" ]]; then
-        dot::debug "switching node to ${desired_version} via n (current: ${current_node:-none})"
-        n "${desired_version}" >/dev/null 2>&1 || dot::warn "failed to activate node ${desired_version} via n"
+        dot::static::logging::debug "switching node to ${desired_version} via n (current: ${current_node:-none})"
+        n "${desired_version}" >/dev/null 2>&1 || dot::static::logging::warn "failed to activate node ${desired_version} via n"
     fi
 fi
 
@@ -67,12 +67,12 @@ if brew list | grep node >/dev/null 2>&1 ; then
 
 fi
 
-function getNodeJS () {
+function dot::node::get () {
     # download node into a temporary DOT_DIRECTORY
-    mkdir -p /tmp/node || { dot::error "cannot create /tmp/node"; return 1; }
-    dot::info "Downloading node from $NODE_URL"
+    mkdir -p /tmp/node || { dot::static::logging::error "cannot create /tmp/node"; return 1; }
+    dot::static::logging::info "Downloading node from $NODE_URL"
     if ! curl -fSL "$NODE_URL" | tar -xJ --strip-components=1 -C /tmp/node; then
-        dot::error "failed to download/extract node from $NODE_URL"
+        dot::static::logging::error "failed to download/extract node from $NODE_URL"
         return 1
     fi
 }

@@ -5,18 +5,18 @@
 # Skip tmux helpers entirely when DOT_DISABLE_TMUX=1 (set automatically in
 # VSCode/Copilot terminals — tmux's per-pane alt-screen breaks output capture).
 if [[ "${DOT_DISABLE_TMUX}" -eq 1 ]]; then
-    dot::skip "tmux" "DOT_DISABLE_TMUX=1"
+    dot::static::logging::skip "tmux" "DOT_DISABLE_TMUX=1"
     return 0
 fi
 
 # point oh-my-tmux / tpm at the vendored plugin dir
 export TMUX_PLUGIN_MANAGER_PATH="${DOT_ROOT}/vendor/oh-my-tmux/plugins"
 
-tmuxKillUnattached() {
+dot::tmux::kill-unattached() {
     tmux list-sessions -F '#{session_name} #{session_attached}' | awk '$2 == "0" {print $1}' | xargs -I {} -r tmux kill-session -t {}
 }
 
-tmuxGetSafeSessionName() {
+dot::tmux::safe-session-name() {
     local session="$1"
     # ensure session name is safe for tmux
     session="${session//[^a-zA-Z0-9_]/_}"  # replace non-alphanumeric characters with underscores
@@ -25,7 +25,7 @@ tmuxGetSafeSessionName() {
     echo "${session}"
 }
 
-tmuxHasSession() {
+dot::tmux::has-session() {
     local session="$1"
     if tmux has-session -t "${session}" 2>/dev/null; then
         return 0  # session exists
@@ -34,16 +34,16 @@ tmuxHasSession() {
     fi
 }
 
-tmuxCreateSessionFromCwd() {
+dot::tmux::create-session-from-cwd() {
     local current_directory
     local current_directory_base
     local session_name
 
     current_directory="$(pwd)"
     current_directory_base="$(basename "${current_directory}")"
-    session_name="$(tmuxGetSafeSessionName "${current_directory_base}")"
+    session_name="$(dot::tmux::safe-session-name "${current_directory_base}")"
 
-    if tmuxHasSession "${session_name}"; then
+    if dot::tmux::has-session "${session_name}"; then
         echo "tmux session '${session_name}' already exists, attaching"
         tmux attach-session -t "${session_name}"
     else
@@ -53,9 +53,9 @@ tmuxCreateSessionFromCwd() {
 }
 
 if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
-    getTmuxWindowName() {
+    dot::tmux::window-name() {
         ("$TMUX_PLUGIN_MANAGER_PATH"/tmux-window-name/scripts/rename_session_windows.py &)
     }
 
-    add-zsh-hook chpwd getTmuxWindowName
+    add-zsh-hook chpwd dot::tmux::window-name
 fi

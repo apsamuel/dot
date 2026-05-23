@@ -4,11 +4,11 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 
 if [[ "${DOT_DISABLE_EXTENSIONS}" -eq 1 ]]; then
-    dot::skip "extensions" "disabled"
+    dot::static::logging::skip "extensions" "disabled"
     return
 fi
 

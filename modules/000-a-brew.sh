@@ -7,10 +7,10 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 if [[ "${DOT_DISABLE_BREW}" -eq 1 ]]; then
-    dot::skip "brew" "disabled"
+    dot::static::logging::skip "brew" "disabled"
     return
 fi
 
@@ -19,29 +19,29 @@ if [[ "$OPERATING_SYSTEM" == "linux-gnu"* ]]; then
     if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     else
-        dot::error "brew not found at /home/linuxbrew/.linuxbrew/bin/brew"
+        dot::static::logging::error "brew not found at /home/linuxbrew/.linuxbrew/bin/brew"
         return 1
     fi
 elif [[ $OPERATING_SYSTEM == "darwin" && "$CPU_ARCHITECTURE" == "arm64" ]]; then
     if [[ -x /opt/homebrew/bin/brew ]]; then
         eval "$(/opt/homebrew/bin/brew shellenv)"
     else
-        dot::error "brew not found at /opt/homebrew/bin/brew"
+        dot::static::logging::error "brew not found at /opt/homebrew/bin/brew"
         return 1
     fi
 elif [[ $OPERATING_SYSTEM == "darwin" && ("$CPU_ARCHITECTURE" == "i386" || "$CPU_ARCHITECTURE" == "x86_64") ]]; then
     if [[ -x /usr/local/bin/brew ]]; then
         eval "$(/usr/local/bin/brew shellenv)"
     else
-        dot::error "brew not found at /usr/local/bin/brew"
+        dot::static::logging::error "brew not found at /usr/local/bin/brew"
         return 1
     fi
 else
-    dot::warn "problem detecting OPERATING_SYSTEM for brew"
+    dot::static::logging::warn "problem detecting OPERATING_SYSTEM for brew"
 fi
 
 
-function brew::version() {
+function dot::brew::version() {
   local input="$1"
 
   if [[ -z "$input" ]]; then
@@ -64,9 +64,9 @@ function brew::version() {
   fi
 }
 
-function brew::installed() {
+function dot::brew::installed() {
   local check_type="formula"
-  local usage="Usage: brew::installed [-t type] <package>
+  local usage="Usage: dot::brew::installed [-t type] <package>
   -t type   Package type: formula (default), cask"
 
   local OPTIND=1
@@ -97,9 +97,9 @@ function brew::installed() {
   fi
 }
 
-function brew::install() {
+function dot::brew::install() {
   local target_arch=""
-  local usage="Usage: brew::install [-a arch] <package>
+  local usage="Usage: dot::brew::install [-a arch] <package>
   -a arch   Architecture: arm64, x86_64 (default: native)"
 
   local OPTIND=1
@@ -118,7 +118,7 @@ function brew::install() {
     return 1
   fi
 
-  if brew::installed "$input" &> /dev/null; then
+  if dot::brew::installed "$input" &> /dev/null; then
     echo "Reinstalling '$input'"
     if [[ -n "$target_arch" ]]; then
       arch "-${target_arch}" brew reinstall "$input"
@@ -135,17 +135,17 @@ function brew::install() {
   fi
 }
 
-function brew::update() {
+function dot::brew::update() {
   brew update "$@"
 }
 
-function brew::upgrade() {
+function dot::brew::upgrade() {
   brew update && brew upgrade "$@"
 }
 
-function brew::list() {
+function dot::brew::list() {
   local list_type="formula"
-  local usage="Usage: brew::list [-t type]
+  local usage="Usage: dot::brew::list [-t type]
   -t type   List type: formula (default), cask"
 
   local OPTIND=1
@@ -167,10 +167,10 @@ function brew::list() {
   esac
 }
 
-function brew::resolve() {
+function dot::brew::resolve() {
   local source="cloud"
   local resolve_type="formula"
-  local usage="Usage: brew::resolve [-s source] [-t type]
+  local usage="Usage: dot::brew::resolve [-s source] [-t type]
   -s source  Source location: cloud (default, \$ICLOUD/dot), dot (\$HOME/.dot/data)
   -t type    Brewfile type: formula (default), cask, mas, all"
 
@@ -230,10 +230,10 @@ function brew::resolve() {
   fi
 }
 
-function brew::dump() {
+function dot::brew::dump() {
   local dump_type="formula"
   local output_file=""
-  local usage="Usage: brew::dump [-t type] [-o file]
+  local usage="Usage: dot::brew::dump [-t type] [-o file]
   -t type   Dump type: formula (default), cask, mas, all
   -o file   Output file path (default: \${ICLOUD}/dot/Brewfile[.type].\${arch})"
 
@@ -277,10 +277,10 @@ function brew::dump() {
   brew bundle dump "${flags[@]}" --file="${output_file}"
 }
 
-function brew::recipe() {
+function dot::brew::recipe() {
   local recipe_type="formula"
   local source="cloud"
-  local usage="Usage: brew::recipe [-t type] [-s source]
+  local usage="Usage: dot::brew::recipe [-t type] [-s source]
   -t type    Brewfile type: formula (default), cask, mas, all
   -s source  Source: cloud (default), dot"
 
@@ -295,14 +295,14 @@ function brew::recipe() {
   done
 
   local file
-  file="$(brew::resolve -s "$source" -t "$recipe_type")" || return 1
+  file="$(dot::brew::resolve -s "$source" -t "$recipe_type")" || return 1
   cat "$file"
 }
 
-function brew::load() {
+function dot::brew::load() {
   local load_type="formula"
   local input_file=""
-  local usage="Usage: brew::load [-t type] [-i file]
+  local usage="Usage: dot::brew::load [-t type] [-i file]
   -t type   Load type: formula (default), cask, mas, all
   -i file   Input Brewfile path (default: \${ICLOUD}/dot/Brewfile[.type].\${arch})"
 
@@ -350,7 +350,7 @@ function brew::load() {
   brew bundle install --file="${input_file}"
 }
 
-function brew::parse-line() {
+function dot::brew::parse-line() {
   local line="$1"
   if [[ -z "$line" ]]; then
     echo "No line provided" >&2
@@ -364,7 +364,7 @@ function brew::parse-line() {
   echo "$operation" "$target"
 }
 
-function brew::info() {
+function dot::brew::info() {
   if [[ -z "$1" ]]; then
     echo "No package name provided" >&2
     return 1
@@ -372,7 +372,7 @@ function brew::info() {
   brew info --json "$@"
 }
 
-function brew::bottle-files() {
+function dot::brew::bottle-files() {
   local input="$1"
   if [[ -z "$input" ]]; then
     echo "No package name provided" >&2

@@ -10,7 +10,7 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 
 #TODO: these options need to be read from a file

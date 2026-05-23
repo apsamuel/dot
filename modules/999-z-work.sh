@@ -6,7 +6,7 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 ## These steps are related to <work>
 host="$(hostname -s)"

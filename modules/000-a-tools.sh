@@ -6,6 +6,6 @@
 # shellcheck disable=SC2207
 
 
-GetPreview() {
+dot::tools::preview() {
     fzf --preview "bat {-1} --color=always"
 }

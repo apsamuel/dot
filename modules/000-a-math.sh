@@ -1,9 +1,9 @@
 #!/usr/local/bin/bash
 
-bcSolve() {
+dot::math::solve() {
     # given a mathematical expression, solve it using bc
     if [[ $# -eq 0 ]]; then
-        echo "Usage: bcSolve <expression>"
+        echo "Usage: dot::math::solve <expression>"
         return 1  # return error if no expression is provided
     fi
 

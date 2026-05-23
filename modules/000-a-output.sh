@@ -32,7 +32,7 @@ debug_color="$(tput setab 238)$(tput setaf 250)"
 reset_color="$(tput sgr0)"
 
 
-# default emojis for output (legacy — kept for printPretty compatibility)
+# default emojis for output (legacy — kept for dot::output::pretty compatibility)
 emoji_info=" ℹ️ "
 emoji_error=" 💣 "
 emoji_debug=" 🛠️ "
@@ -45,7 +45,7 @@ levels=(
     "debug"
 )
 
-function availableColorTab() {
+function dot::output::color-tab() {
 	for ((i=0; i<256; i++)) ;do
 		echo -n '  '
 		tput setab "$i"
@@ -58,7 +58,7 @@ function availableColorTab() {
 	done
 }
 
-function printLevels() {
+function dot::output::levels() {
     local output=""
     for level in "${levels[@]}"; do
         output+="${level} "
@@ -66,15 +66,15 @@ function printLevels() {
     echo "${output}"
 }
 
-function printLevel() {
+function dot::output::level() {
     local level="${1}"
     if [[ -z "${level}" ]]; then
-        echo "Usage: printLevel <level>"
+        echo "Usage: dot::output::level <level>"
         return 1
     fi
 
     if [[ ! " ${levels[*]} " =~  ${level}  ]]; then
-        echo "Invalid level: ${level}. Available levels: $(printLevels)"
+        echo "Invalid level: ${level}. Available levels: $(dot::output::levels)"
         return 1
     fi
 
@@ -87,7 +87,7 @@ function printLevel() {
 }
 
 
-function printPretty() {
+function dot::output::pretty() {
     local message
     local level
     local color
@@ -117,7 +117,7 @@ function printPretty() {
 
     local message="${*:$OPTIND:1}"
     if [[ -z "${message}" ]]; then
-        echo "Usage: printPretty [-c] [-e] -l <level> <message>"
+        echo "Usage: dot::output::pretty [-c] [-e] -l <level> <message>"
         return 1
     fi
 
@@ -209,11 +209,11 @@ function printPretty() {
     echo -n "${output}"
 }
 
-function termLogo() {
-    find "${ICLOUD}/dot/shell/images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --width="$(( $(terminalWidth) / 3 ))" --border --color-depth=24 --background=dark {}
+function dot::output::logo() {
+    find "${ICLOUD}/dot/shell/images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --width="$(( $(dot::output::width) / 3 ))" --border --color-depth=24 --background=dark {}
 }
 
-function termImage () {
+function dot::output::image () {
     local image="${1}"
 
     if ! command -v kitty &> /dev/null; then
@@ -222,7 +222,7 @@ function termImage () {
     fi
 
     if [[ -z "${image}" ]]; then
-        echo "Usage: termImage <image_path>"
+        echo "Usage: dot::output::image <image_path>"
         return 1
     fi
 
@@ -241,7 +241,7 @@ function termImage () {
 }
 
 
-function termRandomFont() {
+function dot::output::random-font() {
 	fonts=(
 		"cyberlarge"
 		"elite"
@@ -255,18 +255,18 @@ function termRandomFont() {
 	echo "${fonts[$((RANDOM % $#fonts+1 ))]}"
 }
 
-function randomQuote() {
-	randomQuote="$(
+function dot::output::quote() {
+	dot::output::quote="$(
 		yq '.[] | .text + " -- " + .author | select(length < 45)' "${DOT_DIRECTORY}/data/quotes.yaml" | shuf -n1
 	)"
-	echo "${randomQuote}"
+	echo "${dot::output::quote}"
 }
 
-function termQuote() {
-    command -v figlet &>/dev/null || { randomQuote | lolcat; return 0; }
+function dot::output::term-quote() {
+    command -v figlet &>/dev/null || { dot::output::quote | lolcat; return 0; }
 
     local term_width
-    term_width="$(terminalWidth)"
+    term_width="$(dot::output::width)"
 
     # Resolve vendored font directory
     local figlet_font_dir="${DOT_DIRECTORY}/vendor/figlet-fonts"
@@ -293,7 +293,7 @@ function termQuote() {
 
     # Try fonts from decorative → minimal until one fits within the terminal width
     local preferred_font
-    preferred_font="$(termRandomFont)"
+    preferred_font="$(dot::output::random-font)"
     local fonts=("${preferred_font}" "small" "mini" "term" "banner" "standard")
 
     local font rendered max_line_len
@@ -319,7 +319,7 @@ function termQuote() {
     echo "${quote}" | lolcat
 }
 
-function toFiglet() {
+function dot::output::figlet() {
 	message="${1}"
 	color="${2:-false}"
     echo "$#"
@@ -358,15 +358,15 @@ function toFiglet() {
     fi
 }
 
-function terminalHeight () {
+function dot::output::height () {
 	stty size | cut -d' ' -f1
 }
 
-function terminalWidth () {
+function dot::output::width () {
 	stty size | cut -d' ' -f2
 }
 
-function showcolors256() {
+function dot::output::colors256() {
     local row col blockrow blockcol red green blue
     local showcolor=_showcolor256_${1:-bg}
     local white="\033[1;37m"
@@ -411,7 +411,7 @@ function showcolors256() {
     echo
 }
 
-function _showcolor256_fg() {
+function dot::output::_color256-fg() {
     local code
     code=$(printf %03d "$1")
     echo -ne "\033[38;5;${code}m"
@@ -419,7 +419,7 @@ function _showcolor256_fg() {
     echo -ne "\033[0m"
 }
 
-function _showcolor256_bg() {
+function dot::output::_color256-bg() {
     if (($2 % 2 == 0)); then
         echo -ne "\033[1;37m"
     else

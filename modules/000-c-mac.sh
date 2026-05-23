@@ -4,19 +4,19 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 
 if [[ "${DOT_DISABLE_MAC}" -eq 1 ]]; then
-    dot::skip "mac" "disabled"
+    dot::static::logging::skip "mac" "disabled"
     return
 fi
 
-osCpuCores() {
+dot::mac::cpu-cores() {
     sysctl -n machdep.cpu.core_count
 }
 
-osCpuBrand() {
+dot::mac::cpu-brand() {
     sysctl -n machdep.cpu.brand_string
 }
 

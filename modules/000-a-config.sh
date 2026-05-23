@@ -19,15 +19,15 @@ fi
 export DOT_SHELL_DATA="${_dot_config_path}"
 
 
-getConfig() {
+dot::config::get() {
   yq '.' "${_dot_config_path}" 2>/dev/null
 }
 
-getTheme() {
+dot::config::theme() {
   yq '.theme' "${_dot_config_path}" 2>/dev/null
 }
 
-getCondition() {
+dot::config::condition() {
   local condition="$1"
   local target="$2"
   yq ".conditions.${condition}.${target}" "${_dot_config_path}" 2>/dev/null

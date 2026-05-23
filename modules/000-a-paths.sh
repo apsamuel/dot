@@ -11,10 +11,10 @@
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 
-inPath() {
+dot::paths::in() {
   local path="$1"
   # check if the provided path is in the PATH variable
   [[ ":$PATH:" == *":$path:"* ]] && return 0 || return 1
@@ -47,9 +47,9 @@ PATH="${HOME}/bin:${PATH}"
 #   PATH="${HOME}/devops/scripts:${PATH}"
 # fi
 
-addPath() {
+dot::paths::add() {
   if [[ -z "$1" ]]; then
-    echo "Usage: addPath <path1> <path2> ..."
+    echo "Usage: dot::paths::add <path1> <path2> ..."
     return 1  # return error if no path is provided
   fi
   path_array=(
@@ -67,27 +67,27 @@ addPath() {
     if [ -d "${path}" ]; then
       # check if the path is already in the PATH array
       if [[ "${path_array[*]}" =~ ${path} ]]; then
-        dot::debug "skipping existing path: '${path}'"
+        dot::static::logging::debug "skipping existing path: '${path}'"
         continue  # skip if the path is already in the PATH
       fi
 
       # skip paths that are not executable
       if [[ ! -x "${path}" ]]; then
-        dot::debug "skipping inaccessible path: ${path}"
+        dot::static::logging::debug "skipping inaccessible path: ${path}"
         continue  # skip if the path does not exist
       fi
 
       # skip paths that do not contain any executable files ...
       if [[ -z "$(find "${path}" -maxdepth 1 -type f -executable)" ]]; then
-        dot::debug "skipping path with no executables: ${path}"
+        dot::static::logging::debug "skipping path with no executables: ${path}"
         continue  # skip if the path does not contain any executable files
       fi
 
-      dot::debug "adding path: ${path}"
+      dot::static::logging::debug "adding path: ${path}"
       # add the path to the array
       path_array+=("${path}")
     else
-      dot::debug "skipping non-directory path: ${path}"
+      dot::static::logging::debug "skipping non-directory path: ${path}"
       continue  # skip if the path is not a directory
     fi
 
@@ -99,10 +99,10 @@ addPath() {
 
 }
 
-deletePath() {
+dot::paths::delete() {
   # delete one or more paths from the PATH variable
   if [[ -z "$1" ]]; then
-    echo "Usage: deletePath <path1> <path2> ..."
+    echo "Usage: dot::paths::delete <path1> <path2> ..."
     return 1  # return error if no path is provided
   fi
   new_path_array=()
@@ -112,13 +112,13 @@ deletePath() {
   for path in "${path_array[@]}"; do
     # skip empty paths
     if [[ -z "${path}" ]]; then
-      dot::debug "skipping empty path: '${path}'"
+      dot::static::logging::debug "skipping empty path: '${path}'"
       continue  # skip empty paths
     fi
 
     # check if the path is in the arguments to delete
     if [[ " $* " =~ " ${path} " ]]; then
-      dot::debug "deleting path: ${path}"
+      dot::static::logging::debug "deleting path: ${path}"
       continue  # skip if the path is in the arguments to delete
     fi
 
@@ -133,7 +133,7 @@ deletePath() {
   fi
 }
 
-printPath() {
+dot::paths::print() {
   printf "%s\n" "$(echo "$PATH" | sed -e 's/:/\n/g')"
 }
 

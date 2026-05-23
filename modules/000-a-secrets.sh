@@ -9,10 +9,10 @@ DOT_DEBUG="${DOT_DEBUG:-0}"
 directory=$(dirname "$0")
 library=$(basename "$0")
 
-dot::loading "${library}" "${directory}"
+dot::static::logging::loading "${library}" "${directory}"
 
 
-function __load_secrets () {
+function dot::secrets::_load () {
     local secret_keys=()
     # declare -A secrets
     while IFS=' ' read -r -d ' ' secret_key; do
@@ -34,7 +34,7 @@ function __load_secrets () {
     fi
 }
 
-function loadSecrets () {
+function dot::secrets::load () {
     local secret_keys=()
     # declare -A secrets
     while IFS=' ' read -r -d ' ' secret_key; do
@@ -56,7 +56,7 @@ function loadSecrets () {
     fi
 }
 
-function __mask_secrets__ () {
+function dot::secrets::_mask () {
     input_data=("${@}")
     safe_word="**************"
     blocked_words=(
@@ -118,7 +118,7 @@ function __mask_secrets__ () {
     rm -f "$TMPDIR"/.secrets
 }
 
-function maskSecrets () {
+function dot::secrets::mask () {
     input_data=("${@}")
     safe_word="**************"
     blocked_words=(
@@ -180,7 +180,7 @@ function maskSecrets () {
     rm -f "$TMPDIR"/.secrets
 }
 
-function reloadOptions () {
+function dot::secrets::reload-options () {
     local _zsh_cfg="${ICLOUD}/dot/shell/zsh/zsh.yaml"
     if [[ ! -f "${_zsh_cfg}" ]]; then
         _zsh_cfg="${DOT_SHELL_DATA:-${HOME}/.dot/data/zsh.yaml}"
@@ -191,10 +191,10 @@ function reloadOptions () {
         )
     )
     for option in "${zsh_options[@]}"; do
-        dot::debug "setting option: ${option}"
+        dot::static::logging::debug "setting option: ${option}"
 
         setopt "${option}" 2>/dev/null || {
-            dot::warn "Failed to set option: ${option}"
+            dot::static::logging::warn "Failed to set option: ${option}"
             continue
         }
     done
