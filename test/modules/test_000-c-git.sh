@@ -51,35 +51,35 @@ it "rebase branch default is 0" test_rebase_branch_flag
 describe "000-c-git.sh: functions exist"
 
 test_gh_auth_exists() {
-    typeset -f ghAuth > /dev/null 2>&1
+    typeset -f dot::git::auth > /dev/null 2>&1
     assert_eq "0" "$?"
 }
 
 test_git_config_exists() {
-    typeset -f gitConfig > /dev/null 2>&1
+    typeset -f dot::git::config > /dev/null 2>&1
     assert_eq "0" "$?"
 }
 
 test_git_changes_exists() {
-    typeset -f gitChanges > /dev/null 2>&1
+    typeset -f dot::git::changes > /dev/null 2>&1
     assert_eq "0" "$?"
 }
 
 test_git_diff_exists() {
-    typeset -f gitDiff > /dev/null 2>&1
+    typeset -f dot::git::diff > /dev/null 2>&1
     assert_eq "0" "$?"
 }
 
 test_git_log_exists() {
-    typeset -f gitLog > /dev/null 2>&1
+    typeset -f dot::git::log > /dev/null 2>&1
     assert_eq "0" "$?"
 }
 
-it "ghAuth is defined" test_gh_auth_exists
-it "gitConfig is defined" test_git_config_exists
-it "gitChanges is defined" test_git_changes_exists
-it "gitDiff is defined" test_git_diff_exists
-it "gitLog is defined" test_git_log_exists
+it "dot::git::auth is defined" test_gh_auth_exists
+it "dot::git::config is defined" test_git_config_exists
+it "dot::git::changes is defined" test_git_changes_exists
+it "dot::git::diff is defined" test_git_diff_exists
+it "dot::git::log is defined" test_git_log_exists
 
 describe "000-c-git.sh: DOT_DISABLE_GIT guard"
 
@@ -90,15 +90,15 @@ test_disable_git_guard() {
 
 it "DOT_DISABLE_GIT guard is recognized" test_disable_git_guard
 
-describe "000-c-git.sh: ghAuth with mock"
+describe "000-c-git.sh: dot::git::auth with mock"
 
 test_gh_auth_calls_gh() {
     mock_reset_calls
     export GH_TOKEN="test-token"
-    ghAuth > /dev/null 2>&1
+    dot::git::auth > /dev/null 2>&1
     assert_called "gh"
 }
 
-it "ghAuth invokes gh CLI" test_gh_auth_calls_gh
+it "dot::git::auth invokes gh CLI" test_gh_auth_calls_gh
 
 tap_summary

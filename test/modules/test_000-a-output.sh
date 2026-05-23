@@ -15,72 +15,72 @@ source_module "000-a-output.sh"
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe "000-a-output.sh: printLevels()"
+describe "000-a-output.sh: dot::output::levels()"
 
 test_print_levels_returns_all() {
     local result=""
-    result="$(printLevels)"
+    result="$(dot::output::levels)"
     assert_contains "${result}" "info"
     assert_contains "${result}" "error"
     assert_contains "${result}" "debug"
 }
 
-it "printLevels returns info, error, debug" test_print_levels_returns_all
+it "dot::output::levels returns info, error, debug" test_print_levels_returns_all
 
-describe "000-a-output.sh: printLevel()"
+describe "000-a-output.sh: dot::output::level()"
 
 test_print_level_info() {
     local result=""
-    result="$(printLevel info)"
+    result="$(dot::output::level info)"
     assert_contains "${result}" "info"
 }
 
 test_print_level_error() {
     local result=""
-    result="$(printLevel error)"
+    result="$(dot::output::level error)"
     assert_contains "${result}" "error"
 }
 
 test_print_level_invalid() {
-    printLevel "nonexistent" > /dev/null 2>&1
+    dot::output::level "nonexistent" > /dev/null 2>&1
     local rc=$?
     assert_eq "1" "${rc}"
 }
 
 test_print_level_no_args() {
-    printLevel > /dev/null 2>&1
+    dot::output::level > /dev/null 2>&1
     local rc=$?
     assert_eq "1" "${rc}"
 }
 
-it "printLevel info contains 'info'" test_print_level_info
-it "printLevel error contains 'error'" test_print_level_error
-it "printLevel rejects invalid level" test_print_level_invalid
-it "printLevel fails with no arguments" test_print_level_no_args
+it "dot::output::level info contains 'info'" test_print_level_info
+it "dot::output::level error contains 'error'" test_print_level_error
+it "dot::output::level rejects invalid level" test_print_level_invalid
+it "dot::output::level fails with no arguments" test_print_level_no_args
 
-describe "000-a-output.sh: printPretty()"
+describe "000-a-output.sh: dot::output::pretty()"
 
 test_print_pretty_basic() {
     local result=""
-    result="$(printPretty "hello world" 2>/dev/null)"
+    result="$(dot::output::pretty "hello world" 2>/dev/null)"
     assert_contains "${result}" "hello world"
 }
 
 test_print_pretty_no_message_fails() {
-    printPretty -l info > /dev/null 2>&1
+    dot::output::pretty -l info > /dev/null 2>&1
     local rc=$?
     assert_eq "1" "${rc}"
 }
 
 test_print_pretty_with_level() {
     local result=""
-    result="$(printPretty -l error "something failed" 2>/dev/null)"
+    result="$(dot::output::pretty -l error "something failed" 2>/dev/null)"
     assert_contains "${result}" "something failed"
 }
 
-it "printPretty includes the message" test_print_pretty_basic
-it "printPretty fails with no message" test_print_pretty_no_message_fails
-it "printPretty -l error includes message" test_print_pretty_with_level
+it "dot::output::pretty includes the message" test_print_pretty_basic
+it "dot::output::pretty fails with no message" test_print_pretty_no_message_fails
+it "dot::output::pretty -l error includes message" test_print_pretty_with_level
 
 describe "000-a-output.sh: DOT_DISABLE_OUTPUTS guard"
 

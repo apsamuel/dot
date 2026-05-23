@@ -12,32 +12,32 @@ source_module "000-a-secrets.sh"
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe "000-a-secrets.sh: loadSecrets()"
+describe "000-a-secrets.sh: dot::secrets::load()"
 
 test_load_secrets_calls_jq() {
     mock_reset_calls
-    loadSecrets 2>/dev/null || true
+    dot::secrets::load 2>/dev/null || true
     assert_called "jq"
 }
 
 test_load_secrets_function_exists() {
-    typeset -f loadSecrets > /dev/null 2>&1
+    typeset -f dot::secrets::load > /dev/null 2>&1
     local rc=$?
     assert_eq "0" "${rc}"
 }
 
-it "loadSecrets calls jq" test_load_secrets_calls_jq
-it "loadSecrets function is defined" test_load_secrets_function_exists
+it "dot::secrets::load calls jq" test_load_secrets_calls_jq
+it "dot::secrets::load function is defined" test_load_secrets_function_exists
 
-describe "000-a-secrets.sh: __load_secrets()"
+describe "000-a-secrets.sh: dot::secrets::_load()"
 
 test_private_load_secrets_exists() {
-    typeset -f __load_secrets > /dev/null 2>&1
+    typeset -f dot::secrets::_load > /dev/null 2>&1
     local rc=$?
     assert_eq "0" "${rc}"
 }
 
-it "__load_secrets function is defined" test_private_load_secrets_exists
+it "dot::secrets::_load function is defined" test_private_load_secrets_exists
 
 describe "000-a-secrets.sh: maskSecrets()"
 
@@ -49,21 +49,21 @@ test_mask_secrets_exists() {
 
 it "maskSecrets function is defined" test_mask_secrets_exists
 
-describe "000-a-secrets.sh: reloadOptions()"
+describe "000-a-secrets.sh: dot::secrets::reload-options()"
 
 test_reload_options_exists() {
-    typeset -f reloadOptions > /dev/null 2>&1
+    typeset -f dot::secrets::reload-options > /dev/null 2>&1
     local rc=$?
     assert_eq "0" "${rc}"
 }
 
 test_reload_options_calls_yq() {
     mock_reset_calls
-    reloadOptions 2>/dev/null || true
+    dot::secrets::reload-options 2>/dev/null || true
     assert_called "yq"
 }
 
-it "reloadOptions function is defined" test_reload_options_exists
-it "reloadOptions calls yq" test_reload_options_calls_yq
+it "dot::secrets::reload-options function is defined" test_reload_options_exists
+it "dot::secrets::reload-options calls yq" test_reload_options_calls_yq
 
 tap_summary

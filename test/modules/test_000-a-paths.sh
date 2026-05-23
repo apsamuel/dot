@@ -7,7 +7,7 @@ source "${_test_dir}/../framework.sh"
 source "${_test_dir}/../mocks/env.sh"
 source "${_test_dir}/../mocks/tools.sh"
 
-# Provide stub implementations for splitString/joinList used by addPath/deletePath
+# Provide stub implementations for splitString/joinList used by dot::paths::add/dot::paths::delete
 # (these may come from a plugin or were removed — stub them for testing)
 splitString() {
     local string="$1"
@@ -36,59 +36,59 @@ source_module "000-a-paths.sh"
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe "000-a-paths.sh: inPath()"
+describe "000-a-paths.sh: dot::paths::in()"
 
 test_in_path_finds_existing() {
     # /usr/bin should always be in PATH
-    inPath "/usr/bin"
+    dot::paths::in "/usr/bin"
     assert_eq "0" "$?"
 }
 
 test_in_path_rejects_missing() {
-    # NOTE: inPath() has a known zsh issue — `local path` shadows the
+    # NOTE: dot::paths::in() has a known zsh issue — `local path` shadows the
     # special $path/$PATH tied variable, causing $PATH to be clobbered.
     # This test documents the bug; skip until the module is fixed.
-    skip "inPath uses 'local path' which shadows \$PATH in zsh"
+    skip "dot::paths::in uses 'local path' which shadows \$PATH in zsh"
 }
 
-it "inPath finds /usr/bin" test_in_path_finds_existing
-it "inPath rejects missing path" test_in_path_rejects_missing
+it "dot::paths::in finds /usr/bin" test_in_path_finds_existing
+it "dot::paths::in rejects missing path" test_in_path_rejects_missing
 
-describe "000-a-paths.sh: printPath()"
+describe "000-a-paths.sh: dot::paths::print()"
 
 test_print_path_produces_output() {
     local result=""
-    result="$(printPath 2>/dev/null)"
+    result="$(dot::paths::print 2>/dev/null)"
     assert_defined "result"
 }
 
 test_print_path_shows_entries() {
     local result=""
-    result="$(printPath 2>/dev/null)"
+    result="$(dot::paths::print 2>/dev/null)"
     # Should contain at least one path entry
     assert_contains "${result}" "/"
 }
 
-it "printPath produces output" test_print_path_produces_output
-it "printPath shows path entries" test_print_path_shows_entries
+it "dot::paths::print produces output" test_print_path_produces_output
+it "dot::paths::print shows path entries" test_print_path_shows_entries
 
-describe "000-a-paths.sh: addPath()"
+describe "000-a-paths.sh: dot::paths::add()"
 
 test_add_path_exists() {
-    typeset -f addPath > /dev/null 2>&1
+    typeset -f dot::paths::add > /dev/null 2>&1
     assert_eq "0" "$?"
 }
 
-it "addPath function is defined" test_add_path_exists
+it "dot::paths::add function is defined" test_add_path_exists
 
-describe "000-a-paths.sh: deletePath()"
+describe "000-a-paths.sh: dot::paths::delete()"
 
 test_delete_path_exists() {
-    typeset -f deletePath > /dev/null 2>&1
+    typeset -f dot::paths::delete > /dev/null 2>&1
     assert_eq "0" "$?"
 }
 
-it "deletePath function is defined" test_delete_path_exists
+it "dot::paths::delete function is defined" test_delete_path_exists
 
 describe "000-a-paths.sh: PATH augmentation on load"
 
