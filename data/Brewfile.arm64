@@ -4,6 +4,7 @@ tap "jandedobbeleer/oh-my-posh"
 tap "kreuzwerker/taps"
 tap "majd/repo"
 tap "mongodb/brew"
+tap "slp/krunkit"
 tap "twilio/brew"
 tap "weaveworks/tap"
 # Run your GitHub Actions locally
@@ -52,12 +53,32 @@ brew "bind"
 brew "blueutil"
 # Vector graphics library with cross-device output support
 brew "cairo"
+# Insanely fast image printing in your terminal
+brew "catimg"
 # Tool to obtain certs from Let's Encrypt and autoenable HTTPS
 brew "certbot"
 # Interpreted, interactive, object-oriented programming language
 brew "python@3.13"
 # Validate CloudFormation templates against the CloudFormation spec
 brew "cfn-lint"
+# Toolkit for image loading and pixel buffer manipulation
+brew "gdk-pixbuf"
+# OpenType text shaping engine
+brew "harfbuzz"
+# Color management engine supporting ICC profiles
+brew "little-cms2"
+# New file format for still image compression
+brew "jpeg-xl"
+# Library for encoding and decoding .avif files
+brew "libavif"
+# Framework for layout and rendering of i18n text
+brew "pango"
+# Library to render SVG files using Cairo
+brew "librsvg"
+# Image format providing lossless and lossy compression for web images
+brew "webp"
+# Versatile and fast Unicode/ASCII/ANSI graphics renderer
+brew "chafa"
 # Control Google Chrome from the command-line
 brew "chrome-cli"
 # Statistics utility to count lines of code
@@ -74,8 +95,6 @@ brew "coreutils"
 brew "cowsay"
 # Top-like interface for container metrics
 brew "ctop"
-# Color management engine supporting ICC profiles
-brew "little-cms2"
 # Secure runtime for JavaScript and TypeScript
 brew "deno"
 # Dictionary Server Protocol (RFC2229) client
@@ -118,26 +137,18 @@ brew "fortune"
 brew "fpp"
 # Library for FreeImage, a dependency-free graphics library
 brew "freeimage"
+# Library to simplify the interaction with PKCS#11
+brew "pkcs11-helper"
+# X11 implementation of the Remote Desktop Protocol (RDP)
+brew "freerdp"
 # GNU awk utility
 brew "gawk"
-# New file format for still image compression
-brew "jpeg-xl"
-# Library for encoding and decoding .avif files
-brew "libavif"
-# Image format providing lossless and lossy compression for web images
-brew "webp"
-# Toolkit for image loading and pixel buffer manipulation
-brew "gdk-pixbuf"
 # GitHub command-line tool
 brew "gh"
-# OpenType text shaping engine
-brew "harfbuzz"
 # Library for JPEG-2000 image manipulation
 brew "openjpeg"
 # Image processing and image analysis library
 brew "leptonica"
-# Framework for layout and rendering of i18n text
-brew "pango"
 # OCR (Optical Character Recognition) engine
 brew "tesseract"
 # Interpreter for PostScript and PDF
@@ -152,14 +163,16 @@ brew "git-filter-repo"
 brew "git-lfs"
 # Multi-platform library for OpenGL applications
 brew "glfw"
+# Render markdown on the CLI
+brew "glow"
 # OpenGL and OpenGL ES reference compiler for shading languages
 brew "glslang"
 # GNU implementation of the famous stream editor
 brew "gnu-sed"
-# Validating, recursive, caching DNS resolver
-brew "unbound"
 # GNU Transport Layer Security (TLS) Library
 brew "gnutls"
+# Validating, recursive, caching DNS resolver
+brew "unbound"
 # Command-driven, interactive function plotting
 brew "gnuplot"
 # Open source programming language to build simple/reliable/efficient software
@@ -170,10 +183,10 @@ brew "pkgconf"
 brew "gobject-introspection"
 # Terminal based graphical activity monitor inspired by gtop and vtop
 brew "gotop"
+# ISO/IEC 23008-12:2017 HEIF file format decoder and encoder
+brew "libheif"
 # Image manipulation
 brew "netpbm"
-# Library to render SVG files using Cairo
-brew "librsvg"
 # Graph visualization software from AT&T and Bell Labs
 brew "graphviz"
 # GNU grep, egrep and fgrep
@@ -198,8 +211,6 @@ brew "howdoi"
 brew "htop"
 # User-friendly cURL replacement (command-line HTTP client)
 brew "httpie"
-# ISO/IEC 23008-12:2017 HEIF file format decoder and encoder
-brew "libheif"
 # Tools and libraries to manipulate images in select formats
 brew "imagemagick"
 # Calculate various network masks, etc. from a given IP address
@@ -292,8 +303,6 @@ brew "node@22"
 brew "ollama"
 # Development kit for the Java programming language
 brew "openjdk@11"
-# Library to simplify the interaction with PKCS#11
-brew "pkcs11-helper"
 # SSL/TLS VPN implementing OSI layer 2 or 3 secure network extension
 brew "openvpn"
 # Swiss-army knife of markup format conversion
@@ -354,6 +363,8 @@ brew "rlwrap"
 brew "rtmpdump"
 # Rust toolchain installer
 brew "rustup"
+# SMB/CIFS file, print, and login server for UNIX
+brew "samba"
 # Database of common MIME types
 brew "shared-mime-info"
 # Static analysis and lint tool, for (ba)sh scripts
@@ -368,6 +379,8 @@ brew "speedtest-cli"
 brew "srt"
 # Tail multiple Kubernetes pods & their containers
 brew "stern"
+# Software TPM Emulator based on libtpms
+brew "swtpm"
 # CLI for generating a Software Bill of Materials from container images
 brew "syft"
 # Traceroute implementation using TCP packets
@@ -386,6 +399,8 @@ brew "the_silver_searcher"
 brew "thefuck"
 # High-performance, platform-neutral implementation of VNC
 brew "tiger-vnc"
+# Terminal image and video viewer
+brew "timg"
 # Simplified and community-driven man pages
 brew "tldr"
 # Terminal multiplexer
@@ -400,6 +415,8 @@ brew "trufflehog", link: false
 brew "urlview"
 # Extremely fast Python package installer and resolver, written in Rust
 brew "uv"
+# Simple terminal image viewer written in Rust
+brew "viu"
 # Pager/text based browser
 brew "w3m"
 # Executes a program periodically, showing output fullscreen
