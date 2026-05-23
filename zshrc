@@ -268,7 +268,7 @@ export plugins=(
     )
 )
 
-export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#E0F40A,bg=black,bold,underline"
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#49F904,bg=black,bold,underline"
 
 . "$ZSH"/oh-my-zsh.sh
 
