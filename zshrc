@@ -141,27 +141,27 @@ fi
     return 1
 }
 
-# dot.shell command + iCloud/TMUX exports (formerly modules/000-b-dot.sh)
+# dot::static::shell command + iCloud/TMUX exports (formerly modules/000-b-dot.sh)
 . "${DOT_MODULES}"/static/dot.sh || {
-    echo "Error: unable to load dot.shell"
+    echo "Error: unable to load dot::static::shell"
     return 1
 }
 
 # declare -a SSH_KEYS
 # prepare files in .ssh directory for the ssh-agent
-# (getSshIdentities is defined in modules/static/foundation.sh)
+# (dot::static::foundation::ssh-identities is defined in modules/static/foundation.sh)
 SSH_KEYS=()
-getSshIdentities --format array --var SSH_KEYS
+dot::static::foundation::ssh-identities --format array --var SSH_KEYS
 export SSH_KEYS
 
 # enable zsh options
-loadZshOptions
+dot::static::foundation::load-zsh-options
 
 # load dot dynamic modules available
-loadModules
+dot::static::foundation::load-modules
 
 if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
-    compileTermInfo
+    dot::foundation::compile-terminfo
 fi
 
 if [[ "${DOT_DEBUG}" -gt 0 ]]; then
@@ -175,13 +175,13 @@ fi
 # (Copilot agent, dumb terminals, automation tasks) where there's no human
 # to enter passphrases or read decorative output.
 if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
-    loadUserSecrets
+    dot::static::foundation::load-user-secrets
 
     if [[ ${DOT_SPLASH_SCREEN} = true && "${DOT_SPLASH_TYPE}" = "quote" ]]; then
-        termQuote
+        dot::output::term-quote
     fi
     if [[ ${DOT_SPLASH_SCREEN} = true && "${DOT_SPLASH_TYPE}" = "ascii" ]]; then
-        termLogo
+        dot::output::logo
     fi
 fi
 
@@ -310,7 +310,7 @@ zle -N create_completion
 
 # Zsh will override CTRL-R & provide its builtin reverse-history-search if this line is not executed here
 # https://github.com/junegunn/fzf/issues/1812
-configureFzf
+dot::terminal::configure-fzf
 
 # calculate total load time and export it as an environment variable for use in the shell
 DOT_INIT_END_TIME=$(date +%s)
