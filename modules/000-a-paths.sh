@@ -13,6 +13,11 @@ library=$(basename "$0")
 
 dot::static::logging::loading "${library}" "${directory}"
 
+# GNU Make 4.4+ from Homebrew (required by dot Makefile .ONESHELL)
+if [[ -d "$(brew --prefix 2>/dev/null)/opt/make/libexec/gnubin" ]]; then
+  PATH="$(brew --prefix)/opt/make/libexec/gnubin:${PATH}"
+fi
+
 
 dot::paths::in() {
   local path="$1"

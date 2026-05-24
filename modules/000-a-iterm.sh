@@ -2,6 +2,8 @@
 # 🕵️ ignore shellcheck warnings about source statements
 # shellcheck source=/dev/null
 
+export ITERM2_SQUELCH_MARK=1
+
 # TODO: this is a dependency on the iterm2 shell integration script, which needs to be installed separately.
 # we should either remove this dependency or add it to the bootstrap process
 test -e "${HOME}/.iterm2_shell_integration.zsh" && . "${HOME}/.iterm2_shell_integration.zsh"

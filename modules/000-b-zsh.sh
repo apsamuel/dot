@@ -97,3 +97,20 @@ zstyle ':completion::complete:*' use-cache 1
 # fzf-tab
 # zstyle ':fzf-tab:*' fzf-flags '--height=40%' '--reverse'
 # zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+
+
+# bind keys
+bindkey -M vicmd v edit-command-line
+bindkey '\e[H' beginning-of-line
+bindkey '\e[F' end-of-line
+
+
+alias ls='ls --color=always'
+
+# Opt-in syntax highlighting — use these interactively; never set as defaults
+# because bat-as-cat/less breaks piped automation and pager detection.
+alias ccat='bat --paging=never'   # syntax-highlighted cat (no pager)
+alias cless='bat --paging=always' # syntax-highlighted pager
+
+# zle
+zle -N create_completion

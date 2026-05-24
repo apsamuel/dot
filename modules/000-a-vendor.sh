@@ -18,3 +18,8 @@ if [[ -n "${DOT_ROOT}" && -f "${DOT_ROOT}/vendor/bash-commons/src" ]]; then
     source "${DOT_ROOT}/vendor/bash-commons/src/os.sh"
     source "${DOT_ROOT}/vendor/bash-commons/src/string.sh"
 fi
+
+# The next line updates PATH for the Google Cloud SDK.
+#source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
+# The next line enables shell command completion for gcloud.
+#source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"

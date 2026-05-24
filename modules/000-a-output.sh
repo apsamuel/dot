@@ -242,7 +242,7 @@ function dot::output::image () {
 
 
 function dot::output::random-font() {
-	fonts=(
+	local fonts=(
 		"cyberlarge"
 		"elite"
 		"bloody"
@@ -252,14 +252,15 @@ function dot::output::random-font() {
 		"ascii12"
 		"binary"
 	)
-	echo "${fonts[$((RANDOM % $#fonts+1 ))]}"
+	echo "${fonts[$((RANDOM % ${#fonts[@]} + 1))]}"
 }
 
 function dot::output::quote() {
-	dot::output::quote="$(
+	local _quote
+	_quote="$(
 		yq '.[] | .text + " -- " + .author | select(length < 45)' "${DOT_DIRECTORY}/data/quotes.yaml" | shuf -n1
 	)"
-	echo "${dot::output::quote}"
+	echo "${_quote}"
 }
 
 function dot::output::term-quote() {
@@ -430,4 +431,261 @@ function dot::output::_color256-bg() {
     echo -ne "\033[48;5;${code}m"
     echo -nE " $code "
     echo -ne "\033[0m"
+}
+
+
+function dot::output::image() {
+    # Display an image in the terminal using chafa
+    # Usage: dot::output::image [options] [image]
+    #   image         filename or path (searches data/images by default)
+    #   --format F    chafa format (default: symbols)
+    #   --symbols S   symbol set (default: block+border)
+    #   --size WxH    output size, e.g. 80x24 (default: auto)
+    #   --colors N    color mode: 2/8/16/256/full (default: full)
+    #   --list        list available images in data/images
+    #   --random      display a random image from data/images
+    #   --help|-h     show this help
+
+    command -v chafa &>/dev/null || {
+        echo "dot::output::image: chafa not found (brew install chafa)" >&2
+        return 1
+    }
+
+    local format="symbols"
+    local symbols="block+border"
+    local size=""
+    local colors=""
+    local image=""
+    local image_dir="${DOT_DIRECTORY}/data/images"
+    local list_mode=0
+    local random_mode=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --format)  format="$2"; shift 2 ;;
+            --symbols) symbols="$2"; shift 2 ;;
+            --size)    size="$2"; shift 2 ;;
+            --colors)  colors="$2"; shift 2 ;;
+            --list)    list_mode=1; shift ;;
+            --random)  random_mode=1; shift ;;
+            --help|-h)
+                echo "Usage: dot::output::image [options] [image]"
+                echo ""
+                echo "Options:"
+                echo "  --format F    chafa format (default: symbols)"
+                echo "  --symbols S   symbol set (default: block+border)"
+                echo "  --size WxH    output size, e.g. 80x24"
+                echo "  --colors N    color mode: 2/8/16/256/full (default: full)"
+                echo "  --list        list available images in data/images"
+                echo "  --random      display a random image"
+                echo "  --help|-h     show this help"
+                echo ""
+                echo "If image is a bare filename, it is resolved from:"
+                echo "  ${image_dir}"
+                return 0 ;;
+            -*)
+                echo "dot::output::image: unknown option: $1" >&2
+                return 1 ;;
+            *)  image="$1"; shift ;;
+        esac
+    done
+
+    # --list mode
+    if [[ "${list_mode}" -eq 1 ]]; then
+        if [[ -d "${image_dir}" ]]; then
+            find "${image_dir}" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.tiff' \) -exec basename {} \; | sort
+        else
+            echo "dot::output::image: image directory not found: ${image_dir}" >&2
+            return 1
+        fi
+        return 0
+    fi
+
+    # --random mode
+    if [[ "${random_mode}" -eq 1 ]]; then
+        if [[ ! -d "${image_dir}" ]]; then
+            echo "dot::output::image: image directory not found: ${image_dir}" >&2
+            return 1
+        fi
+        image="$(find "${image_dir}" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.tiff' \) | shuf -n1)"
+        if [[ -z "${image}" ]]; then
+            echo "dot::output::image: no images found in ${image_dir}" >&2
+            return 1
+        fi
+    fi
+
+    # Resolve image path
+    if [[ -z "${image}" ]]; then
+        echo "dot::output::image: no image specified (use --help for usage)" >&2
+        return 1
+    fi
+
+    # If not an absolute/relative path with directory component, search data/images
+    if [[ "${image}" != */* && ! -f "${image}" ]]; then
+        if [[ -f "${image_dir}/${image}" ]]; then
+            image="${image_dir}/${image}"
+        else
+            echo "dot::output::image: file not found: ${image}" >&2
+            echo "  searched: ${image_dir}/" >&2
+            return 1
+        fi
+    fi
+
+    if [[ ! -f "${image}" ]]; then
+        echo "dot::output::image: file not found: ${image}" >&2
+        return 1
+    fi
+
+    # Build chafa command
+    local -a cmd=(chafa --format="${format}" --symbols "${symbols}")
+    [[ -n "${size}" ]] && cmd+=(--size "${size}")
+    [[ -n "${colors}" ]] && cmd+=(--colors "${colors}")
+    cmd+=("${image}")
+
+    "${cmd[@]}"
+}
+
+
+function dot::output::splash-info() {
+    # Render a compact system info block (4-5 lines, colorized)
+    local cyan="\033[0;36m"
+    local green="\033[0;32m"
+    local yellow="\033[0;33m"
+    local magenta="\033[0;35m"
+    local dim="\033[2m"
+    local reset="\033[0m"
+
+    # Line 1: user@host · shell version
+    local shell_version="${ZSH_VERSION:-${BASH_VERSION:-unknown}}"
+    local shell_name="zsh"
+    [[ -n "${BASH_VERSION}" ]] && shell_name="bash"
+    printf "  ${cyan}%s${dim}@${cyan}%s${reset} · ${green}%s %s${reset}\n" \
+        "${USER}" "$(hostname -s)" "${shell_name}" "${shell_version}"
+
+    # Line 2: uptime · load average
+    local uptime_str=""
+    if [[ -f /proc/uptime ]]; then
+        local _secs
+        _secs="$(cut -d' ' -f1 /proc/uptime | cut -d. -f1)"
+        local _days=$(( _secs / 86400 ))
+        local _hours=$(( (_secs % 86400) / 3600 ))
+        local _mins=$(( (_secs % 3600) / 60 ))
+        uptime_str="${_days}d ${_hours}h ${_mins}m"
+    else
+        uptime_str="$(uptime | sed 's/.*up *//' | sed 's/,.*//' | xargs)"
+    fi
+    local load_str=""
+    load_str="$(uptime | awk -F'load averages?: ' '{print $2}' | cut -d, -f1 | xargs)"
+    printf "  ${yellow}↑ %s${reset} · ${yellow}load %s${reset}\n" \
+        "${uptime_str}" "${load_str}"
+
+    # Line 3: tmux sessions (if tmux available)
+    if command -v tmux &>/dev/null; then
+        local tmux_count=0
+        tmux_count="$(tmux ls 2>/dev/null | wc -l | xargs)"
+        if [[ "${tmux_count}" -gt 0 ]]; then
+            local tmux_names=""
+            tmux_names="$(tmux ls 2>/dev/null | cut -d: -f1 | paste -sd ',' - | sed 's/,/, /g')"
+            printf "  ${magenta}tmux${reset} ${dim}(%s):${reset} %s\n" \
+                "${tmux_count}" "${tmux_names}"
+        else
+            printf "  ${magenta}tmux${reset} ${dim}(no active sessions)${reset}\n"
+        fi
+    fi
+
+    # Line 4: git branch + repo (if in a repo)
+    if git rev-parse --is-inside-work-tree &>/dev/null 2>&1; then
+        local repo_name=""
+        repo_name="$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")"
+        local branch=""
+        branch="$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)"
+        printf "  ${green}⎇ %s${reset} ${dim}(%s)${reset}\n" "${branch}" "${repo_name}"
+    fi
+}
+
+
+function dot::output::splash() {
+    # Terminal splash screen: chafa image (top) + system info + figlet quote (bottom)
+    # Usage: dot::output::splash [--no-image] [--no-quote] [--no-info]
+    #
+    # Env vars:
+    #   DOT_SPLASH_IMAGE_EXCLUDE  comma-separated extensions to skip (default: "gif")
+
+    local show_image=1
+    local show_info=1
+    local show_quote=1
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --no-image) show_image=0; shift ;;
+            --no-quote) show_quote=0; shift ;;
+            --no-info)  show_info=0; shift ;;
+            --help|-h)
+                echo "Usage: dot::output::splash [--no-image] [--no-quote] [--no-info]"
+                echo ""
+                echo "Display a terminal splash screen with:"
+                echo "  • Random image from data/images (via chafa)"
+                echo "  • System info panel (host, uptime, tmux, git)"
+                echo "  • Figlet quote (via term-quote)"
+                echo ""
+                echo "Env vars:"
+                echo "  DOT_SPLASH_IMAGE_EXCLUDE  comma-separated extensions to skip (default: gif)"
+                return 0 ;;
+            *) shift ;;
+        esac
+    done
+
+    local term_width=""
+    term_width="$(dot::output::width)"
+
+    # --- Image ---
+    if [[ "${show_image}" -eq 1 ]]; then
+        if command -v chafa &>/dev/null; then
+            local image_dir="${DOT_DIRECTORY}/data/images"
+            local exclude="${DOT_SPLASH_IMAGE_EXCLUDE:-gif}"
+
+            # Build find exclusion arguments from comma-separated list
+            local -a find_args=("${image_dir}" -type f)
+            find_args+=(\( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.tiff' -o -iname '*.gif' \))
+
+            # Remove excluded extensions from results via grep -v
+            local grep_pattern=""
+            local IFS=','
+            for ext in ${exclude}; do
+                ext="$(echo "${ext}" | xargs)"
+                [[ -n "${ext}" ]] && grep_pattern="${grep_pattern:+${grep_pattern}|}\.${ext}$"
+            done
+            unset IFS
+
+            local selected_image=""
+            if [[ -n "${grep_pattern}" ]]; then
+                selected_image="$(find "${find_args[@]}" 2>/dev/null | grep -ivE "${grep_pattern}" | shuf -n1)"
+            else
+                selected_image="$(find "${find_args[@]}" 2>/dev/null | shuf -n1)"
+            fi
+
+            if [[ -n "${selected_image}" ]]; then
+                local img_height=12
+                # Scale height for very narrow terminals
+                (( term_width < 60 )) && img_height=8
+                (( term_width < 40 )) && img_height=5
+
+                chafa --format=symbols --symbols block+border \
+                    --size "${term_width}x${img_height}" \
+                    "${selected_image}" 2>/dev/null
+                echo ""
+            fi
+        fi
+    fi
+
+    # --- System Info ---
+    if [[ "${show_info}" -eq 1 ]]; then
+        dot::output::splash-info
+        echo ""
+    fi
+
+    # --- Quote ---
+    if [[ "${show_quote}" -eq 1 ]]; then
+        dot::output::term-quote
+    fi
 }
