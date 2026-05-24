@@ -65,7 +65,8 @@ export DOT_MARKDOWN_VAULT="${DOT_MARKDOWN_VAULT:-${HOME}/Library/Mobile Document
 
 # --- shell experience ---
 export DOT_SPLASH_SCREEN="${DOT_SPLASH_SCREEN:-true}"
-export DOT_SPLASH_TYPE="${DOT_SPLASH_TYPE:-quote}"
+export DOT_SPLASH_TYPE="${DOT_SPLASH_TYPE:-quote}"  # valid: quote, ascii, splash
+export DOT_SPLASH_IMAGE_EXCLUDE="${DOT_SPLASH_IMAGE_EXCLUDE:-gif}"  # comma-separated extensions to skip
 
 # --- legacy aliases (backward compatibility) ---
 export DOT_DIR="${DOT_DIR:-${DOT_ROOT}}"
