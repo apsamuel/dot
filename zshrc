@@ -183,6 +183,9 @@ if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
     if [[ ${DOT_SPLASH_SCREEN} = true && "${DOT_SPLASH_TYPE}" = "ascii" ]]; then
         dot::output::logo
     fi
+    if [[ ${DOT_SPLASH_SCREEN} = true && "${DOT_SPLASH_TYPE}" = "splash" ]]; then
+        dot::output::splash
+    fi
 fi
 
 export VI_MODE_RESET_PROMPT_ON_MODE_CHANGE=true
@@ -268,14 +271,11 @@ export plugins=(
     )
 )
 
-export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#49F904,bg=black,bold,underline"
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#5518A6,bg=black,bold,underline"
 
 . "$ZSH"/oh-my-zsh.sh
 
-# bind keys
-bindkey -M vicmd v edit-command-line
-bindkey '\e[H' beginning-of-line
-bindkey '\e[F' end-of-line
+
 
 # You may need to manually set your language environment
 
@@ -295,18 +295,8 @@ bindkey '\e[F' end-of-line
 # completions defined in $HOME/.completion
 #source "$HOME"/.completion/npm
 
-export ITERM2_SQUELCH_MARK=1
-# The next line updates PATH for the Google Cloud SDK.
-#source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
-# The next line enables shell command completion for gcloud.
-#source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
 
 
-# zle
-zle -N create_completion
-
-
-# export PATH="$PATH:$HOME/.dot/bin"
 
 # Zsh will override CTRL-R & provide its builtin reverse-history-search if this line is not executed here
 # https://github.com/junegunn/fzf/issues/1812
