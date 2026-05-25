@@ -89,6 +89,8 @@ brew "cloud-provider-kind"
 brew "cmake"
 # Console Matrix
 brew "cmatrix"
+# GNU Make 4.4+ (macOS ships 3.81; needed for .ONESHELL in dot Makefile)
+brew "make"
 # GNU File, Shell, and Text utilities
 brew "coreutils"
 # Apjanke's fork of the classic cowsay project

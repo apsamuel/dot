@@ -61,7 +61,7 @@ export DOT_PYTHON_UV_DEFAULT_VERSION="${DOT_PYTHON_UV_DEFAULT_VERSION:-3.13}"
 # export DOT_ANACONDA_ENV="${DOT_ANACONDA_ENV:-base}"
 
 # --- notes / vaults ---
-export DOT_MARKDOWN_VAULT="${DOT_MARKDOWN_VAULT:-${HOME}/Library/Mobile Documents/iCloud~md~obsidian/Documents}"
+export DOT_MARKDOWN_VAULTS="${DOT_MARKDOWN_VAULTS:-${HOME}/Library/Mobile Documents/iCloud~md~obsidian/Documents}"
 
 # --- shell experience ---
 export DOT_SPLASH_SCREEN="${DOT_SPLASH_SCREEN:-true}"
