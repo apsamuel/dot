@@ -527,7 +527,7 @@ tmux: ## Vendor dispatch: make tmux <command> [plugin <action>]
 # ══════════════════════════════════════════════════════════════════════════════
 
 doctor: ## Non-mutating health check: deps, symlinks, submodules, vendors
-	$(_BOOT)
+	@$(_BOOT)
 	fails=0
 	echo ""
 	say_step "dot doctor"
@@ -573,8 +573,8 @@ doctor: ## Non-mutating health check: deps, symlinks, submodules, vendors
 		mod_path="$${mod_path%% (*}"
 		mod_path="$${mod_path## }"
 		case "$$prefix" in
-			-) say_err "$$mod_path — not initialized"; submod_issues=$$((submod_issues + 1)) ;;
-			+) say_warn "$$mod_path — checked out but SHA differs from index" ;;
+			[-]) say_err "$$mod_path — not initialized"; submod_issues=$$((submod_issues + 1)) ;;
+			[+]) say_warn "$$mod_path — checked out but SHA differs from index" ;;
 		esac
 	done < <(git -C "$(DOT_DIR)" submodule status 2>/dev/null)
 	if [ $$submod_issues -gt 0 ]; then
