@@ -2346,7 +2346,7 @@ EOF
 # Returns:  0 always.
 # -----------------------------------------------------------------------------
 _dot_bootstrap_export_functions () {
-    local fn
+    local fn=""
     local fns=(
         _is_dry dryrun
         _dot_std_opts _dot_require_cmd
@@ -2385,9 +2385,11 @@ _dot_bootstrap_export_functions () {
             declare -F "${fn}" >/dev/null 2>&1 && export -f "${fn}" 2>/dev/null || true
         done
     elif [ -n "${ZSH_VERSION:-}" ]; then
-        for fn in "${fns[@]}"; do
-            typeset -f "${fn}" >/dev/null 2>&1 && typeset -fx "${fn}" 2>/dev/null || true
-        done
+        # zsh does not support exporting functions to child processes;
+        # typeset -fx prints function bodies to stdout without actually
+        # making them available in subshells. Functions defined in the
+        # current session are already usable, so this is a no-op.
+        :
     fi
 }
 
