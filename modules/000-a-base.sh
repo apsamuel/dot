@@ -1,6 +1,10 @@
 #shellcheck shell=bash
 #% description: base variables and functions
 
+directory=$(dirname "$0")
+library=$(basename "$0")
+
+dot::static::logging::loading "${library}" "${directory}"
 # export TERM=xterm-256color
 export MANPATH="/usr/local/man:$MANPATH"
 export HISTSIZE=1000000000
@@ -12,22 +16,16 @@ export GPG_TTY
 export LANG=en_US.UTF-8
 export EDITOR=vim
 
-directory=$(dirname "$0")
-library=$(basename "$0")
 
-dot::static::logging::loading "${library}" "${directory}"
+# ZSH="$HOME/.dot/vendor/oh-my-zsh"
+# ZSH_CUSTOM="$ZSH/custom"
+# ZSH_HISTFILE="$HOME/.zsh_history"
+# ZSH_HISTSIZE=1000000
+# ZSH_SAVEHIST=1000000
 
-
-
-ZSH="$HOME/.dot/vendor/oh-my-zsh"
-ZSH_CUSTOM="$ZSH/custom"
-ZSH_HISTFILE="$HOME/.zsh_history"
-ZSH_HISTSIZE=1000000
-ZSH_SAVEHIST=1000000
-
-HISTFILE="$HOME/.zsh_history"
-HISTSIZE=${ZSH_HISTSIZE}
-SAVEHIST=${ZSH_SAVEHIST}
+# HISTFILE="$HOME/.zsh_history"
+# HISTSIZE=${ZSH_HISTSIZE}
+# SAVEHIST=${ZSH_SAVEHIST}
 
 # iCloud references
 ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
@@ -69,5 +67,5 @@ GIT_RELEASE="$(command git --version | cut -d' ' -f3)"
 # export variables for use in other modules
 export CPU_ARCHITECTURE OPERATING_SYSTEM CPU_BRAND CPU_FEATURES CPU_CORES
 export BASH_RELEASE ZSH_RELEASE GIT_RELEASE
-export ZSH ZSH_CUSTOM ZSH_HISTFILE ZSH_HISTSIZE ZSH_SAVEHIST HISTFILE HISTSIZE SAVEHIST
+# export ZSH ZSH_CUSTOM ZSH_HISTFILE ZSH_HISTSIZE ZSH_SAVEHIST HISTFILE HISTSIZE SAVEHIST
 export XDG_CACHE_HOME XDG_CONFIG_HOME XDG_DATA_HOME

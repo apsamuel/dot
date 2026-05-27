@@ -72,6 +72,19 @@ export DOT_SPLASH_IMAGE_EXCLUDE="${DOT_SPLASH_IMAGE_EXCLUDE:-gif}"  # comma-sepa
 export DOT_DIR="${DOT_DIR:-${DOT_ROOT}}"
 export DOT_LIBS_DIR="${DOT_LIBS_DIR:-${DOT_MODULES}}"
 
+# --- Shell settings ---
+
+HISTSIZE=${ZSH_HISTSIZE}
+ZSH_HISTSIZE=1000000
+ZSH_SAVEHIST=1000000
+SAVEHIST=${ZSH_SAVEHIST}
+ZSH="$HOME/.dot/vendor/oh-my-zsh"
+export ZSH_CUSTOM="$ZSH/custom"
+export HISTFILE="$HOME/.zsh_history"
+export ZSH_HISTFILE="$HOME/.zsh_history"
+export ZSH ZSH_HISTSIZE ZSH_SAVEHIST SAVEHIST HISTFILE HISTSIZE
+
+
 # --- cloud / data paths ---
 export DOT_CLOUD_DIR="${DOT_CLOUD_DIR:-${HOME}/Library/Mobile Documents/com~apple~CloudDocs/dot}"
 export DOT_SHELL_DATA="${DOT_SHELL_DATA:-${DOT_ROOT}/data/zsh.yaml}"
