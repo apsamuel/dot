@@ -98,6 +98,7 @@ endif
 # ── Phony declarations ────────────────────────────────────────────────────────
 .PHONY: help \
         preflight init-submodules \
+        brewfile brewfile-check \
         check config \
         vim omz tmux \
         dot-bootstrap \
@@ -218,6 +219,21 @@ preflight: ## Preflight checks (arch, os, tools)
 init-submodules: ## Initialize git submodules
 	$(_BOOT)
 	init_submodules
+
+brewfile: ## Regenerate data/Brewfile + data/Brewfile.cask from .dependencies.yml
+	uv run "$(DOT_DIR)/bin/generate-brewfile.py" \
+		--manifest "$(DOT_DIR)/.dependencies.yml" \
+		--output "$(DOT_DIR)/data/Brewfile" \
+		--cask-output "$(DOT_DIR)/data/Brewfile.cask" \
+		--skip-brew-validate
+
+brewfile-check: ## CI: verify Brewfiles match .dependencies.yml
+	uv run "$(DOT_DIR)/bin/generate-brewfile.py" \
+		--manifest "$(DOT_DIR)/.dependencies.yml" \
+		--output "$(DOT_DIR)/data/Brewfile" \
+		--cask-output "$(DOT_DIR)/data/Brewfile.cask" \
+		--check \
+		--skip-brew-validate
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Check dispatch — make check <command>
