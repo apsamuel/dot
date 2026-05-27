@@ -1,0 +1,1170 @@
+version: 1
+metadata:
+  generated_by: bin/generate-brewfile.py
+  output_file: data/Brewfile
+  cask_output_file: data/Brewfile.cask
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tier Reference:
+#   0 = bootstrap essentials (required for dot to function)
+#   1 = language toolchains (needed for dev workflows)
+#   2 = daily-use CLI tools (quality-of-life, plugins)
+#   3 = domain-specific modules (SRE, A/V, VM, etc.)
+#   4 = vendor framework runtime (macOS system tools, not installable via brew)
+#
+# Category Reference:
+#   shell, pkg, data, python, node, rust, java, apple, tui, output, net,
+#   vcs, env, k8s, container, sre, av, vm, git, nav, util, iac, js, term
+# ─────────────────────────────────────────────────────────────────────────────
+
+entries:
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Taps
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - type: tap
+    name: fastly/tap
+    required: false
+    description: Fastly CLI tap
+    category: net
+    tier: 3
+
+  - type: tap
+    name: hashicorp/tap
+    required: false
+    description: HashiCorp tools (packer, terraform)
+    category: sre
+    tier: 3
+
+  - type: tap
+    name: jandedobbeleer/oh-my-posh
+    required: false
+    description: Oh My Posh prompt theme engine
+    category: shell
+    tier: 2
+
+  - type: tap
+    name: kreuzwerker/taps
+    required: false
+    description: M1 terraform provider helper
+    category: sre
+    tier: 3
+
+  - type: tap
+    name: majd/repo
+    required: false
+    description: Majd repo tap
+    category: util
+    tier: 3
+
+  - type: tap
+    name: mongodb/brew
+    required: false
+    description: MongoDB tools
+    category: data
+    tier: 3
+
+  - type: tap
+    name: slp/krunkit
+    required: false
+    description: Lightweight VMs with libkrun
+    category: vm
+    tier: 3
+
+  - type: tap
+    name: twilio/brew
+    required: false
+    description: Twilio CLI
+    category: net
+    tier: 3
+
+  - type: tap
+    name: weaveworks/tap
+    required: false
+    description: Weaveworks Kubernetes tools
+    category: k8s
+    tier: 3
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Tier 0 — Bootstrap Essentials
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - type: brew
+    name: bash
+    required: true
+    description: Bourne-Again SHell, a UNIX command interpreter
+    category: shell
+    tier: 0
+    evidence: scripts/dot-bootstrap.sh:1
+
+  - type: brew
+    name: zsh
+    required: true
+    description: UNIX shell (command interpreter)
+    category: shell
+    tier: 0
+    evidence: zshrc:1
+
+  - type: brew
+    name: git
+    required: true
+    description: Distributed revision control system
+    category: vcs
+    tier: 0
+    evidence: scripts/dot-submodule-sync.sh:1
+
+  - type: brew
+    name: jq
+    required: true
+    description: Lightweight and flexible command-line JSON processor
+    category: data
+    tier: 0
+    evidence: modules/000-a-base.sh:1
+
+  - type: brew
+    name: yq
+    required: true
+    description: Process YAML, JSON, XML, CSV and properties documents from the CLI
+    category: data
+    tier: 0
+    evidence: scripts/dot-bootstrap.sh:555
+
+  - type: brew
+    name: tmux
+    required: true
+    description: Terminal multiplexer
+    category: tui
+    tier: 0
+    evidence: modules/001-a-tmux.sh:1
+
+  - type: brew
+    name: make
+    required: true
+    description: GNU Make 4.4+ (macOS ships 3.81; needed for .ONESHELL in dot Makefile)
+    category: pkg
+    tier: 0
+    evidence: Makefile:34
+
+  - type: brew
+    name: coreutils
+    required: true
+    description: GNU File, Shell, and Text utilities
+    category: util
+    tier: 0
+    evidence: modules/000-a-paths.sh:1
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Tier 1 — Language Toolchains
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - type: brew
+    name: uv
+    required: false
+    description: Extremely fast Python package installer and resolver, written in Rust
+    category: python
+    tier: 1
+    evidence: scripts/dot-bootstrap.sh:673
+
+  - type: brew
+    name: n
+    required: false
+    description: Node version management
+    category: node
+    tier: 1
+    evidence: scripts/dot-bootstrap.sh:2118
+
+  - type: brew
+    name: node
+    required: false
+    description: Open-source, cross-platform JavaScript runtime environment
+    category: node
+    tier: 1
+    evidence: data/zsh.yaml:17
+
+  - type: brew
+    name: rustup
+    required: false
+    description: Rust toolchain installer
+    category: rust
+    tier: 1
+    evidence: turtle/Cargo.toml:1
+
+  - type: brew
+    name: jenv
+    required: false
+    description: Manage your Java environment
+    category: java
+    tier: 1
+    evidence: modules/001-z-java.sh:1
+
+  - type: brew
+    name: openjdk
+    required: false
+    description: Development kit for the Java programming language
+    category: java
+    tier: 1
+
+  - type: brew
+    name: openjdk@11
+    required: false
+    description: Development kit for the Java programming language
+    category: java
+    tier: 1
+
+  - type: brew
+    name: go
+    required: false
+    description: Open source programming language to build simple/reliable/efficient software
+    category: util
+    tier: 1
+
+  - type: brew
+    name: deno
+    required: false
+    description: Secure runtime for JavaScript and TypeScript
+    category: js
+    tier: 1
+    evidence: modules/000-d-extensions.sh:1
+
+  - type: brew
+    name: python@3.13
+    required: false
+    description: Interpreted, interactive, object-oriented programming language
+    category: python
+    tier: 1
+
+  - type: brew
+    name: python@3.12
+    required: false
+    description: Interpreted, interactive, object-oriented programming language
+    category: python
+    tier: 1
+
+  - type: brew
+    name: python@3.10
+    required: false
+    description: Interpreted, interactive, object-oriented programming language
+    category: python
+    tier: 1
+
+  - type: brew
+    name: python@3.9
+    required: false
+    description: Interpreted, interactive, object-oriented programming language
+    category: python
+    tier: 1
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Tier 2 — Daily-use CLI
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - type: brew
+    name: fzf
+    required: false
+    description: Command-line fuzzy finder written in Go
+    category: tui
+    tier: 2
+    evidence: modules/000-a-plugins.sh:1
+
+  - type: brew
+    name: figlet
+    required: false
+    description: Banner-like program prints strings as ASCII art
+    category: output
+    tier: 2
+    evidence: modules/000-a-output.sh:1
+
+  - type: brew
+    name: lolcat
+    required: false
+    description: Rainbows and unicorns in your console!
+    category: output
+    tier: 2
+    evidence: modules/000-a-output.sh:1
+
+  - type: brew
+    name: jp2a
+    required: false
+    description: Convert JPG images to ASCII
+    category: output
+    tier: 2
+    evidence: modules/000-a-output.sh:1
+
+  - type: brew
+    name: thefuck
+    required: false
+    description: Programmatically correct mistyped console commands
+    category: util
+    tier: 2
+    evidence: modules/000-a-tools.sh:1
+
+  - type: brew
+    name: direnv
+    required: false
+    description: Load/unload environment variables based on $PWD
+    category: env
+    tier: 2
+    evidence: modules/000-a-plugins.sh:1
+
+  - type: brew
+    name: z
+    required: false
+    description: Tracks most-used directories to make cd smarter
+    category: nav
+    tier: 2
+    evidence: modules/000-a-plugins.sh:1
+
+  - type: brew
+    name: gh
+    required: false
+    description: GitHub command-line tool
+    category: git
+    tier: 2
+    evidence: bin/git-import-org.sh:1
+
+  - type: brew
+    name: bat
+    required: false
+    description: Clone of cat(1) with syntax highlighting and Git integration
+    category: output
+    tier: 2
+    evidence: modules/000-b-aliases.sh:1
+
+  - type: brew
+    name: ripgrep
+    required: false
+    description: Search tool like grep and The Silver Searcher
+    category: util
+    tier: 2
+
+  - type: brew
+    name: fd
+    required: false
+    description: Simple, fast and user-friendly alternative to find
+    category: util
+    tier: 2
+
+  - type: brew
+    name: neovim
+    required: false
+    description: Ambitious Vim-fork focused on extensibility and agility
+    category: tui
+    tier: 2
+    evidence: vendor/vim/README.md:1
+
+  - type: brew
+    name: shellcheck
+    required: false
+    description: Static analysis and lint tool, for (ba)sh scripts
+    category: util
+    tier: 2
+    evidence: test/run_unit.sh:1
+
+  - type: brew
+    name: tree
+    required: false
+    description: Display directories as trees (with optional color/HTML output)
+    category: util
+    tier: 2
+
+  - type: brew
+    name: htop
+    required: false
+    description: Improved top (interactive process viewer)
+    category: util
+    tier: 2
+
+  - type: brew
+    name: wget
+    required: false
+    description: Internet file retriever
+    category: net
+    tier: 2
+
+  - type: brew
+    name: curl
+    required: false
+    description: Get a file from an HTTP, HTTPS or FTP server
+    category: net
+    tier: 2
+
+  - type: brew
+    name: gnu-sed
+    required: false
+    description: GNU implementation of the famous stream editor
+    category: util
+    tier: 2
+
+  - type: brew
+    name: grep
+    required: false
+    description: GNU grep, egrep and fgrep
+    category: util
+    tier: 2
+
+  - type: brew
+    name: gawk
+    required: false
+    description: GNU awk utility
+    category: util
+    tier: 2
+
+  - type: brew
+    name: findutils
+    required: false
+    description: Collection of GNU find, xargs, and locate
+    category: util
+    tier: 2
+
+  - type: brew
+    name: watch
+    required: false
+    description: Executes a program periodically, showing output fullscreen
+    category: util
+    tier: 2
+
+  - type: brew
+    name: tldr
+    required: false
+    description: Simplified and community-driven man pages
+    category: util
+    tier: 2
+
+  - type: brew
+    name: git-extras
+    required: false
+    description: Small git utilities
+    category: vcs
+    tier: 2
+
+  - type: brew
+    name: git-lfs
+    required: false
+    description: Git extension for versioning large files
+    category: vcs
+    tier: 2
+
+  - type: brew
+    name: diff-so-fancy
+    required: false
+    description: Good-lookin' diffs with diff-highlight and more
+    category: vcs
+    tier: 2
+
+  - type: brew
+    name: navi
+    required: false
+    description: Interactive cheatsheet tool for the command-line
+    category: tui
+    tier: 2
+    evidence: modules/000-a-plugins.sh:1
+
+  - type: brew
+    name: zsh-autosuggestions
+    required: false
+    description: Fish-like fast/unobtrusive autosuggestions for zsh
+    category: shell
+    tier: 2
+
+  - type: brew
+    name: zsh-completions
+    required: false
+    description: Additional completion definitions for zsh
+    category: shell
+    tier: 2
+
+  - type: brew
+    name: zsh-syntax-highlighting
+    required: false
+    description: Fish shell like syntax highlighting for zsh
+    category: shell
+    tier: 2
+
+  - type: brew
+    name: tmuxinator
+    required: false
+    description: Manage complex tmux sessions easily
+    category: tui
+    tier: 2
+
+  - type: brew
+    name: reattach-to-user-namespace
+    required: false
+    description: Reattach process (e.g., tmux) to background
+    category: tui
+    tier: 2
+
+  - type: brew
+    name: fortune
+    required: false
+    description: Infamous electronic fortune-cookie generator
+    category: output
+    tier: 2
+
+  - type: brew
+    name: cowsay
+    required: false
+    description: "Apjanke's fork of the classic cowsay project"
+    category: output
+    tier: 2
+
+  - type: brew
+    name: pygments
+    required: false
+    description: Generic syntax highlighter
+    category: output
+    tier: 2
+    evidence: modules/000-a-plugins.sh:1
+
+  - type: brew
+    name: glow
+    required: false
+    description: Render markdown on the CLI
+    category: output
+    tier: 2
+
+  - type: brew
+    name: mas
+    required: false
+    description: Mac App Store command-line interface
+    category: pkg
+    tier: 2
+
+  - type: brew
+    name: openssl@3
+    required: false
+    description: Cryptography and SSL/TLS Toolkit
+    category: net
+    tier: 2
+
+  - type: brew
+    name: catimg
+    required: false
+    description: Insanely fast image printing in your terminal
+    category: output
+    tier: 2
+
+  - type: brew
+    name: chafa
+    required: false
+    description: Versatile and fast Unicode/ASCII/ANSI graphics renderer
+    category: output
+    tier: 2
+
+  - type: brew
+    name: viu
+    required: false
+    description: Simple terminal image viewer written in Rust
+    category: output
+    tier: 2
+
+  - type: brew
+    name: timg
+    required: false
+    description: Terminal image and video viewer
+    category: output
+    tier: 2
+
+  - type: brew
+    name: mactop
+    required: false
+    description: Apple Silicon Monitor Top written in Go Lang
+    category: util
+    tier: 2
+
+  - type: brew
+    name: pstree
+    required: false
+    description: Show ps output as a tree
+    category: util
+    tier: 2
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Tier 3 — Domain Modules
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # --- Kubernetes & Cloud ---
+  - type: brew
+    name: kubernetes-cli
+    required: false
+    description: Kubernetes command-line interface
+    category: k8s
+    tier: 3
+    evidence: modules/002-a-sre.sh:1
+
+  - type: brew
+    name: kubectx
+    required: false
+    description: Tool that can switch between kubectl contexts easily and create aliases
+    category: k8s
+    tier: 3
+
+  - type: brew
+    name: helm
+    required: false
+    description: Kubernetes package manager
+    category: k8s
+    tier: 3
+    evidence: modules/002-a-sre.sh:1
+
+  - type: brew
+    name: kustomize
+    required: false
+    description: Template-free customization of Kubernetes YAML manifests
+    category: k8s
+    tier: 3
+
+  - type: brew
+    name: argocd
+    required: false
+    description: GitOps Continuous Delivery for Kubernetes
+    category: k8s
+    tier: 3
+
+  - type: brew
+    name: stern
+    required: false
+    description: Tail multiple Kubernetes pods & their containers
+    category: k8s
+    tier: 3
+
+  - type: brew
+    name: eksctl
+    required: false
+    description: Simple command-line tool for creating clusters on Amazon EKS
+    category: k8s
+    tier: 3
+
+  - type: brew
+    name: awscli
+    required: false
+    description: Official Amazon AWS command-line interface
+    category: sre
+    tier: 3
+
+  - type: brew
+    name: aws-iam-authenticator
+    required: false
+    description: Use AWS IAM credentials to authenticate to Kubernetes
+    category: k8s
+    tier: 3
+
+  # --- IaC / SRE ---
+  - type: brew
+    name: ansible
+    required: false
+    description: Automate deployment, configuration, and upgrading
+    category: iac
+    tier: 3
+    evidence: modules/000-a-plugins.sh:1
+
+  - type: brew
+    name: terraform-docs
+    required: false
+    description: Tool to generate documentation from Terraform modules
+    category: sre
+    tier: 3
+
+  - type: brew
+    name: tfenv
+    required: false
+    description: Terraform version manager inspired by rbenv
+    category: sre
+    tier: 3
+
+  - type: brew
+    name: tflint
+    required: false
+    description: Linter for Terraform files
+    category: sre
+    tier: 3
+
+  - type: brew
+    name: hashicorp/tap/packer
+    required: false
+    description: Packer — machine image builder
+    category: sre
+    tier: 3
+
+  # --- Containers ---
+  - type: brew
+    name: podman-compose
+    required: false
+    description: Alternative to docker-compose using podman
+    category: container
+    tier: 3
+    evidence: modules/000-d-podman.sh:1
+
+  - type: brew
+    name: docker-completion
+    required: false
+    description: Bash, Zsh and Fish completion for Docker
+    category: container
+    tier: 3
+
+  - type: brew
+    name: docker-credential-helper
+    required: false
+    description: Platform keystore credential helper for Docker
+    category: container
+    tier: 3
+
+  - type: brew
+    name: ctop
+    required: false
+    description: Top-like interface for container metrics
+    category: container
+    tier: 3
+
+  - type: brew
+    name: lima
+    required: false
+    description: Linux virtual machines
+    category: vm
+    tier: 3
+
+  # --- Security & Scanning ---
+  - type: brew
+    name: trivy
+    required: false
+    description: Vulnerability scanner for container images, file systems, and Git repos
+    category: sre
+    tier: 3
+
+  - type: brew
+    name: grype
+    required: false
+    description: Vulnerability scanner for container images and filesystems
+    category: sre
+    tier: 3
+
+  - type: brew
+    name: syft
+    required: false
+    description: CLI for generating a Software Bill of Materials from container images
+    category: sre
+    tier: 3
+
+  - type: brew
+    name: trufflehog
+    required: false
+    description: Find and verify credentials
+    category: sre
+    tier: 3
+    args:
+      link: false
+
+  - type: brew
+    name: sops
+    required: false
+    description: Editor of encrypted files
+    category: sre
+    tier: 3
+    evidence: modules/000-a-secrets.sh:1
+
+  - type: brew
+    name: rkhunter
+    required: false
+    description: Rootkit hunter
+    category: sre
+    tier: 3
+
+  # --- Audio / Video ---
+  - type: brew
+    name: ffmpeg
+    required: false
+    description: Play, record, convert, and stream select audio and video codecs
+    category: av
+    tier: 3
+    evidence: modules/999-audio-video-tools.sh:1
+
+  - type: brew
+    name: imagemagick
+    required: false
+    description: Tools and libraries to manipulate images in select formats
+    category: av
+    tier: 3
+    evidence: modules/999-audio-video-tools.sh:1
+
+  # --- VM ---
+  - type: brew
+    name: qemu
+    required: false
+    description: Generic machine emulator and virtualizer
+    category: vm
+    tier: 3
+    evidence: bin/ivm.py:1
+
+  - type: brew
+    name: swtpm
+    required: false
+    description: Software TPM Emulator based on libtpms
+    category: vm
+    tier: 3
+
+  # --- Networking ---
+  - type: brew
+    name: nmap
+    required: false
+    description: Port scanning utility for large networks
+    category: net
+    tier: 3
+    evidence: modules/000-a-plugins.sh:1
+
+  - type: brew
+    name: mtr
+    required: false
+    description: "'traceroute' and 'ping' in a single tool"
+    category: net
+    tier: 3
+
+  - type: brew
+    name: socat
+    required: false
+    description: SOcket CAT - netcat on steroids
+    category: net
+    tier: 3
+
+  - type: brew
+    name: telnet
+    required: false
+    description: User interface to the TELNET protocol
+    category: net
+    tier: 3
+
+  - type: brew
+    name: openvpn
+    required: false
+    description: SSL/TLS VPN implementing OSI layer 2 or 3 secure network extension
+    category: net
+    tier: 3
+
+  # --- Misc tools ---
+  - type: brew
+    name: act
+    required: false
+    description: Run your GitHub Actions locally
+    category: vcs
+    tier: 3
+
+  - type: brew
+    name: cmake
+    required: false
+    description: Cross-platform make
+    category: util
+    tier: 3
+
+  - type: brew
+    name: cloc
+    required: false
+    description: Statistics utility to count lines of code
+    category: util
+    tier: 3
+
+  - type: brew
+    name: entr
+    required: false
+    description: Run arbitrary commands when files change
+    category: util
+    tier: 3
+
+  - type: brew
+    name: ollama
+    required: false
+    description: Create, run, and share large language models (LLMs)
+    category: util
+    tier: 3
+
+  - type: brew
+    name: llama.cpp
+    required: false
+    description: LLM inference in C/C++
+    category: util
+    tier: 3
+
+  - type: brew
+    name: hf
+    required: false
+    description: Client library for huggingface.co hub
+    category: util
+    tier: 3
+
+  - type: brew
+    name: maven
+    required: false
+    description: Java-based project management
+    category: java
+    tier: 3
+
+  - type: brew
+    name: powershell
+    required: false
+    description: Command-line shell and scripting language
+    category: shell
+    tier: 3
+    args:
+      link: false
+
+  - type: brew
+    name: certbot
+    required: false
+    description: Tool to obtain certs from Let's Encrypt and autoenable HTTPS
+    category: net
+    tier: 3
+
+  - type: brew
+    name: redis
+    required: false
+    description: Persistent key-value database, with built-in net interface
+    category: data
+    tier: 3
+
+  - type: brew
+    name: tiger-vnc
+    required: false
+    description: High-performance, platform-neutral implementation of VNC
+    category: vm
+    tier: 3
+
+  - type: brew
+    name: markdownlint-cli
+    required: false
+    description: CLI for Node.js style checker and lint tool for Markdown files
+    category: util
+    tier: 3
+
+  - type: brew
+    name: git-filter-repo
+    required: false
+    description: Quickly rewrite git repository history
+    category: vcs
+    tier: 3
+
+  - type: brew
+    name: graphviz
+    required: false
+    description: Graph visualization software from AT&T and Bell Labs
+    category: output
+    tier: 3
+
+  - type: brew
+    name: gnuplot
+    required: false
+    description: Command-driven, interactive function plotting
+    category: output
+    tier: 3
+
+  - type: brew
+    name: asciinema
+    required: false
+    description: Record and share terminal sessions
+    category: output
+    tier: 3
+
+  - type: brew
+    name: plantuml
+    required: false
+    description: Draw UML diagrams
+    category: output
+    tier: 3
+
+  - type: brew
+    name: pandoc
+    required: false
+    description: Swiss-army knife of markup format conversion
+    category: output
+    tier: 3
+
+  - type: brew
+    name: lastpass-cli
+    required: false
+    description: LastPass command-line interface tool
+    category: sre
+    tier: 3
+
+  - type: brew
+    name: mkcert
+    required: false
+    description: Simple tool to make locally trusted development certificates
+    category: net
+    tier: 3
+
+  - type: brew
+    name: k6
+    required: false
+    description: Modern load testing tool, using Go and JavaScript
+    category: sre
+    tier: 3
+
+  # --- Tap-prefixed formulae ---
+  - type: brew
+    name: fastly/tap/fastly
+    required: false
+    description: A CLI for interacting with the Fastly platform
+    category: net
+    tier: 3
+
+  - type: brew
+    name: jandedobbeleer/oh-my-posh/oh-my-posh
+    required: false
+    description: Prompt theme engine for any shell
+    category: shell
+    tier: 2
+
+  - type: brew
+    name: kreuzwerker/taps/m1-terraform-provider-helper
+    required: false
+    description: CLI to support with downloading and compiling terraform providers for Mac with M1 chip
+    category: sre
+    tier: 3
+
+  - type: brew
+    name: twilio/brew/twilio
+    required: false
+    description: Unleash the power of Twilio from your command prompt
+    category: net
+    tier: 3
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # Cask entries
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  - type: cask
+    name: 1password-cli
+    required: false
+    description: Command-line interface for 1Password
+    category: sre
+    tier: 2
+
+  - type: cask
+    name: comfyui
+    required: false
+    description: Node-based image, video and audio generator
+    category: av
+    tier: 3
+
+  - type: cask
+    name: crystalfetch
+    required: false
+    description: UI for creating Windows installer ISO from UUPDump
+    category: vm
+    tier: 3
+
+  - type: cask
+    name: dash
+    required: false
+    description: API documentation browser and code snippet manager
+    category: util
+    tier: 2
+
+  - type: cask
+    name: db-browser-for-sqlite
+    required: false
+    description: Browser for SQLite databases
+    category: data
+    tier: 3
+
+  - type: cask
+    name: font-meslo-lg-nerd-font
+    required: false
+    description: Meslo LG Nerd Font
+    category: output
+    tier: 2
+
+  - type: cask
+    name: gcloud-cli
+    required: false
+    description: Set of tools to manage resources and applications hosted on Google Cloud
+    category: sre
+    tier: 3
+
+  - type: cask
+    name: google-earth-pro
+    required: false
+    description: Virtual globe
+    category: util
+    tier: 3
+
+  - type: cask
+    name: meld
+    required: false
+    description: Visual diff and merge tool
+    category: vcs
+    tier: 3
+
+  - type: cask
+    name: navicat-for-sqlite
+    required: false
+    description: Database administration and development tool for SQLite
+    category: data
+    tier: 3
+
+  - type: cask
+    name: ngrok
+    required: false
+    description: Reverse proxy, secure introspectable tunnels to localhost
+    category: net
+    tier: 3
+
+  - type: cask
+    name: obsidian
+    required: false
+    description: Knowledge base that works on top of a local folder of plain text Markdown files
+    category: util
+    tier: 2
+
+  - type: cask
+    name: postman
+    required: false
+    description: Collaboration platform for API development
+    category: net
+    tier: 3
+
+  - type: cask
+    name: powershell
+    required: false
+    description: Command-line shell and scripting language
+    category: shell
+    tier: 3
+
+  - type: cask
+    name: slack-cli
+    required: false
+    description: CLI to create, run, and deploy Slack apps
+    category: net
+    tier: 3
+
+  - type: cask
+    name: ssh-tunnel-manager
+    required: false
+    description: Application for managing SSH tunnels
+    category: net
+    tier: 3
+
+  - type: cask
+    name: utm
+    required: false
+    description: Virtual machines UI using QEMU
+    category: vm
+    tier: 3
+
+  - type: cask
+    name: vagrant
+    required: false
+    description: Development environment
+    category: vm
+    tier: 3
+
+  - type: cask
+    name: visual-studio-code
+    required: false
+    description: Open-source code editor
+    category: util
+    tier: 2
+
+  - type: cask
+    name: xquartz
+    required: false
+    description: Open-source version of the X.Org X Window System
+    category: util
+    tier: 3
