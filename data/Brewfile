@@ -1,0 +1,290 @@
+# Generated file. Do not edit directly.
+# Source of truth: .dependencies.yml
+# Regenerate with: make brewfile
+
+# ════════════════════════════════════════════════════════════════════════
+# tap entries
+# ════════════════════════════════════════════════════════════════════════
+
+# ── Optional ──────────────────────────────────────────────────────────
+# tier 2
+# Oh My Posh prompt theme engine
+tap "jandedobbeleer/oh-my-posh"
+# tier 3
+# Fastly CLI tap
+tap "fastly/tap"
+# HashiCorp tools (packer, terraform)
+tap "hashicorp/tap"
+# M1 terraform provider helper
+tap "kreuzwerker/taps"
+# Majd repo tap
+tap "majd/repo"
+# MongoDB tools
+tap "mongodb/brew"
+# Lightweight VMs with libkrun
+tap "slp/krunkit"
+# Twilio CLI
+tap "twilio/brew"
+# Weaveworks Kubernetes tools
+tap "weaveworks/tap"
+
+# ════════════════════════════════════════════════════════════════════════
+# brew entries
+# ════════════════════════════════════════════════════════════════════════
+
+# ── Required ──────────────────────────────────────────────────────────
+# Bourne-Again SHell, a UNIX command interpreter
+brew "bash"
+# GNU File, Shell, and Text utilities
+brew "coreutils"
+# Distributed revision control system
+brew "git"
+# Lightweight and flexible command-line JSON processor
+brew "jq"
+# GNU Make 4.4+ (macOS ships 3.81; needed for .ONESHELL in dot Makefile)
+brew "make"
+# Terminal multiplexer
+brew "tmux"
+# Process YAML, JSON, XML, CSV and properties documents from the CLI
+brew "yq"
+# UNIX shell (command interpreter)
+brew "zsh"
+
+# ── Optional ──────────────────────────────────────────────────────────
+# tier 1
+# Secure runtime for JavaScript and TypeScript
+brew "deno"
+# Open source programming language to build simple/reliable/efficient software
+brew "go"
+# Manage your Java environment
+brew "jenv"
+# Node version management
+brew "n"
+# Open-source, cross-platform JavaScript runtime environment
+brew "node"
+# Development kit for the Java programming language
+brew "openjdk"
+# Development kit for the Java programming language
+brew "openjdk@11"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.10"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.12"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.13"
+# Interpreted, interactive, object-oriented programming language
+brew "python@3.9"
+# Rust toolchain installer
+brew "rustup"
+# Extremely fast Python package installer and resolver, written in Rust
+brew "uv"
+# tier 2
+# Clone of cat(1) with syntax highlighting and Git integration
+brew "bat"
+# Insanely fast image printing in your terminal
+brew "catimg"
+# Versatile and fast Unicode/ASCII/ANSI graphics renderer
+brew "chafa"
+# Apjanke's fork of the classic cowsay project
+brew "cowsay"
+# Get a file from an HTTP, HTTPS or FTP server
+brew "curl"
+# Good-lookin' diffs with diff-highlight and more
+brew "diff-so-fancy"
+# Load/unload environment variables based on $PWD
+brew "direnv"
+# Simple, fast and user-friendly alternative to find
+brew "fd"
+# Banner-like program prints strings as ASCII art
+brew "figlet"
+# Collection of GNU find, xargs, and locate
+brew "findutils"
+# Infamous electronic fortune-cookie generator
+brew "fortune"
+# Command-line fuzzy finder written in Go
+brew "fzf"
+# GNU awk utility
+brew "gawk"
+# GitHub command-line tool
+brew "gh"
+# Small git utilities
+brew "git-extras"
+# Git extension for versioning large files
+brew "git-lfs"
+# Render markdown on the CLI
+brew "glow"
+# GNU implementation of the famous stream editor
+brew "gnu-sed"
+# GNU grep, egrep and fgrep
+brew "grep"
+# Improved top (interactive process viewer)
+brew "htop"
+# Prompt theme engine for any shell
+brew "jandedobbeleer/oh-my-posh/oh-my-posh"
+# Convert JPG images to ASCII
+brew "jp2a"
+# Rainbows and unicorns in your console!
+brew "lolcat"
+# Apple Silicon Monitor Top written in Go Lang
+brew "mactop"
+# Mac App Store command-line interface
+brew "mas"
+# Interactive cheatsheet tool for the command-line
+brew "navi"
+# Ambitious Vim-fork focused on extensibility and agility
+brew "neovim"
+# Cryptography and SSL/TLS Toolkit
+brew "openssl@3"
+# Show ps output as a tree
+brew "pstree"
+# Generic syntax highlighter
+brew "pygments"
+# Reattach process (e.g., tmux) to background
+brew "reattach-to-user-namespace"
+# Search tool like grep and The Silver Searcher
+brew "ripgrep"
+# Static analysis and lint tool, for (ba)sh scripts
+brew "shellcheck"
+# Programmatically correct mistyped console commands
+brew "thefuck"
+# Terminal image and video viewer
+brew "timg"
+# Simplified and community-driven man pages
+brew "tldr"
+# Manage complex tmux sessions easily
+brew "tmuxinator"
+# Display directories as trees (with optional color/HTML output)
+brew "tree"
+# Simple terminal image viewer written in Rust
+brew "viu"
+# Executes a program periodically, showing output fullscreen
+brew "watch"
+# Internet file retriever
+brew "wget"
+# Tracks most-used directories to make cd smarter
+brew "z"
+# Fish-like fast/unobtrusive autosuggestions for zsh
+brew "zsh-autosuggestions"
+# Additional completion definitions for zsh
+brew "zsh-completions"
+# Fish shell like syntax highlighting for zsh
+brew "zsh-syntax-highlighting"
+# tier 3
+# Run your GitHub Actions locally
+brew "act"
+# Automate deployment, configuration, and upgrading
+brew "ansible"
+# GitOps Continuous Delivery for Kubernetes
+brew "argocd"
+# Record and share terminal sessions
+brew "asciinema"
+# Use AWS IAM credentials to authenticate to Kubernetes
+brew "aws-iam-authenticator"
+# Official Amazon AWS command-line interface
+brew "awscli"
+# Tool to obtain certs from Let's Encrypt and autoenable HTTPS
+brew "certbot"
+# Statistics utility to count lines of code
+brew "cloc"
+# Cross-platform make
+brew "cmake"
+# Top-like interface for container metrics
+brew "ctop"
+# Bash, Zsh and Fish completion for Docker
+brew "docker-completion"
+# Platform keystore credential helper for Docker
+brew "docker-credential-helper"
+# Simple command-line tool for creating clusters on Amazon EKS
+brew "eksctl"
+# Run arbitrary commands when files change
+brew "entr"
+# A CLI for interacting with the Fastly platform
+brew "fastly/tap/fastly"
+# Play, record, convert, and stream select audio and video codecs
+brew "ffmpeg"
+# Quickly rewrite git repository history
+brew "git-filter-repo"
+# Command-driven, interactive function plotting
+brew "gnuplot"
+# Graph visualization software from AT&T and Bell Labs
+brew "graphviz"
+# Vulnerability scanner for container images and filesystems
+brew "grype"
+# Packer — machine image builder
+brew "hashicorp/tap/packer"
+# Kubernetes package manager
+brew "helm"
+# Client library for huggingface.co hub
+brew "hf"
+# Tools and libraries to manipulate images in select formats
+brew "imagemagick"
+# Modern load testing tool, using Go and JavaScript
+brew "k6"
+# CLI to support with downloading and compiling terraform providers for Mac with M1 chip
+brew "kreuzwerker/taps/m1-terraform-provider-helper"
+# Tool that can switch between kubectl contexts easily and create aliases
+brew "kubectx"
+# Kubernetes command-line interface
+brew "kubernetes-cli"
+# Template-free customization of Kubernetes YAML manifests
+brew "kustomize"
+# LastPass command-line interface tool
+brew "lastpass-cli"
+# Linux virtual machines
+brew "lima"
+# LLM inference in C/C++
+brew "llama.cpp"
+# CLI for Node.js style checker and lint tool for Markdown files
+brew "markdownlint-cli"
+# Java-based project management
+brew "maven"
+# Simple tool to make locally trusted development certificates
+brew "mkcert"
+# 'traceroute' and 'ping' in a single tool
+brew "mtr"
+# Port scanning utility for large networks
+brew "nmap"
+# Create, run, and share large language models (LLMs)
+brew "ollama"
+# SSL/TLS VPN implementing OSI layer 2 or 3 secure network extension
+brew "openvpn"
+# Swiss-army knife of markup format conversion
+brew "pandoc"
+# Draw UML diagrams
+brew "plantuml"
+# Alternative to docker-compose using podman
+brew "podman-compose"
+# Command-line shell and scripting language
+brew "powershell", link: false
+# Generic machine emulator and virtualizer
+brew "qemu"
+# Persistent key-value database, with built-in net interface
+brew "redis"
+# Rootkit hunter
+brew "rkhunter"
+# SOcket CAT - netcat on steroids
+brew "socat"
+# Editor of encrypted files
+brew "sops"
+# Tail multiple Kubernetes pods & their containers
+brew "stern"
+# Software TPM Emulator based on libtpms
+brew "swtpm"
+# CLI for generating a Software Bill of Materials from container images
+brew "syft"
+# User interface to the TELNET protocol
+brew "telnet"
+# Tool to generate documentation from Terraform modules
+brew "terraform-docs"
+# Terraform version manager inspired by rbenv
+brew "tfenv"
+# Linter for Terraform files
+brew "tflint"
+# High-performance, platform-neutral implementation of VNC
+brew "tiger-vnc"
+# Vulnerability scanner for container images, file systems, and Git repos
+brew "trivy"
+# Find and verify credentials
+brew "trufflehog", link: false
+# Unleash the power of Twilio from your command prompt
+brew "twilio/brew/twilio"

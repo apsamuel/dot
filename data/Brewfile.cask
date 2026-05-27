@@ -1,0 +1,51 @@
+# Generated file. Do not edit directly.
+# Source of truth: .dependencies.yml
+# Regenerate with: make brewfile
+
+# ════════════════════════════════════════════════════════════════════════
+# cask entries
+# ════════════════════════════════════════════════════════════════════════
+
+# ── Optional ──────────────────────────────────────────────────────────
+# tier 2
+# Command-line interface for 1Password
+cask "1password-cli"
+# API documentation browser and code snippet manager
+cask "dash"
+# Meslo LG Nerd Font
+cask "font-meslo-lg-nerd-font"
+# Knowledge base that works on top of a local folder of plain text Markdown files
+cask "obsidian"
+# Open-source code editor
+cask "visual-studio-code"
+# tier 3
+# Node-based image, video and audio generator
+cask "comfyui"
+# UI for creating Windows installer ISO from UUPDump
+cask "crystalfetch"
+# Browser for SQLite databases
+cask "db-browser-for-sqlite"
+# Set of tools to manage resources and applications hosted on Google Cloud
+cask "gcloud-cli"
+# Virtual globe
+cask "google-earth-pro"
+# Visual diff and merge tool
+cask "meld"
+# Database administration and development tool for SQLite
+cask "navicat-for-sqlite"
+# Reverse proxy, secure introspectable tunnels to localhost
+cask "ngrok"
+# Collaboration platform for API development
+cask "postman"
+# Command-line shell and scripting language
+cask "powershell"
+# CLI to create, run, and deploy Slack apps
+cask "slack-cli"
+# Application for managing SSH tunnels
+cask "ssh-tunnel-manager"
+# Virtual machines UI using QEMU
+cask "utm"
+# Development environment
+cask "vagrant"
+# Open-source version of the X.Org X Window System
+cask "xquartz"
