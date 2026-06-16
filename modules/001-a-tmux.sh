@@ -52,7 +52,7 @@ dot::tmux::create-session-from-cwd() {
     fi
 }
 
-if [[ "${DOT_INTERACTIVE}" -ne 0 ]]; then
+if [[ "${DOT_INTERACTIVE}" -ne 0 && -n "${TMUX}" ]]; then
     dot::tmux::window-name() {
         ("$TMUX_PLUGIN_MANAGER_PATH"/tmux-window-name/scripts/rename_session_windows.py &)
     }
