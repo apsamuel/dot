@@ -17,16 +17,6 @@ export LANG=en_US.UTF-8
 export EDITOR=vim
 
 
-# ZSH="$HOME/.dot/vendor/oh-my-zsh"
-# ZSH_CUSTOM="$ZSH/custom"
-# ZSH_HISTFILE="$HOME/.zsh_history"
-# ZSH_HISTSIZE=1000000
-# ZSH_SAVEHIST=1000000
-
-# HISTFILE="$HOME/.zsh_history"
-# HISTSIZE=${ZSH_HISTSIZE}
-# SAVEHIST=${ZSH_SAVEHIST}
-
 # iCloud references
 ICLOUD="${ICLOUD_DIR:-$HOME/Library/Mobile Documents/com~apple~CloudDocs}"
 ICLOUD_DIR="${ICLOUD}" # for backward compatibility
