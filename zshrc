@@ -275,6 +275,9 @@ export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#5518A6,bg=black,bold,underline"
 
 . "$ZSH"/oh-my-zsh.sh
 
+# oh-my-zsh's lib/history.zsh resets HISTSIZE/SAVEHIST; re-assert our giant shared history.
+dot::history::configure
+
 
 
 # You may need to manually set your language environment

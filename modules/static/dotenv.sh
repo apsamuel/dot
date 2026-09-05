@@ -73,16 +73,24 @@ export DOT_DIR="${DOT_DIR:-${DOT_ROOT}}"
 export DOT_LIBS_DIR="${DOT_LIBS_DIR:-${DOT_MODULES}}"
 
 # --- Shell settings ---
-
+# Single source of truth for history sizes; define before deriving HISTSIZE/SAVEHIST.
+ZSH_HISTSIZE=1000000000
+ZSH_SAVEHIST=1000000000
 HISTSIZE=${ZSH_HISTSIZE}
-ZSH_HISTSIZE=1000000
-ZSH_SAVEHIST=1000000
 SAVEHIST=${ZSH_SAVEHIST}
 ZSH="$HOME/.dot/vendor/oh-my-zsh"
 export ZSH_CUSTOM="$ZSH/custom"
 export HISTFILE="$HOME/.zsh_history"
 export ZSH_HISTFILE="$HOME/.zsh_history"
 export ZSH ZSH_HISTSIZE ZSH_SAVEHIST SAVEHIST HISTFILE HISTSIZE
+
+# --- history rotation / archival (consumed by dot::history::rotate) ---
+export DOT_HIST_ARCHIVE_ENABLE="${DOT_HIST_ARCHIVE_ENABLE:-true}"
+export DOT_HIST_ARCHIVE_DIR="${DOT_HIST_ARCHIVE_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/dot/history}"
+export DOT_HIST_ARCHIVE_INTERVAL="${DOT_HIST_ARCHIVE_INTERVAL:-86400}"  # seconds between snapshots
+export DOT_HIST_ARCHIVE_MAX="${DOT_HIST_ARCHIVE_MAX:-30}"               # snapshots to retain
+export DOT_HIST_ROTATE_MAX_BYTES="${DOT_HIST_ROTATE_MAX_BYTES:-104857600}"  # trim threshold (100 MiB)
+export DOT_HIST_ROTATE_KEEP_LINES="${DOT_HIST_ROTATE_KEEP_LINES:-0}"    # 0 = never trim live file
 
 
 # --- cloud / data paths ---

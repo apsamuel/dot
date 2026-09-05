@@ -78,12 +78,6 @@ shell:
     - histexpiredupsfirst
     - histfindnodups
     - BANG_HIST
-    - extendedglob
-    - extendedhistory
-    - hist_ignore_all_dups
-    - histexpiredupsfirst
-    - histfindnodups
-    - histignorealldups
     - histignoredups
     - histignorespace
     - histnostore
@@ -92,4 +86,3 @@ shell:
     - histverify
     - incappendhistory
     - share_history
-    - sharehistory

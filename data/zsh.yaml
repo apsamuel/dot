@@ -29,7 +29,6 @@ options: # a list of zsh options to set, can be overridden by users below
   - 'hist_ignore_all_dups'
   - 'histexpiredupsfirst'
   - 'histfindnodups'
-  - 'histignorealldups'
   - 'histignoredups'
   - 'histignorespace'
   - 'histnostore'
@@ -38,7 +37,6 @@ options: # a list of zsh options to set, can be overridden by users below
   - 'histverify'
   - 'incappendhistory'
   - 'share_history'
-  - 'sharehistory'
 plugins: # oh-my-zsh plugins to load, can be overridden by users below
   builtin: # a list of builtin oh-my-zsh plugins to load, can be overridden by users below
     - 'aliases'
