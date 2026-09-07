@@ -42,7 +42,7 @@ It provides an idempotent, opinionated, modular, and extensible shell environmen
 | 🎨   | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                                             |
 | 🧩   | Modular Library       | Two-tier`modules/` library: **static** helpers always loaded, plus 30+ **dynamic** snippets in lex order — disable any with a `DOT_DISABLE_*` flag |
 | 🗂   | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                                                 |
-| 🔐   | Secrets Management    | Load **and mask** secrets from JSON without leaking them in history or output                                                                      |
+| 🔐   | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                                       |
 | 🛠   | Language Environments | Python (`uv`), Node.js (`n`/`npm`), Rust (`rustup`), Java (`jenv`) all from one place                                                              |
 | 🌱   | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                                        |
 | 🔄   | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                                      |
@@ -255,7 +255,7 @@ This means user-facing commands in `bin/` and internal-maintainer commands in `s
 `dot::static::shell` is the framework's built-in CLI. It's defined in the static module [`modules/static/dot.sh`](./modules/static/dot.sh), so it's available in **every** shell that loads `dot` — no opt-out, no plugin to enable.
 
 ```text
-dot.shell <command> [options]
+dot::static::shell <command> [options]
 ```
 
 | Command              | Purpose                                                                                                                 |
@@ -273,12 +273,12 @@ dot.shell <command> [options]
 | `add-theme  <url>`   | Add an OMZ theme  as a submodule under`vendor/oh-my-zsh/custom/themes/`.                                                |
 | `vendor <action>`    | Forward to[`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) — manage every vendored submodule (root + nested). |
 
-### 🔐 `dot.shell secrets`
+### 🔐 `dot::static::shell secrets`
 
 Read/write/import secrets stored as JSON in iCloud (`$ICLOUD/dot/secrets.json`).
 
 ```text
-dot.shell secrets <action> [--key <name>] [--value <val>]
+dot::static::shell secrets <action> [--key <name>] [--value <val>]
 ```
 
 | Action      | Effect                                                                     |
@@ -294,15 +294,15 @@ dot.shell secrets <action> [--key <name>] [--value <val>]
 | `--import`  | Load secrets into the live shell environment (populates`DOT_SECRET_KEYS`). |
 | `--export`  | Dump the raw`secrets.json` to stdout.                                      |
 
-### 📦 `dot.shell vendor`
+### 📦 `dot::static::shell vendor`
 
 Thin pass-through to the submodule manager. Same flags as `scripts/submodule-sync.sh`:
 
 ```bash
-dot.shell vendor status              # show every submodule + nested submodule
-dot.shell vendor init    -j 8        # parallel first-time fetch
-dot.shell vendor update  -n -v       # dry-run, verbose
-dot.shell vendor list                # list configured submodules
+dot::static::shell vendor status              # show every submodule + nested submodule
+dot::static::shell vendor init    -j 8        # parallel first-time fetch
+dot::static::shell vendor update  -n -v       # dry-run, verbose
+dot::static::shell vendor list                # list configured submodules
 ```
 
 ---
@@ -348,7 +348,7 @@ Every third-party dependency below is pinned as a git submodule under [`vendor/`
 | 🌈[F-Sy-H](https://github.com/z-shell/F-Sy-H)                             | Feature-rich syntax highlighting                                            | `vendor/oh-my-zsh/custom/plugins/F-Sy-H/`               |
 | 🤖[zsh_codex](https://github.com/tom-doerr/zsh_codex)                     | LLM-powered shell completion                                                | `vendor/oh-my-zsh/custom/plugins/zsh_codex/`            |
 | 🧭[navi](https://github.com/denisidoro/navi)                              | Interactive cheatsheet                                                      | `vendor/oh-my-zsh/custom/plugins/navi/`                 |
-| 🐍[conda-zsh-completion](https://github.com/esc/conda-zsh-completion)     | Conda completion                                                            | `vendor/oh-my-zsh/custom/plugins/conda-zsh-completion/` |
+| 🐍 [conda-zsh-completion](https://github.com/esc/conda-zsh-completion)    | Conda completion                                                            | `vendor/oh-my-zsh/custom/plugins/conda-zsh-completion/` |
 
 Each plugin entry in [`data/zsh.yaml`](./data/zsh.yaml) carries an `enabled` flag that controls **selective initialisation** at shell start, _without_ deinit'ing the submodule on disk.
 

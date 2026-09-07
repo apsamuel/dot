@@ -38,7 +38,7 @@ function dot::static::shell {
     case "${command}" in
         help|-h|--help)
             cat <<'EOF'
-Usage: dot.shell <command> [options]
+Usage: dot::static::shell <command> [options]
 
 Commands:
   version                 Print version information
@@ -152,7 +152,7 @@ EOF
 
             if [[ -z "${action}" ]]; then
                 cat <<'USAGE'
-Usage: dot.shell secrets <action> [--key <name>] [--value <val>]
+Usage: dot::static::shell secrets <action> [--key <name>] [--value <val>]
 
 Actions:
   --list              List all secret key names
@@ -187,7 +187,7 @@ USAGE
                     ;;
                 get)
                     if [[ -z "${opt_key}" ]]; then
-                        echo "Usage: dot.shell secrets --get --key <name>"
+                        echo "Usage: dot::static::shell secrets --get --key <name>"
                         return 1
                     fi
                     local val
@@ -200,7 +200,7 @@ USAGE
                     ;;
                 set)
                     if [[ -z "${opt_key}" || -z "${opt_value}" ]]; then
-                        echo "Usage: dot.shell secrets --set --key <name> --value <val>"
+                        echo "Usage: dot::static::shell secrets --set --key <name> --value <val>"
                         return 1
                     fi
                     local tmp
@@ -211,7 +211,7 @@ USAGE
                     ;;
                 add)
                     if [[ -z "${opt_key}" || -z "${opt_value}" ]]; then
-                        echo "Usage: dot.shell secrets --add --key <name> --value <val>"
+                        echo "Usage: dot::static::shell secrets --add --key <name> --value <val>"
                         return 1
                     fi
                     if jq -e --arg k "${opt_key}" 'has($k)' "${secrets_file}" >/dev/null 2>&1; then
@@ -226,7 +226,7 @@ USAGE
                     ;;
                 update)
                     if [[ -z "${opt_key}" || -z "${opt_value}" ]]; then
-                        echo "Usage: dot.shell secrets --update --key <name> --value <val>"
+                        echo "Usage: dot::static::shell secrets --update --key <name> --value <val>"
                         return 1
                     fi
                     if ! jq -e --arg k "${opt_key}" 'has($k)' "${secrets_file}" >/dev/null 2>&1; then
@@ -241,7 +241,7 @@ USAGE
                     ;;
                 remove)
                     if [[ -z "${opt_key}" ]]; then
-                        echo "Usage: dot.shell secrets --remove --key <name>"
+                        echo "Usage: dot::static::shell secrets --remove --key <name>"
                         return 1
                     fi
                     if ! jq -e --arg k "${opt_key}" 'has($k)' "${secrets_file}" >/dev/null 2>&1; then
@@ -276,7 +276,7 @@ USAGE
 
         add-plugin)
             if [[ -z "${1:-}" ]]; then
-                echo "Usage: dot.shell add-plugin <git-repo-url>"
+                echo "Usage: dot::static::shell add-plugin <git-repo-url>"
                 return 1
             fi
             local git_url="$1"
@@ -289,7 +289,7 @@ USAGE
 
         add-theme)
             if [[ -z "${1:-}" ]]; then
-                echo "Usage: dot.shell add-theme <git-repo-url>"
+                echo "Usage: dot::static::shell add-theme <git-repo-url>"
                 return 1
             fi
             local git_url="$1"
@@ -316,13 +316,13 @@ USAGE
 
         *)
             echo "Unknown command: ${command}"
-            echo "Use 'dot.shell help' for a list of available commands."
+            echo "Use 'dot::static::shell help' for a list of available commands."
             return 1
             ;;
     esac
 }
 
-if type -t dot.shell &>/dev/null; then
+if type -t dot::static::shell &>/dev/null; then
     DOT_ENABLED=true
 else
     DOT_ENABLED=false
