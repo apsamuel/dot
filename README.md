@@ -42,7 +42,7 @@ It provides an idempotent, opinionated, modular, and extensible shell environmen
 | 🎨   | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                                             |
 | 🧩   | Modular Library       | Two-tier`modules/` library: **static** helpers always loaded, plus 30+ **dynamic** snippets in lex order — disable any with a `DOT_DISABLE_*` flag |
 | 🗂   | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                                                 |
-| 🔐   | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                                       |
+| 🔐   | Secrets Management    | Load **and mask** secrets from JSON without leaking them in history or output                                                                      |
 | 🛠   | Language Environments | Python (`uv`), Node.js (`n`/`npm`), Rust (`rustup`), Java (`jenv`) all from one place                                                              |
 | 🌱   | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                                        |
 | 🔄   | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                                      |
