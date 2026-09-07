@@ -49,6 +49,10 @@ brew "bash"
 brew "libgit2"
 # Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
+# Bash Automated Testing System
+brew "bats-core"
+# Secrets scanner built for configurability and speed
+brew "betterleaks"
 # Implementation of the DNS protocols
 brew "bind"
 # Get/set bluetooth power and discoverable state
@@ -63,6 +67,8 @@ brew "certbot"
 brew "python@3.13"
 # Validate CloudFormation templates against the CloudFormation spec
 brew "cfn-lint"
+# TIFF library and utilities
+brew "libtiff"
 # Toolkit for image loading and pixel buffer manipulation
 brew "gdk-pixbuf"
 # OpenType text shaping engine
@@ -77,8 +83,6 @@ brew "libavif"
 brew "pango"
 # Library to render SVG files using Cairo
 brew "librsvg"
-# Image format providing lossless and lossy compression for web images
-brew "webp"
 # Versatile and fast Unicode/ASCII/ANSI graphics renderer
 brew "chafa"
 # Control Google Chrome from the command-line
@@ -99,6 +103,8 @@ brew "cowsay"
 brew "ctop"
 # Secure runtime for JavaScript and TypeScript
 brew "deno"
+# Tool for testing and debugging Dependabot update jobs
+brew "dependabot"
 # Dictionary Server Protocol (RFC2229) client
 brew "dict"
 # Good-lookin' diffs with diff-highlight and more
@@ -145,6 +151,10 @@ brew "pkcs11-helper"
 brew "freerdp"
 # GNU awk utility
 brew "gawk"
+# Open-source, cross-platform JavaScript runtime environment
+brew "node"
+# Interact with Google Gemini AI models from the command-line
+brew "gemini-cli"
 # GitHub command-line tool
 brew "gh"
 # Library for JPEG-2000 image manipulation
@@ -173,8 +183,6 @@ brew "glslang"
 brew "gnu-sed"
 # GNU Transport Layer Security (TLS) Library
 brew "gnutls"
-# Validating, recursive, caching DNS resolver
-brew "unbound"
 # Command-driven, interactive function plotting
 brew "gnuplot"
 # Open source programming language to build simple/reliable/efficient software
@@ -183,6 +191,8 @@ brew "go"
 brew "pkgconf"
 # Generate introspection data for GObject libraries
 brew "gobject-introspection"
+# Deliver Go binaries as fast and easily as possible
+brew "goreleaser"
 # Terminal based graphical activity monitor inspired by gtop and vtop
 brew "gotop"
 # ISO/IEC 23008-12:2017 HEIF file format decoder and encoder
@@ -193,8 +203,6 @@ brew "netpbm"
 brew "graphviz"
 # GNU grep, egrep and fgrep
 brew "grep"
-# Development kit for the Java programming language
-brew "openjdk"
 # Java-based scripting language
 brew "groovy"
 # Vulnerability scanner for container images and filesystems
@@ -249,8 +257,12 @@ brew "lcdf-typetools"
 brew "lftp"
 # Subtitle renderer for the ASS/SSA subtitle format
 brew "libass"
+# ISO/IEC 23008-12:2017 HEIF file format decoder and encoder
+brew "libheif-plugins"
 # C/C++ seam carving library
 brew "liblqr"
+# Validating, recursive, caching DNS resolver
+brew "unbound"
 # Light HTTP/1.1 server library
 brew "libmicrohttpd"
 # Library for reading RAW files from digital photo cameras
@@ -275,8 +287,6 @@ brew "lolcat"
 brew "mactop"
 # Utility for directing compilation
 brew "make"
-# Open-source, cross-platform JavaScript runtime environment
-brew "node"
 # CLI for Node.js style checker and lint tool for Markdown files
 brew "markdownlint-cli"
 # Mac App Store command-line interface
@@ -305,6 +315,8 @@ brew "node@20"
 brew "node@22"
 # Create, run, and share large language models (LLMs)
 brew "ollama"
+# Open source, general-purpose policy engine
+brew "opa"
 # Development kit for the Java programming language
 brew "openjdk@11"
 # SSL/TLS VPN implementing OSI layer 2 or 3 secure network extension
@@ -425,6 +437,8 @@ brew "viu"
 brew "w3m"
 # Executes a program periodically, showing output fullscreen
 brew "watch"
+# Convert HTML to PDF
+brew "weasyprint"
 # Command-line client for WebSockets
 brew "websocat"
 # Extensible IRC client
@@ -449,13 +463,3 @@ brew "zsh-autosuggestions"
 brew "zsh-completions"
 # Fish shell like syntax highlighting for zsh
 brew "zsh-syntax-highlighting"
-# A CLI for interacting with the Fastly platform
-brew "fastly/tap/fastly"
-# Packer
-brew "hashicorp/tap/packer"
-# Prompt theme engine for any shell
-brew "jandedobbeleer/oh-my-posh/oh-my-posh"
-# CLI to support with downloading and compiling terraform providers for Mac with M1 chip.
-brew "kreuzwerker/taps/m1-terraform-provider-helper"
-# unleash the power of Twilio from your command prompt
-brew "twilio/brew/twilio"

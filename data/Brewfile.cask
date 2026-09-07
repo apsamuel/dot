@@ -1,0 +1,70 @@
+# Command-line interface for 1Password
+cask "1password-cli"
+# Agent orchestration platform
+cask "antigravity"
+# Terminal interface for Antigravity agents
+cask "antigravity-cli"
+# Terminal-based AI coding assistant
+cask "claude-code"
+# Semantic code analysis engine
+cask "codeql"
+# OpenAI's coding agent that runs in your terminal
+cask "codex"
+# Node-based image, video and audio generator
+cask "comfy"
+# Brings the power of Copilot coding agent directly to your terminal
+cask "copilot-cli"
+# UI for creating Windows installer ISO from UUPDump
+cask "crystalfetch"
+# API documentation browser and code snippet manager
+cask "dash"
+# Browser for SQLite databases
+cask "db-browser-for-sqlite"
+cask "font-caskaydia-mono-nerd-font"
+cask "font-fira-code-nerd-font"
+cask "font-hack-nerd-font"
+cask "font-jetbrains-mono-nerd-font"
+cask "font-maple-mono-nf"
+cask "font-meslo-lg-nerd-font"
+cask "font-mononoki-nerd-font"
+cask "font-noto-color-emoji"
+cask "font-victor-mono"
+cask "font-victor-mono-nerd-font"
+# Set of tools to manage resources and applications hosted on Google Cloud
+cask "gcloud-cli"
+# Terminal emulator that uses platform-native UI and GPU acceleration
+cask "ghostty"
+# Native client for GitHub Copilot
+cask "github-copilot-app"
+# Virtual globe
+cask "google-earth-pro"
+# GPU-based terminal emulator
+cask "kitty"
+# Visual diff and merge tool
+cask "meld"
+# Remote desktop client
+cask "microsoft-remote-desktop"
+# Database administration and development tool for SQLite
+cask "navicat-for-sqlite"
+# Reverse proxy, secure introspectable tunnels to localhost
+cask "ngrok"
+# Knowledge base that works on top of a local folder of plain text Markdown files
+cask "obsidian"
+# Browse, manage, inspect containers and images
+cask "podman-desktop"
+# Collaboration platform for API development
+cask "postman"
+cask "powershell"
+# CLI to create, run, and deploy Slack apps
+cask "slack-cli"
+cask "ssh-tunnel-manager"
+# Virtual machines UI using QEMU
+cask "utm"
+# Development environment
+cask "vagrant"
+# Open-source code editor
+cask "visual-studio-code"
+# Open-source version of the X.Org X Window System
+cask "xquartz"
+# Multiplayer code editor
+cask "zed"
