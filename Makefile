@@ -107,7 +107,8 @@ endif
         vim omz tmux \
         dot-bootstrap \
         doctor dry-run-verify \
-        test test-verbose test-module
+        test test-verbose test-module \
+        lint-md format-md
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Help
@@ -664,3 +665,11 @@ test-verbose: ## Run all unit tests with verbose TAP output
 test-module: ## Run a single test module (MODULE=name)
 	if [ -z "$(MODULE)" ]; then echo "Usage: make test-module MODULE=<filter>"; exit 1; fi
 	zsh test/run_unit.sh "$(MODULE)"
+
+# ── Markdown lint/format (prettier backend) ────────────────────────────────
+
+lint-md: ## Check markdown formatting with prettier (no writes)
+	npx --yes prettier@3 --check "**/*.md"
+
+format-md: ## Format markdown in place with prettier
+	npx --yes prettier@3 --write "**/*.md"
