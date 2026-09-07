@@ -210,10 +210,10 @@ See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough a
 
 ### 🪨 Static vs 🌀 Dynamic Modules
 
-| Tier          | Path                 | Loaded                                        | Purpose                                                                                                                                                   |
-| ------------- | -------------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🪨 **Static**  | `modules/static/`    | First — sourced explicitly by `zshrc`         | Foundational env (`DOT_*` vars, autoloads, limits, ssh helpers, `dot::static::shell`). Always available; consumed by every dynamic module and by internal tooling. |
-| 🌀 **Dynamic** | `modules/NNN-x-*.sh` | Lex order via `dot::static::foundation::load-modules` after the statics | Targeted, individually disable-able snippets (homebrew, git, mac, podman, p10k, tmux, node, python, rust, java, sre, …).                                  |
+| Tier          | Path                 | Loaded                                                                  | Purpose                                                                                                                                                            |
+| ------------- | -------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 🪨 **Static**  | `modules/static/`    | First — sourced explicitly by `zshrc`                                   | Foundational env (`DOT_*` vars, autoloads, limits, ssh helpers, `dot::static::shell`). Always available; consumed by every dynamic module and by internal tooling. |
+| 🌀 **Dynamic** | `modules/NNN-x-*.sh` | Lex order via `dot::static::foundation::load-modules` after the statics | Targeted, individually disable-able snippets (homebrew, git, mac, podman, p10k, tmux, node, python, rust, java, sre, …).                                           |
 
 Both tiers are plain `.sh` files. See [modules/README.md](./modules/README.md) for the full inventory and the `DOT_DISABLE_*` flags that toggle each dynamic module off.
 
@@ -260,8 +260,8 @@ dot.shell <command> [options]
 | `help`               | Show inline usage for every command (also `-h` / `--help`).                                                              |
 | `update`             | `git pull` the `dot` repo, then `omz update`.                                                                            |
 | `reload [-d]`        | Re-source the shell via `omz reload`. `-d`/`--debug` enables `set -x` tracing.                                           |
-| `refresh-modules`    | Re-run `dot::static::foundation::load-modules` to re-source every dynamic module in the current shell.                                             |
-| `load-options`       | Re-apply the curated zsh options (`dot::static::foundation::load-zsh-options`).                                                                     |
+| `refresh-modules`    | Re-run `dot::static::foundation::load-modules` to re-source every dynamic module in the current shell.                   |
+| `load-options`       | Re-apply the curated zsh options (`dot::static::foundation::load-zsh-options`).                                          |
 | `printenv`           | Dump every `DOT_*` variable, masking anything that looks like a secret.                                                  |
 | `changelog [-a\|-d]` | Pretty-printed git log (last 7 commits by default; `-a` for all, `-d` for diffs).                                        |
 | `secrets <action>`   | Manage `~/Library/Mobile Documents/.../dot/secrets.json` — see below.                                                    |
@@ -330,21 +330,21 @@ dot.shell vendor list                # list configured submodules
 
 Every third-party dependency below is pinned as a git submodule under [`vendor/`](./vendor/README.md). This guarantees reproducible installs even when upstream repos move, rename, or break.
 
-| 🧩 Project                                                                | Purpose                                                    | Location                                                |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------- |
-| 🐚[oh-my-zsh](https://ohmyz.sh)                                           | ZSH plugin & theme framework                               | `vendor/oh-my-zsh/`                                     |
-| 🪟[oh-my-tmux](https://github.com/gpakosz/.tmux)                          | Tmux config framework (TPM at `$TMUX_PLUGIN_MANAGER_PATH`) | `vendor/oh-my-tmux/`                                    |
-| 🔍[fzf-git](https://github.com/junegunn/fzf-git.sh)                       | fzf bindings for git ops                                   | `vendor/fzf-git/`                                       |
-| 🛠[bash-commons](https://github.com/gruntwork-io/bash-commons)            | Reusable bash helpers                                      | `vendor/bash-commons/`                                  |
-| 🔠[figlet-fonts](https://github.com/xero/figlet-fonts)                    | Figlet fonts for `toFiglet`                                | `vendor/figlet-fonts/`                                  |
-| ⚡[powerlevel10k](https://github.com/romkatv/powerlevel10k)               | ZSH prompt theme                                           | `vendor/oh-my-zsh/custom/themes/powerlevel10k/`         |
-| 💡[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-style suggestions                                     | `vendor/oh-my-zsh/custom/plugins/zsh-autosuggestions/`  |
-| ⌨️[fzf-tab](https://github.com/Aloxaf/fzf-tab)                            | Replace ZSH completion menu with fzf                       | `vendor/oh-my-zsh/custom/plugins/fzf-tab/`              |
-| ✏️[zsh-vi-mode](https://github.com/jeffreytse/zsh-vi-mode)                | Enhanced vi mode                                           | `vendor/oh-my-zsh/custom/plugins/zsh-vi-mode/`          |
-| 🌈[F-Sy-H](https://github.com/z-shell/F-Sy-H)                             | Feature-rich syntax highlighting                           | `vendor/oh-my-zsh/custom/plugins/F-Sy-H/`               |
-| 🤖[zsh_codex](https://github.com/tom-doerr/zsh_codex)                     | LLM-powered shell completion                               | `vendor/oh-my-zsh/custom/plugins/zsh_codex/`            |
-| 🧭[navi](https://github.com/denisidoro/navi)                              | Interactive cheatsheet                                     | `vendor/oh-my-zsh/custom/plugins/navi/`                 |
-| 🐍[conda-zsh-completion](https://github.com/esc/conda-zsh-completion)     | Conda completion                                           | `vendor/oh-my-zsh/custom/plugins/conda-zsh-completion/` |
+| 🧩 Project                                                                | Purpose                                                                      | Location                                                |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 🐚[oh-my-zsh](https://ohmyz.sh)                                           | ZSH plugin & theme framework                                                 | `vendor/oh-my-zsh/`                                     |
+| 🪟[oh-my-tmux](https://github.com/gpakosz/.tmux)                          | Tmux config framework (plugins as submodules at `$TMUX_PLUGIN_MANAGER_PATH`) | `vendor/oh-my-tmux/`                                    |
+| 🔍[fzf-git](https://github.com/junegunn/fzf-git.sh)                       | fzf bindings for git ops                                                     | `vendor/fzf-git/`                                       |
+| 🛠[bash-commons](https://github.com/gruntwork-io/bash-commons)            | Reusable bash helpers                                                        | `vendor/bash-commons/`                                  |
+| 🔠[figlet-fonts](https://github.com/xero/figlet-fonts)                    | Figlet fonts for `toFiglet`                                                  | `vendor/figlet-fonts/`                                  |
+| ⚡[powerlevel10k](https://github.com/romkatv/powerlevel10k)               | ZSH prompt theme                                                             | `vendor/oh-my-zsh/custom/themes/powerlevel10k/`         |
+| 💡[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-style suggestions                                                       | `vendor/oh-my-zsh/custom/plugins/zsh-autosuggestions/`  |
+| ⌨️[fzf-tab](https://github.com/Aloxaf/fzf-tab)                            | Replace ZSH completion menu with fzf                                         | `vendor/oh-my-zsh/custom/plugins/fzf-tab/`              |
+| ✏️[zsh-vi-mode](https://github.com/jeffreytse/zsh-vi-mode)                | Enhanced vi mode                                                             | `vendor/oh-my-zsh/custom/plugins/zsh-vi-mode/`          |
+| 🌈[F-Sy-H](https://github.com/z-shell/F-Sy-H)                             | Feature-rich syntax highlighting                                             | `vendor/oh-my-zsh/custom/plugins/F-Sy-H/`               |
+| 🤖[zsh_codex](https://github.com/tom-doerr/zsh_codex)                     | LLM-powered shell completion                                                 | `vendor/oh-my-zsh/custom/plugins/zsh_codex/`            |
+| 🧭[navi](https://github.com/denisidoro/navi)                              | Interactive cheatsheet                                                       | `vendor/oh-my-zsh/custom/plugins/navi/`                 |
+| 🐍[conda-zsh-completion](https://github.com/esc/conda-zsh-completion)     | Conda completion                                                             | `vendor/oh-my-zsh/custom/plugins/conda-zsh-completion/` |
 
 Each plugin entry in [`data/zsh.yaml`](./data/zsh.yaml) carries an `enabled` flag that controls **selective initialisation** at shell start, _without_ deinit'ing the submodule on disk.
 

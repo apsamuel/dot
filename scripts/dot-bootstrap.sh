@@ -810,12 +810,13 @@ function check_cloud () {
 }
 
 # -----------------------------------------------------------------------------
-# check_omtmux - link oh-my-tmux config + install tpm plugins
+# check_omtmux - link oh-my-tmux config + provision plugin submodules
 #
 # Description:
 #   Symlinks `~/.tmux.conf` and `~/.tmux.conf.local` to the vendored
 #   oh-my-tmux copies, archives any legacy ~/.tmux, and (when not in
-#   dry-run) runs a transient tmux session to trigger tpm plugin install.
+#   dry-run) checks out the plugin git submodules at their pinned commits.
+#   Plugins are loaded at tmux startup by lib/tmux-helpers.sh — there is no tpm.
 #
 # Usage:    check_omtmux [-n] [-x] [-h]
 # Returns:  0 on success; 1 when vendor/oh-my-tmux missing or link fails.
@@ -828,8 +829,6 @@ function check_omtmux () {
     fi
     local DOT_DRY_RUN="${DOT_DRY_RUN:-0}"; [[ ${_opt_dry} -eq 1 ]] && DOT_DRY_RUN=1
     [[ ${_opt_debug} -eq 1 ]] && set -x
-
-    say_warn "DEPRECATED: use 'make bootstrap-tmux' or 'make tmux-install' instead"
 
     local vendor_tmux="${dot_bootstrap_directory}/vendor/oh-my-tmux"
     local plugin_dir="${dot_bootstrap_directory}/vendor/oh-my-tmux/plugins"
@@ -853,20 +852,15 @@ function check_omtmux () {
         dry_mv  "${HOME}/.tmux" "${HOME}/.tmux.bak"
     fi
 
-    # install plugins via a transient tmux session — ONLY when not in dry-run.
+    # provision plugins from their git submodules at pinned commits.
+    # no tpm, no transient tmux session: submodules are the sole provider and
+    # lib/tmux-helpers.sh (install_plugin source) loads them at tmux startup.
     export TMUX_PLUGIN_MANAGER_PATH="${plugin_dir}"
     if _is_dry; then
-        say_plan "tmux new-session -d -s bootstrap && send-keys C-I (install tpm plugins)"
+        say_plan "git -C ${vendor_tmux} submodule update --init --recursive (plugins)"
     else
-        if ! command -v tmux >/dev/null 2>&1; then
-            say_warn "🪴 tmux is not installed; skipping plugin install"
-        else
-            tmux has-session -t bootstrap 2>/dev/null && tmux kill-session -t bootstrap
-            tmux new-session -d -s bootstrap \
-                && tmux send-keys -t bootstrap C-I \
-                && tmux kill-session -t bootstrap \
-                || say_warn "🪴 tpm install session did not complete cleanly"
-        fi
+        git -C "${vendor_tmux}" submodule update --init --recursive \
+            || say_warn "🪴 plugin submodule sync did not complete cleanly"
     fi
     say_ok "🪴 tmux is configured"
     [[ ${_opt_debug} -eq 1 ]] && set +x

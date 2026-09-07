@@ -27,10 +27,9 @@ export ICLOUD ICLOUD_DOCUMENTS ICLOUD_DOWNLOADS ICLOUD_SCREENSHOTS
 
 # TODO: validate that these variables are set correctly and return with an error if not
 # TODO: ensure we consume our submodules correctly and return with an error if they are not present
-# TODO: verify what happens when TPM is not configured to point to the XDG path and return with an error if it is not configured correctly
-# TODO: ensure that TPM is configured to consume plugins from the vendored path ./vendor/oh-my-tmux/plugins/ and return with an error if it is not configured correctly
 
-# INFO: TPM plugins are managed as git submodules inside vendor/oh-my-tmux/plugins/
+# INFO: tmux plugins are managed purely as git submodules inside vendor/oh-my-tmux/plugins/
+#       (no tpm); they are loaded at startup by vendor/oh-my-tmux/lib/tmux-helpers.sh.
 # SEE: vendor/oh-my-tmux/.gitmodules for the full plugin inventory.
 
 # XDG Base Directory Specification

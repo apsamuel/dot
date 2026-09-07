@@ -73,7 +73,7 @@ TIERS=(
   "0|jq|yes|data|JSON parsing in modules and brew helpers|brew install jq"
   "0|yq|yes|data|reads data/zsh.yaml at every shell start|brew install yq"
   "0|brew|yes|pkg|host for tier 1+ installs|bash bin/brew-bootstrap.sh install"
-  "0|tmux|yes|tui|TPM plugin install in bootstrap|brew install tmux"
+  "0|tmux|yes|tui|plugin submodules provisioned in bootstrap|brew install tmux"
 
   # Tier 1 — language toolchains
   "1|uv|no|python|venv manager (~/.venv/<ver>-<arch>-base)|brew install uv"

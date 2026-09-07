@@ -94,7 +94,7 @@ $ DRY=1 make dot-bootstrap
 🔮 plan » mkdir -p ~/.config/nvim
 🔮 plan » ln -snf ~/.dot/vendor/vim ~/.vim
 🔮 plan » ln -snf ~/.dot/vendor/vim/init.vim ~/.vimrc
-🔮 plan » git submodule add https://github.com/tmux-plugins/tpm vendor/oh-my-tmux/plugins/tpm
+🔮 plan » git submodule update --init --recursive vendor/oh-my-tmux/plugins/tmux-sensible
 [done — zero mutations]
 ```
 
@@ -212,7 +212,7 @@ In `DOT_DRY_RUN=1` mode:
 $ DRY=1 make tmux-install
 [dry-run] ln -snf ~/.dot/vendor/oh-my-tmux/.tmux.conf ~/.tmux.conf
 [dry-run] ln -snf ~/.dot/vendor/oh-my-tmux/.tmux.conf.local ~/.tmux.conf.local
-[dry-run] git submodule update --init --recursive vendor/oh-my-tmux/plugins/tpm
+[dry-run] git submodule update --init --recursive vendor/oh-my-tmux/plugins/tmux-sensible
 ```
 
 #### Runtime Helper (`lib/tmux-helpers.sh`)

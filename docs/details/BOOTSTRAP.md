@@ -90,17 +90,17 @@ DOT_INSTALL_LANG_DEPS=1 source ~/.dot/scripts/dot-bootstrap.sh
 | `ICLOUD`                   | `~/iCloud`                            | iCloud Drive path                                        |
 | `ZSH`                      | `$HOME/.dot/vendor/oh-my-zsh`         | Vendored oh-my-zsh root                                  |
 | `ZSH_CUSTOM`               | `$ZSH/custom`                         | oh-my-zsh custom directory                               |
-| `TMUX_PLUGIN_MANAGER_PATH` | `$DOT_ROOT/vendor/oh-my-tmux/plugins` | TPM root                                                 |
+| `TMUX_PLUGIN_MANAGER_PATH` | `$DOT_ROOT/vendor/oh-my-tmux/plugins` | Plugin submodule root                                    |
 
 ## 🚚 Deploy Flags
 
 `dot-bootstrap.sh` exposes deploy shortcuts (matching the standalone scripts under `bin/`):
 
-| Flag               | Equivalent                                               | Effect                                                  |
-| ------------------ | -------------------------------------------------------- | ------------------------------------------------------- |
+| Flag               | Equivalent                                                   | Effect                                                  |
+| ------------------ | ------------------------------------------------------------ | ------------------------------------------------------- |
 | `-d`               | [`dot-deploy-config.sh`](../../scripts/dot-deploy-config.sh) | Push `data/zsh.yaml` → `$ICLOUD/dot/shell/zsh/zsh.yaml` |
 | `-r`               | [`dot-deploy-rc.sh`](../../scripts/dot-deploy-rc.sh)         | Push `zshrc` → `$ICLOUD/dot/shell/zsh/rc`               |
-| `-n` / `--dry-run` | `DOT_DRY_RUN=1`                                          | Preview only                                            |
+| `-n` / `--dry-run` | `DOT_DRY_RUN=1`                                              | Preview only                                            |
 
 ## 🌱 Submodule Workflow
 

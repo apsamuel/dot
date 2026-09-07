@@ -9,7 +9,7 @@ if [[ "${DOT_DISABLE_TMUX}" -eq 1 ]]; then
     return 0
 fi
 
-# point oh-my-tmux / tpm at the vendored plugin dir
+# point oh-my-tmux at the vendored plugin dir
 export TMUX_PLUGIN_MANAGER_PATH="${DOT_ROOT}/vendor/oh-my-tmux/plugins"
 
 dot::tmux::kill-unattached() {

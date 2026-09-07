@@ -23,8 +23,8 @@ Custom plugins/themes are themselves nested submodules under `vendor/oh-my-zsh/c
 Tmux configuration framework.
 
 - 📍 **Location:** `vendor/oh-my-tmux/`
-- 🔌 TPM root: `TMUX_PLUGIN_MANAGER_PATH=$DOT_ROOT/vendor/oh-my-tmux/plugins`
-- 🧾 TPM plugin list lives in `data/zsh.yaml` under `tmux.plugins`
+- 🔌 Plugin dir: `TMUX_PLUGIN_MANAGER_PATH=$DOT_ROOT/vendor/oh-my-tmux/plugins`
+- 🧾 Plugins are git submodules; the inventory lives in `vendor/oh-my-tmux/.gitmodules`
 - 🐈 Fork: [`apsamuel/.tmux`](https://github.com/apsamuel/.tmux)
 - 🧩 `dot` helpers: [`modules/001-a-tmux.sh`](../../modules/001-a-tmux.sh) (session management, safe session naming, cwd-derived sessions)
 
