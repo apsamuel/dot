@@ -192,4 +192,7 @@ test/*.log
 .zcompiled
 .zcompdump*
 
+.env
 .envrc
+.env.local
+.envrc.local
