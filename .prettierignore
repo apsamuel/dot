@@ -1,0 +1,18 @@
+# Vendored third-party code (git submodules) — never reformat
+vendor/
+
+# Node dependencies and build output
+**/node_modules/
+data/sbom/out/
+data/sbom/dist/
+
+# Generated artifacts / reports
+.sbom-tool/
+data/Brewfile.lock.json
+**/*.min.js
+**/*.min.css
+
+# Lockfiles (prettier shouldn't touch these)
+**/package-lock.json
+**/pnpm-lock.yaml
+**/yarn.lock
