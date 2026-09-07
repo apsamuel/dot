@@ -168,12 +168,12 @@ One-liner per plugin in the `plugins.builtin` array. **Required?** = does the pl
 
 Bootstrap will only seed these when explicitly opted in.
 
-| Package              | Source                                                                                                                                             | Installed via                    |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| `libtmux==0.36.0`    | [`data/zsh.yaml`](../../data/zsh.yaml) `languages.python.pip.requirements`, [`config/langs/requirements.txt`](../../config/langs/requirements.txt) | `uv pip install --python <venv>` |
-| `requests==2.32.5`   | [`requirements.txt`](../../requirements.txt) (used by [`bin/git-import-org.py`](../../bin/git-import-org.py))                                      | `uv pip install`                 |
-| `@google/gemini-cli` | [`data/zsh.yaml`](../../data/zsh.yaml) `languages.node.npm.requirements`                                                                           | `npm install -g`                 |
-| `@openai/codex`      | [`data/zsh.yaml`](../../data/zsh.yaml) `languages.node.npm.requirements`                                                                           | `npm install -g`                 |
+| Package              | Source                                                                                                        | Installed via                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `libtmux==0.36.0`    | [`data/zsh.yaml`](../../data/zsh.yaml) `languages.python.pip.requirements`                                    | `uv pip install --python <venv>` |
+| `requests==2.32.5`   | [`requirements.txt`](../../requirements.txt) (used by [`bin/git-import-org.py`](../../bin/git-import-org.py)) | `uv pip install`                 |
+| `@google/gemini-cli` | [`data/zsh.yaml`](../../data/zsh.yaml) `languages.node.npm.requirements`                                      | `npm install -g`                 |
+| `@openai/codex`      | [`data/zsh.yaml`](../../data/zsh.yaml) `languages.node.npm.requirements`                                      | `npm install -g`                 |
 
 ---
 

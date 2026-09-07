@@ -38,9 +38,9 @@ ZSH will read [`data/configs/automation/.zshrc`](.zshrc) instead of `~/.zshrc`.
 | 🔧 Variable                              | Effect                          |
 | --------------------------------------- | ------------------------------- |
 | `DOT_SPLASH_SCREEN=false`               | No banner                       |
-| `DOT_DISABLE_OUTPUTS=1`                 | No decorative `echo` chatter    |
-| `DOT_DISABLE_P10K=1`                    | Plain `%~ $` prompt             |
-| `DOT_DISABLE_THEFUCK=1`                 | No `thefuck` shell hook         |
+| `DOT_DISABLE_OUTPUTS=1`                 | No decorative`echo` chatter     |
+| `DOT_DISABLE_P10K=1`                    | Plain`%~ $` prompt              |
+| `DOT_DISABLE_THEFUCK=1`                 | No`thefuck` shell hook          |
 | `DOT_DISABLE_ZSH_AUTOSUGGESTIONS=1`     | No autosuggestions buffer       |
 | `DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING=1` | No F-Sy-H                       |
 | `DOT_DISABLE_EXTENSIONS=1`              | Skip the extensions module      |
@@ -64,6 +64,6 @@ ZSH will read [`data/configs/automation/.zshrc`](.zshrc) instead of `~/.zshrc`.
 
 | Doc                                                             | Purpose                            |
 | --------------------------------------------------------------- | ---------------------------------- |
-| [`config/README.md`](../README.md)                              | Configuration overview             |
+| [`data/README.md`](../../README.md)                             | Data & config overview             |
 | [`zshrc`](../../../zshrc)                                       | Full interactive shell entry point |
-| [`docs/details/DOT_VARS.md`](../../../docs/details/DOT_VARS.md) | All `DOT_*` variables              |
+| [`docs/details/DOT_VARS.md`](../../../docs/details/DOT_VARS.md) | All`DOT_*` variables               |

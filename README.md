@@ -47,7 +47,7 @@ It provides an idempotent, opinionated, modular, and extensible shell environmen
 | 🌱   | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                                        |
 | 🔄   | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                                      |
 | 🛡   | SBOM + OSV Scanner    | [`data/sbom/`](./data/sbom/) — VS Code extension that generates CycloneDX/SPDX SBOMs and scans them via OSV.dev                                    |
-| 🤖   | Automation Profile    | [`config/automation/.zshrc`](./config/automation/.zshrc) — minimal headless ZSH for Copilot/CI (no p10k, no plugins, no banners)                   |
+| 🤖   | Automation Profile    | [`data/configs/automation/.zshrc`](./data/configs/automation/.zshrc) — minimal headless ZSH for Copilot/CI (no p10k, no plugins, no banners)       |
 | 🖥   | VM Control            | [`bin/ivm.py`](./bin/ivm.py) — unified VM lifecycle for UTM, QEMU, Podman, and Apple Virtualization.framework                                      |
 | 🍎   | Apple VM Helper       | [`bin/applevm-helper`](./bin/apple-vm-helper/README.md) — native Swift binary using `Virtualization.framework`                                     |
 | 🥷   | Dry-run Mode          | `DOT_DRY_RUN=1` (or `-n`) on bootstrap — preview every action before it touches your machine                                                       |
@@ -372,16 +372,15 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on adding modules, repor
 
 ## 📚 Further Reading
 
-| 📄 Document                                 | Description                           |
-| ------------------------------------------ | ------------------------------------- |
-| [FAQ](./docs/FAQ.md)                       | Common questions answered             |
-| [BOOTSTRAP](./docs/details/BOOTSTRAP.md)   | Full bootstrap walkthrough            |
-| [FRAMEWORKS](./docs/details/FRAMEWORKS.md) | Frameworks used and why               |
-| [SECRETS](./docs/details/SECRETS.md)       | Loading & masking secrets             |
-| [DOT_VARS](./docs/details/DOT_VARS.md)     | Every`DOT_*` env var, audited         |
-| [modules/README](./modules/README.md)      | ZSH modules reference                 |
-| [bin/README](./bin/README.md)              | Scripts available on`$PATH`           |
-| [vendor/README](./vendor/README.md)        | Vendored submodules                   |
-| [scripts/README](./scripts/README.md)      | Submodule sync & repo automation      |
-| [data/README](./data/README.md)            | Data assets, Brewfile, SBOM extension |
-| [config/README](./config/README.md)        | Runtime configuration & deploys       |
+| 📄 Document                                 | Description                                   |
+| ------------------------------------------ | --------------------------------------------- |
+| [FAQ](./docs/FAQ.md)                       | Common questions answered                     |
+| [BOOTSTRAP](./docs/details/BOOTSTRAP.md)   | Full bootstrap walkthrough                    |
+| [FRAMEWORKS](./docs/details/FRAMEWORKS.md) | Frameworks used and why                       |
+| [SECRETS](./docs/details/SECRETS.md)       | Loading & masking secrets                     |
+| [DOT_VARS](./docs/details/DOT_VARS.md)     | Every`DOT_*` env var, audited                 |
+| [modules/README](./modules/README.md)      | ZSH modules reference                         |
+| [bin/README](./bin/README.md)              | Scripts available on`$PATH`                   |
+| [vendor/README](./vendor/README.md)        | Vendored submodules                           |
+| [scripts/README](./scripts/README.md)      | Submodule sync & repo automation              |
+| [data/README](./data/README.md)            | Data assets, config, Brewfile, SBOM extension |

@@ -35,7 +35,7 @@ Tmux configuration framework.
 ZSH prompt theme.
 
 - 📍 **Location:** `vendor/oh-my-zsh/custom/themes/powerlevel10k/`
-- 🎨 Pre-baked config at [`config/shell/p10k.zsh`](../../config/shell/p10k.zsh) → symlinked to `~/.p10k.zsh` by bootstrap (no wizard, no waiting)
+- 🎨 Pre-baked config at [`data/configs/shell/p10k.zsh`](../../data/configs/shell/p10k.zsh) → symlinked to `~/.p10k.zsh` by bootstrap (no wizard, no waiting)
 - 🚀 Activated in [`modules/001-a-p10k.sh`](../../modules/001-a-p10k.sh)
 - 🔤 Requires a [Nerd Font](https://www.nerdfonts.com) in your terminal emulator
 

@@ -60,7 +60,7 @@ Shell modules live in `modules/`. To add one:
 
 ### Updating Configuration Defaults
 
-Default options, plugins, and paths are configured in `config/data.json` and `config/data.yaml`. To add a new oh-my-zsh plugin, for example, add it to `plugins.builtin` in `config/data.json`.
+Default options, plugins, and paths are configured in `data/zsh.yaml`. To add a new oh-my-zsh plugin, for example, add it to `plugins.builtin` in `data/zsh.yaml`.
 
 ### Documenting Changes
 

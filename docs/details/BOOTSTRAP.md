@@ -70,7 +70,7 @@ DOT_INSTALL_LANG_DEPS=1 source ~/.dot/scripts/dot-bootstrap.sh
 3. 🍺 Resolves the **Brewfile** (`data/Brewfile`, falling back to iCloud).
 4. 🧰 Installs **bootstrap dependencies**: Homebrew, `gh`, and `yq` (the YAML parser is required because `data/zsh.yaml` is the runtime source of truth).
 5. 🔗 Symlinks `~/.dot/zshrc` → `~/.zshrc` (existing file → `~/.zshrc.bak`).
-6. 🔗 Symlinks `~/.dot/config/shell/p10k.zsh` → `~/.p10k.zsh`.
+6. 🔗 Symlinks `~/.dot/data/configs/shell/p10k.zsh` → `~/.p10k.zsh`.
 7. 🌥 Creates a `~/iCloud` shortcut on macOS.
 8. 🍺 If `DOT_DEPS=1`, runs `brew bundle` against the Brewfile.
 9. 🌱 Initialises **vendored submodules** under `vendor/` (oh-my-zsh, oh-my-tmux, fzf-git, bash-commons, figlet-fonts, plus all nested oh-my-zsh custom plugins/themes).
@@ -148,7 +148,7 @@ Limitations: SIGTERM stop, no suspend/resume, status only checks bundle presence
 ```text
 ~/
 ├── .zshrc          → ~/.dot/zshrc                              (symlink)
-├── .p10k.zsh       → ~/.dot/config/shell/p10k.zsh              (symlink)
+├── .p10k.zsh       → ~/.dot/data/configs/shell/p10k.zsh       (symlink)
 └── iCloud          → ~/Library/Mobile Documents/com~apple~CloudDocs
 
 ~/.dot/vendor/

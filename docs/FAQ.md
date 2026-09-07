@@ -66,10 +66,10 @@ Partially. Core ZSH modules work on any ZSH 5.8+. macOS-specific modules are gua
 Use the headless profile:
 
 ```bash
-ZDOTDIR="$HOME/.dot/config/automation" zsh
+ZDOTDIR="$HOME/.dot/data/configs/automation" zsh
 ```
 
-It disables `p10k`, splashes, plugin loading, and the language envs. See [`config/automation/README.md`](../config/automation/README.md).
+It disables `p10k`, splashes, plugin loading, and the language envs. See [`data/configs/automation/README.md`](../data/configs/automation/README.md).
 
 ---
 

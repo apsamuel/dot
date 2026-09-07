@@ -4,16 +4,18 @@ Runtime data and static assets consumed by `dot`.
 
 ## Directory Map
 
-| Path | Purpose |
-| --- | --- |
-| `zsh.yaml` | Canonical shell runtime config (theme, paths, conditions, languages, options, plugins, themes). |
-| `zsh.json` | Legacy JSON mirror of shell config values. |
-| `Brewfile` | Homebrew formula bundle used by bootstrap. |
-| `Brewfile.cask` | Homebrew cask bundle for GUI apps/tools. |
-| `quotes.yaml` / `quotes.json` | Quote sources for splash/output helpers. |
-| `images/` | Branding and visual assets. |
-| `configs/` | Shell/terminal config snapshots and related files. |
-| `sbom/` | SBOM + vulnerability scanning extension project. |
+| Path                          | Purpose                                                                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `zsh.yaml`                    | Canonical shell runtime config (theme, paths, conditions, languages, options, plugins, themes).                         |
+| `zsh.json`                    | Legacy JSON mirror of shell config values.                                                                              |
+| `Brewfile`                    | Homebrew formula bundle used by bootstrap.                                                                              |
+| `Brewfile.cask`               | Homebrew cask bundle for GUI apps/tools.                                                                                |
+| `quotes.yaml` / `quotes.json` | Quote sources for splash/output helpers.                                                                                |
+| `images/`                     | Branding and visual assets.                                                                                             |
+| `configs/`                    | Shell/terminal config snapshots (bash/fish/csh/ksh rc, `shell/p10k.zsh` symlinked to `~/.p10k.zsh`, terminal profiles). |
+| `configs/automation/`         | Minimal headless ZSH profile (`ZDOTDIR`) for Copilot/CI automation.                                                     |
+| `configs/vscode/`             | VSCode Copilot-terminal settings template for the automation profile.                                                   |
+| `sbom/`                       | SBOM + vulnerability scanning extension project.                                                                        |
 
 ## `zsh.yaml` Schema (Current)
 
@@ -68,10 +70,10 @@ themes:
 
 Use scripts in `scripts/` to mirror runtime config to iCloud-backed locations.
 
-| Script | Effect |
-| --- | --- |
+| Script                         | Effect                                                      |
+| ------------------------------ | ----------------------------------------------------------- |
 | `scripts/dot-deploy-config.sh` | Copies `data/zsh.yaml` to `$ICLOUD/dot/shell/zsh/zsh.yaml`. |
-| `scripts/dot-deploy-rc.sh` | Copies `zshrc` to `$ICLOUD/dot/shell/zsh/rc`. |
+| `scripts/dot-deploy-rc.sh`     | Copies `zshrc` to `$ICLOUD/dot/shell/zsh/rc`.               |
 
 ## Notes
 
