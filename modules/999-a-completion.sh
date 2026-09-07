@@ -8,16 +8,21 @@ library=$(basename "$0")
 dot::static::logging::loading "${library}" "${directory}"
 
 
-# enable zsh completions
+# Initialize the zsh completion system FIRST — loads zsh/computil (comptags,
+# comptry, ...) so completion helpers like _tags work. Must run before
+# bashcompinit, which assumes compinit has already run.
+autoload -Uz compinit
+compinit
+
+# bash-style completion shims (complete/compgen) — require compinit first
 autoload -U +X bashcompinit && bashcompinit
 
 # ensure that brew is a function so we can use it to find completions
 if type brew &>/dev/null; then
 
-    # load zsh completions
+    # add brew's extra completions to FPATH and re-scan
     if [ -d "$(brew --prefix)/share/zsh-completions" ]; then
         FPATH=$(brew --prefix)/share/zsh-completions:$FPATH
-        autoload -Uz compinit
         compinit
     fi
 
