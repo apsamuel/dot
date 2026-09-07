@@ -191,3 +191,5 @@ test/*.log
 
 .zcompiled
 .zcompdump*
+
+.envrc
