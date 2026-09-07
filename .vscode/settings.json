@@ -152,9 +152,7 @@
     "node_modules"
   ],
   "python.analysis.typeCheckingMode": "standard",
-  "rust-analyzer.linkedProjects": [
-    "${workspaceFolder}/turtle/Cargo.toml"
-  ],
+  "rust-analyzer.linkedProjects": [],
   // Exclude node_modules and vendor directories from search results, and also exclude any files with the .code-search extension.
   "search.exclude": {
     "**/*.code-search": true,

@@ -7,7 +7,7 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     exit 0
 fi
 
-# Format Turtle source files
+# Format Rust source files
 find . -name "*.rs" -print -exec rustfmt {} \;
 
 mapfile -t rust_files < <(find . -name "*.rs" -print)

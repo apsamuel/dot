@@ -81,7 +81,7 @@ TIERS=(
   "1|n|no|node|node version manager (reads zsh.yaml)|brew install n"
   "1|node|no|node|JS runtime|installed by n"
   "1|npm|no|node|installs @google/gemini-cli, @openai/codex|installed by n"
-  "1|cargo|no|rust|builds turtle/ and rust crates|brew install rustup-init && rustup-init"
+  "1|cargo|no|rust|formats/tests rust sources (test/, bin/rust-project-format.sh)|brew install rustup-init && rustup-init"
   "1|rustup|no|rust|toolchain manager for cargo|brew install rustup-init"
   "1|jenv|no|java|JAVA_HOME resolution / JDK switch|brew install jenv"
   "1|java|no|java|JDK runtime|brew install openjdk"

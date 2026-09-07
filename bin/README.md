@@ -56,7 +56,6 @@
 | [`imgcat.sh`](./imgcat.sh)                           | Bash | Print images inline (iTerm2 / compatible).                                                     |
 | [`blender-render.sh`](./blender-render.sh)           | Bash | Headless Blender render helper.                                                                |
 | [`rust-project-format.sh`](./rust-project-format.sh) | Bash | Recursively `rustfmt` every `.rs` file.                                                        |
-| [`turtle-run.sh`](./turtle-run.sh)                   | Bash | _(Deprecated — `turtle/` is being removed from this repo.)_                                    |
 
 ---
 

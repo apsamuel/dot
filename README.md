@@ -242,7 +242,9 @@ At startup, `modules/000-a-paths.sh` prepends these directories (when present):
 
 This means user-facing commands in `bin/` and internal-maintainer commands in `scripts/` are directly callable in interactive shells.
 
-> The `turtle/` path is **scheduled for excision** and is not part of `dot`'s supported surface.
+> **Deprecation notice — 🐢 Turtle has moved.** The `turtle/` shell/language project has been
+> extracted from `dot` into its own repository at <https://github.com/apsamuel/turtle>. Update any
+> scripts, aliases, or `rust-analyzer` config that pointed at `~/.dot/turtle` — that path no longer exists here.
 
 ---
 

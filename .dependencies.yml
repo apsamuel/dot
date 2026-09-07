@@ -187,7 +187,7 @@ entries:
     description: Rust toolchain installer
     category: rust
     tier: 1
-    evidence: turtle/Cargo.toml:1
+    evidence: modules/001-d-rust.sh:1
 
   - type: brew
     name: jenv
