@@ -81,7 +81,7 @@ DOT_INSTALL_LANG_DEPS=1 source ~/.dot/scripts/dot-bootstrap.sh
 
 ## 🎚️ Environment Variables
 
-| 🔧 Variable                 | Default                               | Effect                                                   |
+| 🔧 Variable                | Default                               | Effect                                                   |
 | -------------------------- | ------------------------------------- | -------------------------------------------------------- |
 | `DOT_DRY_RUN`              | `0`                                   | Print every action without executing                     |
 | `DOT_DEPS`                 | `0`                                   | Force install / refresh of bootstrap deps (brew, gh, yq) |
@@ -129,7 +129,7 @@ cp .build/release/applevm-helper ~/.dot/bin/
 python3 ~/.dot/bin/ivm.py backends    # → "apple yes swift-native: <version>"
 ```
 
-| 🔧 Variable                         | Effect                                            |
+| 🔧 Variable                        | Effect                                            |
 | ---------------------------------- | ------------------------------------------------- |
 | `IVM_APPLE_PROVIDER=swift-native`  | Force native provider; fail loudly if unavailable |
 | `IVM_APPLE_PROVIDER=vz`            | Force vz fallback; fail if unavailable            |

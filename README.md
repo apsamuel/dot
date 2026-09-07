@@ -13,7 +13,7 @@
 
 ## 🌑 About
 
-**`dot`** is a ZSH configuration automation framework that turns your bare shell into a *productivity powerhouse* in **seconds!**
+**`dot`** is a ZSH configuration automation framework that turns your bare shell into a _productivity powerhouse_ in **seconds!**
 
 It provides an idempotent, opinionated, modular, and extensible shell environment with sensible defaults, curated tooling, and a clean structure that scales from personal use to team adoption.
 
@@ -36,28 +36,28 @@ It provides an idempotent, opinionated, modular, and extensible shell environmen
 
 ## ✨ Features
 
-| 🪶   | Feature               | Description                                                                                                                                        |
+| 🪶  | Feature               | Description                                                                                                                                        |
 | --- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🔋   | Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions`, `navi`, `zsh_codex` wired up out of the box                                                |
-| 🎨   | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                                             |
-| 🧩   | Modular Library       | Two-tier`modules/` library: **static** helpers always loaded, plus 30+ **dynamic** snippets in lex order — disable any with a `DOT_DISABLE_*` flag |
+| 🔋  | Batteries Included    | `fzf`, `bat`, `thefuck`, `tmux`, `zsh-autosuggestions`, `navi`, `zsh_codex` wired up out of the box                                                |
+| 🎨  | Sleek Prompt          | `powerlevel10k` with a pre-baked configuration — no wizard, no waiting                                                                             |
+| 🧩  | Modular Library       | Two-tier`modules/` library: **static** helpers always loaded, plus 30+ **dynamic** snippets in lex order — disable any with a `DOT_DISABLE_*` flag |
 | 🗂   | YAML-first Config     | [`data/zsh.yaml`](./data/zsh.yaml) is the single source of truth, parsed with `yq`                                                                 |
-| 🔐   | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                                       |
+| 🔐  | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                                       |
 | 🛠   | Language Environments | Python (`uv`), Node.js (`n`/`npm`), Rust (`rustup`), Java (`jenv`) all from one place                                                              |
-| 🌱   | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                                        |
-| 🔄   | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                                      |
+| 🌱  | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                                        |
+| 🔄  | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                                      |
 | 🛡   | SBOM + OSV Scanner    | [`data/sbom/`](./data/sbom/) — VS Code extension that generates CycloneDX/SPDX SBOMs and scans them via OSV.dev                                    |
-| 🤖   | Automation Profile    | [`data/configs/automation/.zshrc`](./data/configs/automation/.zshrc) — minimal headless ZSH for Copilot/CI (no p10k, no plugins, no banners)       |
+| 🤖  | Automation Profile    | [`data/configs/automation/.zshrc`](./data/configs/automation/.zshrc) — minimal headless ZSH for Copilot/CI (no p10k, no plugins, no banners)       |
 | 🖥   | VM Control            | [`bin/ivm.py`](./bin/ivm.py) — unified VM lifecycle for UTM, QEMU, Podman, and Apple Virtualization.framework                                      |
-| 🍎   | Apple VM Helper       | [`bin/applevm-helper`](./bin/apple-vm-helper/README.md) — native Swift binary using `Virtualization.framework`                                     |
-| 🥷   | Dry-run Mode          | `DOT_DRY_RUN=1` (or `-n`) on bootstrap — preview every action before it touches your machine                                                       |
+| 🍎  | Apple VM Helper       | [`bin/applevm-helper`](./bin/apple-vm-helper/README.md) — native Swift binary using `Virtualization.framework`                                     |
+| 🥷  | Dry-run Mode          | `DOT_DRY_RUN=1` (or `-n`) on bootstrap — preview every action before it touches your machine                                                       |
 
 ---
 
 ## 📋 Requirements
 
-| Tool       | Version      | Purpose                                          |
-| ---------- | ------------ | ------------------------------------------------ |
+| Tool        | Version      | Purpose                                          |
+| ----------- | ------------ | ------------------------------------------------ |
 | 🍎 macOS    | 12 Monterey+ | Primary platform                                 |
 | 🐚 ZSH      | 5.8+         | Required shell                                   |
 | 🌳 Git      | 2.x+         | Submodule support                                |
@@ -212,8 +212,8 @@ See [BOOTSTRAP.md](./docs/details/BOOTSTRAP.md) for a step-by-step walkthrough a
 
 ### 🪨 Static vs 🌀 Dynamic Modules
 
-| Tier         | Path                 | Loaded                                                                 | Purpose                                                                                                                                                            |
-| ------------ | -------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tier          | Path                 | Loaded                                                                 | Purpose                                                                                                                                                            |
+| ------------- | -------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 🪨**Static**  | `modules/static/`    | First — sourced explicitly by`zshrc`                                   | Foundational env (`DOT_*` vars, autoloads, limits, ssh helpers, `dot::static::shell`). Always available; consumed by every dynamic module and by internal tooling. |
 | 🌀**Dynamic** | `modules/NNN-x-*.sh` | Lex order via`dot::static::foundation::load-modules` after the statics | Targeted, individually disable-able snippets (homebrew, git, mac, podman, p10k, tmux, node, python, rust, java, sre, …).                                           |
 
@@ -270,7 +270,7 @@ dot::static::shell <command> [options]
 | `changelog [-a\|-d]` | Pretty-printed git log (last 7 commits by default;`-a` for all, `-d` for diffs).                                        |
 | `secrets <action>`   | Manage`~/Library/Mobile Documents/.../dot/secrets.json` — see below.                                                    |
 | `add-plugin <url>`   | Add an OMZ plugin as a submodule under`vendor/oh-my-zsh/custom/plugins/`.                                               |
-| `add-theme  <url>`   | Add an OMZ theme  as a submodule under`vendor/oh-my-zsh/custom/themes/`.                                                |
+| `add-theme  <url>`   | Add an OMZ theme as a submodule under`vendor/oh-my-zsh/custom/themes/`.                                                 |
 | `vendor <action>`    | Forward to[`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) — manage every vendored submodule (root + nested). |
 
 ### 🔐 `dot::static::shell secrets`
@@ -311,7 +311,7 @@ dot::static::shell vendor list                # list configured submodules
 
 `dot` is controlled through environment variables. Set any of these before sourcing `~/.zshrc` to change behaviour:
 
-| 🔧 Variable               | Default | Effect                                                            |
+| 🔧 Variable              | Default | Effect                                                            |
 | ------------------------ | ------- | ----------------------------------------------------------------- |
 | `DOT_DEBUG`              | `0`     | Print each module as it loads                                     |
 | `DOT_DRY_RUN`            | `0`     | Bootstrap prints actions without executing them                   |
@@ -335,11 +335,11 @@ dot::static::shell vendor list                # list configured submodules
 Every third-party dependency below is pinned as a git submodule under [`vendor/`](./vendor/README.md). This guarantees reproducible installs even when upstream repos move, rename, or break.
 
 | 🧩 Project                                                                | Purpose                                                                     | Location                                                |
-| ------------------------------------------------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------- |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------- |
 | 🐚[oh-my-zsh](https://ohmyz.sh)                                           | ZSH plugin & theme framework                                                | `vendor/oh-my-zsh/`                                     |
 | 🪟[oh-my-tmux](https://github.com/gpakosz/.tmux)                          | Tmux config framework (plugins as submodules at`$TMUX_PLUGIN_MANAGER_PATH`) | `vendor/oh-my-tmux/`                                    |
 | 🔍[fzf-git](https://github.com/junegunn/fzf-git.sh)                       | fzf bindings for git ops                                                    | `vendor/fzf-git/`                                       |
-| 🛠[bash-commons](https://github.com/gruntwork-io/bash-commons)            | Reusable bash helpers                                                       | `vendor/bash-commons/`                                  |
+| 🛠[bash-commons](https://github.com/gruntwork-io/bash-commons)             | Reusable bash helpers                                                       | `vendor/bash-commons/`                                  |
 | 🔠[figlet-fonts](https://github.com/xero/figlet-fonts)                    | Figlet fonts for`toFiglet`                                                  | `vendor/figlet-fonts/`                                  |
 | ⚡[powerlevel10k](https://github.com/romkatv/powerlevel10k)               | ZSH prompt theme                                                            | `vendor/oh-my-zsh/custom/themes/powerlevel10k/`         |
 | 💡[zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) | Fish-style suggestions                                                      | `vendor/oh-my-zsh/custom/plugins/zsh-autosuggestions/`  |
@@ -372,7 +372,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on adding modules, repor
 
 ## 📚 Further Reading
 
-| 📄 Document                                 | Description                                   |
+| 📄 Document                                | Description                                   |
 | ------------------------------------------ | --------------------------------------------- |
 | [FAQ](./docs/FAQ.md)                       | Common questions answered                     |
 | [BOOTSTRAP](./docs/details/BOOTSTRAP.md)   | Full bootstrap walkthrough                    |

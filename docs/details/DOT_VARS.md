@@ -6,8 +6,8 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 
 ## Quick-Reference Index
 
-| Variable                                                                      | Category       | Status                                   |
-| ----------------------------------------------------------------------------- | -------------- | ---------------------------------------- |
+| Variable                                                                      | Category       | Status                                    |
+| ----------------------------------------------------------------------------- | -------------- | ----------------------------------------- |
 | [`DOT_ROOT`](#dot_root)                                                       | Path           | ✅ Active                                 |
 | [`DOT_DIRECTORY`](#dot_directory)                                             | Path           | ✅ Active                                 |
 | [`DOT_DIR`](#dot_dir)                                                         | Path           | ✅ Active (alias)                         |
@@ -61,6 +61,7 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 | [`DOT_LIBS_DIR`](#dot_libs_dir)                                               | External Input | ✅ Active (when set)                      |
 
 **Status key:**
+
 - ✅ Active — set and consumed by at least one module
 - ⚠️ Partial — set but only used in limited/indirect ways
 - ❌ Orphan — defined and exported but never consumed (candidate for removal)
@@ -72,42 +73,49 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 These variables establish the filesystem layout of the framework and are used throughout all modules.
 
 ### `DOT_ROOT`
+
 - **Default:** `$HOME/.dot`
 - **Set in:** `modules/static/dotenv.sh`
 - **Used in:** `dotenv.sh` to derive `DOT_DIRECTORY`, `DOT_MODULES`, and `DOT_DEBUG_RC`
 - **Notes:** Synonymous with `DOT_DIRECTORY`. `unset` and re-exported on every shell start to avoid stale values from parent processes.
 
 ### `DOT_DIRECTORY`
+
 - **Default:** `$DOT_ROOT`
 - **Set in:** `modules/static/dotenv.sh`, `modules/static/limits.sh`
 - **Used in:** `modules/000-a-output.sh` (quotes file path), `modules/static/lib/internal.sh` (zsh.yaml plugin list), `modules/static/lib/mac.sh` and `linux.sh` (debug messages), `modules/000-b-dot.sh` (initializes `DOT_DIR`)
 - **Notes:** Canonical name for the repo root. Prefer this over `DOT_DIR` in new code.
 
 ### `DOT_DIR`
+
 - **Default:** `$DOT_DIRECTORY` (set in `000-b-dot.sh`)
 - **Set in:** `modules/000-b-dot.sh` (`DOT_DIR="${DOT_DIRECTORY}"`)
 - **Used in:** `modules/000-b-dot.sh` (all `git -C` operations, plugin/theme install), `modules/000-aa-paths.sh` (`$DOT_DIR/bin` PATH entry), `modules/000-b-dot.sh` sources `$DOT_DIR/modules/static/lib/internal.sh`
 - **Notes:** Redundant alias for `DOT_DIRECTORY` introduced in `000-b-dot.sh`. Candidate for consolidation — replace all `DOT_DIR` references with `DOT_DIRECTORY`.
 
 ### `DOT_MODULES`
+
 - **Default:** `$DOT_ROOT/modules`
 - **Set in:** `modules/static/dotenv.sh`, `modules/static/limits.sh`
 - **Used in:** `modules/000-a-foundation.sh` (sources `static/lib/mac.sh`), `modules/static/dotbase.sh` (sources `limits.sh`, `autoload.sh`), `modules/static/foundation.sh` (sources `000-c-mac.sh`)
 - **Notes:** Points to the modules directory.
 
 ### `DOT_MODULES_FILES`
+
 - **Default:** sorted array of `$DOT_MODULES/*.sh` paths
 - **Set in:** `modules/static/dotenv.sh`
 - **Used in:** `zshrc` — iterates this array to source every module at startup
 - **Notes:** The core mechanism by which all numbered `modules/` files are loaded. Re-populated each shell start.
 
 ### `DOT_BOOTSTRAP`
+
 - **Default:** `$DOT_DIRECTORY/scripts/dot-bootstrap.sh`
 - **Set in:** `modules/static/dotenv.sh`
 - **Used in:** Informational only — no module executes `$DOT_BOOTSTRAP` automatically
 - **Notes:** ⚠️ Set but only passively exported. Its value is never actually invoked by any module. Useful as a convenience reference (`source $DOT_BOOTSTRAP`) but not strictly necessary.
 
 ### `DOT_CONFIGURATION`
+
 - **Default:** `$ICLOUD/dot/data.json`
 - **Set in:** `modules/static/config.sh`
 - **Used in:** `modules/000-a-config.sh` — `dot::config::theme()` and `dot::config::condition()` query this file via `jq`
@@ -118,6 +126,7 @@ These variables establish the filesystem layout of the framework and are used th
 ## 2. Debug Variables
 
 ### `DOT_DEBUG`
+
 - **Default:** `0`
 - **Set in:** `modules/static/dotenv.sh` (authoritative); also re-defaulted defensively in `000-a-foundation.sh`, `000-a-emulation.sh`, `000-a-output.sh`, `000-c-git.sh`, `000-a-secrets.sh`
 - **Used in:** Every numbered `modules/` file, `bin/tmux-code.sh`, `modules/static/lib/{mac,linux,windows,plumbing}.sh`
@@ -125,6 +134,7 @@ These variables establish the filesystem layout of the framework and are used th
 - **To enable:** `export DOT_DEBUG=1` before starting a new shell (or `export DOT_DEBUG=1 && exec zsh`)
 
 ### `DOT_DEBUG_RC`
+
 - **Default:** `$DOT_ROOT/.$DOT_SHELL rc` → e.g. `~/.dot/.zshrc`
 - **Set in:** `modules/static/dotenv.sh`
 - **Used in:** ❌ **Nowhere** — never read by any module or script
@@ -137,42 +147,49 @@ These variables establish the filesystem layout of the framework and are used th
 These are set during shell startup to reflect the current state of the loaded environment.
 
 ### `DOT_SHELL`
+
 - **Default:** `"zsh"`
 - **Set in:** `modules/static/dotenv.sh`
 - **Used in:** Only to construct `DOT_DEBUG_RC` (`${DOT_ROOT}/.${DOT_SHELL}rc`) — and since `DOT_DEBUG_RC` itself is never read, `DOT_SHELL` has no effective consumer
 - **Notes:** ⚠️ Would be useful if `DOT_DEBUG_RC` were implemented. Harmless to keep as a shell identity tag.
 
 ### `DOT_INTERACTIVE`
+
 - **Default:** `0`
 - **Set in:** `modules/static/dotenv.sh`
 - **Used in:** ❌ **Nowhere** — defined and exported but never checked
 - **Recommendation:** Remove, or implement a check (e.g. `[[ $- == *i* ]]` → set to 1) and guard interactive-only modules with it.
 
 ### `DOT_BOOT`
+
 - **Default:** (none — never assigned a value)
 - **Set in:** Appears in the `export` statement in `modules/static/dotenv.sh` line 57 but is never assigned
 - **Used in:** ❌ **Nowhere**
 - **Recommendation:** Remove from the export list. It is always empty/unset.
 
 ### `DOT_BOOTED`
+
 - **Default:** `false`
 - **Set in:** `modules/static/dotenv.sh`
 - **Used in:** ❌ **Nowhere** — set to `false` but never checked or updated to `true` by any module
 - **Recommendation:** Remove, or implement: set to `true` at the end of `zshrc` load sequence so callers can detect a fully-initialized shell.
 
 ### `DOT_ENABLED`
+
 - **Default:** `true` (set at end of `000-b-dot.sh`; conditionally `false` if iCloud is unavailable)
 - **Set in:** `modules/000-b-dot.sh`
 - **Used in:** ❌ **Nowhere outside `000-b-dot.sh`** — exported but never checked by any other module
 - **Recommendation:** Remove or honour: modules that depend on iCloud-backed config could guard themselves with `[[ "${DOT_ENABLED}" == "true" ]]`.
 
 ### `DOT_SECRETS_LOADED`
+
 - **Default:** unset
 - **Set in:** `modules/static/lib/plumbing.sh` → set to `1` after secrets are loaded
 - **Used in:** `modules/static/lib/plumbing.sh` → checked to skip double-loading; unset after use
 - **Notes:** ✅ Internal one-shot latch — functions correctly as a re-entrancy guard.
 
 ### `DOT_DIRECTORY_NAME`
+
 - **Default:** (derived from `dirname "${DOT_DIRECTORY_NAME}"` — self-reference without initialisation)
 - **Set in:** `modules/000-b-dot.sh` line 11
 - **Used in:** ❌ Only in its own assignment (`DOT_DIRECTORY_NAME="$(dirname "${DOT_DIRECTORY_NAME}")"` with no prior value)
@@ -271,16 +288,19 @@ Defined in `modules/static/dotenv.sh`. No module currently reads any of these �
 These are **not** set by any `modules/` file. They are meant to be set by the caller (in the environment or a wrapper script) before invoking bootstrap or starting a shell.
 
 ### `DOT_DEPS`
+
 - **Consumed in:** `scripts/dot-bootstrap.sh`
 - **Effect:** If set to `1`, forces re-installation of all bootstrap dependencies (brew packages, etc.)
 - **Example:** `DOT_DEPS=1 source scripts/dot-bootstrap.sh`
 
 ### `DOT_NVM_INSTALL_LTS`
+
 - **Consumed in:** `scripts/dot-bootstrap.sh`
 - **Effect:** If set to `1`, installs the LTS version of Node.js via nvm during bootstrap
 - **Example:** `DOT_NVM_INSTALL_LTS=1 source scripts/dot-bootstrap.sh`
 
 ### `DOT_LIBS_DIR`
+
 - **Consumed in:** [`modules/static/dot.sh`](../../modules/static/dot.sh) — the `dot::static::shell` command sources all `*.sh` files found under this path
 - **Effect:** Allows injecting additional shell libraries into the `dot` environment without modifying the repo
 - **Example:** `export DOT_LIBS_DIR="$HOME/.local/dot-extras"` in a machine-local rc snippet

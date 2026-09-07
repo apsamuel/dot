@@ -371,11 +371,11 @@ All major install/update operations are **guaranteed idempotent**:
 
 | Operation               | Idempotent? | Verification                     |
 | ----------------------- | ----------- | -------------------------------- |
-| `make vim-install`      | ✅ Yes       | Run twice, zero file changes     |
-| `make omz-sync-plugins` | ✅ Yes       | Reconciles to YAML, then stable  |
-| `make tmux-install`     | ✅ Yes       | Symlinks exist, re-link is no-op |
-| `make config-zsh`       | ✅ Yes       | Same symlinks, zero overwrites   |
-| `DRY=1 make <anything>` | ✅ Yes       | Zero mutations, all planned      |
+| `make vim-install`      | ✅ Yes      | Run twice, zero file changes     |
+| `make omz-sync-plugins` | ✅ Yes      | Reconciles to YAML, then stable  |
+| `make tmux-install`     | ✅ Yes      | Symlinks exist, re-link is no-op |
+| `make config-zsh`       | ✅ Yes      | Same symlinks, zero overwrites   |
+| `DRY=1 make <anything>` | ✅ Yes      | Zero mutations, all planned      |
 
 **Verification Approach:**
 

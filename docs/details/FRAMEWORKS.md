@@ -71,8 +71,8 @@ Curated figlet font collection used by the `dot::output::figlet` helper.
 
 `dot` manages language runtimes through dedicated `modules/` files. Their package lists live in [`data/zsh.yaml`](../../data/zsh.yaml) under `languages.*` and are installed when `DOT_INSTALL_LANG_DEPS=1`.
 
-| Language  | Toolchain                                     | Module                                                     |
-| --------- | --------------------------------------------- | ---------------------------------------------------------- |
+| Language   | Toolchain                                     | Module                                                     |
+| ---------- | --------------------------------------------- | ---------------------------------------------------------- |
 | 🐍 Python  | [`uv`](https://github.com/astral-sh/uv) venvs | [`modules/001-d-python.sh`](../../modules/001-d-python.sh) |
 | 🟢 Node.js | Homebrew + `fnm`/`n`                          | [`modules/001-d-node.sh`](../../modules/001-d-node.sh)     |
 | 🦀 Rust    | [`rustup`](https://rustup.rs) via Homebrew    | [`modules/001-d-rust.sh`](../../modules/001-d-rust.sh)     |

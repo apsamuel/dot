@@ -24,12 +24,12 @@ Secrets are stored in a JSON file **outside the repository** (e.g. `~/.secrets.j
 
 All functions are defined in `modules/000-a-secrets.sh`.
 
-| Function             | Description                                                                                               |
-| -------------------- | --------------------------------------------------------------------------------------------------------- |
-| `dot::secrets::load [path]` | Loads a JSON secrets file and exports each key as an environment variable. Defaults to `~/.secrets.json`. |
-| `dot::secrets::mask`        | Masks the values of all loaded secrets in subsequent shell output.                                        |
-| `__mask_secrets__`   | Internal function called by `dot::secrets::mask`.                                                                |
-| `dot::secrets::reload-options`      | Reloads shell options after secrets are masked.                                                           |
+| Function                       | Description                                                                                               |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `dot::secrets::load [path]`    | Loads a JSON secrets file and exports each key as an environment variable. Defaults to `~/.secrets.json`. |
+| `dot::secrets::mask`           | Masks the values of all loaded secrets in subsequent shell output.                                        |
+| `__mask_secrets__`             | Internal function called by `dot::secrets::mask`.                                                         |
+| `dot::secrets::reload-options` | Reloads shell options after secrets are masked.                                                           |
 
 ---
 

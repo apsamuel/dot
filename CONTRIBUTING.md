@@ -7,11 +7,13 @@ Thanks for your interest in improving `dot`. Contributions are welcome in the fo
 ## Getting Started
 
 1. Fork the repository and clone your fork:
+
    ```bash
    git clone https://github.com/<your-username>/dot.git ~/.dot
    ```
 
 2. Run bootstrap to set up your environment:
+
    ```bash
    pushd ~/.dot && source ./scripts/dot-bootstrap.sh
    ```
@@ -107,6 +109,7 @@ Tests cover shell basics, language target builds (C, C++, Go, Rust, Java), and u
 ## Reporting Issues
 
 Open a GitHub issue with:
+
 - Your OS and ZSH version (`uname -a`, `zsh --version`)
 - Steps to reproduce
 - Expected vs actual behaviour
