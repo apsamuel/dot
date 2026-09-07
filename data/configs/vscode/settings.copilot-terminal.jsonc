@@ -1,5 +1,5 @@
 // Copy these keys into your VSCode user settings.json to route Copilot's
-// agent terminal AND VSCode automation tasks through ~/.dot/config/automation.
+// agent terminal AND VSCode automation tasks through ~/.dot/data/configs/automation.
 //
 // Why: tmux, p10k, zsh-vi-mode, F-Sy-H, and fzf-tab can switch the terminal
 // into the alternate screen buffer (ESC[?1049h), which breaks Copilot's
@@ -17,7 +17,7 @@
       "-l"
     ],
     "env": {
-      "ZDOTDIR": "${env:HOME}/.dot/config/automation",
+      "ZDOTDIR": "${env:HOME}/.dot/data/configs/automation",
       "DOT_INTERACTIVE": "0",
       "DOT_DISABLE_TMUX": "1",
       "COPILOT_AGENT_TERMINAL": "1",
@@ -34,7 +34,7 @@
       "color": "terminal.ansiMagenta",
       "overrideName": true,
       "env": {
-        "ZDOTDIR": "${env:HOME}/.dot/config/automation",
+        "ZDOTDIR": "${env:HOME}/.dot/data/configs/automation",
         "DOT_INTERACTIVE": "0",
         "DOT_DISABLE_TMUX": "1",
         "COPILOT_AGENT_TERMINAL": "1",

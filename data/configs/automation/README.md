@@ -1,4 +1,4 @@
-# 🤖 config/automation/
+# 🤖 data/configs/automation/
 
 A **headless ZSH profile** for non-interactive use cases — Copilot Workspace, CI runners, scripted automation, or any context where banners, splash screens, p10k prompts, and plugin chains would only get in the way.
 
@@ -14,7 +14,7 @@ A **headless ZSH profile** for non-interactive use cases — Copilot Workspace, 
 - 🐳 Container builds where `~/.zshrc` is mounted from `dot`
 - 📦 Tooling that wants Homebrew + language runtimes but no prompt decoration
 
-For interactive day-to-day use, you want the full [`zshrc`](../../zshrc) and [`modules/`](../../modules/README.md) chain instead.
+For interactive day-to-day use, you want the full [`zshrc`](../../../zshrc) and [`modules/`](../../../modules/README.md) chain instead.
 
 ---
 
@@ -23,13 +23,13 @@ For interactive day-to-day use, you want the full [`zshrc`](../../zshrc) and [`m
 Set `ZDOTDIR` to this directory before launching `zsh`:
 
 ```bash
-ZDOTDIR=~/.dot/config/automation zsh -i
+ZDOTDIR=~/.dot/data/configs/automation zsh -i
 # or for an entire automation session
-export ZDOTDIR=~/.dot/config/automation
+export ZDOTDIR=~/.dot/data/configs/automation
 exec zsh
 ```
 
-ZSH will read [`config/automation/.zshrc`](.zshrc) instead of `~/.zshrc`.
+ZSH will read [`data/configs/automation/.zshrc`](.zshrc) instead of `~/.zshrc`.
 
 ---
 
@@ -62,8 +62,8 @@ ZSH will read [`config/automation/.zshrc`](.zshrc) instead of `~/.zshrc`.
 
 ## 🔗 Related
 
-| Doc                                                          | Purpose                            |
-| ------------------------------------------------------------ | ---------------------------------- |
-| [`config/README.md`](../README.md)                           | Configuration overview             |
-| [`zshrc`](../../zshrc)                                       | Full interactive shell entry point |
-| [`docs/details/DOT_VARS.md`](../../docs/details/DOT_VARS.md) | All `DOT_*` variables              |
+| Doc                                                             | Purpose                            |
+| --------------------------------------------------------------- | ---------------------------------- |
+| [`config/README.md`](../README.md)                              | Configuration overview             |
+| [`zshrc`](../../../zshrc)                                       | Full interactive shell entry point |
+| [`docs/details/DOT_VARS.md`](../../../docs/details/DOT_VARS.md) | All `DOT_*` variables              |

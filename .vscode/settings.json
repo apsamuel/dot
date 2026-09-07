@@ -174,7 +174,7 @@
       "DOT_DISABLE_TMUX": "1",
       "DOT_INTERACTIVE": "0",
       "TERM": "xterm-256color",
-      "ZDOTDIR": "${env:HOME}/.dot/config/automation"
+      "ZDOTDIR": "${env:HOME}/.dot/data/configs/automation"
     },
     "icon": "light-bulb",
     "path": "/opt/homebrew/bin/zsh"
@@ -244,7 +244,7 @@
         "DOT_DISABLE_TMUX": "1",
         "DOT_INTERACTIVE": "0",
         "TERM": "xterm-256color",
-        "ZDOTDIR": "${env:HOME}/.dot/config/automation"
+        "ZDOTDIR": "${env:HOME}/.dot/data/configs/automation"
       },
       "icon": "copilot",
       "overrideName": true,
