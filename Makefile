@@ -48,6 +48,10 @@ SHELL := /bin/bash
 .ONESHELL:
 .DEFAULT_GOAL := help
 
+# Silence recipe echoing globally (use DEBUG=1 for xtrace); drop sub-make dir noise.
+.SILENT:
+MAKEFLAGS += --no-print-directory
+
 # ── Project layout ────────────────────────────────────────────────────────────
 DOT_DIR := $(shell cd "$(dir $(lastword $(MAKEFILE_LIST)))" && pwd)
 BOOTSTRAP := $(DOT_DIR)/scripts/dot-bootstrap.sh
