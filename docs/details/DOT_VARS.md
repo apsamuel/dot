@@ -6,59 +6,59 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 
 ## Quick-Reference Index
 
-| Variable                                                                      | Category       | Status                                    |
-| ----------------------------------------------------------------------------- | -------------- | ----------------------------------------- |
-| [`DOT_ROOT`](#dot_root)                                                       | Path           | ✅ Active                                 |
-| [`DOT_DIRECTORY`](#dot_directory)                                             | Path           | ✅ Active                                 |
-| [`DOT_DIR`](#dot_dir)                                                         | Path           | ✅ Active (alias)                         |
-| [`DOT_MODULES`](#dot_modules)                                                 | Path           | ✅ Active                                 |
-| [`DOT_MODULES_FILES`](#dot_modules_files)                                     | Path           | ✅ Active                                 |
-| [`DOT_BOOTSTRAP`](#dot_bootstrap)                                             | Path           | ⚠️ Set, rarely read                       |
-| [`DOT_CONFIGURATION`](#dot_configuration)                                     | Path           | ✅ Active                                 |
-| [`DOT_DEBUG`](#dot_debug)                                                     | Debug          | ✅ Active                                 |
-| [`DOT_DEBUG_RC`](#dot_debug_rc)                                               | Debug          | ❌ Orphan                                 |
-| [`DOT_SHELL`](#dot_shell)                                                     | State          | ⚠️ Set, used only for DOT_DEBUG_RC        |
-| [`DOT_INTERACTIVE`](#dot_interactive)                                         | State          | ❌ Orphan                                 |
-| [`DOT_BOOT`](#dot_boot)                                                       | State          | ❌ Orphan (never assigned)                |
-| [`DOT_BOOTED`](#dot_booted)                                                   | State          | ❌ Orphan                                 |
-| [`DOT_ENABLED`](#dot_enabled)                                                 | State          | ❌ Orphan                                 |
-| [`DOT_SECRETS_LOADED`](#dot_secrets_loaded)                                   | State          | ✅ Active (internal)                      |
-| [`DOT_DIRECTORY_NAME`](#dot_directory_name)                                   | State          | ❌ Dead code                              |
-| [`DOT_DISABLE_BREW`](#dot_disable_brew)                                       | Feature Flag   | ✅ Active                                 |
-| [`DOT_DISABLE_EXTENSIONS`](#dot_disable_extensions)                           | Feature Flag   | ✅ Active                                 |
-| [`DOT_DISABLE_THEFUCK`](#dot_disable_thefuck)                                 | Feature Flag   | ✅ Active (sub-flag)                      |
-| [`DOT_DISABLE_ZSH_AUTOSUGGESTIONS`](#dot_disable_zsh_autosuggestions)         | Feature Flag   | ✅ Active (sub-flag)                      |
-| [`DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING`](#dot_disable_zsh_syntax_highlighting) | Feature Flag   | ✅ Active (sub-flag)                      |
-| [`DOT_DISABLE_Z`](#dot_disable_z)                                             | Feature Flag   | ✅ Active (sub-flag)                      |
-| [`DOT_DISABLE_GIT`](#dot_disable_git)                                         | Feature Flag   | ✅ Active                                 |
-| [`DOT_DISABLE_MAC`](#dot_disable_mac)                                         | Feature Flag   | ✅ Active                                 |
-| [`DOT_DISABLE_OUTPUTS`](#dot_disable_outputs)                                 | Feature Flag   | ✅ Active                                 |
-| [`DOT_DISABLE_P10K`](#dot_disable_p10k)                                       | Feature Flag   | ✅ Active                                 |
-| [`DOT_DISABLE_NODE`](#dot_disable_node)                                       | Feature Flag   | ✅ Active                                 |
-| [`DOT_DISABLE_ANACONDA`](#dot_disable_anaconda)                               | Feature Flag   | ❌ Orphan                                 |
-| [`DOT_DISABLE_NETWORK`](#dot_disable_network)                                 | Feature Flag   | ❌ Orphan                                 |
-| [`DOT_GIT_DEFAULT_USER`](#dot_git_default_user)                               | Git            | ✅ Active                                 |
-| [`DOT_GIT_DEFAULT_EMAIL`](#dot_git_default_email)                             | Git            | ✅ Active                                 |
-| [`DOT_GIT_DEFAULT_SOURCE_BRANCH`](#dot_git_default_source_branch)             | Git            | ✅ Active                                 |
-| [`DOT_GIT_DEFAULT_DESTINATION_BRANCH`](#dot_git_default_destination_branch)   | Git            | ✅ Active                                 |
-| [`DOT_GIT_DEFAULT_MERGE_BRANCH`](#dot_git_default_merge_branch)               | Git            | ✅ Active                                 |
-| [`DOT_GIT_DEFAULT_REBASE_BRANCH`](#dot_git_default_rebase_branch)             | Git            | ✅ Active                                 |
-| [`DOT_GIT_DEFAULT_STASH_COMMITS`](#dot_git_default_stash_commits)             | Git            | ✅ Active                                 |
-| [`DOT_CPU_TIME_LIMIT`](#dot_cpu_time_limit)                                   | Resource Limit | ⚠️ Informational                          |
-| [`DOT_FILE_SIZE_LIMIT`](#dot_file_size_limit)                                 | Resource Limit | ⚠️ Informational                          |
-| [`DOT_DATA_SIZE_LIMIT`](#dot_data_size_limit)                                 | Resource Limit | ⚠️ Informational                          |
-| [`DOT_STACK_SIZE_LIMIT`](#dot_stack_size_limit)                               | Resource Limit | ⚠️ Informational                          |
-| [`DOT_CORE_DUMP_LIMIT`](#dot_core_dump_limit)                                 | Resource Limit | ⚠️ Informational                          |
-| [`DOT_VIRTUAL_MEMORY_LIMIT`](#dot_virtual_memory_limit)                       | Resource Limit | ⚠️ Informational                          |
-| [`DOT_LOCKED_MEMORY_LIMIT`](#dot_locked_memory_limit)                         | Resource Limit | ⚠️ Informational                          |
-| [`DOT_OPEN_FILES_LIMIT`](#dot_open_files_limit)                               | Resource Limit | ⚠️ Duplicate of DOT_FILE_DESCRIPTOR_LIMIT |
-| [`DOT_FILE_DESCRIPTOR_LIMIT`](#dot_file_descriptor_limit)                     | Resource Limit | ⚠️ Informational                          |
-| [`DOT_ANACONDA_ENABLED`](#dot_anaconda_enabled)                               | Anaconda       | ❌ Orphan                                 |
-| [`DOT_ANACONDA_DIR`](#dot_anaconda_dir)                                       | Anaconda       | ❌ Orphan                                 |
-| [`DOT_ANACONDA_ENV`](#dot_anaconda_env)                                       | Anaconda       | ❌ Orphan                                 |
-| [`DOT_DEPS`](#dot_deps)                                                       | External Input | ✅ Active (bootstrap only)                |
-| [`DOT_NVM_INSTALL_LTS`](#dot_nvm_install_lts)                                 | External Input | ✅ Active (bootstrap only)                |
-| [`DOT_LIBS_DIR`](#dot_libs_dir)                                               | External Input | ✅ Active (when set)                      |
+| Variable                                                          | Category       | Status                                    |
+| ----------------------------------------------------------------- | -------------- | ----------------------------------------- |
+| [`DOT_ROOT`](#dot_root)                                           | Path           | ✅ Active                                 |
+| [`DOT_DIRECTORY`](#dot_directory)                                 | Path           | ✅ Active                                 |
+| [`DOT_DIR`](#dot_dir)                                             | Path           | ✅ Active (alias)                         |
+| [`DOT_MODULES`](#dot_modules)                                     | Path           | ✅ Active                                 |
+| [`DOT_MODULES_FILES`](#dot_modules_files)                         | Path           | ✅ Active                                 |
+| [`DOT_BOOTSTRAP`](#dot_bootstrap)                                 | Path           | ⚠️ Set, rarely read                       |
+| [`DOT_CONFIGURATION`](#dot_configuration)                         | Path           | ✅ Active                                 |
+| [`DOT_DEBUG`](#dot_debug)                                         | Debug          | ✅ Active                                 |
+| [`DOT_DEBUG_RC`](#dot_debug_rc)                                   | Debug          | ❌ Orphan                                 |
+| [`DOT_SHELL`](#dot_shell)                                         | State          | ⚠️ Set, used only for DOT_DEBUG_RC        |
+| [`DOT_INTERACTIVE`](#dot_interactive)                             | State          | ❌ Orphan                                 |
+| [`DOT_BOOT`](#dot_boot)                                           | State          | ❌ Orphan (never assigned)                |
+| [`DOT_BOOTED`](#dot_booted)                                       | State          | ❌ Orphan                                 |
+| [`DOT_ENABLED`](#dot_enabled)                                     | State          | ❌ Orphan                                 |
+| [`DOT_SECRETS_LOADED`](#dot_secrets_loaded)                       | State          | ✅ Active (internal)                      |
+| [`DOT_DIRECTORY_NAME`](#dot_directory_name)                       | State          | ❌ Dead code                              |
+| [`DOT_DISABLE_BREW`](#4-feature-disable-flags)                    | Feature Flag   | ✅ Active                                 |
+| [`DOT_DISABLE_EXTENSIONS`](#4-feature-disable-flags)              | Feature Flag   | ✅ Active                                 |
+| [`DOT_DISABLE_THEFUCK`](#4-feature-disable-flags)                 | Feature Flag   | ✅ Active (sub-flag)                      |
+| [`DOT_DISABLE_ZSH_AUTOSUGGESTIONS`](#4-feature-disable-flags)     | Feature Flag   | ✅ Active (sub-flag)                      |
+| [`DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING`](#4-feature-disable-flags) | Feature Flag   | ✅ Active (sub-flag)                      |
+| [`DOT_DISABLE_Z`](#4-feature-disable-flags)                       | Feature Flag   | ✅ Active (sub-flag)                      |
+| [`DOT_DISABLE_GIT`](#4-feature-disable-flags)                     | Feature Flag   | ✅ Active                                 |
+| [`DOT_DISABLE_MAC`](#4-feature-disable-flags)                     | Feature Flag   | ✅ Active                                 |
+| [`DOT_DISABLE_OUTPUTS`](#4-feature-disable-flags)                 | Feature Flag   | ✅ Active                                 |
+| [`DOT_DISABLE_P10K`](#4-feature-disable-flags)                    | Feature Flag   | ✅ Active                                 |
+| [`DOT_DISABLE_NODE`](#4-feature-disable-flags)                    | Feature Flag   | ✅ Active                                 |
+| [`DOT_DISABLE_ANACONDA`](#4-feature-disable-flags)                | Feature Flag   | ❌ Orphan                                 |
+| [`DOT_DISABLE_NETWORK`](#4-feature-disable-flags)                 | Feature Flag   | ❌ Orphan                                 |
+| [`DOT_GIT_DEFAULT_USER`](#5-git-default-variables)                | Git            | ✅ Active                                 |
+| [`DOT_GIT_DEFAULT_EMAIL`](#5-git-default-variables)               | Git            | ✅ Active                                 |
+| [`DOT_GIT_DEFAULT_SOURCE_BRANCH`](#5-git-default-variables)       | Git            | ✅ Active                                 |
+| [`DOT_GIT_DEFAULT_DESTINATION_BRANCH`](#5-git-default-variables)  | Git            | ✅ Active                                 |
+| [`DOT_GIT_DEFAULT_MERGE_BRANCH`](#5-git-default-variables)        | Git            | ✅ Active                                 |
+| [`DOT_GIT_DEFAULT_REBASE_BRANCH`](#5-git-default-variables)       | Git            | ✅ Active                                 |
+| [`DOT_GIT_DEFAULT_STASH_COMMITS`](#5-git-default-variables)       | Git            | ✅ Active                                 |
+| [`DOT_CPU_TIME_LIMIT`](#6-resource-limit-variables)               | Resource Limit | ⚠️ Informational                          |
+| [`DOT_FILE_SIZE_LIMIT`](#6-resource-limit-variables)              | Resource Limit | ⚠️ Informational                          |
+| [`DOT_DATA_SIZE_LIMIT`](#6-resource-limit-variables)              | Resource Limit | ⚠️ Informational                          |
+| [`DOT_STACK_SIZE_LIMIT`](#6-resource-limit-variables)             | Resource Limit | ⚠️ Informational                          |
+| [`DOT_CORE_DUMP_LIMIT`](#6-resource-limit-variables)              | Resource Limit | ⚠️ Informational                          |
+| [`DOT_VIRTUAL_MEMORY_LIMIT`](#6-resource-limit-variables)         | Resource Limit | ⚠️ Informational                          |
+| [`DOT_LOCKED_MEMORY_LIMIT`](#6-resource-limit-variables)          | Resource Limit | ⚠️ Informational                          |
+| [`DOT_OPEN_FILES_LIMIT`](#6-resource-limit-variables)             | Resource Limit | ⚠️ Duplicate of DOT_FILE_DESCRIPTOR_LIMIT |
+| [`DOT_FILE_DESCRIPTOR_LIMIT`](#6-resource-limit-variables)        | Resource Limit | ⚠️ Informational                          |
+| [`DOT_ANACONDA_ENABLED`](#7-anaconda-variables)                   | Anaconda       | ❌ Orphan                                 |
+| [`DOT_ANACONDA_DIR`](#7-anaconda-variables)                       | Anaconda       | ❌ Orphan                                 |
+| [`DOT_ANACONDA_ENV`](#7-anaconda-variables)                       | Anaconda       | ❌ Orphan                                 |
+| [`DOT_DEPS`](#dot_deps)                                           | External Input | ✅ Active (bootstrap only)                |
+| [`DOT_NVM_INSTALL_LTS`](#dot_nvm_install_lts)                     | External Input | ✅ Active (bootstrap only)                |
+| [`DOT_LIBS_DIR`](#dot_libs_dir)                                   | External Input | ✅ Active (when set)                      |
 
 **Status key:**
 
