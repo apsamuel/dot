@@ -6,8 +6,8 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 
 ## Quick-Reference Index
 
-| Variable                                                          | Category       | Status                                   |
-| ----------------------------------------------------------------- | -------------- | ---------------------------------------- |
+| Variable                                                          | Category       | Status                                    |
+| ----------------------------------------------------------------- | -------------- | ----------------------------------------- |
 | [`DOT_ROOT`](#dot_root)                                           | Path           | ✅ Active                                 |
 | [`DOT_DIRECTORY`](#dot_directory)                                 | Path           | ✅ Active                                 |
 | [`DOT_MODULES`](#dot_modules)                                     | Path           | ✅ Active                                 |
