@@ -8,8 +8,6 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
 
-DOT_DIR="${DOT_DIRECTORY}"
-
 
 # detect TMUX session if present
 if [[ -n "${TMUX}" ]]; then
@@ -27,7 +25,7 @@ export ICLOUD_DOWNLOADS="${ICLOUD}/Downloads"
 export ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
 
 
-. "${DOT_DIR}"/modules/static/lib/internal.sh
+. "${DOT_DIRECTORY}"/modules/static/lib/internal.sh
 
 function dot::static::shell {
     local command="${1:-version}"
@@ -69,20 +67,20 @@ EOF
 
         version)
             local branch revision date author
-            branch="$(git -C "${DOT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+            branch="$(git -C "${DOT_DIRECTORY}" rev-parse --abbrev-ref HEAD 2>/dev/null)"
             branch="${branch:-main}"
-            revision="$(git -C "${DOT_DIR}" rev-parse --short HEAD 2>/dev/null)"
+            revision="$(git -C "${DOT_DIRECTORY}" rev-parse --short HEAD 2>/dev/null)"
             revision="${revision:-}"
-            date="$(git -C "${DOT_DIR}" log -1 --format=%cd --date=format:'%Y-%m-%d at %H:%M:%S' 2>/dev/null)"
+            date="$(git -C "${DOT_DIRECTORY}" log -1 --format=%cd --date=format:'%Y-%m-%d at %H:%M:%S' 2>/dev/null)"
             date="${date:-}"
-            author="$(git -C "${DOT_DIR}" log -1 --format=%an 2>/dev/null)"
+            author="$(git -C "${DOT_DIRECTORY}" log -1 --format=%an 2>/dev/null)"
             author="${author:-}"
             echo "${branch} (${revision}) by ${author} on ${date}"
             return 0
             ;;
 
         update)
-            git -C "${DOT_DIR}" pull 2>/dev/null || echo "please update your dotfiles manually"
+            git -C "${DOT_DIRECTORY}" pull 2>/dev/null || echo "please update your dotfiles manually"
             omz update
             return $?
             ;;
@@ -119,13 +117,13 @@ EOF
             local log_fmt="%C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset))%x09 %C(Cyan)%an: %C(reset)%s"
 
             if [[ "${opt_details}" == true ]]; then
-                git -C "${DOT_DIR}" log -p --pretty="${log_fmt}" --date=short -7
+                git -C "${DOT_DIRECTORY}" log -p --pretty="${log_fmt}" --date=short -7
                 return $?
             elif [[ "${opt_all}" == true ]]; then
-                git -C "${DOT_DIR}" log --pretty="${log_fmt}" --date=short
+                git -C "${DOT_DIRECTORY}" log --pretty="${log_fmt}" --date=short
                 return $?
             else
-                git -C "${DOT_DIR}" log --pretty="${log_fmt}" --date=short -7
+                git -C "${DOT_DIRECTORY}" log --pretty="${log_fmt}" --date=short -7
                 return $?
             fi
             ;;
@@ -280,7 +278,7 @@ USAGE
             local git_url="$1"
             local plugin_name
             plugin_name="$(basename -s .git "${git_url}")"
-            local plugins_dir="${DOT_DIR}/zsh/custom/plugins"
+            local plugins_dir="${DOT_DIRECTORY}/zsh/custom/plugins"
             git -C "${ZSH}" submodule add "${git_url}" "${plugins_dir}/${plugin_name}"
             return $?
             ;;
@@ -293,13 +291,13 @@ USAGE
             local git_url="$1"
             local theme_name
             theme_name="$(basename -s .git "${git_url}")"
-            local themes_dir="${DOT_DIR}/zsh/custom/themes"
+            local themes_dir="${DOT_DIRECTORY}/zsh/custom/themes"
             git -C "${ZSH}" submodule add "${git_url}" "${themes_dir}/${theme_name}"
             return $?
             ;;
 
         vendor)
-            local vendor_script="${DOT_DIR}/scripts/dot-submodule-sync.sh"
+            local vendor_script="${DOT_DIRECTORY}/scripts/dot-submodule-sync.sh"
             if [[ ! -x "${vendor_script}" ]]; then
                 if [[ -r "${vendor_script}" ]]; then
                     bash "${vendor_script}" "$@"
@@ -319,5 +317,3 @@ USAGE
             ;;
     esac
 }
-
-export DOT_DIR

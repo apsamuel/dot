@@ -51,7 +51,6 @@ export DOT_SPLASH_TYPE="${DOT_SPLASH_TYPE:-quote}"  # valid: quote, ascii, splas
 export DOT_SPLASH_IMAGE_EXCLUDE="${DOT_SPLASH_IMAGE_EXCLUDE:-gif}"  # comma-separated extensions to skip
 
 # --- legacy aliases (backward compatibility) ---
-export DOT_DIR="${DOT_DIR:-${DOT_ROOT}}"
 export DOT_LIBS_DIR="${DOT_LIBS_DIR:-${DOT_MODULES}}"
 
 # --- Shell settings ---

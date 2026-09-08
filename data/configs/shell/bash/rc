@@ -53,8 +53,8 @@ DOT_SHELL=${DOT_SHELL:-bash}
 DOT_DEBUG=${DOT_DEBUG:-false}
 DOT_SPLASH_SCREEN=${DOT_SPLASH_SCREEN:-true}
 DOT_SPLASH_TYPE="${DOT_SPLASH_TYPE:-quote}"
-DOT_DIR="${DOT_DIR:-$HOME/.dot}"
-DOT_LIBS_DIR="${DOT_LIBS_DIR:-$DOT_DIR/shellx}"
+DOT_DIRECTORY="${DOT_DIRECTORY:-$HOME/.dot}"
+DOT_LIBS_DIR="${DOT_LIBS_DIR:-$DOT_DIRECTORY/shellx}"
 DOT_CLOUD_DIR="${ICLOUD}/dot"
 DOT_SHELL_DATA=${DOT_SHELL_DATA:-$HOME/.dot/data/zsh.json}
 DOT_SECRETS_DATA=${DOT_SECRETS_DATA:-"${DOT_CLOUD_DIR}/secrets.json"}
@@ -79,7 +79,7 @@ export EDITOR=vim
 export ZSH_COLORIZE_TOOL=pygmentize
 export PAGER='bat '
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
-export TMUX_PLUGIN_MANAGER_PATH="$DOT_DIR/vendor/oh-my-tmux/plugins"
+export TMUX_PLUGIN_MANAGER_PATH="$DOT_DIRECTORY/vendor/oh-my-tmux/plugins"
 arch="$(arch)"
 export ARCH="${arch}"
 
@@ -102,4 +102,3 @@ export PATH="$PATH:${HOME}/.lmstudio/bin"
 # Added by LM Studio CLI (lms)
 export PATH="$PATH:/Users/Aaron.Samuel/.lmstudio/bin"
 # End of LM Studio CLI section
-

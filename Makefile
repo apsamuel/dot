@@ -53,13 +53,13 @@ SHELL := /bin/bash
 MAKEFLAGS += --no-print-directory
 
 # ── Project layout ────────────────────────────────────────────────────────────
-DOT_DIR := $(shell cd "$(dir $(lastword $(MAKEFILE_LIST)))" && pwd)
-BOOTSTRAP := $(DOT_DIR)/scripts/dot-bootstrap.sh
+DOT_DIRECTORY := $(shell cd "$(dir $(lastword $(MAKEFILE_LIST)))" && pwd)
+BOOTSTRAP := $(DOT_DIRECTORY)/scripts/dot-bootstrap.sh
 
 # ── Vendor directories ────────────────────────────────────────────────────────
-VENDOR_VIM  := $(DOT_DIR)/vendor/vim
-VENDOR_OMZ  := $(DOT_DIR)/vendor/oh-my-zsh
-VENDOR_TMUX := $(DOT_DIR)/vendor/oh-my-tmux
+VENDOR_VIM  := $(DOT_DIRECTORY)/vendor/vim
+VENDOR_OMZ  := $(DOT_DIRECTORY)/vendor/oh-my-zsh
+VENDOR_TMUX := $(DOT_DIRECTORY)/vendor/oh-my-tmux
 
 # ── Parameter passthrough ─────────────────────────────────────────────────────
 DRY       ?= 0
@@ -115,7 +115,7 @@ endif
 # ══════════════════════════════════════════════════════════════════════════════
 
 define _BOOT
-export DOT_DRY_RUN="$(DRY)" DOT_DEPS="$(DEPS)" DOT_INSTALL_LANG_DEPS="$(LANG_DEPS)" DOT_DIRECTORY="$(DOT_DIR)"
+export DOT_DRY_RUN="$(DRY)" DOT_DEPS="$(DEPS)" DOT_INSTALL_LANG_DEPS="$(LANG_DEPS)" DOT_DIRECTORY="$(DOT_DIRECTORY)"
 source "$(BOOTSTRAP)"
 if [[ "$(DEBUG)" == "1" ]]; then set -x; fi
 endef
@@ -226,17 +226,17 @@ init-submodules: ## Initialize git submodules
 	init_submodules
 
 brewfile: ## Regenerate data/Brewfile + data/Brewfile.cask from .dependencies.yml
-	uv run "$(DOT_DIR)/bin/generate-brewfile.py" \
-		--manifest "$(DOT_DIR)/.dependencies.yml" \
-		--output "$(DOT_DIR)/data/Brewfile" \
-		--cask-output "$(DOT_DIR)/data/Brewfile.cask" \
+	uv run "$(DOT_DIRECTORY)/bin/generate-brewfile.py" \
+		--manifest "$(DOT_DIRECTORY)/.dependencies.yml" \
+		--output "$(DOT_DIRECTORY)/data/Brewfile" \
+		--cask-output "$(DOT_DIRECTORY)/data/Brewfile.cask" \
 		--skip-brew-validate
 
 brewfile-check: ## CI: verify Brewfiles match .dependencies.yml
-	uv run "$(DOT_DIR)/bin/generate-brewfile.py" \
-		--manifest "$(DOT_DIR)/.dependencies.yml" \
-		--output "$(DOT_DIR)/data/Brewfile" \
-		--cask-output "$(DOT_DIR)/data/Brewfile.cask" \
+	uv run "$(DOT_DIRECTORY)/bin/generate-brewfile.py" \
+		--manifest "$(DOT_DIRECTORY)/.dependencies.yml" \
+		--output "$(DOT_DIRECTORY)/data/Brewfile" \
+		--cask-output "$(DOT_DIRECTORY)/data/Brewfile.cask" \
 		--check \
 		--skip-brew-validate
 
@@ -554,7 +554,7 @@ doctor: ## Non-mutating health check: deps, symlinks, submodules, vendors
 	say_step "dot doctor"
 	echo ""
 	say_step "tier-0 dependencies"
-	if "$(DOT_DIR)/scripts/dot-deps-report.sh" --tier 0 -q; then
+	if "$(DOT_DIRECTORY)/scripts/dot-deps-report.sh" --tier 0 -q; then
 		say_ok "all tier-0 dependencies present"
 	else
 		say_err "tier-0 dependency check failed"
@@ -562,7 +562,7 @@ doctor: ## Non-mutating health check: deps, symlinks, submodules, vendors
 	fi
 	echo ""
 	say_step "core symlinks"
-	for pair in "$$HOME/.zshrc:$(DOT_DIR)/zshrc" "$$HOME/.oh-my-zsh:$(VENDOR_OMZ)"; do
+	for pair in "$$HOME/.zshrc:$(DOT_DIRECTORY)/zshrc" "$$HOME/.oh-my-zsh:$(VENDOR_OMZ)"; do
 		link="$${pair%%:*}"; expected="$${pair#*:}"
 		if [ -L "$$link" ]; then
 			target=$$(readlink "$$link")
@@ -597,7 +597,7 @@ doctor: ## Non-mutating health check: deps, symlinks, submodules, vendors
 			[-]) say_err "$$mod_path — not initialized"; submod_issues=$$((submod_issues + 1)) ;;
 			[+]) say_warn "$$mod_path — checked out but SHA differs from index" ;;
 		esac
-	done < <(git -C "$(DOT_DIR)" submodule status 2>/dev/null)
+	done < <(git -C "$(DOT_DIRECTORY)" submodule status 2>/dev/null)
 	if [ $$submod_issues -gt 0 ]; then
 		fails=$$((fails + submod_issues))
 	else

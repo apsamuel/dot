@@ -28,7 +28,7 @@ export ICLOUD_DOCUMENTS="${MOCK_ICLOUD}/Documents"
 export ICLOUD_DOWNLOADS="${MOCK_ICLOUD}/Downloads"
 export ICLOUD_SCREENSHOTS="${MOCK_ICLOUD}/ScreenShots"
 
-export DOT_DIR="${DOT_REAL_ROOT}"
+export DOT_DIRECTORY="${DOT_REAL_ROOT}"
 export DOT_MODULES="${DOT_REAL_ROOT}/modules"
 export DOT_DEBUG=0
 export DOT_DRY_RUN=1

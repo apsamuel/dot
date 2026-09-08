@@ -6,11 +6,10 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 
 ## Quick-Reference Index
 
-| Variable                                                          | Category       | Status                                    |
-| ----------------------------------------------------------------- | -------------- | ----------------------------------------- |
+| Variable                                                          | Category       | Status                                   |
+| ----------------------------------------------------------------- | -------------- | ---------------------------------------- |
 | [`DOT_ROOT`](#dot_root)                                           | Path           | ✅ Active                                 |
 | [`DOT_DIRECTORY`](#dot_directory)                                 | Path           | ✅ Active                                 |
-| [`DOT_DIR`](#dot_dir)                                             | Path           | ✅ Active (alias)                         |
 | [`DOT_MODULES`](#dot_modules)                                     | Path           | ✅ Active                                 |
 | [`DOT_MODULES_FILES`](#dot_modules_files)                         | Path           | ✅ Active                                 |
 | [`DOT_BOOTSTRAP`](#dot_bootstrap)                                 | Path           | ⚠️ Set, rarely read                       |
@@ -73,15 +72,8 @@ These variables establish the filesystem layout of the framework and are used th
 
 - **Default:** `$DOT_ROOT`
 - **Set in:** `modules/static/dotenv.sh`, `modules/static/limits.sh`
-- **Used in:** `modules/000-a-output.sh` (quotes file path), `modules/static/lib/internal.sh` (zsh.yaml plugin list), `modules/static/lib/mac.sh` and `linux.sh` (debug messages), `modules/000-b-dot.sh` (initializes `DOT_DIR`)
-- **Notes:** Canonical name for the repo root. Prefer this over `DOT_DIR` in new code.
-
-### `DOT_DIR`
-
-- **Default:** `$DOT_DIRECTORY` (set in `000-b-dot.sh`)
-- **Set in:** `modules/000-b-dot.sh` (`DOT_DIR="${DOT_DIRECTORY}"`)
-- **Used in:** `modules/000-b-dot.sh` (all `git -C` operations, plugin/theme install), `modules/000-aa-paths.sh` (`$DOT_DIR/bin` PATH entry), `modules/000-b-dot.sh` sources `$DOT_DIR/modules/static/lib/internal.sh`
-- **Notes:** Redundant alias for `DOT_DIRECTORY` introduced in `000-b-dot.sh`. Candidate for consolidation — replace all `DOT_DIR` references with `DOT_DIRECTORY`.
+- **Used in:** `modules/000-a-output.sh` (quotes file path), `modules/static/dot.sh` (all `git -C` operations, sources `static/lib/internal.sh`, plugin/theme install), `modules/000-a-paths.sh` (`$DOT_DIRECTORY/bin` and `/scripts` PATH entries), `modules/static/lib/internal.sh` (zsh.yaml plugin list), `modules/static/lib/mac.sh` and `linux.sh` (debug messages)
+- **Notes:** Canonical (and only) name for the repo root. `DOT_ROOT` is its upstream default.
 
 ### `DOT_MODULES`
 
@@ -246,6 +238,5 @@ These are **not** set by any `modules/` file. They are meant to be set by the ca
 | Action                                        | Variables                                                                                                          |
 | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | **Remove duplicate** (same `ulimit -n` value) | `DOT_OPEN_FILES_LIMIT` (keep `DOT_FILE_DESCRIPTOR_LIMIT`)                                                          |
-| **Consolidate alias**                         | `DOT_DIR` → replace all references with `DOT_DIRECTORY`                                                            |
 | **Fix bug**                                   | `000-c-git.sh` `dot::git::config` calls `git config user.DOT_GIT_DEFAULT_EMAIL` instead of `git config user.email` |
 | **Keep as-is**                                | All actively used path, debug, feature flag, and git default variables                                             |

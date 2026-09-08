@@ -30,14 +30,14 @@ if [ -d "${HOME}/Tools/edirect" ] ; then
 fi
 
 
-# source $DOT_DIR/bin
-if [ -d "$DOT_DIR/bin" ] ; then
-  PATH="${DOT_DIR}/bin:${PATH}"
+# source $DOT_DIRECTORY/bin
+if [ -d "$DOT_DIRECTORY/bin" ] ; then
+  PATH="${DOT_DIRECTORY}/bin:${PATH}"
 fi
 
-# source $DOT_DIR/scripts
-if [ -d "$DOT_DIR/scripts" ] ; then
-  PATH="${DOT_DIR}/scripts:${PATH}"
+# source $DOT_DIRECTORY/scripts
+if [ -d "$DOT_DIRECTORY/scripts" ] ; then
+  PATH="${DOT_DIRECTORY}/scripts:${PATH}"
 fi
 
 # theoretical $HOME/bin

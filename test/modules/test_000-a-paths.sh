@@ -93,15 +93,15 @@ it "dot::paths::delete function is defined" test_delete_path_exists
 describe "000-a-paths.sh: PATH augmentation on load"
 
 test_dot_bin_in_path() {
-    # After sourcing, $DOT_DIR/bin should be in PATH
-    assert_contains "${PATH}" "${DOT_DIR}/bin"
+    # After sourcing, $DOT_DIRECTORY/bin should be in PATH
+    assert_contains "${PATH}" "${DOT_DIRECTORY}/bin"
 }
 
 test_dot_scripts_in_path() {
-    assert_contains "${PATH}" "${DOT_DIR}/scripts"
+    assert_contains "${PATH}" "${DOT_DIRECTORY}/scripts"
 }
 
-it "DOT_DIR/bin added to PATH" test_dot_bin_in_path
-it "DOT_DIR/scripts added to PATH" test_dot_scripts_in_path
+it "DOT_DIRECTORY/bin added to PATH" test_dot_bin_in_path
+it "DOT_DIRECTORY/scripts added to PATH" test_dot_scripts_in_path
 
 tap_summary
