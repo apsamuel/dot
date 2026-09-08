@@ -19,6 +19,7 @@ Thanks for your interest in improving `dot`. Contributions are welcome in the fo
    ```
 
 3. Create a branch for your change:
+
    ```bash
    git checkout -b feat/my-improvement
    ```
@@ -35,6 +36,7 @@ Shell modules live in `modules/`. To add one:
    - Use a tier appropriate to when your module needs to run (see [modules/README.md](./modules/README.md))
    - Use a letter sub-order that doesn't conflict with existing files
 2. Start with the standard header:
+
    ```bash
    #shellcheck shell=bash
    # shellcheck source=/dev/null
@@ -46,10 +48,13 @@ Shell modules live in `modules/`. To add one:
        echo "loading: ${library} (${directory})"
    fi
    ```
+
 3. If your module can be disabled, add a guard:
+
    ```bash
    if [[ "${DOT_DISABLE_MYMODULE:-0}" -eq 1 ]]; then return; fi
    ```
+
 4. Test by opening a new shell and confirming your functions/aliases are available.
 5. Document your module with a row in the [modules/README.md](./modules/README.md) module table.
 
@@ -97,9 +102,11 @@ Tests cover shell basics, language target builds (C, C++, Go, Rust, Java), and u
 
 1. Ensure your branch is up to date with `main`
 2. Run shellcheck on any modified `.sh` files:
+
    ```bash
    shellcheck modules/your-module.sh
    ```
+
 3. Push your branch and open a pull request against `main`
 4. Describe what the change does and why in the PR description
 5. Link to any relevant issues
