@@ -11,7 +11,7 @@
 
 
 # initialize static sources
-unset DOT_ROOT DOT_DIRECTORY DOT_LIBRARY DOT_LIBRARY_FILES DOT_DEBUG DOT_INTERACTIVE DOT_BOOT DOT_BOOTED
+unset DOT_ROOT DOT_DIRECTORY DOT_LIBRARY DOT_LIBRARY_FILES DOT_DEBUG DOT_INTERACTIVE
 export DOT_DEBUG="${DOT_DEBUG:-0}"
 export DOT_INTERACTIVE="${DOT_INTERACTIVE:-0}"
 export DOT_ROOT="${DOT_ROOT:-${HOME}/.dot}"
@@ -20,7 +20,6 @@ export DOT_DEFAULT_SHELL="${DOT_DEFAULT_SHELL:-zsh}"
 export DOT_LIBRARY="${DOT_LIBRARY:-${DOT_ROOT}/zlib}"
 export DOT_LIBRARY_FILES=($(find "${DOT_LIBRARY}" -maxdepth 1 -type f -name "*.sh" | sort -d))
 export DOT_BOOTSTRAP="${DOT_BOOTSTRAP:-${DOT_DIRECTORY}/bin/bootstrap.sh}"
-export DOT_BOOTED="${DOT_BOOTED:-false}"
 
 ## TODO: is the bootstrap file available? has the system been bootstrapped?
 if [[ -f "${DOT_BOOTSTRAP}" ]]; then
@@ -375,4 +374,3 @@ test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell
 # Added by LM Studio CLI (lms)
 set -gx PATH $PATH /Users/Aaron.Samuel/.lmstudio/bin
 # End of LM Studio CLI section
-

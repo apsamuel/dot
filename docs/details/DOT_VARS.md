@@ -16,14 +16,9 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 | [`DOT_BOOTSTRAP`](#dot_bootstrap)                                 | Path           | ⚠️ Set, rarely read                       |
 | [`DOT_CONFIGURATION`](#dot_configuration)                         | Path           | ✅ Active                                 |
 | [`DOT_DEBUG`](#dot_debug)                                         | Debug          | ✅ Active                                 |
-| [`DOT_DEBUG_RC`](#dot_debug_rc)                                   | Debug          | ❌ Orphan                                 |
-| [`DOT_SHELL`](#dot_shell)                                         | State          | ⚠️ Set, used only for DOT_DEBUG_RC        |
-| [`DOT_INTERACTIVE`](#dot_interactive)                             | State          | ❌ Orphan                                 |
-| [`DOT_BOOT`](#dot_boot)                                           | State          | ❌ Orphan (never assigned)                |
-| [`DOT_BOOTED`](#dot_booted)                                       | State          | ❌ Orphan                                 |
-| [`DOT_ENABLED`](#dot_enabled)                                     | State          | ❌ Orphan                                 |
+| [`DOT_SHELL`](#dot_shell)                                         | State          | ⚠️ Shell identity tag                     |
+| [`DOT_INTERACTIVE`](#dot_interactive)                             | State          | ✅ Active                                 |
 | [`DOT_SECRETS_LOADED`](#dot_secrets_loaded)                       | State          | ✅ Active (internal)                      |
-| [`DOT_DIRECTORY_NAME`](#dot_directory_name)                       | State          | ❌ Dead code                              |
 | [`DOT_DISABLE_BREW`](#4-feature-disable-flags)                    | Feature Flag   | ✅ Active                                 |
 | [`DOT_DISABLE_EXTENSIONS`](#4-feature-disable-flags)              | Feature Flag   | ✅ Active                                 |
 | [`DOT_DISABLE_THEFUCK`](#4-feature-disable-flags)                 | Feature Flag   | ✅ Active (sub-flag)                      |
@@ -35,8 +30,6 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 | [`DOT_DISABLE_OUTPUTS`](#4-feature-disable-flags)                 | Feature Flag   | ✅ Active                                 |
 | [`DOT_DISABLE_P10K`](#4-feature-disable-flags)                    | Feature Flag   | ✅ Active                                 |
 | [`DOT_DISABLE_NODE`](#4-feature-disable-flags)                    | Feature Flag   | ✅ Active                                 |
-| [`DOT_DISABLE_ANACONDA`](#4-feature-disable-flags)                | Feature Flag   | ❌ Orphan                                 |
-| [`DOT_DISABLE_NETWORK`](#4-feature-disable-flags)                 | Feature Flag   | ❌ Orphan                                 |
 | [`DOT_GIT_DEFAULT_USER`](#5-git-default-variables)                | Git            | ✅ Active                                 |
 | [`DOT_GIT_DEFAULT_EMAIL`](#5-git-default-variables)               | Git            | ✅ Active                                 |
 | [`DOT_GIT_DEFAULT_SOURCE_BRANCH`](#5-git-default-variables)       | Git            | ✅ Active                                 |
@@ -53,9 +46,6 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 | [`DOT_LOCKED_MEMORY_LIMIT`](#6-resource-limit-variables)          | Resource Limit | ⚠️ Informational                          |
 | [`DOT_OPEN_FILES_LIMIT`](#6-resource-limit-variables)             | Resource Limit | ⚠️ Duplicate of DOT_FILE_DESCRIPTOR_LIMIT |
 | [`DOT_FILE_DESCRIPTOR_LIMIT`](#6-resource-limit-variables)        | Resource Limit | ⚠️ Informational                          |
-| [`DOT_ANACONDA_ENABLED`](#7-anaconda-variables)                   | Anaconda       | ❌ Orphan                                 |
-| [`DOT_ANACONDA_DIR`](#7-anaconda-variables)                       | Anaconda       | ❌ Orphan                                 |
-| [`DOT_ANACONDA_ENV`](#7-anaconda-variables)                       | Anaconda       | ❌ Orphan                                 |
 | [`DOT_DEPS`](#dot_deps)                                           | External Input | ✅ Active (bootstrap only)                |
 | [`DOT_NVM_INSTALL_LTS`](#dot_nvm_install_lts)                     | External Input | ✅ Active (bootstrap only)                |
 | [`DOT_LIBS_DIR`](#dot_libs_dir)                                   | External Input | ✅ Active (when set)                      |
@@ -76,7 +66,7 @@ These variables establish the filesystem layout of the framework and are used th
 
 - **Default:** `$HOME/.dot`
 - **Set in:** `modules/static/dotenv.sh`
-- **Used in:** `dotenv.sh` to derive `DOT_DIRECTORY`, `DOT_MODULES`, and `DOT_DEBUG_RC`
+- **Used in:** `dotenv.sh` to derive `DOT_DIRECTORY` and `DOT_MODULES`
 - **Notes:** Synonymous with `DOT_DIRECTORY`. `unset` and re-exported on every shell start to avoid stale values from parent processes.
 
 ### `DOT_DIRECTORY`
@@ -133,15 +123,6 @@ These variables establish the filesystem layout of the framework and are used th
 - **Effect:** When set to `1`, each module prints `"loading: <file> (<dir>)"` to stdout at source time
 - **To enable:** `export DOT_DEBUG=1` before starting a new shell (or `export DOT_DEBUG=1 && exec zsh`)
 
-### `DOT_DEBUG_RC`
-
-- **Default:** `$DOT_ROOT/.$DOT_SHELL rc` → e.g. `~/.dot/.zshrc`
-- **Set in:** `modules/static/dotenv.sh`
-- **Used in:** ❌ **Nowhere** — never read by any module or script
-- **Recommendation:** Remove. The variable suggests an intent to have a debug-mode rc file that was never implemented.
-
----
-
 ## 3. Runtime State Variables
 
 These are set during shell startup to reflect the current state of the loaded environment.
@@ -150,36 +131,15 @@ These are set during shell startup to reflect the current state of the loaded en
 
 - **Default:** `"zsh"`
 - **Set in:** `modules/static/dotenv.sh`
-- **Used in:** Only to construct `DOT_DEBUG_RC` (`${DOT_ROOT}/.${DOT_SHELL}rc`) — and since `DOT_DEBUG_RC` itself is never read, `DOT_SHELL` has no effective consumer
-- **Notes:** ⚠️ Would be useful if `DOT_DEBUG_RC` were implemented. Harmless to keep as a shell identity tag.
+- **Used in:** Exported as a shell identity tag; not currently read by any module.
+- **Notes:** Harmless to keep as a shell identity tag.
 
 ### `DOT_INTERACTIVE`
 
-- **Default:** `0`
-- **Set in:** `modules/static/dotenv.sh`
-- **Used in:** ❌ **Nowhere** — defined and exported but never checked
-- **Recommendation:** Remove, or implement a check (e.g. `[[ $- == *i* ]]` → set to 1) and guard interactive-only modules with it.
-
-### `DOT_BOOT`
-
-- **Default:** (none — never assigned a value)
-- **Set in:** Appears in the `export` statement in `modules/static/dotenv.sh` line 57 but is never assigned
-- **Used in:** ❌ **Nowhere**
-- **Recommendation:** Remove from the export list. It is always empty/unset.
-
-### `DOT_BOOTED`
-
-- **Default:** `false`
-- **Set in:** `modules/static/dotenv.sh`
-- **Used in:** ❌ **Nowhere** — set to `false` but never checked or updated to `true` by any module
-- **Recommendation:** Remove, or implement: set to `true` at the end of `zshrc` load sequence so callers can detect a fully-initialized shell.
-
-### `DOT_ENABLED`
-
-- **Default:** `true` (set at end of `000-b-dot.sh`; conditionally `false` if iCloud is unavailable)
-- **Set in:** `modules/000-b-dot.sh`
-- **Used in:** ❌ **Nowhere outside `000-b-dot.sh`** — exported but never checked by any other module
-- **Recommendation:** Remove or honour: modules that depend on iCloud-backed config could guard themselves with `[[ "${DOT_ENABLED}" == "true" ]]`.
+- **Default:** `0` (set to `1` for human interactive shells)
+- **Set in:** `zshrc` (0 for non-interactive/automation shells, 1 for interactive/VSCode); `modules/static/dotenv.sh` provides the default
+- **Used in:** `zshrc` (splash-screen gating), `modules/001-a-tmux.sh` (auto-tmux), `modules/999-a-terminal.sh` (fzf / interactive setup); also set by the automation profile and `.vscode` settings
+- **Notes:** ✅ Active — the interactive vs non-interactive session switch.
 
 ### `DOT_SECRETS_LOADED`
 
@@ -187,13 +147,6 @@ These are set during shell startup to reflect the current state of the loaded en
 - **Set in:** `modules/static/lib/plumbing.sh` → set to `1` after secrets are loaded
 - **Used in:** `modules/static/lib/plumbing.sh` → checked to skip double-loading; unset after use
 - **Notes:** ✅ Internal one-shot latch — functions correctly as a re-entrancy guard.
-
-### `DOT_DIRECTORY_NAME`
-
-- **Default:** (derived from `dirname "${DOT_DIRECTORY_NAME}"` — self-reference without initialisation)
-- **Set in:** `modules/000-b-dot.sh` line 11
-- **Used in:** ❌ Only in its own assignment (`DOT_DIRECTORY_NAME="$(dirname "${DOT_DIRECTORY_NAME}")"` with no prior value)
-- **Recommendation:** Remove. This is a no-op that produces an empty string.
 
 ---
 
@@ -223,13 +176,6 @@ These are checked **after** `DOT_DISABLE_EXTENSIONS` — if the parent flag is `
 | `DOT_DISABLE_ZSH_AUTOSUGGESTIONS`     | Skips `zsh-autosuggestions` source     |
 | `DOT_DISABLE_ZSH_SYNTAX_HIGHLIGHTING` | Skips `zsh-syntax-highlighting` source |
 | `DOT_DISABLE_Z`                       | Skips `z` (directory autojump) source  |
-
-### Orphaned flags (defined but never checked)
-
-| Variable               | Notes                                |
-| ---------------------- | ------------------------------------ |
-| `DOT_DISABLE_ANACONDA` | No anaconda module exists to read it |
-| `DOT_DISABLE_NETWORK`  | No network module exists to read it  |
 
 ---
 
@@ -271,19 +217,7 @@ Set in `modules/static/limits.sh` by reading the current `ulimit` values at shel
 
 ---
 
-## 7. Anaconda Variables
-
-Defined in `modules/static/dotenv.sh`. No module currently reads any of these — there is no anaconda module in `modules/`. All three are candidates for removal unless an anaconda module is planned.
-
-| Variable               | Default                                                         | Notes                                     |
-| ---------------------- | --------------------------------------------------------------- | ----------------------------------------- |
-| `DOT_ANACONDA_ENABLED` | `0`                                                             | Flag to enable anaconda — never checked   |
-| `DOT_ANACONDA_DIR`     | `/opt/homebrew/anaconda3` (arm) or `/usr/local/anaconda3` (x86) | Path to anaconda install — never consumed |
-| `DOT_ANACONDA_ENV`     | `"base"`                                                        | Active conda env name — never consumed    |
-
----
-
-## 8. External Input Variables
+## 7. External Input Variables
 
 These are **not** set by any `modules/` file. They are meant to be set by the caller (in the environment or a wrapper script) before invoking bootstrap or starting a shell.
 
@@ -309,11 +243,9 @@ These are **not** set by any `modules/` file. They are meant to be set by the ca
 
 ## Summary: Cleanup Recommendations
 
-| Action                                        | Variables                                                                                                                                                                                                       |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Remove** (never read, no planned use)       | `DOT_BOOT`, `DOT_DEBUG_RC`, `DOT_INTERACTIVE`, `DOT_BOOTED`, `DOT_ENABLED`, `DOT_DIRECTORY_NAME`, `DOT_DISABLE_ANACONDA`, `DOT_DISABLE_NETWORK`, `DOT_ANACONDA_ENABLED`, `DOT_ANACONDA_DIR`, `DOT_ANACONDA_ENV` |
-| **Remove duplicate** (same `ulimit -n` value) | `DOT_OPEN_FILES_LIMIT` (keep `DOT_FILE_DESCRIPTOR_LIMIT`)                                                                                                                                                       |
-| **Consolidate alias**                         | `DOT_DIR` → replace all references with `DOT_DIRECTORY`                                                                                                                                                         |
-| **Fix bug**                                   | `000-c-git.sh` `dot::git::config` calls `git config user.DOT_GIT_DEFAULT_EMAIL` instead of `git config user.email`                                                                                              |
-| **Implement or remove**                       | `DOT_BOOTED` — useful if set to `true` at end of zshrc; `DOT_INTERACTIVE` — useful if set from `[[ $- == *i* ]]`; `DOT_ENABLED` — useful if modules guard on iCloud availability                                |
-| **Keep as-is**                                | All actively used path, debug, feature flag, and git default variables                                                                                                                                          |
+| Action                                        | Variables                                                                                                          |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Remove duplicate** (same `ulimit -n` value) | `DOT_OPEN_FILES_LIMIT` (keep `DOT_FILE_DESCRIPTOR_LIMIT`)                                                          |
+| **Consolidate alias**                         | `DOT_DIR` → replace all references with `DOT_DIRECTORY`                                                            |
+| **Fix bug**                                   | `000-c-git.sh` `dot::git::config` calls `git config user.DOT_GIT_DEFAULT_EMAIL` instead of `git config user.email` |
+| **Keep as-is**                                | All actively used path, debug, feature flag, and git default variables                                             |

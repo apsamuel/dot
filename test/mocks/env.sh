@@ -38,7 +38,6 @@ mkdir -p "${TMPDIR}"
 # ── Disable module features that are not under test ───────────────────────────
 export DOT_DISABLE_OUTPUTS=0
 export DOT_DISABLE_GIT=0
-export DOT_DISABLE_NETWORK=1
 export DOT_DISABLE_SECRETS=1
 export DOT_DISABLE_VENDOR=1
 

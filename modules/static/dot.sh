@@ -8,8 +8,6 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
     echo "loading: ${library} (${directory})"
 fi
 
-DOT_DIRECTORY_NAME="$(dirname "${DOT_DIRECTORY_NAME}")"
-# temporarily set DOC_DIR to a basename for git ops...
 DOT_DIR="${DOT_DIRECTORY}"
 
 
@@ -322,10 +320,4 @@ USAGE
     esac
 }
 
-if type -t dot::static::shell &>/dev/null; then
-    DOT_ENABLED=true
-else
-    DOT_ENABLED=false
-fi
-DOT_ENABLED=true
-export DOT_ENABLED DOT_DIR
+export DOT_DIR
