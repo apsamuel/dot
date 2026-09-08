@@ -1,5 +1,10 @@
 import Foundation
 
+// MARK: - Defaults
+
+// Standard Apple VZ bundle location used across the vmctl toolchain (see ivm.py AppleBackend).
+let defaultAppleVMRoot = ("~/.vmctl/apple" as NSString).expandingTildeInPath
+
 // MARK: - Models
 
 struct VMInfo: Codable {
@@ -134,7 +139,7 @@ func main() {
             }
         }
         if root.isEmpty {
-            printError("--root <path> is required for list command", exitCode: 2)
+            root = defaultAppleVMRoot
         }
         cmdList(root: root)
 

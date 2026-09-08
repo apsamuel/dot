@@ -26,14 +26,23 @@ applevm-helper version
 # Output: {"version":"0.1.0-swift"}
 ```
 
-### list --root <dir>
+### list [--root <dir>]
 
-Discover VM bundles in a root directory and return their status.
+Discover VM bundles in a root directory and return their status. `--root` is
+optional and defaults to `~/.vmctl/apple` (the standard vmctl Apple VZ location).
 
 ```bash
-applevm-helper list --root ~/.vmctl/apple
+applevm-helper list
+# equivalent to: applevm-helper list --root ~/.vmctl/apple
 # Output: {"vms":[{"name":"ubuntu","status":"stopped","id":"ubuntu"},...]}
 ```
+
+A child directory of `--root` is treated as a VM bundle only when it looks like
+one — it either has a bundle suffix (`.bundle`, `.vm`, `.vzvm`) or contains a
+recognized marker file (`config.json`, `vm.json`, `.runtime.json`, `disk.img`,
+`AuxiliaryStorage`, or `nvram`). Ordinary folders are ignored, so pointing
+`--root` at a generic directory (e.g. `/`) returns an empty list rather than
+every subfolder.
 
 ### start --bundle <path> --name <vm>
 
@@ -88,5 +97,4 @@ If helper is unavailable, `ivm.py` falls back to the `vz` CLI. Use `IVM_APPLE_PR
 
 - This is a scaffolded MVP that parses commands and returns JSON stubs.
 - TODO: Implement actual Virtualization.framework calls.
-- TODO: Implement VM bundle discovery and state persistence.
 - TODO: Add macOS version compatibility checks and feature detection.

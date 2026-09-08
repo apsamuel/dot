@@ -63,12 +63,25 @@ class VMRuntimeManager {
         }
     }
 
+    // A directory qualifies as a VM bundle only if it carries a recognized VM marker,
+    // so an arbitrary --root (e.g. "/") no longer reports ordinary folders as VMs.
+    private static let bundleMarkerFiles = [
+        "config.json",      // vmctl bundle config (ssh details)
+        "vm.json",          // alternate bundle config name
+        ".runtime.json",    // helper runtime state
+        "disk.img",         // primary disk image
+        "AuxiliaryStorage", // Virtualization.framework auxiliary storage
+        "nvram",            // VZ EFI NVRAM store
+    ]
+    private static let bundleExtensions = [".bundle", ".vm", ".vzvm"]
+
     private func isBundle(at path: String) -> Bool {
         var isDir: ObjCBool = false
         guard FileManager.default.fileExists(atPath: path, isDirectory: &isDir), isDir.boolValue else { return false }
-        // Simple heuristic: it's a bundle if it exists and is a directory
-        // Could extend to check for Info.plist or other markers
-        return true
+        let name = (path as NSString).lastPathComponent
+        if Self.bundleExtensions.contains(where: { name.hasSuffix($0) }) { return true }
+        let fm = FileManager.default
+        return Self.bundleMarkerFiles.contains { fm.fileExists(atPath: "\(path)/\($0)") }
     }
 
     func isPidAlive(_ pid: Int) -> Bool {
