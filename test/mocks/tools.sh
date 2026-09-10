@@ -188,6 +188,45 @@ uv() {
     esac
 }
 
+# ── rustup ────────────────────────────────────────────────────────────────────
+rustup() {
+    _mock_record "rustup" "$@"
+    local a1="${1:-}" a2="${2:-}"
+    case "${a1}" in
+        --version) echo "rustup 1.27.1 (abcdef0 2024-01-01)" ;;
+        toolchain)
+            case "${a2}" in
+                list) echo "stable-aarch64-apple-darwin (default)"; echo "nightly-aarch64-apple-darwin" ;;
+                *)    return 0 ;;
+            esac
+            ;;
+        target)    echo "aarch64-apple-darwin" ;;
+        component) echo "rustc-aarch64-apple-darwin (installed)" ;;
+        default)   echo "stable-aarch64-apple-darwin (default)" ;;
+        show)      echo "Default host: aarch64-apple-darwin"; echo "stable-aarch64-apple-darwin (default)" ;;
+        which)     echo "/mock/.rustup/toolchains/stable/bin/${a2:-cargo}" ;;
+        *)         return 0 ;;
+    esac
+}
+
+# ── cargo ─────────────────────────────────────────────────────────────────────
+cargo() {
+    _mock_record "cargo" "$@"
+    case "${1:-}" in
+        --version) echo "cargo 1.79.0 (abcdef0 2024-01-01)" ;;
+        *)         return 0 ;;
+    esac
+}
+
+# ── rustc ─────────────────────────────────────────────────────────────────────
+rustc() {
+    _mock_record "rustc" "$@"
+    case "${1:-}" in
+        --version) echo "rustc 1.79.0 (abcdef0 2024-01-01)" ;;
+        *)         return 0 ;;
+    esac
+}
+
 # ── brew ──────────────────────────────────────────────────────────────────────
 brew() {
     _mock_record "brew" "$@"

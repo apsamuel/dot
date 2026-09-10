@@ -322,6 +322,7 @@ dot::static::shell vendor list                # list configured submodules
 | `DOT_DISABLE_EXTENSIONS` | `0`     | Skip iTerm2 / thefuck / autosuggestions / syntax highlighting     |
 | `DOT_DISABLE_GIT`        | `0`     | Skip git module                                                   |
 | `DOT_DISABLE_NODE`       | `0`     | Skip Node.js environment setup                                    |
+| `DOT_DISABLE_RUST`       | `0`     | Skip Rust environment setup (rustup PATH, `dot::rust` helpers)    |
 | `DOT_DISABLE_MAC`        | `0`     | Skip macOS-specific helpers                                       |
 | `DOT_DISABLE_OUTPUTS`    | `0`     | Skip splash, quotes, ascii art                                    |
 | `DOT_DISABLE_P10K`       | `0`     | Skip Powerlevel10k prompt                                         |

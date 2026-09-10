@@ -59,7 +59,7 @@ Dynamic modules are discovered using:
 | `001-a-tmux.sh`   | Tmux session helpers and defaults.                      |
 | `001-d-node.sh`   | Node runtime/tooling setup (`n`/`npm`) and env exports. |
 | `001-d-python.sh` | Python runtime/tooling setup (`uv`) and env exports.    |
-| `001-d-rust.sh`   | Rust toolchain env setup.                               |
+| `001-d-rust.sh`   | Rust toolchain env setup + `dot::rust` rustup helpers.  |
 | `001-z-java.sh`   | Java/JDK env setup (`jenv`-aware).                      |
 
 ### Tier 002 (domain-specific)

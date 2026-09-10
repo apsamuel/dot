@@ -29,6 +29,7 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 | [`DOT_DISABLE_OUTPUTS`](#4-feature-disable-flags)                 | Feature Flag   | ✅ Active                                 |
 | [`DOT_DISABLE_P10K`](#4-feature-disable-flags)                    | Feature Flag   | ✅ Active                                 |
 | [`DOT_DISABLE_NODE`](#4-feature-disable-flags)                    | Feature Flag   | ✅ Active                                 |
+| [`DOT_DISABLE_RUST`](#4-feature-disable-flags)                    | Feature Flag   | ✅ Active                                 |
 | [`DOT_GIT_DEFAULT_USER`](#5-git-default-variables)                | Git            | ✅ Active                                 |
 | [`DOT_GIT_DEFAULT_EMAIL`](#5-git-default-variables)               | Git            | ✅ Active                                 |
 | [`DOT_GIT_DEFAULT_SOURCE_BRANCH`](#5-git-default-variables)       | Git            | ✅ Active                                 |
@@ -160,6 +161,7 @@ Set any of these to `1` to skip the corresponding module or feature. All default
 | `DOT_DISABLE_OUTPUTS`    | `modules/000-a-output.sh`     | Skips terminal decoration functions (`dot::output::logo`, `dot::output::term-quote`, `dot::output::colors256`, etc.) |
 | `DOT_DISABLE_P10K`       | `modules/001-a-p10k.sh`       | Skips Powerlevel10k prompt activation                                                                                |
 | `DOT_DISABLE_NODE`       | `modules/001-d-node.sh`       | Skips Node.js environment setup (`N_PREFIX`, PATH)                                                                   |
+| `DOT_DISABLE_RUST`       | `modules/001-d-rust.sh`       | Skips Rust environment setup (rustup PATH, `dot::rust` helpers)                                                      |
 
 ### Sub-flags within `000-d-extensions.sh`
 
