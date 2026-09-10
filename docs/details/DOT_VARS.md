@@ -48,6 +48,9 @@ All variables defined, exported, and consumed by the `dot` framework are prefixe
 | [`DOT_DEPS`](#dot_deps)                                           | External Input | ✅ Active (bootstrap only)                |
 | [`DOT_NVM_INSTALL_LTS`](#dot_nvm_install_lts)                     | External Input | ✅ Active (bootstrap only)                |
 | [`DOT_LIBS_DIR`](#dot_libs_dir)                                   | External Input | ✅ Active (when set)                      |
+| [`DOT_PY_ENSURE_REQUIREMENTS`](#8-python-environment-variables)   | Python         | ✅ Active                                 |
+| [`DOT_PY_FORCE_BASE`](#8-python-environment-variables)            | Python         | ✅ Active                                 |
+| [`PYTHON_VERSION`](#8-python-environment-variables)               | Python         | ✅ Active (when set)                      |
 
 **Status key:**
 
@@ -230,6 +233,20 @@ These are **not** set by any `modules/` file. They are meant to be set by the ca
 - **Consumed in:** [`modules/static/dot.sh`](../../modules/static/dot.sh) — the `dot::static::shell` command sources all `*.sh` files found under this path
 - **Effect:** Allows injecting additional shell libraries into the `dot` environment without modifying the repo
 - **Example:** `export DOT_LIBS_DIR="$HOME/.local/dot-extras"` in a machine-local rc snippet
+
+---
+
+## 8. Python Environment Variables
+
+Read by [`modules/001-d-python.sh`](../../modules/001-d-python.sh), which manages `uv`-created venvs under `~/.venv`.
+
+| Variable                     | Default | Description                                                                                                                                                                                                                                                             |
+| ---------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DOT_PY_ENSURE_REQUIREMENTS` | `1`     | When `1`, reconcile `.languages.python.pip.requirements` from `data/zsh.yaml` into provisioned venvs. On startup (interactive shells) every venv under `~/.venv` is reconciled (stamp-gated); new venvs created by `dot::python::env` get them too. Set `0` to disable. |
+| `DOT_PY_FORCE_BASE`          | `0`     | When `1`, re-activate the base venv on startup even if another venv (venv/direnv) is already active.                                                                                                                                                                    |
+| `PYTHON_VERSION`             | _unset_ | Overrides the python version otherwise resolved from `.languages.python.version` in `data/zsh.yaml` (fallback `3.11`).                                                                                                                                                  |
+
+**Requirement reconciliation** installs a configured package only when it is entirely missing (existing versions are never modified). A per-venv stamp `<venv>/.dot-requirements.sha` records the last reconciled requirement set so steady-state shell startup stays cheap. Use `dot::python::sync [--force] [<venv>...]` to reconcile on demand.
 
 ---
 

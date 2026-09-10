@@ -116,9 +116,75 @@ yq() {
             echo "  - autopushd"
             echo "  - extendedglob"
             ;;
+        '.languages.python.version'*)
+            echo "3.11.13"
+            ;;
+        '.languages.python.pip.requirements'*)
+            echo "requests==2.31.0"
+            ;;
+        '.languages.node.version'*)
+            echo "20.11.0"
+            ;;
+        '.languages.node.npm.requirements'*)
+            echo "typescript"
+            ;;
         *)
             echo "null"
             ;;
+    esac
+}
+
+# ── uv ─────────────────────────────────────────────────────────────────────────────
+# Controllable python env/package manager mock.
+#   MOCK_UV_INSTALLED — space-separated package names treated as already installed
+#                       ("uv pip show <name>" returns 0 for those, 1 otherwise).
+# "uv venv ... <dir>" materializes <dir>/bin/python + activate so downstream
+# checks behave like a real venv.
+uv() {
+    _mock_record "uv" "$@"
+    local sub="${1:-}"
+    case "${sub}" in
+        pip)
+            local action="${2:-}"
+            case "${action}" in
+                show)
+                    shift 2
+                    local name=""
+                    while [ $# -gt 0 ]; do
+                        case "$1" in
+                            --python) shift 2 ;;
+                            -*) shift ;;
+                            *) name="$1"; shift ;;
+                        esac
+                    done
+                    case " ${MOCK_UV_INSTALLED:-} " in
+                        *" ${name} "*) return 0 ;;
+                        *) return 1 ;;
+                    esac
+                    ;;
+                *) return 0 ;;
+            esac
+            ;;
+        venv)
+            shift
+            local target="" prev="" a=""
+            for a in "$@"; do
+                if [ "${prev}" = "--python" ]; then prev="${a}"; continue; fi
+                case "${a}" in
+                    --python) prev="--python"; continue ;;
+                    -*) prev="${a}"; continue ;;
+                esac
+                target="${a}"; prev="${a}"
+            done
+            if [ -n "${target}" ]; then
+                mkdir -p "${target}/bin" 2>/dev/null
+                printf '#!/bin/sh\n' > "${target}/bin/python" 2>/dev/null
+                chmod +x "${target}/bin/python" 2>/dev/null
+                : > "${target}/bin/activate" 2>/dev/null
+            fi
+            return 0
+            ;;
+        *) return 0 ;;
     esac
 }
 

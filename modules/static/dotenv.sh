@@ -78,3 +78,9 @@ export DOT_HIST_ROTATE_KEEP_LINES="${DOT_HIST_ROTATE_KEEP_LINES:-0}"    # 0 = ne
 export DOT_CLOUD_DIR="${DOT_CLOUD_DIR:-${HOME}/Library/Mobile Documents/com~apple~CloudDocs/dot}"
 export DOT_SHELL_DATA="${DOT_SHELL_DATA:-${DOT_ROOT}/data/zsh.yaml}"
 export DOT_SECRETS_DATA="${DOT_SECRETS_DATA:-${DOT_CLOUD_DIR}/secrets.json}"
+
+# --- python ---
+# When 1 (default), the python module reconciles zsh.yaml pip requirements into
+# provisioned venvs (stamp-gated) and installs them into venvs created by
+# dot::python::env. Set 0 to disable all requirement reconciliation.
+export DOT_PY_ENSURE_REQUIREMENTS="${DOT_PY_ENSURE_REQUIREMENTS:-1}"
