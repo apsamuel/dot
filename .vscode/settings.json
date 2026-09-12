@@ -17,9 +17,9 @@
   "[github-actions-workflow]": {
     "editor.defaultFormatter": "redhat.vscode-yaml"
   },
-  "[glsl]": {
-    "editor.defaultFormatter": "raczzalan.webgl-glsl-editor"
-  },
+  // "[glsl]": {
+  //   "editor.defaultFormatter": "raczzalan.webgl-glsl-editor"
+  // },
   "[go]": {
     "editor.defaultFormatter": "golang.go",
     "editor.formatOnSave": true
@@ -184,57 +184,45 @@
   "terminal.integrated.profiles.osx": {
     "bash": {
       "icon": "terminal-bash",
-      "path": "bash"
-    },
-    "fish": {
-      "color": "terminal.ansiBlack",
-      "icon": "terminal",
-      "path": "fish"
+      "args": [
+        "-arch",
+        "arm64",
+        "/opt/homebrew/bin/bash"
+      ],
+      "path": "/usr/bin/arch"
     },
     "pwsh": {
       "args": [
         "-arch",
-        "x86_64",
+        "arm64",
         "/usr/local/bin/pwsh",
         "-Login",
         "-NoLogo",
         "-Interactive"
       ],
-      "color": "terminal.ansiBlack",
+      "color": "terminal.ansiGreen",
       "icon": "terminal-powershell",
       "path": "/usr/bin/arch"
     },
-    "tmux-arm": {
+    "tmux": {
       "args": [],
       "color": "terminal.ansiCyan",
       "icon": "terminal-tmux",
       "path": "${env:HOME}/.dot/bin/tmux-code.sh"
     },
-    "tmux-x86_64": {
-      "args": [
-        "-arch",
-        "x86_64",
-        "/usr/local/bin/zsh",
-        "-c",
-        "${env:HOME}/.dot/bin/tmux-code.sh"
-      ],
+    "zsh": {
       "color": "terminal.ansiBlack",
-      "icon": "terminal-tmux",
-      "overrideName": true,
-      "path": "/usr/bin/arch"
-    },
-    "zsh-arm": {
       "args": [
         "-arch",
         "arm64",
         "/opt/homebrew/bin/zsh",
         "-l"
       ],
-      "icon": "light-bulb",
+      "icon": "terminal-compact",
       "overrideName": true,
       "path": "/usr/bin/arch"
     },
-    "zsh-copilot": {
+    "automation": {
       "args": [
         "-l"
       ],
@@ -246,20 +234,18 @@
         "TERM": "xterm-256color",
         "ZDOTDIR": "${env:HOME}/.dot/data/configs/automation"
       },
-      "icon": "copilot",
+      "icon": "robot",
       "overrideName": true,
       "path": "/opt/homebrew/bin/zsh"
     },
-    "zsh-x86_64": {
+    "copilot-cli": {
+      "icon": "copilot-large",
+      "path": "/usr/bin/arch",
       "args": [
         "-arch",
-        "x86_64",
-        "/usr/local/bin/zsh",
-        "-l"
-      ],
-      "icon": "lightbulb",
-      "overrideName": true,
-      "path": "/usr/bin/arch"
+        "arm64",
+        "/opt/homebrew/bin/copilot"
+      ]
     }
   }
 }
