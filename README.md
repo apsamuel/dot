@@ -45,7 +45,7 @@ It provides an idempotent, opinionated, modular, and extensible shell environmen
 | 🔐  | Secrets Management    | Load**and mask** secrets from JSON without leaking them in history or output                                                                       |
 | 🛠   | Language Environments | Python (`uv`), Node.js (`n`/`npm`), Rust (`rustup`), Java (`jenv`) all from one place                                                              |
 | 🌱  | Vendor-first          | Submodules pin every upstream — no surprises when a project moves or breaks                                                                        |
-| 🔄  | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) inits/updates root + nested submodules in parallel                                      |
+| 🔄  | Submodule Sync        | [`scripts/submodule-sync.sh`](./scripts/dot-submodule-sync.sh) inits/updates root + nested submodules in parallel                                  |
 | 🛡   | SBOM + OSV Scanner    | [`data/sbom/`](./data/sbom/) — VS Code extension that generates CycloneDX/SPDX SBOMs and scans them via OSV.dev                                    |
 | 🤖  | Automation Profile    | [`data/configs/automation/.zshrc`](./data/configs/automation/.zshrc) — minimal headless ZSH for Copilot/CI (no p10k, no plugins, no banners)       |
 | 🖥   | VM Control            | [`bin/ivm.py`](./bin/ivm.py) — unified VM lifecycle for UTM, QEMU, Podman, and Apple Virtualization.framework                                      |
@@ -258,20 +258,20 @@ This means user-facing commands in `bin/` and internal-maintainer commands in `s
 dot::static::shell <command> [options]
 ```
 
-| Command              | Purpose                                                                                                                 |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `version`            | Print current branch, short revision, last-commit date, and author (default action).                                    |
-| `help`               | Show inline usage for every command (also`-h` / `--help`).                                                              |
-| `update`             | `git pull` the `dot` repo, then `omz update`.                                                                           |
-| `reload [-d]`        | Re-source the shell via`omz reload`. `-d`/`--debug` enables `set -x` tracing.                                           |
-| `refresh-modules`    | Re-run`dot::static::foundation::load-modules` to re-source every dynamic module in the current shell.                   |
-| `load-options`       | Re-apply the curated zsh options (`dot::static::foundation::load-zsh-options`).                                         |
-| `printenv`           | Dump every`DOT_*` variable, masking anything that looks like a secret.                                                  |
-| `changelog [-a\|-d]` | Pretty-printed git log (last 7 commits by default;`-a` for all, `-d` for diffs).                                        |
-| `secrets <action>`   | Manage`~/Library/Mobile Documents/.../dot/secrets.json` — see below.                                                    |
-| `add-plugin <url>`   | Add an OMZ plugin as a submodule under`vendor/oh-my-zsh/custom/plugins/`.                                               |
-| `add-theme  <url>`   | Add an OMZ theme as a submodule under`vendor/oh-my-zsh/custom/themes/`.                                                 |
-| `vendor <action>`    | Forward to[`scripts/submodule-sync.sh`](./scripts/submodule-sync.sh) — manage every vendored submodule (root + nested). |
+| Command              | Purpose                                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `version`            | Print current branch, short revision, last-commit date, and author (default action).                                        |
+| `help`               | Show inline usage for every command (also`-h` / `--help`).                                                                  |
+| `update`             | `git pull` the `dot` repo, then `omz update`.                                                                               |
+| `reload [-d]`        | Re-source the shell via`omz reload`. `-d`/`--debug` enables `set -x` tracing.                                               |
+| `refresh-modules`    | Re-run`dot::static::foundation::load-modules` to re-source every dynamic module in the current shell.                       |
+| `load-options`       | Re-apply the curated zsh options (`dot::static::foundation::load-zsh-options`).                                             |
+| `printenv`           | Dump every`DOT_*` variable, masking anything that looks like a secret.                                                      |
+| `changelog [-a\|-d]` | Pretty-printed git log (last 7 commits by default;`-a` for all, `-d` for diffs).                                            |
+| `secrets <action>`   | Manage`~/Library/Mobile Documents/.../dot/secrets.json` — see below.                                                        |
+| `add-plugin <url>`   | Add an OMZ plugin as a submodule under`vendor/oh-my-zsh/custom/plugins/`.                                                   |
+| `add-theme  <url>`   | Add an OMZ theme as a submodule under`vendor/oh-my-zsh/custom/themes/`.                                                     |
+| `vendor <action>`    | Forward to[`scripts/submodule-sync.sh`](./scripts/dot-submodule-sync.sh) — manage every vendored submodule (root + nested). |
 
 ### 🔐 `dot::static::shell secrets`
 
