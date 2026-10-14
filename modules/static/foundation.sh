@@ -237,8 +237,85 @@ function dot::static::foundation::load-secrets () {
 # shell environment. Each JSON key is exported as an environment variable and
 # the key names are collected in DOT_SECRET_KEYS. The intermediate file is
 # written to $TMPDIR and removed after sourcing so secrets never persist on disk.
+#
+# Usage: dot::static::foundation::load-user-secrets [-l|--list-loaded] [-d|--list-defined]
+#                                                   [--show-values] [-h|--help]
+# With no arguments the secrets are loaded. Listing modes print key names only,
+# unless --show-values is given.
 function dot::static::foundation::load-user-secrets () {
     local secrets_file="${ICLOUD}/dot/secrets.json"
+    local mode="load"
+    local show_values=0
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -l|--list-loaded)  mode="list-loaded"; shift ;;
+            -d|--list-defined) mode="list-defined"; shift ;;
+            --show-values)     show_values=1; shift ;;
+            -h|--help)
+                cat <<'EOF'
+Usage: dot::static::foundation::load-user-secrets [-l|--list-loaded] [-d|--list-defined]
+                                                  [--show-values] [-h|--help]
+
+Load secrets from $ICLOUD/dot/secrets.json into the current shell environment.
+Each JSON key is exported as an environment variable and the key names are
+collected in DOT_SECRET_KEYS.
+
+Options:
+  -l, --list-loaded   List keys currently loaded into the environment
+  -d, --list-defined  List keys defined in secrets.json
+      --show-values   Print KEY=value instead of key names (listing modes only)
+  -h, --help          Show this help
+
+With no options the secrets are loaded. Values are never printed unless
+--show-values is given.
+
+Examples:
+  dot::static::foundation::load-user-secrets
+  dot::static::foundation::load-user-secrets --list-loaded
+  dot::static::foundation::load-user-secrets --list-defined --show-values
+EOF
+                return 0
+                ;;
+            *)
+                echo "dot::static::foundation::load-user-secrets: unknown argument: $1" >&2
+                return 2
+                ;;
+        esac
+    done
+
+    if (( show_values )) && [[ "${mode}" == "load" ]]; then
+        echo "dot::static::foundation::load-user-secrets: --show-values requires --list-loaded or --list-defined" >&2
+        return 2
+    fi
+
+    if [[ "${mode}" == "list-loaded" ]]; then
+        local loadedKey=""
+        for loadedKey in "${DOT_SECRET_KEYS[@]}"; do
+            # printenv returns 0 for set-but-empty values, 1 when unset
+            printenv "${loadedKey}" >/dev/null 2>&1 || continue
+            if (( show_values )); then
+                printf '%s=%s\n' "${loadedKey}" "$(printenv "${loadedKey}")"
+            else
+                printf '%s\n' "${loadedKey}"
+            fi
+        done
+        return 0
+    fi
+
+    if [[ "${mode}" == "list-defined" ]]; then
+        if [[ ! -f "${secrets_file}" ]]; then
+            echo "dot::static::foundation::load-user-secrets: secrets file not found: ${secrets_file}" >&2
+            return 1
+        fi
+        if (( show_values )); then
+            jq -r 'to_entries[] | "\(.key)=\(.value)"' "${secrets_file}"
+        else
+            jq -r 'keys[]' "${secrets_file}"
+        fi
+        return $?
+    fi
+
     if [[ ! -d "${ICLOUD}/dot" || ! -f "${secrets_file}" ]]; then
         return 0
     fi
@@ -259,7 +336,7 @@ function dot::static::foundation::load-user-secrets () {
 
     for secretKey in "${secretKeys[@]}"; do
         secrets[$secretKey]="$(jq --arg secretKey "${secretKey}" -r '.[$secretKey]' "${secrets_file}")"
-        echo "export ${secretKey}=${secrets[$secretKey]}" >> "${TMPDIR}"/.secrets
+        printf 'export %s=%q\n' "${secretKey}" "${secrets[$secretKey]}" >> "${TMPDIR}"/.secrets
     done
 
     if [[ -f "${TMPDIR}"/.secrets ]]; then
@@ -273,10 +350,12 @@ function dot::static::foundation::load-user-secrets () {
 # (or any other consumer).
 #
 # Usage:
-#   dot::static::foundation::ssh-identities [--dir DIR] [--format array|string] [--var VARNAME]
-#                    [--exclude REGEX] [--absolute]
+#   dot::static::foundation::ssh-identities [-p|--list-present] [-l|--list-loaded] [--dir DIR]
+#                    [--format array|string] [--var VARNAME] [--exclude REGEX] [--absolute]
 #
 # Options:
+#   -p, --list-present  List identities present in the SSH directory (default mode).
+#   -l, --list-loaded   List identities currently loaded in ssh-agent (`ssh-add -l`).
 #   --dir DIR        Directory to scan (default: $HOME/.ssh).
 #   --format FMT     Output format: "array" (newline-separated, default) or
 #                    "string" (space-separated, shell-quoted entries).
@@ -301,9 +380,12 @@ function dot::static::foundation::ssh-identities () {
     local outVar=""
     local exclude='(config|deprecated|.*\.pub|environment.*|known_hosts.*)'
     local absolute=0
+    local mode="present"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            -p|--list-present) mode="present"; shift ;;
+            -l|--list-loaded)  mode="loaded"; shift ;;
             --dir)      dir="$2"; shift 2 ;;
             --format)   format="$2"; shift 2 ;;
             --var)      outVar="$2"; shift 2 ;;
@@ -311,14 +393,19 @@ function dot::static::foundation::ssh-identities () {
             --absolute) absolute=1; shift ;;
             -h|--help)
                 cat <<'EOF'
-Usage: dot::static::foundation::ssh-identities [--dir DIR] [--format array|string] [--var VARNAME]
-                        [--exclude REGEX] [--absolute]
+Usage: dot::static::foundation::ssh-identities [-p|--list-present] [-l|--list-loaded] [--dir DIR]
+                        [--format array|string] [--var VARNAME] [--exclude REGEX] [--absolute]
 
 Scan an SSH directory for private key files and return their basenames
 (or absolute paths) in a form suitable for consumers like
-`zstyle :omz:plugins:ssh-agent identities`.
+`zstyle :omz:plugins:ssh-agent identities`, or list the identities
+currently loaded in ssh-agent.
 
 Options:
+  -p, --list-present  List identities present in the SSH directory (default)
+  -l, --list-loaded   List identities loaded in ssh-agent, as printed by
+                      `ssh-add -l` (bits, fingerprint, comment, type);
+                      --dir/--format/--var/--exclude/--absolute do not apply
   --dir DIR        Directory to scan (default: $HOME/.ssh)
   --format FMT     Output format: "array" (newline-separated, default) or
                    "string" (space-separated, shell-quoted entries)
@@ -332,6 +419,8 @@ Options:
 Examples:
   dot::static::foundation::ssh-identities --format array --var SSH_KEYS
   dot::static::foundation::ssh-identities --format string --var SSH_KEYS_STR
+  dot::static::foundation::ssh-identities --list-present --absolute
+  dot::static::foundation::ssh-identities --list-loaded
 EOF
                 return 0
                 ;;
@@ -345,6 +434,24 @@ EOF
     if [[ "${format}" != "array" && "${format}" != "string" ]]; then
         echo "dot::static::foundation::ssh-identities: --format must be 'array' or 'string'" >&2
         return 2
+    fi
+
+    if [[ "${mode}" == "loaded" ]]; then
+        if [[ -n "${outVar}" ]]; then
+            echo "dot::static::foundation::ssh-identities: --var is not supported with --list-loaded" >&2
+            return 2
+        fi
+        local agentOut=""
+        local agentRc=0
+        agentOut="$(ssh-add -l 2>/dev/null)"
+        agentRc=$?
+        # ssh-add -l: 0 = identities listed, 1 = agent has none, 2 = no agent reachable
+        if (( agentRc == 2 )); then
+            echo "dot::static::foundation::ssh-identities: cannot reach ssh-agent" >&2
+            return 1
+        fi
+        [[ ${agentRc} -eq 0 ]] && printf '%s\n' "${agentOut}"
+        return 0
     fi
 
     local -a keys=()
