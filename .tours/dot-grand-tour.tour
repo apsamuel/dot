@@ -1,0 +1,152 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "dot: Grand Tour",
+  "description": "An end-to-end walkthrough of the prominent features of the dot ZSH configuration & bootstrap framework: the runtime entry point, the static/dynamic module system, YAML-driven config, Makefile orchestration, the bootstrap engine, tests, and bundled tooling.",
+  "isPrimary": true,
+  "steps": [
+    {
+      "title": "Welcome",
+      "description": "# dot: Grand Tour \ud83d\uddfa\ufe0f\n\nWelcome! `dot` is a macOS-first ZSH configuration and bootstrap framework. It vendors proven open-source projects as git submodules and layers idempotent, modular configuration on top.\n\nThis tour visits the most prominent features in the order the shell actually uses them:\n\n1. The runtime entry point ([zshrc](zshrc))\n2. The static foundation + dynamic module system ([modules/](modules))\n3. YAML-driven configuration ([data/zsh.yaml](data/zsh.yaml), [.dependencies.yml](.dependencies.yml))\n4. Makefile orchestration + the dry-run bootstrap engine\n5. The TAP test harness\n6. Bundled tooling (bin/, a Swift VM helper, a TypeScript VS Code extension)\n\n**Navigating:** use `cmd+right` / `cmd+left` (macOS) to move between steps, or click steps in the CodeTour tree. Let's go \u2192"
+    },
+    {
+      "title": "What is dot?",
+      "file": "README.md",
+      "line": 16,
+      "description": "## The pitch\n\n`dot` isn't \"another shell framework\" \u2014 it's **configuration layered** on proven tools. It vendors them as pinned submodules under [vendor/](vendor/README.md), wires them together, and adds quality-of-life helpers.\n\nThe design goals below (zero-friction onboarding, composable modules, reproducibility) are what the rest of this tour demonstrates in code."
+    },
+    {
+      "title": "Entry point \u2014 fail fast on a broken environment",
+      "file": "zshrc",
+      "line": 27,
+      "description": "## zshrc: environment validation\n\n[zshrc](zshrc) is the runtime entry point sourced on every shell start. Before doing anything else it validates the critical environment (`HOME`, `USER`, `SHELL`) and bails early if any are missing \u2014 a broken environment should fail loudly, not silently misbehave."
+    },
+    {
+      "title": "The non-interactive / VS Code / Copilot guard",
+      "file": "zshrc",
+      "line": 56,
+      "description": "## Protecting automated terminals\n\nThis guard is one of dot's most important safety features. Any feature that switches the terminal to the *alternate screen buffer* (tmux, p10k instant prompt, zsh-vi-mode, syntax highlighting, fzf-tab previews) breaks output capture in VS Code / Copilot agent terminals.\n\nTwo tiers:\n- **Full minimal mode** \u2014 non-interactive shells, `dumb` terminals, or Copilot agent terminals disable everything decorative via `DOT_DISABLE_*` flags.\n- **Tmux-only suppression** \u2014 human VS Code terminals keep the rich profile but never auto-attach tmux.\n\nThese `DOT_DISABLE_*` flags all default in [modules/static/dotenv.sh](modules/static/dotenv.sh) (step [#7])."
+    },
+    {
+      "title": "Ordered static-foundation sourcing",
+      "file": "zshrc",
+      "line": 104,
+      "description": "## Loading the static layer, in order\n\nOrder matters here. `dotenv.sh` (canonical `DOT_*` vars) and `logging.sh` (structured logging) must load *before* `foundation.sh` and any dynamic module, because everything downstream depends on them.\n\nThe explicit sequence is: `dotenv` \u2192 `logging` \u2192 optional bootstrap \u2192 `foundation` \u2192 `ssh` \u2192 `limits` \u2192 `autoload` \u2192 `dot`. See [modules/README.md](modules/README.md) for the canonical list."
+    },
+    {
+      "title": "Discovering & loading dynamic modules",
+      "file": "zshrc",
+      "line": 161,
+      "description": "## The heart of startup\n\nAfter options are applied, `dot::static::foundation::load-modules` discovers and sources every dynamic feature module. We'll look at its implementation next (step [#8]).\n\nInteractive-only extras \u2014 secret loading and the splash screen \u2014 come *after* this, and are skipped entirely in the non-interactive/Copilot path from step [#4]."
+    },
+    {
+      "title": "Canonical DOT_* variables & feature flags",
+      "file": "modules/static/dotenv.sh",
+      "line": 27,
+      "description": "## The single source of truth for configuration\n\n[modules/static/dotenv.sh](modules/static/dotenv.sh) declares every canonical `DOT_*` path and the full set of `DOT_DISABLE_*` feature toggles with their defaults.\n\nThis is what makes dot **composable**: enable or disable an entire integration (brew, git, node, rust, tmux, p10k, vi-mode\u2026) with a single environment variable. The guard in step [#4] simply flips these to `1`."
+    },
+    {
+      "title": "load-modules: lexical discovery",
+      "file": "modules/static/foundation.sh",
+      "line": 198,
+      "description": "## How modules are found\n\nThe loader globs `[0-9][0-9][0-9]-*-*.sh` and sorts lexically (`sort -d`), sourcing each via `dot::static::foundation::source-module` while tracking `DOT_LOADED_MODULES` / `DOT_FAILED_MODULES`.\n\nBecause discovery is purely lexical, **the numeric filename prefix *is* the load order** \u2014 renaming a module changes when it runs."
+    },
+    {
+      "title": "Structured logging helpers",
+      "file": "modules/static/logging.sh",
+      "line": 17,
+      "description": "## dot:: logging\n\nLoaded before any dynamic module, [modules/static/logging.sh](modules/static/logging.sh) provides namespaced helpers (`debug`, `info`, `warn`, `error`, `success`, `loading`, `skip`) with an emoji palette shown only when `DOT_DEBUG=1`. Modules use these instead of raw `echo` so output stays consistent and quiet by default."
+    },
+    {
+      "title": "The dynamic module system",
+      "directory": "modules",
+      "description": "## Tiered, numbered modules\n\nEvery `NNN-x-name.sh` file here is a self-contained feature module, discovered and sorted lexically by the loader from step [#8].\n\nThe `NNN` prefix encodes a **tier**:\n- **000** \u2014 foundational (base, paths, brew, config, git, macOS\u2026)\n- **001** \u2014 language / tooling integration (python, rust, node, tmux, p10k, ai\u2026)\n- **002** \u2014 domain-specific (sre, bio)\n- **999** \u2014 finalization (completion, terminal)\n\nThe `x` letter (a/b/c/d/z) orders files within a tier. See [modules/README.md](modules/README.md) for the full inventory and load order. Next we'll look at two representative modules."
+    },
+    {
+      "title": "Language integration \u2014 Python via uv",
+      "file": "modules/001-d-python.sh",
+      "line": 17,
+      "description": "## Tier 001: python\n\nA good example of a language module. It resolves the desired Python version from a fallback chain \u2014 `PYTHON_VERSION` env override \u2192 local [data/zsh.yaml](data/zsh.yaml) \u2192 iCloud config \u2192 default \u2014 then creates per-version/arch virtual environments under `~/.venv` on demand using `uv`. Config-driven, idempotent, lazy."
+    },
+    {
+      "title": "Tooling integration \u2014 tmux helpers",
+      "file": "modules/001-a-tmux.sh",
+      "line": 15,
+      "description": "## Tier 001: tmux\n\nNote the very first thing this module does: honor `DOT_DISABLE_TMUX` and `return 0` early (never `exit` \u2014 that would kill a sourced shell). When enabled it points oh-my-tmux at the vendored plugin dir and defines `dot::tmux::*` helpers for safe session naming and lifecycle management."
+    },
+    {
+      "title": "Runtime config \u2014 data/zsh.yaml",
+      "file": "data/zsh.yaml",
+      "line": 12,
+      "description": "## The runtime source of truth\n\n[data/zsh.yaml](data/zsh.yaml) drives the interactive experience: theme, `path` additions, host/network `conditions`, per-language versions & requirements, the list of `options` (setopt), and the `plugins` (builtin + custom). Modules read it via `yq` \u2014 as you saw the Python module do in step [#11]."
+    },
+    {
+      "title": "Dependency manifest \u2014 .dependencies.yml",
+      "file": ".dependencies.yml",
+      "line": 8,
+      "description": "## One manifest, two Brewfiles\n\n[.dependencies.yml](.dependencies.yml) is the single source of truth for Homebrew dependencies. Each entry carries a `tier`, `category`, and `required` flag, and is grouped into taps / formulae / casks. The generated [data/Brewfile](data/Brewfile) and [data/Brewfile.cask](data/Brewfile.cask) are outputs \u2014 never hand-edited."
+    },
+    {
+      "title": "Manifest \u2192 Brewfile generator",
+      "file": "bin/generate-brewfile.py",
+      "line": 250,
+      "description": "## generate-brewfile.py\n\nThis Python utility parses [.dependencies.yml](.dependencies.yml) into `Entry` records and renders the two Brewfiles. It's wired to the `brewfile` Make target (next). Regenerate any time with `>> make brewfile`."
+    },
+    {
+      "title": "Makefile \u2014 orchestration & help",
+      "file": "Makefile",
+      "line": 123,
+      "description": "## make help\n\nThe [Makefile](Makefile) (GNU Make 4.4+) orchestrates install, configuration, vendor management, health checks, and tests. It uses a small dispatch system so you can write space-separated sub-commands like `make check brew` or `make config zsh`.\n\nStart here any time: `>> make help`"
+    },
+    {
+      "title": "The main install target",
+      "file": "Makefile",
+      "line": 379,
+      "description": "## make dot-bootstrap\n\nThe primary user-facing target: a full, fail-fast install that checks dependencies, installs brew, links configs, and provisions language runtimes. It's **mutating**, so preview the plan first with `DRY=1 make dot-bootstrap`. All of its work routes through the bootstrap engine we'll see next."
+    },
+    {
+      "title": "Bootstrap engine \u2014 dry-run safety",
+      "file": "scripts/dot-bootstrap.sh",
+      "line": 126,
+      "description": "## Idempotency & DRY mode\n\n[scripts/dot-bootstrap.sh](scripts/dot-bootstrap.sh) implements the operations behind the Make targets. The `_is_dry` predicate and the `dryrun` wrapper (just below) gate every filesystem/system mutation: when `DOT_DRY_RUN=1`, actions are *printed* via `say_plan` instead of executed. This is what keeps `DRY=1` non-mutating and the whole bootstrap idempotent."
+    },
+    {
+      "title": "Health checks & the dry-run CI gate",
+      "file": "Makefile",
+      "line": 550,
+      "description": "## make doctor + make dry-run-verify\n\n`make doctor` is a **read-only** health check (brew, symlinks, submodules, vendor trees) \u2014 safe to run anytime: `>> make doctor`\n\nJust below it, `dry-run-verify` proves that `DRY=1 make dot-bootstrap` produces **zero** mutations \u2014 the guard that protects the dry-run contract in CI/pre-commit."
+    },
+    {
+      "title": "The TAP test harness",
+      "file": "test/framework.sh",
+      "line": 16,
+      "description": "## test/framework.sh\n\nA portable TAP (Test Anything Protocol) harness that runs under both bash and zsh. Tests use `describe` / `it` plus a rich set of `assert_*` helpers (equality, regex, mock call tracking) and optional `test_setup` / `test_teardown` hooks. External commands are mocked, never touched on the real host."
+    },
+    {
+      "title": "The test runner",
+      "file": "test/run_unit.sh",
+      "line": 9,
+      "description": "## test/run_unit.sh\n\nDiscovers every `test/modules/test_*.sh` suite, runs each in an isolated subshell (default shell: zsh), aggregates TAP output, and supports a filename substring filter plus verbose mode.\n\nRun the whole suite now: `>> make test`"
+    },
+    {
+      "title": "User-facing commands",
+      "directory": "bin",
+      "description": "## bin/\n\nEverything here lands on `PATH`. Highlights:\n- [ivm.py](bin/ivm.py) \u2014 unified VM control across multiple backends (prefers the Swift Apple-VM helper, next step)\n- [isync.py](bin/isync.py) \u2014 inspect iCloud account/service status\n- [git-secret.sh](bin/git-secret.sh) \u2014 scrub secrets from git history (optionally driven by trufflehog)\n- [secret-scanner.sh](bin/secret-scanner.sh) \u2014 container-based trufflehog scan of the repo\n- [generate-brewfile.py](bin/generate-brewfile.py) \u2014 the manifest generator from step [#15]"
+    },
+    {
+      "title": "Native sub-component \u2014 Swift VM helper",
+      "file": "bin/apple-vm-helper/Package.swift",
+      "line": 4,
+      "description": "## bin/apple-vm-helper\n\nA native Swift Package Manager executable (macOS 13+) that drives Apple's Virtualization.framework. [bin/ivm.py](bin/ivm.py) prefers this compiled `applevm-helper` backend for fast native VM control, falling back to `vz`. Build it with `swift build -c release --package-path bin/apple-vm-helper`."
+    },
+    {
+      "title": "TypeScript sub-component \u2014 SBOM extension",
+      "file": "data/sbom/package.json",
+      "line": 4,
+      "description": "## data/sbom\n\nA bundled VS Code extension that generates CycloneDX / SPDX Software Bill of Materials via `syft` and scans for vulnerabilities against OSV.dev. It contributes the `sbom.*` commands and activates `onStartupFinished`. Compile with `npm run compile` inside [data/sbom/](data/sbom)."
+    },
+    {
+      "title": "That's the tour \ud83c\udf89",
+      "description": "# You've seen the highlights\n\nYou now have the mental model:\n\n- [zshrc](zshrc) validates, guards non-interactive shells, sources the static foundation, then loads dynamic modules\n- **Static modules** ([modules/static/](modules/static)) define config & helpers; **dynamic modules** ([modules/](modules)) add tiered, composable features\n- **YAML config** ([data/zsh.yaml](data/zsh.yaml), [.dependencies.yml](.dependencies.yml)) drives behavior and dependencies\n- The **[Makefile](Makefile)** + **[bootstrap engine](scripts/dot-bootstrap.sh)** install everything idempotently, with a strict dry-run contract\n- A portable **TAP test harness** keeps it honest\n- Bundled **tooling** (bin/, a Swift VM helper, a TS SBOM extension) rounds it out\n\n## Where to go next\n- Browse the docs in [docs/](docs) (BOOTSTRAP, FAQ, DOT_VARS, SECRETS\u2026)\n- Explore the module inventory in [modules/README.md](modules/README.md)\n- List every task: `>> make help`\n- Run the tests: `>> make test`\n\nThanks for taking the tour!"
+    }
+  ]
+}
