@@ -10,14 +10,14 @@ library=$(basename "$0")
 
 dot::static::logging::loading "${library}" "${directory}"
 
-if [[ "${DOT_DISABLE_ZSTYLE}" -eq 1 ]]; then
+if [[ "${DOT_DISABLE_ZSTYLE:-0}" -eq 1 ]]; then
     dot::static::logging::skip "zstyle" "disabled"
     return
 fi
 
 # zstyle is a zsh-only builtin; bail out for other shells.
 # Note: don't use dot::foundation::shell-name() here — it has inverted logic and would skip zsh.
-if [[ -z "${ZSH_VERSION}" ]]; then
+if [[ -z "${ZSH_VERSION:-}" ]]; then
     return
 fi
 
@@ -25,20 +25,46 @@ fi
 # Helpers — introspect zstyle at runtime
 # ---------------------------------------------------------------------------
 
+dot::zstyle::help() {
+    case "${1:-}" in
+        ''|help|-h|--help) printf '%s\n' 'Usage: dot::zstyle <command> [arguments]' 'Commands: list, show, dump, help' 'Example: dot::zstyle help dump'; return ;;
+        list) printf '%s\n' 'Usage: dot::zstyle list [--] [CONTEXT_PATTERN [STYLE_PATTERN]]' '       dot::zstyle::list [--] [CONTEXT_PATTERN [STYLE_PATTERN]]' 'List matching styles in re-sourceable form; no operands lists all styles.' "Example: dot::zstyle list ':completion:*'" ;;
+        show) printf '%s\n' 'Usage: dot::zstyle show [--] CONTEXT STYLE' '       dot::zstyle::show [--] CONTEXT STYLE' 'Print the value of a style, or (unset) with status 1.' "Example: dot::zstyle show ':omz:update' frequency" ;;
+        dump) printf '%s\n' 'Usage: dot::zstyle dump [--] [FILE]' '       dot::zstyle::dump [--] [FILE]' 'Dump all styles to stdout by default; FILE is created or overwritten.' 'Example: dot::zstyle dump styles.zsh' ;;
+        *) printf 'dot::zstyle: unknown help topic: %s\n' "$1" >&2; return 2 ;;
+    esac
+    printf '%s\n' 'Options: -h, --help; -- permits literal dash-leading operands.' 'Requires ZSH and its zstyle builtin. Help does not query styles or write files.' 'Returns 0 on success, 2 for usage errors, or the failing builtin/redirection status.'
+}
+
+dot::zstyle() {
+    local action="${1:-help}"
+    [[ $# -eq 0 ]] || shift
+    case "${action}" in
+        help|-h|--help) dot::zstyle::help "$@" ;;
+        list) dot::zstyle::list "$@" ;;
+        show) dot::zstyle::show "$@" ;;
+        dump) dot::zstyle::dump "$@" ;;
+        *) printf 'dot::zstyle: unknown command: %s\n' "${action}" >&2; return 2 ;;
+    esac
+}
+
 # dot::zstyle::list [pattern] — list all zstyle entries (or those matching pattern)
 # in re-sourceable form. Example: dot::zstyle::list ':completion:*'
 dot::zstyle::list() {
+    case "${1:-}" in -h|--help) dot::zstyle::help list; return ;; --) shift ;; -*) printf '%s\n' 'dot::zstyle::list: unknown option' >&2; return 2 ;; esac
+    [[ $# -le 2 ]] || { dot::zstyle::help list >&2; return 2; }
     zstyle -L "$@"
 }
 
 # dot::zstyle::show <context> <style> — pretty-print the value of a single style.
 # Example: dot::zstyle::show ':omz:plugins:ssh-agent' identities
 dot::zstyle::show() {
-    if [[ $# -lt 2 ]]; then
-        echo "usage: dot::zstyle::show <context> <style>" >&2
+    case "${1:-}" in -h|--help) dot::zstyle::help show; return ;; --) shift ;; -*) printf '%s\n' 'dot::zstyle::show: unknown option' >&2; return 2 ;; esac
+    if [[ $# -ne 2 || -z "${1:-}" || -z "${2:-}" ]]; then
+        dot::zstyle::help show >&2
         return 2
     fi
-    local __ctx="$1" __style="$2" __val
+    local __ctx="$1" __style="$2" __val=""
     if zstyle -g __val "${__ctx}" "${__style}"; then
         printf '%s %s = %s\n' "${__ctx}" "${__style}" "${__val}"
     else
@@ -49,7 +75,9 @@ dot::zstyle::show() {
 
 # dot::zstyle::dump [file] — dump all zstyle entries to stdout or to a file.
 dot::zstyle::dump() {
-    if [[ -n "$1" ]]; then
+    case "${1:-}" in -h|--help) dot::zstyle::help dump; return ;; --) shift ;; -*) printf '%s\n' 'dot::zstyle::dump: unknown option' >&2; return 2 ;; esac
+    [[ $# -le 1 ]] || { dot::zstyle::help dump >&2; return 2; }
+    if [[ -n "${1:-}" ]]; then
         zstyle -L > "$1"
     else
         zstyle -L

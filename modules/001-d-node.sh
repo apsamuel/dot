@@ -12,6 +12,7 @@ if [[ "${DOT_DISABLE_NODE}" -eq 1 ]]; then
     return
 fi
 
+dot::node::_initialize() {
 N_PREFIX="${HOME}"/.node-$(arch)
 export N_PREFIX
 export PATH="${N_PREFIX}/bin:${PATH}"
@@ -67,12 +68,46 @@ if brew list | grep node >/dev/null 2>&1 ; then
 
 fi
 
+}
+
+dot::node::help() {
+    case "${1:-}" in
+        ''|help|get|-h|--help) ;;
+        *) printf 'dot::node: unknown help topic: %s\n' "$1" >&2; return 1 ;;
+    esac
+    printf '%s\n' 'Usage: dot::node get' '       dot::node::get' \
+        'Download and extract the configured Node release into /tmp/node.' \
+        'Options: -h, --help. Version and architecture come from module configuration.' \
+        'Requires curl and tar; help does not. Returns 1 on download/extraction failure.' \
+        'Writes files under /tmp/node. No automatic retries or installation.' \
+        'Example: dot::node get'
+}
+
+dot::node() {
+    local action="${1:-help}"
+    [[ $# -eq 0 ]] || shift
+    case "${action}" in
+        help|-h|--help) dot::node::help "$@" ;;
+        get) dot::node::get "$@" ;;
+        *) printf 'dot::node: unknown command: %s\n' "${action}" >&2; return 1 ;;
+    esac
+}
+
 function dot::node::get () {
+    case "${1:-}" in -h|--help) dot::node::help get; return ;; esac
+    [[ $# -eq 0 ]] || { dot::node::help get >&2; return 1; }
+    local tool=""
+    for tool in curl tar; do
+        command -v "${tool}" >/dev/null 2>&1 || { printf 'dot::node: %s is required\n' "${tool}" >&2; return 1; }
+    done
+    [[ -n "${NODE_URL:-}" ]] || { printf '%s\n' 'dot::node: NODE_URL is not configured' >&2; return 1; }
     # download node into a temporary DOT_DIRECTORY
     mkdir -p /tmp/node || { dot::static::logging::error "cannot create /tmp/node"; return 1; }
     dot::static::logging::info "Downloading node from $NODE_URL"
-    if ! curl -fSL "$NODE_URL" | tar -xJ --strip-components=1 -C /tmp/node; then
+    if ! (set -o pipefail; curl -fSL "$NODE_URL" | tar -xJ --strip-components=1 -C /tmp/node); then
         dot::static::logging::error "failed to download/extract node from $NODE_URL"
         return 1
     fi
 }
+
+dot::node::_initialize

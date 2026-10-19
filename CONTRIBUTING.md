@@ -55,7 +55,7 @@ Shell modules live in `modules/`. To add one:
    if [[ "${DOT_DISABLE_MYMODULE:-0}" -eq 1 ]]; then return; fi
    ```
 
-4. Test by opening a new shell and confirming your functions/aliases are available.
+4. Add isolated module tests and run the matching suite as described below. A real-shell smoke check is optional and may invoke host integrations.
 5. Document your module with a row in the [modules/README.md](./modules/README.md) module table.
 
 ### Adding a `bin/` Script
@@ -80,7 +80,7 @@ Default options, plugins, and paths are configured in `data/zsh.yaml`. To add a 
 ## Code Style
 
 - **Shell**: Follow existing conventions — use `#shellcheck shell=bash` and address shellcheck warnings where practical. Prefer `[[ ]]` over `[ ]`. Quote all variable expansions.
-- **Function names**: Use `camelCase` for helper functions, `dot.namespace` for top-level commands, and `module::action` for module-scoped utilities.
+- **Function names**: Use `dot::<family>` for dispatchers and `dot::<family>::<action>` for public functions. Keep private helpers in the owning namespace with an underscore-prefixed action.
 - **Guards**: Wrap optional functionality in `DOT_DISABLE_*` guards so the module can be skipped.
 - **Debug output**: Emit debug lines only when `DOT_DEBUG -eq 1`.
 
@@ -88,13 +88,28 @@ Default options, plugins, and paths are configured in `data/zsh.yaml`. To add a 
 
 ## Testing
 
-Run the test suite before submitting:
+Run the isolated module suite from the repository root:
 
 ```bash
-cd test && bash run.sh
+./test/run_unit.sh
+./test/run_unit.sh test_000-a-config
+DOT_TEST_SHELL=bash ./test/run_unit.sh test_000-a-config
+bash -n modules/000-a-config.sh
+zsh -n modules/000-a-config.sh
 ```
 
-Tests cover shell basics, language target builds (C, C++, Go, Rust, Java), and user/sudo flows. Add a test file if your change introduces new shell behaviour.
+The default runner uses ZSH. Use an installed modern Bash for portable functions, not macOS's bundled Bash 3.2; ZSH-only builtins remain ZSH-only. Tests source real modules with isolated HOME/iCloud paths and mocked commands. Do not run real package managers, authentication, SSH agents, tmux sessions, VM operations, or bootstrap from unit tests. See [test/README.md](./test/README.md) for harness conventions and separately invoked manual smoke checks.
+
+## Public Command Interfaces
+
+- Keep shell functions and small explicit dispatchers; do not add parser runtimes or dispatch through `eval`.
+- Support family help, topic help, and leaf `-h`/`--help` before checking operational dependencies. New dispatchers default to help; preserve established defaults and direct function names.
+- Help must return 0 on stdout without backend work, credentials, writes, or TTY interaction. Describe actual flags, defaults, dependencies, effects, and failure behavior in source-local help.
+- Validate wrapper-owned arguments before mutation. Guard missing values before `shift 2`, initialize local `OPTIND`/parser state, and preserve quoting, negative numbers, documented `--` boundaries, and delegated backend options.
+- Keep successful stdout composable and send new diagnostics to stderr. Return backend failures; retain existing usage and predicate codes. Never `exit` from a sourced module or abort the caller with `${arg:?}`.
+- Preserve literal-data helpers, predicates, logging, and lifecycle contracts. Document exceptions in the [family inventory](./modules/README.md#compatibility-boundaries), rather than forcing flag parsing into every helper.
+- Keep definitions/help available when optional tools are absent, while preserving explicit disable flags and startup guards. Use only meaningful fallbacks; do not introduce blanket retries or automatic installs.
+- Test repeated parsing, missing values/tools, quoted arguments, legacy output, help without side effects, and injected backend failures. Keep tests in the existing family suite where possible.
 
 ---
 

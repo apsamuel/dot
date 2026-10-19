@@ -19,10 +19,40 @@ if [[ -d "$(brew --prefix 2>/dev/null)/opt/make/libexec/gnubin" ]]; then
 fi
 
 
+dot::paths::help() {
+  local topic="${1:-}" usage="" description=""
+  case "${topic}" in
+    ''|help|-h|--help)
+      printf '%s\n' 'Usage: dot::paths <command> [arguments]' 'Commands: in, add, delete, print, help' 'Example: dot::paths help add'
+      return 0 ;;
+    in) usage='DIRECTORY'; description='Test exact PATH membership. Returns 0 when present, 1 otherwise. Leaf arguments are literal data, including --help.' ;;
+    add) usage='[--] DIRECTORY [DIRECTORY...]'; description='Append accessible directories containing executable files; skip duplicates and unsuitable directories. Changes PATH in this shell. Requires find.' ;;
+    delete) usage='[--] DIRECTORY [DIRECTORY...]'; description='Remove exact directory entries from PATH in this shell. Missing entries are ignored.' ;;
+    print) description='Print PATH entries, one per line. Does not change PATH.' ;;
+    *) printf 'dot::paths: unknown help topic: %s\n' "${topic}" >&2; return 1 ;;
+  esac
+  printf 'Usage: dot::paths %s %s\n       dot::paths::%s %s\n%s\n' "${topic}" "${usage}" "${topic}" "${usage}" "${description}"
+  printf '%s\n' 'Use -- before dash-leading directories for add/delete. Help requires no external tools.' 'Returns 0 on success, nonzero on invalid usage or an operational failure.'
+}
+
+dot::paths() {
+  local action="${1:-help}"
+  [[ $# -eq 0 ]] || shift
+  case "${action}" in
+    help|-h|--help) dot::paths::help "$@" ;;
+    in) dot::paths::in "$@" ;;
+    add) dot::paths::add "$@" ;;
+    delete) dot::paths::delete "$@" ;;
+    print) dot::paths::print "$@" ;;
+    *) printf 'dot::paths: unknown command: %s\n' "${action}" >&2; return 1 ;;
+  esac
+}
+
 dot::paths::in() {
-  local path="$1"
+  [[ $# -eq 1 ]] || return 1
+  local target_path="$1"
   # check if the provided path is in the PATH variable
-  [[ ":$PATH:" == *":$path:"* ]] && return 0 || return 1
+  [[ ":$PATH:" == *":${target_path}:"* ]] && return 0 || return 1
 }
 
 if [ -d "${HOME}/Tools/edirect" ] ; then
@@ -53,93 +83,64 @@ PATH="${HOME}/bin:${PATH}"
 # fi
 
 dot::paths::add() {
-  if [[ -z "$1" ]]; then
-    echo "Usage: dot::paths::add <path1> <path2> ..."
-    return 1  # return error if no path is provided
-  fi
-  path_array=(
-    $(splitString "${PATH}" ":")
-  )
-  for path in "$@"; do
-
-    # skip empty paths
-    if [[ -z "${path}" ]]; then
-      echo "skipping empty path: '${path}'"
-      continue  # skip empty paths
-    fi
-
-    # check if the path is an existing directory
-    if [ -d "${path}" ]; then
-      # check if the path is already in the PATH array
-      if [[ "${path_array[*]}" =~ ${path} ]]; then
-        dot::static::logging::debug "skipping existing path: '${path}'"
-        continue  # skip if the path is already in the PATH
-      fi
-
-      # skip paths that are not executable
-      if [[ ! -x "${path}" ]]; then
-        dot::static::logging::debug "skipping inaccessible path: ${path}"
-        continue  # skip if the path does not exist
-      fi
-
-      # skip paths that do not contain any executable files ...
-      if [[ -z "$(find "${path}" -maxdepth 1 -type f -executable)" ]]; then
-        dot::static::logging::debug "skipping path with no executables: ${path}"
-        continue  # skip if the path does not contain any executable files
-      fi
-
-      dot::static::logging::debug "adding path: ${path}"
-      # add the path to the array
-      path_array+=("${path}")
-    else
-      dot::static::logging::debug "skipping non-directory path: ${path}"
-      continue  # skip if the path is not a directory
-    fi
-
+  case "${1:-}" in -h|--help) dot::paths::help add; return ;; --) shift ;; -*) printf 'dot::paths::add: unknown option: %s\n' "$1" >&2; return 1 ;; esac
+  [[ $# -gt 0 ]] || { dot::paths::help add >&2; return 1; }
+  local target_path="" updated_path="${PATH}" executables="" search_path=""
+  for target_path in "$@"; do
+    [[ "${target_path}" != *:* ]] || { printf '%s\n' 'dot::paths::add: directories cannot contain a colon' >&2; return 1; }
   done
-  # join the array back into a string
-  PATH=$(joinList ":" "${path_array[@]}")
-  export PATH  # export the updated PATH variable
+  for target_path in "$@"; do
+    if [[ -z "${target_path}" ]]; then
+      printf '%s\n' "skipping empty path: '${target_path}'"
+      continue
+    fi
+    [[ -d "${target_path}" && -x "${target_path}" ]] || continue
+    [[ ":${updated_path}:" != *":${target_path}:"* ]] || continue
+    command -v find >/dev/null 2>&1 || { printf '%s\n' 'dot::paths::add: find is required' >&2; return 1; }
+    search_path="${target_path}"
+    case "${search_path}" in -*) search_path="./${search_path}" ;; esac
+    executables="$(find "${search_path}" -maxdepth 1 -type f -executable)" || return $?
+    [[ -n "${executables}" ]] || continue
+    dot::static::logging::debug "adding path: ${target_path}"
+    updated_path="${updated_path}:${target_path}"
+  done
+  PATH="${updated_path}"
+  export PATH
   return 0
 
 }
 
 dot::paths::delete() {
-  # delete one or more paths from the PATH variable
-  if [[ -z "$1" ]]; then
-    echo "Usage: dot::paths::delete <path1> <path2> ..."
-    return 1  # return error if no path is provided
-  fi
-  new_path_array=()
-  path_array=(
-    $(splitString "${PATH}" ":")
-  )
-  for path in "${path_array[@]}"; do
-    # skip empty paths
-    if [[ -z "${path}" ]]; then
-      dot::static::logging::debug "skipping empty path: '${path}'"
-      continue  # skip empty paths
+  case "${1:-}" in -h|--help) dot::paths::help delete; return ;; --) shift ;; -*) printf 'dot::paths::delete: unknown option: %s\n' "$1" >&2; return 1 ;; esac
+  [[ $# -gt 0 ]] || { dot::paths::help delete >&2; return 1; }
+  local remaining="${PATH}" entry="" target_path="" updated_path="" separator="" remove_entry=0
+  while :; do
+    entry="${remaining%%:*}"
+    remove_entry=0
+    for target_path in "$@"; do
+      [[ "${entry}" != "${target_path}" ]] || remove_entry=1
+    done
+    if [[ "${remove_entry}" -eq 0 ]]; then
+      updated_path="${updated_path}${separator}${entry}"
+      separator=:
     fi
-
-    # check if the path is in the arguments to delete
-    if [[ " $* " =~ " ${path} " ]]; then
-      dot::static::logging::debug "deleting path: ${path}"
-      continue  # skip if the path is in the arguments to delete
-    fi
-
-    # add the path to the new array
-    new_path_array+=("${path}")
+    [[ "${remaining}" == *:* ]] || break
+    remaining="${remaining#*:}"
   done
-
-  return_code=$?
-  if [[ ${return_code} -ne 0 ]]; then
-    echo "Error deleting paths"
-    return ${return_code}
-  fi
+  PATH="${updated_path}"
+  export PATH
+  return 0
 }
 
 dot::paths::print() {
-  printf "%s\n" "$(echo "$PATH" | sed -e 's/:/\n/g')"
+  case "${1:-}" in -h|--help) dot::paths::help print; return ;; esac
+  [[ $# -eq 0 ]] || { dot::paths::help print >&2; return 1; }
+  local remaining="${PATH}"
+  while :; do
+    printf '%s\n' "${remaining%%:*}"
+    [[ "${remaining}" == *:* ]] || break
+    remaining="${remaining#*:}"
+  done
 }
 
 

@@ -16,7 +16,7 @@ if [[ "${DOT_DEBUG}" -eq 1 ]]; then
 fi
 
 
-if [[ "${DOT_DISABLE_OUTPUTS}" -eq 1 ]]; then
+if [[ "${DOT_DISABLE_OUTPUTS:-0}" -eq 1 ]]; then
     return
 fi
 
@@ -26,10 +26,16 @@ fi
 
 
 # default colors for output
-info_color="$(tput setab 238)$(tput setaf 250)"
-error_color="$(tput setab 232)$(tput setaf 160)"
-debug_color="$(tput setab 238)$(tput setaf 250)"
-reset_color="$(tput sgr0)"
+info_color=""
+error_color=""
+debug_color=""
+reset_color=""
+if command -v tput >/dev/null 2>&1 && [[ -n "${TERM:-}" && "${TERM}" != dumb ]]; then
+    info_color="$(tput setab 238 2>/dev/null)$(tput setaf 250 2>/dev/null)" || info_color=""
+    error_color="$(tput setab 232 2>/dev/null)$(tput setaf 160 2>/dev/null)" || error_color=""
+    debug_color="${info_color}"
+    reset_color="$(tput sgr0 2>/dev/null)" || reset_color=""
+fi
 
 
 # default emojis for output (legacy — kept for dot::output::pretty compatibility)
@@ -45,7 +51,90 @@ levels=(
     "debug"
 )
 
+dot::output::help() {
+    local topic="${1:-}" usage="" description=""
+    case "${topic}" in
+        ""|help|-h|--help)
+            printf '%s\n' 'Usage: dot::output <command> [args]' \
+                'Format messages, render images and quotes, and inspect terminal dimensions.' \
+                '' 'Commands:' \
+                '  pretty, level, levels       Format messages and inspect severity levels' \
+                '  image, logo                Render images' \
+                '  quote, term-quote, figlet   Print plain or decorative text' \
+                '  random-font                Select a decorative font name' \
+                '  width, height              Print terminal dimensions' \
+                '  color-tab, colors256       Display terminal color samples' \
+                '  splash, splash-info        Display a splash or system information' \
+                '' 'Use dot::output help <command> for options and prerequisites.'
+            return 0 ;;
+        pretty)
+            usage='pretty [-c] [-e] [-t] [-l LEVEL] [--] MESSAGE'
+            description='Format a message. Known levels: info (default), error, debug; custom labels retain unknown-level rendering.' ;;
+        level) usage='level <info|error|debug>'; description='Print a colored severity label.' ;;
+        levels) usage='levels'; description='List supported severity levels.' ;;
+        image) usage='image [options] [--] [IMAGE]'; description='Render with chafa; bare filenames are also searched in data/images.' ;;
+        logo) usage='logo'; description='Render a random iCloud JPEG; requires find, shuf, and jp2a.' ;;
+        quote) usage='quote'; description='Select a short quote from data/quotes.yaml; requires yq and shuf.' ;;
+        term-quote) usage='term-quote'; description='Render a quote using optional figlet and lolcat, with plain-text fallback.' ;;
+        figlet) usage='figlet MESSAGE [true|false] [FIGLET_OPTIONS...]'; description='Render text with figlet; the second argument enables optional lolcat color.' ;;
+        random-font) usage='random-font'; description='Print a decorative font name.' ;;
+        width|height) usage="${topic}"; description='Print terminal size, falling back to COLUMNS/LINES and then 80x24.' ;;
+        color-tab) usage='color-tab'; description='Display 256 background colors; requires tput.' ;;
+        colors256) usage='colors256 [bg|fg]'; description='Display ANSI background (default) or foreground colors.' ;;
+        splash) usage='splash [--no-image] [--no-quote] [--no-info]'; description='Display a splash; DOT_SPLASH_IMAGE_EXCLUDE defaults to gif.' ;;
+        splash-info) usage='splash-info'; description='Print host, shell, uptime, and optional tmux/git information.' ;;
+        *) printf 'dot::output help: unknown command: %s\n' "${topic}" >&2; return 1 ;;
+    esac
+    printf 'Usage: dot::output %s\n       dot::output::%s\n\n%s\n' "${usage}" "${usage}" "${description}"
+    case "${topic}" in
+        pretty)
+            printf '%s\n' '' 'Options:' \
+                '  -c, --color          Enable color' \
+                '  -e, --emoji          Enable emoji' \
+                '  -t, --timestamp      Include a timestamp' \
+                '  -l, --level LEVEL    Select severity (default: info)' \
+                '' 'Example: dot::output pretty --level error "Build failed"' ;;
+        image)
+            printf '%s\n' '' 'Options:' \
+                '  --format FORMAT      Chafa format (default: symbols)' \
+                '  --symbols SYMBOLS    Symbol set (default: block+border)' \
+                '  --size WIDTHxHEIGHT  Output size (default: automatic)' \
+                '  --colors MODE        Chafa color mode (default: chafa default)' \
+                '  --list               List images without requiring chafa' \
+                '  --random             Select an image from data/images' \
+                '' 'Example: dot::output image --size 80x24 photo.jpg' ;;
+    esac
+    printf '\n%s\n' 'Help: -h, --help (before operands). Returns 0 on success, nonzero on failure.'
+}
+
+dot::output() {
+    local action="${1:-help}"
+    [[ $# -gt 0 ]] && shift
+    case "${action}" in
+        help|-h|--help) dot::output::help "$@" ;;
+        pretty) dot::output::pretty "$@" ;;
+        level) dot::output::level "$@" ;;
+        levels) dot::output::levels "$@" ;;
+        image) dot::output::image "$@" ;;
+        logo) dot::output::logo "$@" ;;
+        quote) dot::output::quote "$@" ;;
+        term-quote) dot::output::term-quote "$@" ;;
+        figlet) dot::output::figlet "$@" ;;
+        random-font) dot::output::random-font "$@" ;;
+        width) dot::output::width "$@" ;;
+        height) dot::output::height "$@" ;;
+        color-tab) dot::output::color-tab "$@" ;;
+        colors256) dot::output::colors256 "$@" ;;
+        splash) dot::output::splash "$@" ;;
+        splash-info) dot::output::splash-info "$@" ;;
+        *) printf 'dot::output: unknown command: %s (use dot::output help)\n' "${action}" >&2; return 1 ;;
+    esac
+}
+
 function dot::output::color-tab() {
+    case "${1:-}" in -h|--help) dot::output::help color-tab; return ;; esac
+    command -v tput >/dev/null 2>&1 || { printf '%s\n' 'dot::output::color-tab: tput is required' >&2; return 1; }
+    local i=0
 	for ((i=0; i<256; i++)) ;do
 		echo -n '  '
 		tput setab "$i"
@@ -59,7 +148,8 @@ function dot::output::color-tab() {
 }
 
 function dot::output::levels() {
-    local output=""
+    case "${1:-}" in -h|--help) dot::output::help levels; return ;; esac
+    local output="" level=""
     for level in "${levels[@]}"; do
         output+="${level} "
     done
@@ -67,16 +157,17 @@ function dot::output::levels() {
 }
 
 function dot::output::level() {
-    local level="${1}"
+    case "${1:-}" in -h|--help) dot::output::help level; return ;; esac
+    local level="${1:-}"
     if [[ -z "${level}" ]]; then
-        echo "Usage: dot::output::level <level>"
+        echo "Usage: dot::output::level <level>" >&2
         return 1
     fi
 
-    if [[ ! " ${levels[*]} " =~  ${level}  ]]; then
-        echo "Invalid level: ${level}. Available levels: $(dot::output::levels)"
-        return 1
-    fi
+    case "${level}" in
+        info|error|debug) ;;
+        *) printf 'Invalid level: %s. Available levels: info error debug\n' "${level}" >&2; return 1 ;;
+    esac
 
     case "${level}" in
         info) echo "${info_color}info${reset_color}" ;;
@@ -88,12 +179,9 @@ function dot::output::level() {
 
 
 function dot::output::pretty() {
-    local message
-    local level
-    local color
-    local emoji
-    local timestamp
-    local output
+    local message="" level="" color=0 emoji=0 timestamp=0 output=""
+    local OPTIND=1 OPTARG="" opt=""
+    local -a normalized_args=()
 
     output=""
 
@@ -104,20 +192,43 @@ function dot::output::pretty() {
     emoji=0
     timestamp=0
 
-    while getopts ":ectl:" opt; do
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --help) normalized_args+=(-h); shift ;;
+            --color) normalized_args+=(-c); shift ;;
+            --emoji) normalized_args+=(-e); shift ;;
+            --timestamp) normalized_args+=(-t); shift ;;
+            --level|-l)
+                if [[ $# -lt 2 || -z "${2:-}" || "${2:-}" == -* ]]; then
+                    printf 'dot::output::pretty: %s requires a level\n' "$1" >&2
+                    return 1
+                fi
+                normalized_args+=(-l "$2"); shift 2 ;;
+            --level=) printf '%s\n' 'dot::output::pretty: --level requires a level' >&2; return 1 ;;
+            --level=*) normalized_args+=(-l "${1#*=}"); shift ;;
+            --) normalized_args+=("$@"); break ;;
+            --*) printf 'Invalid option: %s\n' "$1" >&2; return 1 ;;
+            -*) normalized_args+=("$1"); shift ;;
+            *) normalized_args+=("$@"); break ;;
+        esac
+    done
+    set -- "${normalized_args[@]}"
+    while getopts ":hectl:" opt; do
         case ${opt} in
+            h) dot::output::help pretty; return ;;
             e) emoji=1 ;;
             c) color=1 ;;
             t) timestamp=1;;
             l) level="${OPTARG}" ;;
-            \?) echo "Invalid option: -$OPTARG" >&2 ;;
-            :) echo "Option -$OPTARG requires an argument." >&2 ;;
+            \?) echo "Invalid option: -$OPTARG" >&2; return 1 ;;
+            :) echo "Option -$OPTARG requires an argument." >&2; return 1 ;;
         esac
     done
 
-    local message="${*:$OPTIND:1}"
+    shift $((OPTIND - 1))
+    message="${1:-}"
     if [[ -z "${message}" ]]; then
-        echo "Usage: dot::output::pretty [-c] [-e] -l <level> <message>"
+        echo "Usage: dot::output::pretty [-c] [-e] [-t] [-l <level>] <message>" >&2
         return 1
     fi
 
@@ -210,7 +321,17 @@ function dot::output::pretty() {
 }
 
 function dot::output::logo() {
-    find "${ICLOUD}/dot/shell/images" -type f -name "*.jpg" | shuf -n 1 | xargs -I {} jp2a --colors --width="$(( $(dot::output::width) / 3 ))" --border --color-depth=24 --background=dark {}
+    case "${1:-}" in -h|--help) dot::output::help logo; return ;; esac
+    local tool="" images="" image="" width=""
+    for tool in find shuf jp2a; do
+        command -v "${tool}" >/dev/null 2>&1 || { printf 'dot::output::logo: %s is required\n' "${tool}" >&2; return 1; }
+    done
+    [[ -d "${ICLOUD:-}/dot/shell/images" ]] || { printf '%s\n' 'dot::output::logo: iCloud image directory not found' >&2; return 1; }
+    images="$(find "${ICLOUD}/dot/shell/images" -type f -name '*.jpg')" || return $?
+    [[ -n "${images}" ]] || { printf '%s\n' 'dot::output::logo: no JPEG images found' >&2; return 1; }
+    image="$(printf '%s\n' "${images}" | shuf -n 1)" || return $?
+    width="$(dot::output::width)" || return $?
+    jp2a --colors --width="$(( width / 3 ))" --border --color-depth=24 --background=dark "${image}"
 }
 
 function dot::output::image () {
@@ -242,6 +363,7 @@ function dot::output::image () {
 
 
 function dot::output::random-font() {
+    case "${1:-}" in -h|--help) dot::output::help random-font; return ;; esac
 	local fonts=(
 		"cyberlarge"
 		"elite"
@@ -252,19 +374,41 @@ function dot::output::random-font() {
 		"ascii12"
 		"binary"
 	)
-	echo "${fonts[$((RANDOM % ${#fonts[@]} + 1))]}"
+    local offset=0
+    [[ -n "${ZSH_VERSION:-}" ]] && offset=1
+    echo "${fonts[$((RANDOM % ${#fonts[@]} + offset))]}"
 }
 
 function dot::output::quote() {
-	local _quote
-	_quote="$(
-		yq '.[] | .text + " -- " + .author | select(length < 45)' "${DOT_DIRECTORY}/data/quotes.yaml" | shuf -n1
-	)"
-	echo "${_quote}"
+	case "${1:-}" in -h|--help) dot::output::help quote; return ;; esac
+	local _quote="" tool=""
+	for tool in yq shuf; do
+		command -v "${tool}" >/dev/null 2>&1 || { printf 'dot::output::quote: %s is required\n' "${tool}" >&2; return 1; }
+	done
+	_quote="$(yq '.[] | .text + " -- " + .author | select(length < 45)' "${DOT_DIRECTORY}/data/quotes.yaml")" || return $?
+	printf '%s\n' "${_quote}" | shuf -n1
+}
+
+dot::output::_colorize() {
+    if command -v lolcat >/dev/null 2>&1; then
+        printf '%s\n' "$1" | lolcat
+    else
+        printf '%s\n' "$1"
+    fi
 }
 
 function dot::output::term-quote() {
-    command -v figlet &>/dev/null || { dot::output::quote | lolcat; return 0; }
+    case "${1:-}" in -h|--help) dot::output::help term-quote; return ;; esac
+    local quote=""
+    if ! command -v figlet >/dev/null 2>&1; then
+        quote="$(dot::output::quote)" || return $?
+        dot::output::_colorize "${quote}"
+        return $?
+    fi
+    local tool=""
+    for tool in yq shuf; do
+        command -v "${tool}" >/dev/null 2>&1 || { printf 'dot::output::term-quote: %s is required\n' "${tool}" >&2; return 1; }
+    done
 
     local term_width
     term_width="$(dot::output::width)"
@@ -284,11 +428,9 @@ function dot::output::term-quote() {
     (( max_len < 30 )) && max_len=30
     (( max_len > 80 )) && max_len=80
 
-    local quote
-    quote="$(
-        yq ".[] | .text + \" -- \" + .author | select(length < ${max_len})" \
-            "${DOT_DIRECTORY}/data/quotes.yaml" | shuf -n1
-    )"
+    quote="$(yq ".[] | .text + \" -- \" + .author | select(length < ${max_len})" \
+        "${DOT_DIRECTORY}/data/quotes.yaml")" || return $?
+    quote="$(printf '%s\n' "${quote}" | shuf -n1)" || return $?
 
     [[ -z "${quote}" ]] && return 0
 
@@ -311,65 +453,67 @@ function dot::output::term-quote() {
 
         max_line_len=$(echo "${rendered}" | awk '{ if (length > max) max = length } END { print max+0 }')
         if (( max_line_len <= term_width )); then
-            echo "${rendered}" | lolcat
-            return 0
+            dot::output::_colorize "${rendered}"
+            return $?
         fi
     done
 
     # Absolute fallback: plain lolcat output
-    echo "${quote}" | lolcat
+    dot::output::_colorize "${quote}"
 }
 
 function dot::output::figlet() {
-	message="${1}"
-	color="${2:-false}"
-    echo "$#"
-    #	shift 2
-    #	args="${*}"
-
-
-    if [ $# -eq 1 ]; then
-        # shift 1
-        message="${*}"
-        figlet "$message"
-    fi
-
-    if [ $# -eq 2 ]; then
-        # shift 2
-        message="${1}"
-        color="${2}"
-        if [[ "${color}" == "true" ]]; then
-            figlet "$message" | lolcat
+    case "${1:-}" in -h|--help) dot::output::help figlet; return ;; --) shift ;; esac
+    [[ $# -gt 0 && -n "$1" ]] || { printf '%s\n' 'Usage: dot::output::figlet MESSAGE [true|false] [FIGLET_OPTIONS...]' >&2; return 1; }
+    local message="$1" color="${2:-false}" rendered="" count=$#
+    shift
+    [[ $# -gt 0 ]] && shift
+    echo "${count}"
+    if command -v figlet >/dev/null 2>&1; then
+        if [[ $# -gt 0 ]]; then
+            rendered="$(printf '%s\n' "${message}" | figlet "$@")" || return $?
         else
-            figlet "$message"
+            rendered="$(figlet "${message}")" || return $?
         fi
+    else
+        rendered="${message}"
     fi
-
-    if [ $# -ge 3 ]; then
-        message="${1}"
-        color="${2}"
-        shift 2
-        args="${*}"
-        if [[ "${color}" == "true" ]]; then
-            echo "$message" | figlet "$args"| lolcat
-        fi
-        if [[ ! "${color}" == "true" ]]; then
-            echo "$message" | figlet "$args"
-        fi
+    if [[ "${color}" == true ]]; then
+        dot::output::_colorize "${rendered}"
+    else
+        printf '%s\n' "${rendered}"
     fi
 }
 
 function dot::output::height () {
-	stty size | cut -d' ' -f1
+	case "${1:-}" in -h|--help) dot::output::help height; return ;; esac
+	local dimensions="" height="${LINES:-24}"
+	if dimensions="$(stty size 2>/dev/null)"; then
+		height="${dimensions%% *}"
+	fi
+	case "${height}" in ''|*[!0-9]*|0) height=24 ;; esac
+	printf '%s\n' "${height}"
 }
 
 function dot::output::width () {
-	stty size | cut -d' ' -f2
+	case "${1:-}" in -h|--help) dot::output::help width; return ;; esac
+	local dimensions="" width="${COLUMNS:-80}"
+	if dimensions="$(stty size 2>/dev/null)"; then
+		width="${dimensions##* }"
+	fi
+	case "${width}" in ''|*[!0-9]*|0) width=80 ;; esac
+	printf '%s\n' "${width}"
 }
 
 function dot::output::colors256() {
+    case "${1:-}" in -h|--help) dot::output::help colors256; return ;; esac
     local row col blockrow blockcol red green blue
-    local showcolor=_showcolor256_${1:-bg}
+    local showcolor=""
+    case "${1:-bg}" in
+        bg) showcolor=dot::output::_color256-bg ;;
+        fg) showcolor=dot::output::_color256-fg ;;
+        *) printf '%s\n' 'dot::output::colors256: expected bg or fg' >&2; return 1 ;;
+    esac
     local white="\033[1;37m"
     local reset="\033[0m"
 
@@ -446,11 +590,6 @@ function dot::output::image() {
     #   --random      display a random image from data/images
     #   --help|-h     show this help
 
-    command -v chafa &>/dev/null || {
-        echo "dot::output::image: chafa not found (brew install chafa)" >&2
-        return 1
-    }
-
     local format="symbols"
     local symbols="block+border"
     local size=""
@@ -462,52 +601,65 @@ function dot::output::image() {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --format)  format="$2"; shift 2 ;;
-            --symbols) symbols="$2"; shift 2 ;;
-            --size)    size="$2"; shift 2 ;;
-            --colors)  colors="$2"; shift 2 ;;
+            --format|--symbols|--size|--colors)
+                if [[ $# -lt 2 || -z "${2:-}" || "${2:-}" == --* ]]; then
+                    printf 'dot::output::image: %s requires a value\n' "$1" >&2
+                    return 1
+                fi
+                case "$1" in
+                    --format) format="$2" ;;
+                    --symbols) symbols="$2" ;;
+                    --size) size="$2" ;;
+                    --colors) colors="$2" ;;
+                esac
+                shift 2 ;;
             --list)    list_mode=1; shift ;;
             --random)  random_mode=1; shift ;;
             --help|-h)
-                echo "Usage: dot::output::image [options] [image]"
-                echo ""
-                echo "Options:"
-                echo "  --format F    chafa format (default: symbols)"
-                echo "  --symbols S   symbol set (default: block+border)"
-                echo "  --size WxH    output size, e.g. 80x24"
-                echo "  --colors N    color mode: 2/8/16/256/full (default: full)"
-                echo "  --list        list available images in data/images"
-                echo "  --random      display a random image"
-                echo "  --help|-h     show this help"
-                echo ""
-                echo "If image is a bare filename, it is resolved from:"
-                echo "  ${image_dir}"
-                return 0 ;;
+                dot::output::help image; return ;;
+            --)
+                shift
+                [[ $# -le 1 && -z "${image}" ]] || { printf '%s\n' 'dot::output::image: expected one image' >&2; return 1; }
+                image="${1:-}"; break ;;
             -*)
                 echo "dot::output::image: unknown option: $1" >&2
                 return 1 ;;
-            *)  image="$1"; shift ;;
+            *)
+                [[ -z "${image}" ]] || { printf '%s\n' 'dot::output::image: expected one image' >&2; return 1; }
+                image="$1"; shift ;;
         esac
     done
+    if (( list_mode + random_mode > 1 )) || { (( list_mode || random_mode )) && [[ -n "${image}" ]]; }; then
+        printf '%s\n' 'dot::output::image: choose an image, --list, or --random' >&2
+        return 1
+    fi
 
     # --list mode
     if [[ "${list_mode}" -eq 1 ]]; then
         if [[ -d "${image_dir}" ]]; then
-            find "${image_dir}" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.tiff' \) -exec basename {} \; | sort
+            local entries="" tool=""
+            for tool in find basename sort; do
+                command -v "${tool}" >/dev/null 2>&1 || { printf 'dot::output::image: %s is required for --list\n' "${tool}" >&2; return 1; }
+            done
+            entries="$(find "${image_dir}" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.tiff' \) -exec basename {} \;)" || return $?
+            [[ -n "${entries}" ]] || return 0
+            printf '%s\n' "${entries}" | sort
+            return $?
         else
             echo "dot::output::image: image directory not found: ${image_dir}" >&2
             return 1
         fi
-        return 0
     fi
 
     # --random mode
     if [[ "${random_mode}" -eq 1 ]]; then
+        command -v shuf >/dev/null 2>&1 || { printf '%s\n' 'dot::output::image: shuf is required for --random' >&2; return 1; }
         if [[ ! -d "${image_dir}" ]]; then
             echo "dot::output::image: image directory not found: ${image_dir}" >&2
             return 1
         fi
-        image="$(find "${image_dir}" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.tiff' \) | shuf -n1)"
+        image="$(find "${image_dir}" -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.gif' -o -iname '*.webp' -o -iname '*.bmp' -o -iname '*.tiff' \))" || return $?
+        image="$(printf '%s\n' "${image}" | shuf -n1)" || return $?
         if [[ -z "${image}" ]]; then
             echo "dot::output::image: no images found in ${image_dir}" >&2
             return 1
@@ -537,16 +689,21 @@ function dot::output::image() {
     fi
 
     # Build chafa command
+    command -v chafa &>/dev/null || {
+        echo "dot::output::image: chafa not found (brew install chafa)" >&2
+        return 1
+    }
     local -a cmd=(chafa --format="${format}" --symbols "${symbols}")
     [[ -n "${size}" ]] && cmd+=(--size "${size}")
     [[ -n "${colors}" ]] && cmd+=(--colors "${colors}")
-    cmd+=("${image}")
+    cmd+=(-- "${image}")
 
     "${cmd[@]}"
 }
 
 
 function dot::output::splash-info() {
+    case "${1:-}" in -h|--help) dot::output::help splash-info; return ;; esac
     # Render a compact system info block (4-5 lines, colorized)
     local cyan="\033[0;36m"
     local green="\033[0;32m"
@@ -558,7 +715,7 @@ function dot::output::splash-info() {
     # Line 1: user@host · shell version
     local shell_version="${ZSH_VERSION:-${BASH_VERSION:-unknown}}"
     local shell_name="zsh"
-    [[ -n "${BASH_VERSION}" ]] && shell_name="bash"
+    [[ -n "${BASH_VERSION:-}" ]] && shell_name="bash"
     printf "  ${cyan}%s${dim}@${cyan}%s${reset} · ${green}%s %s${reset}\n" \
         "${USER}" "$(hostname -s)" "${shell_name}" "${shell_version}"
 
@@ -621,21 +778,14 @@ function dot::output::splash() {
             --no-quote) show_quote=0; shift ;;
             --no-info)  show_info=0; shift ;;
             --help|-h)
-                echo "Usage: dot::output::splash [--no-image] [--no-quote] [--no-info]"
-                echo ""
-                echo "Display a terminal splash screen with:"
-                echo "  • Random image from data/images (via chafa)"
-                echo "  • System info panel (host, uptime, tmux, git)"
-                echo "  • Figlet quote (via term-quote)"
-                echo ""
-                echo "Env vars:"
-                echo "  DOT_SPLASH_IMAGE_EXCLUDE  comma-separated extensions to skip (default: gif)"
-                return 0 ;;
-            *) shift ;;
+                dot::output::help splash; return ;;
+            --) shift; [[ $# -eq 0 ]] && break
+                printf '%s\n' 'dot::output::splash: no operands expected' >&2; return 1 ;;
+            *) printf 'dot::output::splash: unknown option: %s\n' "$1" >&2; return 1 ;;
         esac
     done
 
-    local term_width=""
+    local term_width="" ret=0
     term_width="$(dot::output::width)"
 
     # --- Image ---
@@ -650,12 +800,13 @@ function dot::output::splash() {
 
             # Remove excluded extensions from results via grep -v
             local grep_pattern=""
-            local IFS=','
-            for ext in ${exclude}; do
+            local ext=""
+            while [[ -n "${exclude}" ]]; do
+                ext="${exclude%%,*}"
+                if [[ "${exclude}" == *,* ]]; then exclude="${exclude#*,}"; else exclude=""; fi
                 ext="$(echo "${ext}" | xargs)"
                 [[ -n "${ext}" ]] && grep_pattern="${grep_pattern:+${grep_pattern}|}\.${ext}$"
             done
-            unset IFS
 
             local selected_image=""
             if [[ -n "${grep_pattern}" ]]; then
@@ -672,7 +823,7 @@ function dot::output::splash() {
 
                 chafa --format=symbols --symbols block+border \
                     --size "${term_width}x${img_height}" \
-                    "${selected_image}" 2>/dev/null
+                    "${selected_image}" || ret=$?
                 echo ""
             fi
         fi
@@ -680,12 +831,13 @@ function dot::output::splash() {
 
     # --- System Info ---
     if [[ "${show_info}" -eq 1 ]]; then
-        dot::output::splash-info
+        dot::output::splash-info || ret=$?
         echo ""
     fi
 
     # --- Quote ---
     if [[ "${show_quote}" -eq 1 ]]; then
-        dot::output::term-quote
+        dot::output::term-quote || ret=$?
     fi
+    return "${ret}"
 }

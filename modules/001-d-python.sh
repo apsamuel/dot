@@ -14,6 +14,7 @@ dot::static::logging::loading "${library}" "${directory}"
 ## if a venv does not exist, it will be created on demand
 
 # resolve desired python version: env override → local zsh.yaml → iCloud zsh.yaml → default
+dot::python::_initialize() {
 desired_version="${PYTHON_VERSION:-}"
 if [[ -z "${desired_version}" ]] && command -v yq >/dev/null 2>&1; then
     for _cfg in "${DOT_SHELL_DATA}" "${DOT_DIRECTORY}/data/zsh.yaml" "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/dot/shell/zsh/zsh.yaml"; do
@@ -65,15 +66,47 @@ fi
 # ---------------------------------------------------------------------------
 # requirements management — keep venvs in sync with zsh.yaml pip requirements
 # ---------------------------------------------------------------------------
+}
+
+dot::python::help() {
+    local usage="" purpose=""
+    case "${1:-}" in
+        ''|help|-h|--help) printf '%s\n' 'Usage: dot::python <command> [args]' 'Commands: requirements, ensure-requirements, sync, env' 'Use dot::python help <command> for details.'; return ;;
+        env) dot::python::env --help; return ;;
+        requirements) purpose='Print configured requirements, one per line. Missing yq yields an empty list.' ;;
+        ensure-requirements) usage='[--force] [--] <venv_dir>'; purpose='Install missing configured packages using uv; matching stamps skip work unless --force.' ;;
+        sync) usage='[--force] [--all | <venv> ...]'; purpose='Reconcile environments; default: every environment under ~/.venv.' ;;
+        *) printf 'dot::python: unknown help topic: %s\n' "$1" >&2; return 1 ;;
+    esac
+    printf '%s\n' "${purpose}"
+    printf 'Usage: dot::python %s %s\n       dot::python::%s %s\n' "$1" "${usage}" "$1" "${usage}"
+    printf '%s\n' 'Options: -h, --help. Help never creates environments or installs packages.' 'Reconciliation requires uv and a venv Python; unavailable tools retain the existing no-op behavior.' 'Invalid input or failed reconciliation returns 1. Failed installs are not stamped; no automatic retry.'
+    printf 'Example: dot::python help %s\n' "$1"
+}
+
+dot::python() {
+    local action="${1:-help}"
+    [[ $# -eq 0 ]] || shift
+    case "${action}" in
+        help|-h|--help) dot::python::help "$@" ;;
+        requirements) dot::python::requirements "$@" ;;
+        ensure-requirements) dot::python::ensure-requirements "$@" ;;
+        sync) dot::python::sync "$@" ;;
+        env) dot::python::env "$@" ;;
+        *) printf 'dot::python: unknown command: %s\n' "${action}" >&2; return 1 ;;
+    esac
+}
 
 # dot::python::requirements — echo the configured pip requirements (one per line),
 # resolved from the same config chain as the python version.
 dot::python::requirements() {
+    case "${1:-}" in -h|--help) dot::python::help requirements; return ;; esac
+    [[ $# -eq 0 ]] || { dot::python::help requirements >&2; return 1; }
     command -v yq >/dev/null 2>&1 || return 0
     local _cfg="" _out=""
     for _cfg in "${DOT_SHELL_DATA}" "${DOT_DIRECTORY}/data/zsh.yaml" "${HOME}/Library/Mobile Documents/com~apple~CloudDocs/dot/shell/zsh/zsh.yaml"; do
         [[ -n "${_cfg}" && -f "${_cfg}" ]] || continue
-        _out="$(yq -r '.languages.python.pip.requirements[]' "${_cfg}" 2>/dev/null)"
+        _out="$(yq -r '.languages.python.pip.requirements[]' "${_cfg}" 2>/dev/null)" || return $?
         if [[ -n "${_out}" ]]; then
             printf '%s\n' "${_out}"
             return 0
@@ -105,15 +138,18 @@ dot::python::_list-venvs() {
 # <venv>/.dot-requirements.sha unless --force.
 dot::python::ensure-requirements() {
     local force=0
-    while [[ "$1" == --* ]]; do
+    while [[ $# -gt 0 ]]; do
         case "$1" in
+            -h|--help) dot::python::help ensure-requirements; return ;;
             --force) force=1; shift ;;
             --) shift; break ;;
+            -*) dot::python::help ensure-requirements >&2; return 1 ;;
             *) break ;;
         esac
     done
 
     local venv_dir="${1:-}"
+    [[ $# -eq 1 ]] || { dot::python::help ensure-requirements >&2; return 1; }
     if [[ -z "${venv_dir}" || ! -d "${venv_dir}" ]]; then
         echo "dot::python::ensure-requirements: venv not found: ${venv_dir}" >&2
         return 1
@@ -124,7 +160,7 @@ dot::python::ensure-requirements() {
     [[ -x "${venv_py}" ]] || return 0
 
     local reqs
-    reqs="$(dot::python::requirements)"
+    reqs="$(dot::python::requirements)" || return $?
     [[ -n "${reqs}" ]] || return 0
 
     local stamp_file="${venv_dir}/.dot-requirements.sha"
@@ -152,7 +188,7 @@ dot::python::ensure-requirements() {
     if [[ "${failed}" -eq 0 ]]; then
         printf '%s\n' "${want_hash}" > "${stamp_file}" 2>/dev/null || true
     fi
-    return 0
+    [[ "${failed}" -eq 0 ]]
 }
 
 # dot::python::sync [--force] [--all | <venv> ...]
@@ -166,7 +202,9 @@ dot::python::sync() {
             --force) force_arg=(--force); shift ;;
             --all)   shift ;;
             -h|--help)
-                echo "Usage: dot::python::sync [--force] [--all | <venv> ...]"; return 0 ;;
+                dot::python::help sync; return ;;
+            --) shift; targets+=("$@"); break ;;
+            -*) dot::python::help sync >&2; return 1 ;;
             *) targets+=("$1"); shift ;;
         esac
     done
@@ -179,21 +217,15 @@ dot::python::sync() {
         done < <(dot::python::_list-venvs)
     fi
 
-    local _t=""
+    local _t="" failed=0
     for _t in "${targets[@]}"; do
-        dot::python::ensure-requirements "${force_arg[@]}" "${_t}"
+        dot::python::ensure-requirements "${force_arg[@]}" "${_t}" || failed=1
     done
+    return "${failed}"
 }
 
 # reconcile provisioned venvs with zsh.yaml pip requirements on startup —
 # interactive shells only; stamp-gated so steady-state startup stays cheap.
-if [[ "${DOT_PY_ENSURE_REQUIREMENTS:-1}" -eq 1 && "${DOT_INTERACTIVE:-0}" -eq 1 ]]; then
-    while IFS= read -r _venv; do
-        [[ -n "${_venv}" ]] || continue
-        dot::python::ensure-requirements "${_venv}"
-    done < <(dot::python::_list-venvs)
-    unset _venv
-fi
 
 # pyenv — create a python virtual environment using uv (preferred) or venv module
 #
@@ -255,6 +287,7 @@ dot::python::env() {
 dot::python::env — create a python virtual environment
 
 Usage: dot::python::env [OPTIONS]
+    dot::python env [OPTIONS]
 
 Options:
   -p, --path <dir>      Parent directory for the venv (default: $PWD)
@@ -269,6 +302,9 @@ Options:
   --no-base-requirements       Skip installing zsh.yaml base pip requirements
   -l, --list            List venvs under --path (default: ~/.venv) instead of creating one
   -h, --help            Show this help
+Requires uv or Python with venv. Creates files; --force removes an existing venv.
+Returns 1 on invalid input or creation/install failure. No automatic retries.
+Example: dot::python env --path . --name project --no-base-requirements
 EOF
                 return 0 ;;
             --)
@@ -279,6 +315,9 @@ EOF
                 break ;;
         esac
     done
+
+    [[ $# -eq 0 ]] || { echo 'dot::python::env: unexpected operands' >&2; return 1; }
+    case "${venv_name}" in ''|.|..|*/*) echo 'dot::python::env: name must be a single directory name' >&2; return 1 ;; esac
 
     # List mode — enumerate venvs under --path (default ~/.venv) and return.
     if [[ "${list_mode}" -eq 1 ]]; then
@@ -316,11 +355,16 @@ EOF
 
     local venv_dir="${venv_parent}/${venv_name}"
 
+    if [[ -n "${requirements_file}" && ! -r "${requirements_file}" ]]; then
+        printf 'dot::python::env: requirements file is not readable: %s\n' "${requirements_file}" >&2
+        return 1
+    fi
+
     # Handle existing venv
     if [[ -d "${venv_dir}" ]]; then
         if [[ "${force}" -eq 1 ]]; then
             echo "dot::python::env: removing existing venv: ${venv_dir}"
-            rm -rf "${venv_dir}"
+            rm -rf "${venv_dir}" || return $?
         else
             echo "dot::python::env: venv already exists: ${venv_dir} (use --force to recreate)" >&2
             return 1
@@ -362,7 +406,7 @@ EOF
 
         # Seed with pip/setuptools if requested
         if [[ "${seed}" -eq 1 && -x "${venv_dir}/bin/python" ]]; then
-            "${venv_dir}/bin/python" -m ensurepip --upgrade 2>/dev/null || true
+            "${venv_dir}/bin/python" -m ensurepip --upgrade || return $?
         fi
     fi
 
@@ -372,10 +416,11 @@ EOF
     if [[ "${activate}" -eq 1 ]]; then
         if [[ -f "${venv_dir}/bin/activate" ]]; then
             # shellcheck disable=SC1091
-            source "${venv_dir}/bin/activate"
+            source "${venv_dir}/bin/activate" || return $?
             echo "dot::python::env: activated ${venv_dir}"
         else
             echo "dot::python::env: warning — activate script not found at ${venv_dir}/bin/activate" >&2
+            return 1
         fi
     fi
 
@@ -424,7 +469,8 @@ EOF
     if [[ -n "${packages}" ]]; then
         local pkg_failed=0
         local pkg=""
-        for pkg in ${=packages}; do
+        while IFS= read -r pkg; do
+            [[ -n "${pkg}" ]] || continue
             echo "dot::python::env: installing package: ${pkg}"
             if command -v uv &>/dev/null; then
                 if ! uv pip install --python "${venv_dir}/bin/python" "${pkg}" 2>&1; then
@@ -440,17 +486,27 @@ EOF
                 echo "dot::python::env: no pip available in venv (use --seed to include pip)" >&2
                 return 1
             fi
-        done
+        done < <(printf '%s\n' "${packages}" | tr -s '[:space:]' '\n')
         if [[ "${pkg_failed}" -gt 0 ]]; then
             echo "dot::python::env: ${pkg_failed} package(s) failed to install" >&2
+            return 1
         fi
     fi
 
     # Ensure zsh.yaml base pip requirements are present in the new venv
     if [[ "${no_base_requirements}" -ne 1 && "${DOT_PY_ENSURE_REQUIREMENTS:-1}" -eq 1 ]] \
         && command -v dot::python::ensure-requirements >/dev/null 2>&1; then
-        dot::python::ensure-requirements "${venv_dir}"
+        dot::python::ensure-requirements "${venv_dir}" || return $?
     fi
 
     return 0
 }
+
+dot::python::_initialize
+if [[ "${DOT_PY_ENSURE_REQUIREMENTS:-1}" -eq 1 && "${DOT_INTERACTIVE:-0}" -eq 1 ]]; then
+    while IFS= read -r _venv; do
+        [[ -n "${_venv}" ]] || continue
+        dot::python::ensure-requirements "${_venv}"
+    done < <(dot::python::_list-venvs)
+    unset _venv
+fi

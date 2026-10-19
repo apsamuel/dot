@@ -1,18 +1,42 @@
 # test
 
-The `test/` directory contains smoke tests that verify the environment is correctly configured and that each supported language toolchain is present and functional.
-
-Tests are not a full unit-test suite — they are **presence/compile checks** intended to catch missing dependencies after a fresh bootstrap or OS upgrade.
+The `test/` directory contains isolated module unit tests and separate manual host/toolchain smoke checks. Unit tests exercise real shell functions with fixtures and mocked operational commands; they do not require installing the feature toolchains.
 
 ---
 
-## Running Tests
+## Module Unit Tests
 
 ```bash
-bash test/run.sh
+./test/run_unit.sh
+./test/run_unit.sh -v
+./test/run_unit.sh test_000-a-output
+DOT_TEST_SHELL=bash ./test/run_unit.sh test_000-a-output
 ```
 
-> `run.sh` currently defines a stub `run_tests()` function. Individual test scripts can also be sourced or executed directly.
+The runner discovers `modules/test_*.sh`, starts a separate ZSH process for each suite, and reports TAP results. Its optional filename substring selects a suite. `DOT_TEST_SHELL` selects another installed shell for portable tests; macOS Bash 3.2 is not the portable test target. ZSH builtin-specific assertions are skipped under Bash.
+
+GNU Make 4.4+ also exposes `make test`, `make test-verbose`, and `make test-module MODULE=000-a-output` at the repository root.
+
+### Harness and Isolation
+
+- [framework.sh](framework.sh) provides `describe`, `it`, assertions, `source_module`, and `tap_summary`.
+- [mocks/env.sh](mocks/env.sh) isolates HOME, iCloud, XDG paths and temporary files, and defaults `DOT_DRY_RUN=1`.
+- [mocks/tools.sh](mocks/tools.sh) supplies backend mocks and call tracking. Semantic JSON tests use real `jq` against generated fixtures, never real secrets.
+- Keep operational commands mocked, including absolute-path initialization where relevant. Do not touch real package, credential, SSH, tmux, VM, or history state.
+
+### Adding a Module Test
+
+1. Extend the matching `modules/test_<module>.sh`, or add it only when that family has no suite.
+2. Copy a neighboring suite's portable bootstrap, source the harness and mocks, then load the real module with `source_module` where applicable.
+3. Group cases with `describe`, register them using `it`, and end with `tap_summary`.
+4. Check help equivalence and absence of backend calls; malformed inputs must fail before mutation. Cover repeated parser use, literal `--`, quoted/negative operands, dependency absence, and backend status propagation where relevant.
+5. Run the filtered suite in ZSH and portable cases in a modern Bash, plus syntax checks and scoped ShellCheck.
+
+Detailed command contracts and exceptions are maintained in [modules/README.md](../modules/README.md#command-discovery).
+
+## Manual Smoke Checks
+
+The scripts below inspect the real host or compile installed toolchains; the unit runner does not execute them. VM checks change VM state and require deliberate user action. `run.sh` still contains a stub `run_tests()` function and is not the unit-test entry point.
 
 ---
 
@@ -104,7 +128,7 @@ IVM_APPLE_PROVIDER=invalid python3 ~/.dot/bin/ivm.py backends
 
 ---
 
-## Adding a Test
+## Adding a Manual Smoke Check
 
 1. Create `test/_test_<name>.sh`.
 2. Source a context guard at the top if the test requires a specific execution context.

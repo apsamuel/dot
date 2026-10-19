@@ -33,7 +33,7 @@ describe "001-d-python.sh: dot::python::requirements()"
 test_requirements_reads_yaml() {
     local out=""
     out="$(dot::python::requirements 2>/dev/null)"
-    assert_eq "requests==2.31.0" "${out}"
+    assert_eq "requests==2.31.0" "${out}" 'requirements match configuration'
 }
 it "reads pip requirements from zsh.yaml" test_requirements_reads_yaml
 
@@ -69,7 +69,7 @@ test_stamp_gating_skips_second_run() {
     # Even if the package now looks missing, a matching stamp short-circuits.
     export MOCK_UV_INSTALLED=""
     dot::python::ensure-requirements "${MOCK_VENV}" >/dev/null 2>&1
-    assert_not_called "uv"
+    assert_not_called "uv" 'matching stamp skips uv'
 }
 it "skips uv entirely when the stamp matches" test_stamp_gating_skips_second_run
 
@@ -117,4 +117,43 @@ test_sync_reconciles_named_venv() {
 }
 it "reconciles an explicitly named venv" test_sync_reconciles_named_venv
 
+test_python_help() {
+    local topic="" result=""
+    for topic in requirements ensure-requirements sync env; do
+        result="$(dot::python help "${topic}")" || return 1
+        assert_eq "${result}" "$(dot::python "${topic}" --help)" 'help agrees' || return 1
+    done
+    assert_not_called uv 'help does not install' || return 1
+    assert_not_called yq 'help does not read configuration'
+}
+
+test_python_invalid() {
+    assert_exit_code 1 dot::python ensure-requirements --force || return 1
+    assert_exit_code 1 dot::python env --force --name .. || return 1
+    assert_exit_code 1 dot::python env --path || return 1
+    assert_not_called uv 'invalid input does not install'
+}
+
+test_python_failed_install() {
+    uv() { return 25; }
+    assert_exit_code 1 dot::python ensure-requirements "${MOCK_VENV}" || return 1
+    [[ ! -f "${MOCK_VENV}/.dot-requirements.sha" ]] || return 1
+    assert_exit_code 1 dot::python sync "${MOCK_VENV}"
+}
+
+it 'help bypasses feature tools' test_python_help
+it 'invalid arguments fail before action' test_python_invalid
+it 'failed installation is not stamped or reported as success' test_python_failed_install
+
+test_python_packages() {
+    local parent="${TEST_TMPDIR}/package project"
+    mkdir -p "${parent}"
+    dot::python env --path "${parent}" --packages 'requests[security] pytest==8' --no-base-requirements >/dev/null || return 1
+    mock_call_args uv | grep -F 'requests[security]' >/dev/null || return 1
+    mock_call_args uv | grep -F 'pytest==8' >/dev/null || return 1
+    mock_reset_calls
+    assert_exit_code 1 dot::python env --path "${parent}" --name missing --requirements "${parent}/missing.txt" || return 1
+    assert_not_called uv 'unreadable requirements fail before creation'
+}
+it 'package splitting is portable and requirements are validated before creation' test_python_packages
 tap_summary

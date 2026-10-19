@@ -1,14 +1,18 @@
 # Secrets Management
 
-`dot` provides a simple system for loading and masking secrets (API keys, tokens, passwords) so they are available in your shell without being committed to the repository or appearing in shell history.
+`dot` provides shell functions for loading secrets and explicitly filtering output. Loading does not prevent secrets from appearing in command history, logs, or unfiltered output.
 
 ---
 
 ## How It Works
 
-Secrets are stored in a JSON file **outside the repository** (e.g. `~/.secrets.json` or in iCloud). The `dot::secrets::load` function reads the file and exports each key–value pair as an environment variable. The `dot::secrets::mask` function then replaces the values in any shell output so they are never accidentally printed.
+Secrets are stored **outside the repository** at `$ICLOUD/dot/secrets.json`. The `dot::secrets::load` function reads this file into shell variables without adding export attributes; already-exported variables retain that attribute. It accepts no path argument. The `dot::secrets::mask` function separately reads the same JSON file and filters only the text passed to it.
+
+Both operations require `jq`. Loading validates all names and reads all values before assignment, without generating or sourcing a temporary shell script. Values remain literal, including shell metacharacters. An assignment failure, such as a readonly variable, returns nonzero but can leave earlier assignments applied.
 
 ### Secret File Format
+
+Use a JSON object with string values and valid shell identifier keys. The `_dot_secrets_` prefix is reserved; NUL characters are not supported.
 
 ```json
 {
@@ -22,31 +26,36 @@ Secrets are stored in a JSON file **outside the repository** (e.g. `~/.secrets.j
 
 ## Functions
 
-All functions are defined in `modules/000-a-secrets.sh`.
+The dynamic family is defined in [modules/000-a-secrets.sh](../../modules/000-a-secrets.sh). See [Command Discovery](../../modules/README.md#command-discovery) for the shared interface conventions.
 
-| Function                       | Description                                                                                               |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `dot::secrets::load [path]`    | Loads a JSON secrets file and exports each key as an environment variable. Defaults to `~/.secrets.json`. |
-| `dot::secrets::mask`           | Masks the values of all loaded secrets in subsequent shell output.                                        |
-| `__mask_secrets__`             | Internal function called by `dot::secrets::mask`.                                                         |
-| `dot::secrets::reload-options` | Reloads shell options after secrets are masked.                                                           |
+| Function                       | Description                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `dot::secrets help [command]`  | Shows help without reading credentials.                                                                 |
+| `dot::secrets::load`           | Loads shell variables from `$ICLOUD/dot/secrets.json`.                                                  |
+| `dot::secrets::mask [text...]` | Filters arguments and piped stdin using literal values from the JSON file.                              |
+| `dot::secrets::reload-options` | Applies ZSH options from iCloud configuration, falling back to `DOT_SHELL_DATA`; requires ZSH and `yq`. |
+
+The separate `dot::static::foundation::load-user-secrets` command **exports** loaded values and records names in `DOT_SECRET_KEYS`. Use `dot::static::foundation help load-user-secrets` for its listing options. It is distinct from the legacy `dot::static::foundation::load-secrets` loader.
 
 ---
 
 ## Usage
 
 ```bash
-# Load secrets from the default location (~/.secrets.json)
+# Discover options without reading credentials
+dot::secrets help load
+
+# Load shell variables from $ICLOUD/dot/secrets.json
 dot::secrets::load
 
-# Load from a specific path
-dot::secrets::load ~/iCloud/secrets/work.json
+# Export only variables needed by child processes
+export GITHUB_TOKEN
 
-# Mask secrets in output
-dot::secrets::mask
+# Explicitly filter output
+printf '%s\n' "$GITHUB_TOKEN" | dot::secrets::mask
 
-# Your secret is now available
-echo $GITHUB_TOKEN   # Output will be masked: ****
+# Pass text literally, even when it resembles an option
+dot::secrets mask -- '--help'
 ```
 
 ---
@@ -55,11 +64,13 @@ echo $GITHUB_TOKEN   # Output will be masked: ****
 
 - **Never commit your secrets file.** Add it to `.gitignore` or store it outside the repo entirely.
 - **Use iCloud or a password manager** to sync secrets across machines rather than committing them.
-- **Scope secrets** — use separate JSON files for work and personal secrets and load them conditionally.
-- **Rotate frequently** — the masking system protects against accidental printing, but it is not a substitute for proper secret rotation.
+- **Limit exposure**: export only values required by child processes. Never assume an ordinary `echo`, `env`, or `set` invocation is filtered.
+- **Rotate frequently**: explicit filtering is not a substitute for secret rotation or access controls.
 
 ---
 
 ## How `dot::secrets::mask` Works
 
-`dot::secrets::mask` iterates over all known secret variable names loaded by `dot::secrets::load` and registers a ZSH preexec hook that replaces their values with `****` in command output. This prevents secrets from appearing in `set`, `env`, or accidental `echo $VAR` calls.
+`dot::secrets::mask` replaces nonempty string values from the JSON file, longest first, with `**************`. Matching is literal rather than regular-expression based. The compatibility placeholder `SuperSecretPassword` is also masked. Loading variables first is not required.
+
+Arguments are processed one per line, followed by piped stdin. Filtering is line-oriented, so multiline secrets are not reliably masked. The function installs no hook and does not intercept other commands, shell history, or stderr. Its direct arguments are always literal, including `--help`; request help with `dot::secrets help mask` instead.

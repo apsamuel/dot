@@ -9,15 +9,51 @@
 # we need to source the mac.sh file first
 source "${DOT_MODULES}"/000-c-mac.sh
 
+dot::static::foundation() {
+    local action="${1:-help}"
+    [[ $# -eq 0 ]] || shift
+    case "${action}" in
+        help|-h|--help) dot::static::foundation::help "$@" ;;
+        shell-name) dot::static::foundation::shell-name "$@" ;;
+        secure-string) dot::static::foundation::secure-string "$@" ;;
+        cpu-cores|cpu-brand)
+            case "${1:-}" in -h|--help) dot::static::foundation::help "${action}"; return ;; esac
+            [[ $# -eq 0 ]] || return 2
+            case "${action}" in cpu-cores) dot::static::foundation::cpu-cores ;; *) dot::static::foundation::cpu-brand ;; esac ;;
+        load-user-secrets) dot::static::foundation::load-user-secrets "$@" ;;
+        ssh-identities) dot::static::foundation::ssh-identities "$@" ;;
+        *) printf 'dot::static::foundation: unknown command: %s\n' "${action}" >&2; return 2 ;;
+    esac
+}
+
+dot::static::foundation::help() {
+    case "${1:-}" in
+        ''|help|-h|--help) printf '%s\n' 'Usage: dot::static::foundation <command>' 'Commands: shell-name, secure-string, cpu-cores, cpu-brand, load-user-secrets, ssh-identities'; return ;;
+        load-user-secrets) dot::static::foundation::load-user-secrets --help; return ;;
+        ssh-identities) dot::static::foundation::ssh-identities --help; return ;;
+        shell-name) printf '%s\n' 'Print the current shell command name via ps. No operands; read-only.' ;;
+        secure-string) printf '%s\n' 'Generate a password via pwgen. Optional positive length defaults to 15.' ;;
+        cpu-cores|cpu-brand) printf '%s\n' 'Read CPU information using the existing platform backend. No operands.' ;;
+        *) printf 'dot::static::foundation: unknown help topic\n' >&2; return 2 ;;
+    esac
+    printf 'Usage: dot::static::foundation %s [args]\nExisting dot::static::foundation::%s remains available.\n' "$1" "$1"
+    printf '%s\n' 'Use family help <command> or <command> --help. Help returns 0; invalid input returns 2; backend failures are nonzero.'
+}
+
 function dot::static::foundation::shell-name () {
-    currentShell="$(command ps -p $$ -ocomm=)"
+    case "${1:-}" in -h|--help) dot::static::foundation::help shell-name; return ;; esac
+    [[ $# -eq 0 ]] || return 2
+    local currentShell=""
+    currentShell="$(command ps -p $$ -ocomm=)" || return $?
     echo "$currentShell"
 }
 
 function dot::static::foundation::secure-string () {
-    len="${1:-15}"
-    secureString="$(pwgen -n -y "${len}" 1)"
-    echo "$secureString"
+    case "${1:-}" in -h|--help) dot::static::foundation::help secure-string; return ;; esac
+    local len="${1:-15}"
+    [[ $# -le 1 && "${len}" != *[!0-9]* && "${len}" == *[1-9]* ]] || return 2
+    command -v pwgen >/dev/null 2>&1 || { printf 'dot::static::foundation: pwgen is required\n' >&2; return 1; }
+    pwgen -n -y "${len}" 1
 }
 
 
@@ -57,7 +93,33 @@ function dot::static::foundation::load-zsh-options() {
 
 # Re-assert authoritative history config AFTER oh-my-zsh.sh, whose lib/history.zsh
 # otherwise clobbers HISTSIZE/SAVEHIST back down to its 50000/10000 defaults.
+dot::history() {
+    local action="${1:-help}"
+    [[ $# -eq 0 ]] || shift
+    case "${action}" in
+        help|-h|--help) dot::history::help "$@" ;;
+        rotate) dot::history::rotate "$@" ;;
+        configure) dot::history::configure "$@" ;;
+        *) printf 'dot::history: unknown command: %s\n' "${action}" >&2; return 1 ;;
+    esac
+}
+
+dot::history::help() {
+    case "${1:-}" in
+        ''|help|-h|--help) printf '%s\n' 'Usage: dot::history <rotate|configure>' 'Example: dot::history help rotate'; return ;;
+        rotate) printf '%s\n' 'Usage: dot::history rotate [-f|--force] | dot::history::rotate [-f|--force]' 'Archive HISTFILE (default $HOME/.zsh_history); --force bypasses interval only.' ;;
+        configure) printf '%s\n' 'Usage: dot::history configure | dot::history::configure' 'Apply ZSH history options and sizes, then rotate. No arguments.' ;;
+        *) printf 'dot::history: unknown help topic\n' >&2; return 1 ;;
+    esac
+    printf '%s\n' 'Requires gzip and filesystem tools. Archives use DOT_HIST_ARCHIVE_DIR (default XDG_DATA_HOME/dot/history).' \
+        'Defaults: enabled, interval 86400s, retention 30 snapshots; trimming disabled (KEEP_LINES=0).' \
+        'DOT_HIST_ROTATE_KEEP_LINES > 0 enables live trimming above DOT_HIST_ROTATE_MAX_BYTES (104857600).' \
+        'Help (-h/--help), disabled or absent history returns 0. Invalid config/input and operational failures are nonzero. No retries.'
+}
+
 function dot::history::configure() {
+    case "${1:-}" in -h|--help) dot::history::help configure; return ;; esac
+    [[ $# -eq 0 ]] || { dot::history::help configure >&2; return 1; }
     export HISTFILE="${HISTFILE:-$HOME/.zsh_history}"
     export HISTSIZE="${ZSH_HISTSIZE:-1000000000}"
     export SAVEHIST="${ZSH_SAVEHIST:-1000000000}"  # in-memory HISTSIZE must be >= on-disk SAVEHIST
@@ -79,7 +141,7 @@ function dot::history::_archive-dir() {
 # Keep at most DOT_HIST_ARCHIVE_MAX snapshots; timestamped names sort chronologically.
 function dot::history::_prune-archives() {
     local dir="$1"
-    local keep="${DOT_HIST_ARCHIVE_MAX:-30}"
+    local keep="$((10#${DOT_HIST_ARCHIVE_MAX:-30}))"
     local files=""
     local count=0
     [[ "$keep" -gt 0 ]] || return 0
@@ -87,7 +149,7 @@ function dot::history::_prune-archives() {
     count=$(printf '%s\n' "$files" | grep -c .)
     (( count > keep )) || return 0
     printf '%s\n' "$files" | head -n "$(( count - keep ))" | while IFS= read -r f; do
-        [[ -n "$f" ]] && rm -f "$f" 2>/dev/null
+        [[ -z "$f" ]] || rm -f -- "$f" || return $?
     done
 }
 
@@ -96,22 +158,26 @@ function dot::history::_prune-archives() {
 # Trims at an EXTENDED_HISTORY entry boundary (': <epoch>:<dur>;') so no command is split.
 function dot::history::_trim-live() {
     local histfile="$1"
-    local keep="${DOT_HIST_ROTATE_KEEP_LINES:-0}"
-    local max_bytes="${DOT_HIST_ROTATE_MAX_BYTES:-104857600}"
+    local keep="$((10#${DOT_HIST_ROTATE_KEEP_LINES:-0}))"
+    local max_bytes="$((10#${DOT_HIST_ROTATE_MAX_BYTES:-104857600}))"
     local size=0
     local tmp=""
     [[ "$keep" -gt 0 ]] || return 0
     size=$(/usr/bin/stat -f %z "$histfile" 2>/dev/null || stat -c %s "$histfile" 2>/dev/null || echo 0)
     (( size > max_bytes )) || return 0
 
-    tmp="$(mktemp "${histfile}.XXXXXX")" || return 0
-    tail -n "$keep" "$histfile" | awk '/^: [0-9]+:[0-9]+;/{s=1} s' > "$tmp" 2>/dev/null
-    if [[ -s "$tmp" ]]; then
-        mv "$tmp" "$histfile" 2>/dev/null
-        [[ -n "${ZSH_VERSION:-}" ]] && fc -R "$histfile" 2>/dev/null
-    else
-        rm -f "$tmp" 2>/dev/null
+    tmp="$(mktemp "${histfile}.XXXXXX")" || return $?
+    if ! (set -o pipefail; tail -n "$keep" "$histfile" | awk '/^: [0-9]+:[0-9]+;/{s=1} s' > "$tmp"); then
+        rm -f -- "$tmp"
+        return 1
     fi
+    if [[ -s "$tmp" ]]; then
+        mv "$tmp" "$histfile" || return $?
+        if [[ -n "${ZSH_VERSION:-}" && -o interactive ]]; then fc -R "$histfile" || return $?; fi
+    else
+        rm -f "$tmp" || return $?
+    fi
+    return 0
 }
 
 # Snapshot the full history file to a compressed, timestamped archive (non-destructive),
@@ -119,7 +185,18 @@ function dot::history::_trim-live() {
 # DOT_HIST_ARCHIVE_INTERVAL seconds; pass --force to bypass the interval gate.
 function dot::history::rotate() {
     local force=0
-    [[ "${1:-}" == "--force" || "${1:-}" == "-f" ]] && force=1
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help) dot::history::help rotate; return ;;
+            -f|--force) force=1; shift ;;
+            --) shift; [[ $# -eq 0 ]] || return 1 ;;
+            *) dot::history::help rotate >&2; return 1 ;;
+        esac
+    done
+    local setting=""
+    for setting in "${DOT_HIST_ARCHIVE_INTERVAL:-86400}" "${DOT_HIST_ARCHIVE_MAX:-30}" "${DOT_HIST_ROTATE_KEEP_LINES:-0}" "${DOT_HIST_ROTATE_MAX_BYTES:-104857600}"; do
+        case "${setting}" in *[!0-9]*) printf 'dot::history: numeric settings must be nonnegative integers\n' >&2; return 1 ;; esac
+    done
     [[ "${DOT_HIST_ARCHIVE_ENABLE:-true}" == true ]] || return 0
 
     local histfile="${HISTFILE:-$HOME/.zsh_history}"
@@ -127,32 +204,41 @@ function dot::history::rotate() {
 
     local archive_dir=""
     local stamp=""
-    local interval="${DOT_HIST_ARCHIVE_INTERVAL:-86400}"
+    local interval="$((10#${DOT_HIST_ARCHIVE_INTERVAL:-86400}))"
     local now=0
     local last=0
     local ts=""
     local snapshot=""
+    local temporary="" archive_rc=0
     archive_dir="$(dot::history::_archive-dir)"
     stamp="${archive_dir}/.last-archive"
 
     if (( ! force )) && [[ -f "$stamp" ]]; then
-        now=$(date +%s)
+        now=$(date +%s) || return $?
         last=$(cat "$stamp" 2>/dev/null || echo 0)
         case "$last" in ''|*[!0-9]*) last=0 ;; esac
+        last="$((10#${last}))"
         (( now - last < interval )) && return 0
     fi
 
-    mkdir -p "$archive_dir" 2>/dev/null || return 0
+    command -v gzip >/dev/null 2>&1 || { printf 'dot::history: gzip is required\n' >&2; return 1; }
+    mkdir -p "$archive_dir" || return $?
 
     # Flush the current session to disk so the snapshot is complete.
-    [[ -n "${ZSH_VERSION:-}" ]] && fc -AI 2>/dev/null
+    if [[ -n "${ZSH_VERSION:-}" && -o interactive ]]; then fc -AI || return $?; fi
 
-    ts="$(date +%Y%m%d-%H%M%S)"
-    snapshot="${archive_dir}/zsh_history-${ts}.gz"
-    gzip -c "$histfile" > "$snapshot" 2>/dev/null || return 0
-    date +%s > "$stamp" 2>/dev/null
+    ts="$(date +%Y%m%d-%H%M%S)" || return $?
+    temporary="$(mktemp "${archive_dir}/zsh_history-${ts}.XXXXXX")" || return $?
+    snapshot="${temporary}.gz"
+    gzip -c "$histfile" > "$temporary" || archive_rc=$?
+    if [[ "${archive_rc}" -ne 0 ]]; then
+        rm -f -- "${temporary}"
+        return "${archive_rc}"
+    fi
+    mv -- "${temporary}" "${snapshot}" || return $?
+    date +%s > "$stamp" || return $?
 
-    dot::history::_prune-archives "$archive_dir"
+    dot::history::_prune-archives "$archive_dir" || return $?
     dot::history::_trim-live "$histfile"
 }
 
@@ -243,15 +329,15 @@ function dot::static::foundation::load-secrets () {
 # With no arguments the secrets are loaded. Listing modes print key names only,
 # unless --show-values is given.
 function dot::static::foundation::load-user-secrets () {
-    local secrets_file="${ICLOUD}/dot/secrets.json"
-    local mode="load"
-    local show_values=0
+    local _dot_user_secrets_file="${ICLOUD}/dot/secrets.json"
+    local _dot_user_secrets_mode="load"
+    local _dot_user_secrets_show=0
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            -l|--list-loaded)  mode="list-loaded"; shift ;;
-            -d|--list-defined) mode="list-defined"; shift ;;
-            --show-values)     show_values=1; shift ;;
+            -l|--list-loaded)  _dot_user_secrets_mode="list-loaded"; shift ;;
+            -d|--list-defined) _dot_user_secrets_mode="list-defined"; shift ;;
+            --show-values)     _dot_user_secrets_show=1; shift ;;
             -h|--help)
                 cat <<'EOF'
 Usage: dot::static::foundation::load-user-secrets [-l|--list-loaded] [-d|--list-defined]
@@ -269,6 +355,11 @@ Options:
 
 With no options the secrets are loaded. Values are never printed unless
 --show-values is given.
+Requires jq for loading or listing defined keys. Missing files are a no-op
+when loading. Invalid usage returns 2; invalid JSON/assignments return 1.
+Keys must be shell identifiers; DOT_SECRET_KEYS and _dot_user_secrets_ names
+are reserved. NUL values cannot be represented by shell variables.
+Values are assigned literally, without temporary shell scripts or retries.
 
 Examples:
   dot::static::foundation::load-user-secrets
@@ -284,65 +375,62 @@ EOF
         esac
     done
 
-    if (( show_values )) && [[ "${mode}" == "load" ]]; then
+    if (( _dot_user_secrets_show )) && [[ "${_dot_user_secrets_mode}" == "load" ]]; then
         echo "dot::static::foundation::load-user-secrets: --show-values requires --list-loaded or --list-defined" >&2
         return 2
     fi
 
-    if [[ "${mode}" == "list-loaded" ]]; then
-        local loadedKey=""
-        for loadedKey in "${DOT_SECRET_KEYS[@]}"; do
+    if [[ "${_dot_user_secrets_mode}" == "list-loaded" ]]; then
+        local _dot_user_secrets_loaded=""
+        for _dot_user_secrets_loaded in "${DOT_SECRET_KEYS[@]}"; do
             # printenv returns 0 for set-but-empty values, 1 when unset
-            printenv "${loadedKey}" >/dev/null 2>&1 || continue
-            if (( show_values )); then
-                printf '%s=%s\n' "${loadedKey}" "$(printenv "${loadedKey}")"
+            printenv "${_dot_user_secrets_loaded}" >/dev/null 2>&1 || continue
+            if (( _dot_user_secrets_show )); then
+                printf '%s=%s\n' "${_dot_user_secrets_loaded}" "$(printenv "${_dot_user_secrets_loaded}")"
             else
-                printf '%s\n' "${loadedKey}"
+                printf '%s\n' "${_dot_user_secrets_loaded}"
             fi
         done
         return 0
     fi
 
-    if [[ "${mode}" == "list-defined" ]]; then
-        if [[ ! -f "${secrets_file}" ]]; then
-            echo "dot::static::foundation::load-user-secrets: secrets file not found: ${secrets_file}" >&2
+    if [[ "${_dot_user_secrets_mode}" == "list-defined" ]]; then
+        if [[ ! -f "${_dot_user_secrets_file}" ]]; then
+            echo "dot::static::foundation::load-user-secrets: secrets file not found: ${_dot_user_secrets_file}" >&2
             return 1
         fi
-        if (( show_values )); then
-            jq -r 'to_entries[] | "\(.key)=\(.value)"' "${secrets_file}"
+        command -v jq >/dev/null 2>&1 || { printf 'dot::static::foundation: jq is required\n' >&2; return 1; }
+        if (( _dot_user_secrets_show )); then
+            jq -r 'to_entries[] | "\(.key)=\(.value)"' "${_dot_user_secrets_file}"
         else
-            jq -r 'keys[]' "${secrets_file}"
+            jq -r 'keys[]' "${_dot_user_secrets_file}"
         fi
         return $?
     fi
 
-    if [[ ! -d "${ICLOUD}/dot" || ! -f "${secrets_file}" ]]; then
+    if [[ ! -d "${ICLOUD}/dot" || ! -f "${_dot_user_secrets_file}" ]]; then
         return 0
     fi
 
-    declare -A secrets
-    local secretKeys=()
-    secretKeys=(
-        $(
-            jq -r '. | keys | .[]' "${secrets_file}" | xargs
-        )
-    )
-    export DOT_SECRET_KEYS=("${secretKeys[@]}")
-
-    if [[ ${#secretKeys[@]} -gt 0 ]]; then
-        touch "${TMPDIR}"/.secrets
-        echo "#!/bin/bash" > "${TMPDIR}"/.secrets
+    command -v jq >/dev/null 2>&1 || { printf 'dot::static::foundation: jq is required\n' >&2; return 1; }
+    jq -e 'type == "object" and all(to_entries[]; (.key | test("^[A-Za-z_][A-Za-z0-9_]*$")) and (.key != "DOT_SECRET_KEYS") and (.key | startswith("_dot_user_secrets_") | not) and (.value | tostring | contains("\u0000") | not))' "${_dot_user_secrets_file}" >/dev/null 2>&1 || {
+        printf 'dot::static::foundation: unreadable or invalid secrets JSON\n' >&2; return 1;
+    }
+    local _dot_user_secrets_keys="" _dot_user_secrets_key="" _dot_user_secrets_value=""
+    local -a _dot_user_secrets_names=() _dot_user_secrets_assignments=()
+    _dot_user_secrets_keys="$(jq -r 'keys[]' "${_dot_user_secrets_file}" 2>/dev/null)" || return $?
+    while IFS= read -r _dot_user_secrets_key; do
+        [[ -n "${_dot_user_secrets_key}" ]] || continue
+        _dot_user_secrets_value="$(jq -j --arg key "${_dot_user_secrets_key}" '.[$key]' "${_dot_user_secrets_file}" 2>/dev/null && printf '.')" || return $?
+        _dot_user_secrets_names+=("${_dot_user_secrets_key}")
+        _dot_user_secrets_assignments+=("${_dot_user_secrets_key}=${_dot_user_secrets_value%.}")
+    done <<< "${_dot_user_secrets_keys}"
+    if [[ ${#_dot_user_secrets_assignments[@]} -gt 0 ]]; then
+        typeset -gx -- "${_dot_user_secrets_assignments[@]}" 2>/dev/null || { printf 'dot::static::foundation: variable assignment failed\n' >&2; return 1; }
     fi
-
-    for secretKey in "${secretKeys[@]}"; do
-        secrets[$secretKey]="$(jq --arg secretKey "${secretKey}" -r '.[$secretKey]' "${secrets_file}")"
-        printf 'export %s=%q\n' "${secretKey}" "${secrets[$secretKey]}" >> "${TMPDIR}"/.secrets
-    done
-
-    if [[ -f "${TMPDIR}"/.secrets ]]; then
-        . "${TMPDIR}"/.secrets
-        rm -f "${TMPDIR}"/.secrets
-    fi
+    typeset -ga DOT_SECRET_KEYS
+    DOT_SECRET_KEYS=("${_dot_user_secrets_names[@]}")
+    return 0
 }
 
 # dot::static::foundation::ssh-identities: scan an SSH directory for private key files and return the
@@ -383,6 +471,10 @@ function dot::static::foundation::ssh-identities () {
     local mode="present"
 
     while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --dir|--format|--var|--exclude)
+                [[ $# -ge 2 ]] || { printf 'dot::static::foundation: missing option value\n' >&2; return 2; } ;;
+        esac
         case "$1" in
             -p|--list-present) mode="present"; shift ;;
             -l|--list-loaded)  mode="loaded"; shift ;;
@@ -431,6 +523,9 @@ EOF
         esac
     done
 
+    case "${outVar}" in
+        [0-9]*|*[!a-zA-Z0-9_]*) printf 'dot::static::foundation: invalid variable name\n' >&2; return 2 ;;
+    esac
     if [[ "${format}" != "array" && "${format}" != "string" ]]; then
         echo "dot::static::foundation::ssh-identities: --format must be 'array' or 'string'" >&2
         return 2
@@ -443,18 +538,20 @@ EOF
         fi
         local agentOut=""
         local agentRc=0
-        agentOut="$(ssh-add -l 2>/dev/null)"
-        agentRc=$?
+        command -v ssh-add >/dev/null 2>&1 || { printf 'dot::static::foundation: ssh-add is required\n' >&2; return 1; }
+        agentOut="$(ssh-add -l 2>/dev/null)" || agentRc=$?
         # ssh-add -l: 0 = identities listed, 1 = agent has none, 2 = no agent reachable
         if (( agentRc == 2 )); then
             echo "dot::static::foundation::ssh-identities: cannot reach ssh-agent" >&2
             return 1
         fi
+        (( agentRc <= 1 )) || return "${agentRc}"
         [[ ${agentRc} -eq 0 ]] && printf '%s\n' "${agentOut}"
         return 0
     fi
 
     local -a keys=()
+    if [[ -n "${ZSH_VERSION:-}" ]]; then setopt local_options null_glob; fi
     if [[ -d "${dir}" ]]; then
         local file base
         for file in "${dir}"/*; do

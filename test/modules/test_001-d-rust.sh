@@ -97,4 +97,27 @@ test_dispatch_which() {
 }
 it "routes 'which' to rustup" test_dispatch_which
 
+test_rust_help_without_backend() {
+    local topic="" direct="" result=""
+    dot::rust::_require() { _mock_record require; return 95; }
+    for topic in toolchains targets components versions show use update install uninstall add which doctor; do
+        result="$(dot::rust help "${topic}")" || return 1
+        direct="$(dot::rust "${topic}" --help)" || return 1
+        assert_eq "${result}" "${direct}" "${topic} help agrees" || return 1
+    done
+    assert_not_called require 'help bypasses prerequisite checks' || return 1
+    assert_not_called rustup 'help never calls rustup'
+}
+
+test_rust_forwarding_failures() {
+    rustup() { printf '<%s>\n' "$@"; return 24; }
+    local result="" ret=0
+    result="$(dot::rust install 'quoted toolchain' --profile minimal)" || ret=$?
+    assert_eq 24 "${ret}" 'backend status survives' || return 1
+    assert_eq $'<toolchain>\n<install>\n<quoted toolchain>\n<--profile>\n<minimal>' "${result}" 'backend argv survives' || return 1
+    assert_exit_code 24 dot::rust list all
+}
+
+it 'help is contextual and backend-free' test_rust_help_without_backend
+it 'forwarding and aggregate failures are preserved' test_rust_forwarding_failures
 tap_summary

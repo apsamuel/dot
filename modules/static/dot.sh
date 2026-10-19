@@ -27,44 +27,55 @@ export ICLOUD_SCREENSHOTS="${ICLOUD}/ScreenShots"
 
 . "${DOT_DIRECTORY}"/modules/static/lib/internal.sh
 
+dot::static::shell::help() {
+    local topic="${1:-}" detail=""
+    case "${topic}" in
+        ''|help|-h|--help)
+            printf '%s\n' 'Usage: dot::static::shell [command] [options]' \
+                'Default: version. Commands: version, update, reload, changelog, printenv, secrets,' \
+                'refresh-modules, load-options, add-plugin, add-theme, vendor.' \
+                'Example: dot::static::shell help secrets'
+            return ;;
+        version) detail='Print repository version metadata (git); unavailable fields use existing empty/main defaults. No arguments.' ;;
+        update) detail='Pull dotfiles, then run omz update. Requires git and omz. No arguments; no retries.' ;;
+        reload) detail='Reload via omz. Options: -d, --debug enables tracing. No other arguments.' ;;
+        changelog) detail='Read git history. Default: 7 entries. -a, --all: all entries; -d, --details: last 7 with diffs (takes precedence).' ;;
+        printenv) detail='Print masked DOT environment variables. Requires dot::secrets::mask and its prerequisites. No arguments.' ;;
+        secrets) detail='Manage $ICLOUD/dot/secrets.json using jq. Exactly one action:
+--list: key names; --all: masked values; --details or --export: UNMASKED secrets.
+--get --key NAME: UNMASKED value; --remove --key NAME: delete a key.
+--set, --add, --update --key NAME --value VALUE: write a value. -k/-v are aliases.
+--import: load into the shell. Writes/imports are not retried.
+Example: dot::static::shell secrets --list' ;;
+        refresh-modules) detail='Re-source dynamic modules with existing startup effects. No arguments; requires foundation loader.' ;;
+        load-options) detail='Apply configured ZSH options. No arguments; requires foundation loader and yq.' ;;
+        add-plugin|add-theme) detail='Add a git submodule: exactly one repository URL. Requires git and ZSH directory. Mutates checkout; no retry.' ;;
+        vendor) detail='Forward arguments to scripts/dot-submodule-sync.sh. Actions: status, init, update, list. Options: -n dry-run, -v verbose, -j N jobs. init/update mutate submodules.' ;;
+        *) printf 'dot::static::shell: unknown help topic: %s\n' "${topic}" >&2; return 1 ;;
+    esac
+    printf '%s\n' "Usage: dot::static::shell ${topic} [options]" "${detail}" \
+        "Help: dot::static::shell help ${topic} or dot::static::shell ${topic} --help" \
+        'Help returns 0 without accessing backends. Invalid wrapper input returns 1; backend failures are nonzero.'
+}
+
 function dot::static::shell {
     local command="${1:-version}"
     shift 2>/dev/null || true
 
     case "${command}" in
-        help|-h|--help)
-            cat <<'EOF'
-Usage: dot::static::shell <command> [options]
+        help|-h|--help) dot::static::shell::help "$@"; return ;;
+    esac
+    case "${1:-}" in
+        -h|--help) dot::static::shell::help "${command}"; return ;;
+    esac
+    case "${command}" in
+        version|update|printenv|refresh-modules|load-options)
+            [[ $# -eq 0 ]] || { dot::static::shell::help "${command}" >&2; return 1; } ;;
+        add-plugin|add-theme)
+            [[ $# -eq 1 && -n "$1" ]] || { dot::static::shell::help "${command}" >&2; return 1; } ;;
+    esac
 
-Commands:
-  version                 Print version information
-  update                  Update dotfiles and oh-my-zsh
-  reload [--debug]        Reload shell (via omz reload)
-  changelog [options]     Print git changelog
-  printenv                Print DOT_* environment variables
-  secrets <action>        Manage secrets (placeholder)
-  refresh-modules         Re-source all modules
-  load-options            Load zsh options
-  add-plugin <url>        Add a zsh plugin via git submodule
-  add-theme <url>         Add a zsh theme via git submodule
-  vendor <action> [path]  Manage git submodules (root + nested)
-  help, -h, --help        Show this help message
-
-Vendor actions:
-  status, init, update, list
-  Options: -n (dry-run), -v (verbose), -j <N> (parallel jobs)
-
-Changelog options:
-  --all                   Show full changelog
-  --details               Show changelog with diffs
-
-Secrets actions:
-  --all, --details, --list, --add, --remove,
-  --update, --get, --set, --import, --export
-EOF
-            return 0
-            ;;
-
+    case "${command}" in
         version)
             local branch revision date author
             branch="$(git -C "${DOT_DIRECTORY}" rev-parse --abbrev-ref HEAD 2>/dev/null)"
@@ -80,24 +91,30 @@ EOF
             ;;
 
         update)
-            git -C "${DOT_DIRECTORY}" pull 2>/dev/null || echo "please update your dotfiles manually"
+            command -v git >/dev/null 2>&1 && command -v omz >/dev/null 2>&1 || {
+                printf 'dot::static::shell: git and omz are required\n' >&2; return 1;
+            }
+            git -C "${DOT_DIRECTORY}" pull || return $?
             omz update
             return $?
             ;;
 
         reload)
-            local opt_debug=false
+            local opt_debug=false reload_rc=0 tracing=false
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     -d|--debug) opt_debug=true; shift ;;
-                    *) shift ;;
+                    --) shift; [[ $# -eq 0 ]] || return 1 ;;
+                    *) dot::static::shell::help reload >&2; return 1 ;;
                 esac
             done
 
             if [[ "${opt_debug}" == true ]]; then
+                [[ "$-" != *x* ]] || tracing=true
                 set -x
-                omz reload
-                set +x
+                omz reload || reload_rc=$?
+                [[ "${tracing}" == true ]] || set +x
+                return "${reload_rc}"
             else
                 omz reload
             fi
@@ -110,7 +127,8 @@ EOF
                 case "$1" in
                     -a|--all)     opt_all=true; shift ;;
                     -d|--details) opt_details=true; shift ;;
-                    *) shift ;;
+                    --) shift; [[ $# -eq 0 ]] || return 1 ;;
+                    *) dot::static::shell::help changelog >&2; return 1 ;;
                 esac
             done
 
@@ -129,7 +147,10 @@ EOF
             ;;
 
         printenv)
-            env | grep -E '^DOT' | "${HOME}"/.dot/bin/mask-secret.sh
+            command -v dot::secrets::mask >/dev/null 2>&1 || {
+                printf 'dot::static::shell: dot::secrets::mask is required\n' >&2; return 1;
+            }
+            (set -o pipefail; env | grep -E '^DOT' | dot::secrets::mask)
             return $?
             ;;
 
@@ -139,10 +160,15 @@ EOF
             while [[ $# -gt 0 ]]; do
                 case "$1" in
                     --all|--details|--list|--add|--remove|--update|--get|--set|--import|--export)
+                        [[ -z "${action}" ]] || { printf 'dot::static::shell: choose one secrets action\n' >&2; return 1; }
                         action="${1#--}"; shift ;;
-                    -k|--key)   opt_key="$2"; shift 2 ;;
-                    -v|--value) opt_value="$2"; shift 2 ;;
-                    *) shift ;;
+                    -k|--key|-v|--value)
+                        [[ $# -ge 2 ]] || { printf 'dot::static::shell: missing option value\n' >&2; return 1; }
+                        case "$1" in -k|--key) opt_key="$2" ;; *) opt_value="$2" ;; esac
+                        shift 2 ;;
+                    -h|--help) dot::static::shell::help secrets; return ;;
+                    --) shift; [[ $# -eq 0 ]] || return 1 ;;
+                    *) printf 'dot::static::shell: invalid secrets option\n' >&2; return 1 ;;
                 esac
             done
 
@@ -166,6 +192,7 @@ USAGE
             fi
 
             # guard: require the secrets file for most actions
+            command -v jq >/dev/null 2>&1 || { printf 'dot::static::shell: jq is required\n' >&2; return 1; }
             if [[ "${action}" != "import" && ! -f "${secrets_file}" ]]; then
                 echo "Error: secrets file not found: ${secrets_file}"
                 return 1
@@ -187,7 +214,7 @@ USAGE
                         return 1
                     fi
                     local val
-                    val="$(jq -r --arg k "${opt_key}" '.[$k] // empty' "${secrets_file}")"
+                    val="$(jq -r --arg k "${opt_key}" '.[$k] // empty' "${secrets_file}")" || return $?
                     if [[ -z "${val}" ]]; then
                         echo "Error: key '${opt_key}' not found"
                         return 1
@@ -199,10 +226,10 @@ USAGE
                         echo "Usage: dot::static::shell secrets --set --key <name> --value <val>"
                         return 1
                     fi
-                    local tmp
+                    local tmp=""
                     tmp="$(jq --arg k "${opt_key}" --arg v "${opt_value}" \
-                        '.[$k] = $v' "${secrets_file}")" && \
-                        echo "${tmp}" > "${secrets_file}"
+                        '.[$k] = $v' "${secrets_file}")" || return $?
+                    printf '%s\n' "${tmp}" > "${secrets_file}" || return $?
                     echo "Secret '${opt_key}' set."
                     ;;
                 add)
@@ -214,10 +241,10 @@ USAGE
                         echo "Error: key '${opt_key}' already exists (use --set or --update)"
                         return 1
                     fi
-                    local tmp
+                    local tmp=""
                     tmp="$(jq --arg k "${opt_key}" --arg v "${opt_value}" \
-                        '.[$k] = $v' "${secrets_file}")" && \
-                        echo "${tmp}" > "${secrets_file}"
+                        '.[$k] = $v' "${secrets_file}")" || return $?
+                    printf '%s\n' "${tmp}" > "${secrets_file}" || return $?
                     echo "Secret '${opt_key}' added."
                     ;;
                 update)
@@ -229,10 +256,10 @@ USAGE
                         echo "Error: key '${opt_key}' not found (use --add)"
                         return 1
                     fi
-                    local tmp
+                    local tmp=""
                     tmp="$(jq --arg k "${opt_key}" --arg v "${opt_value}" \
-                        '.[$k] = $v' "${secrets_file}")" && \
-                        echo "${tmp}" > "${secrets_file}"
+                        '.[$k] = $v' "${secrets_file}")" || return $?
+                    printf '%s\n' "${tmp}" > "${secrets_file}" || return $?
                     echo "Secret '${opt_key}' updated."
                     ;;
                 remove)
@@ -244,13 +271,13 @@ USAGE
                         echo "Error: key '${opt_key}' not found"
                         return 1
                     fi
-                    local tmp
-                    tmp="$(jq --arg k "${opt_key}" 'del(.[$k])' "${secrets_file}")" && \
-                        echo "${tmp}" > "${secrets_file}"
+                    local tmp=""
+                    tmp="$(jq --arg k "${opt_key}" 'del(.[$k])' "${secrets_file}")" || return $?
+                    printf '%s\n' "${tmp}" > "${secrets_file}" || return $?
                     echo "Secret '${opt_key}' removed."
                     ;;
                 import)
-                    dot::static::foundation::load-user-secrets
+                    dot::static::foundation::load-user-secrets || return $?
                     echo "Secrets imported into environment (${#DOT_SECRET_KEYS[@]} keys)."
                     ;;
                 export)
@@ -311,8 +338,8 @@ USAGE
             ;;
 
         *)
-            echo "Unknown command: ${command}"
-            echo "Use 'dot::static::shell help' for a list of available commands."
+            echo "Unknown command: ${command}" >&2
+            echo "Use 'dot::static::shell help' for a list of available commands." >&2
             return 1
             ;;
     esac

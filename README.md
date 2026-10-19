@@ -54,6 +54,20 @@ It provides an idempotent, opinionated, modular, and extensible shell environmen
 
 ---
 
+## Shell Command Help
+
+In an initialized `dot` shell, discover commands without invoking their operational backends:
+
+```bash
+dot::output help
+dot::output help pretty
+dot::git diff --help
+dot::static::ssh help create-key
+dot::static::shell help
+```
+
+Existing direct functions remain available, such as `dot::output::pretty --help`. New family dispatchers default to help; `dot::static::shell` still defaults to version output. These are ordinary shell functions, with no new CLI runtime to install. See the [command-family inventory and compatibility boundaries](./modules/README.md#command-discovery) for available families and literal-data exceptions.
+
 ## 📋 Requirements
 
 | Tool        | Version      | Purpose                                          |

@@ -35,6 +35,37 @@ fi
 
 export SSH_KEYS
 
+dot::static::ssh() {
+    local action="${1:-help}"
+    [[ $# -eq 0 ]] || shift
+    case "${action}" in
+        help|-h|--help) dot::static::ssh::help "$@" ;;
+        list-keys) dot::static::ssh::list-keys "$@" ;;
+        create-key) dot::static::ssh::create-key "$@" ;;
+        key-fingerprint) dot::static::ssh::key-fingerprint "$@" ;;
+        key-type) dot::static::ssh::key-type "$@" ;;
+        public-key) dot::static::ssh::public-key "$@" ;;
+        remove-key) dot::static::ssh::remove-key "$@" ;;
+        add-key-to-agent) dot::static::ssh::add-key-to-agent "$@" ;;
+        *) printf 'dot::static::ssh: unknown command: %s\n' "${action}" >&2; return 2 ;;
+    esac
+}
+
+dot::static::ssh::help() {
+    case "${1:-}" in
+        ''|help|-h|--help)
+            printf '%s\n' 'Usage: dot::static::ssh <command> [options]' \
+                'Commands: list-keys, create-key, key-fingerprint, key-type, public-key, remove-key, add-key-to-agent' \
+                'Example: dot::static::ssh help create-key' \
+                'Existing dot::static::ssh::<command> functions remain available.'
+            ;;
+        list-keys|create-key|key-fingerprint|key-type|public-key|remove-key|add-key-to-agent)
+            dot::static::ssh "$1" --help
+            ;;
+        *) printf 'dot::static::ssh: unknown help topic: %s\n' "$1" >&2; return 2 ;;
+    esac
+}
+
 # dot::static::ssh::list-keys: enumerate private SSH keys in a directory and report metadata
 # (name, fingerprint, created/modified timestamps) along with any Host/Match
 # bindings from an ssh config file that reference each key via IdentityFile.
@@ -60,6 +91,10 @@ function dot::static::ssh::list-keys () {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --dir|--config|--exclude|--format)
+                [[ $# -ge 2 ]] || { printf 'dot::static::ssh: %s requires a value\n' "$1" >&2; return 2; } ;;
+        esac
+        case "$1" in
             --dir)     dir="$2"; shift 2 ;;
             --config)  config="$2"; shift 2 ;;
             --exclude) exclude="$2"; shift 2 ;;
@@ -74,6 +109,9 @@ Usage: dot::static::ssh::list-keys [--dir DIR] [--config FILE] [--exclude REGEX]
   --exclude REGEX  Override default key exclusion regex
   --format FMT     Output format: text (default) or json
   -h, --help       Show this help
+Read-only inventory. Missing fingerprints/timestamps become unavailable/unknown.
+Example: dot::static::ssh list-keys --format json
+Returns 2 for usage errors, 1 for a missing directory. No keys or agents are changed.
 EOF
                 return 0
                 ;;
@@ -392,6 +430,10 @@ function dot::static::ssh::create-key () {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --name|--type|--bits|--comment|--dir|--passphrase)
+                [[ $# -ge 2 ]] || { printf 'dot::static::ssh: %s requires a value\n' "$1" >&2; return 2; } ;;
+        esac
+        case "$1" in
             --name)       name="$2"; shift 2 ;;
             --type)       ktype="$2"; shift 2 ;;
             --bits)       bits="$2"; shift 2 ;;
@@ -410,6 +452,9 @@ Usage: dot::static::ssh::create-key --name NAME [--type TYPE] [--bits BITS] [--c
   --dir DIR          Output directory (default: $HOME/.ssh)
   --passphrase PASS  Passphrase (empty string = no passphrase; omit to prompt)
   -h, --help         Show this help
+Requires ssh-keygen. Creates a key pair; never overwrites an existing pair or retries.
+Example: dot::static::ssh create-key --name work --type ed25519
+Returns 2 for invalid input; operational failures are nonzero.
 EOF
                 return 0
                 ;;
@@ -425,13 +470,18 @@ EOF
         return 2
     fi
 
+    case "${name}" in .|..|*/*) printf 'dot::static::ssh::create-key: --name must be a filename\n' >&2; return 2 ;; esac
+    case "${ktype}" in ed25519|rsa|ecdsa) ;; *) printf 'dot::static::ssh::create-key: invalid key type\n' >&2; return 2 ;; esac
+    case "${bits}" in *[!0-9]*|0) printf 'dot::static::ssh::create-key: invalid bit size\n' >&2; return 2 ;; esac
+    [[ -n "${dir}" ]] || { printf 'dot::static::ssh::create-key: empty directory\n' >&2; return 2; }
+    command -v ssh-keygen >/dev/null 2>&1 || { printf 'dot::static::ssh: ssh-keygen is required\n' >&2; return 1; }
     local keypath="${dir}/${name}"
-    if [[ -e "${keypath}" ]]; then
+    if [[ -e "${keypath}" || -L "${keypath}" || -e "${keypath}.pub" || -L "${keypath}.pub" ]]; then
         echo "dot::static::ssh::create-key: key already exists: ${keypath}" >&2
         return 1
     fi
 
-    [[ -d "${dir}" ]] || mkdir -p "${dir}"
+    [[ -d "${dir}" ]] || mkdir -p "${dir}" || return $?
 
     [[ -z "${comment}" ]] && comment="${USER}@$(hostname -s)"
 
@@ -453,8 +503,8 @@ EOF
 
     "${cmd[@]}" || return $?
 
-    chmod 600 "${keypath}"
-    chmod 644 "${keypath}.pub"
+    chmod 600 "${keypath}" || return $?
+    chmod 644 "${keypath}.pub" || return $?
 
     echo "Created: ${keypath}"
     echo "Public:  ${keypath}.pub"
@@ -475,6 +525,10 @@ function dot::static::ssh::key-fingerprint () {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --name|--hash|--dir)
+                [[ $# -ge 2 ]] || { printf 'dot::static::ssh: %s requires a value\n' "$1" >&2; return 2; } ;;
+        esac
+        case "$1" in
             --name) name="$2"; shift 2 ;;
             --hash) hash="$2"; shift 2 ;;
             --dir)  dir="$2"; shift 2 ;;
@@ -485,6 +539,9 @@ Usage: dot::static::ssh::key-fingerprint --name NAME [--hash md5|sha256] [--dir 
   --name NAME   Key filename or full path (required)
   --hash ALGO   sha256 (default) or md5
   --dir DIR     Directory to look in (default: $HOME/.ssh)
+Read-only; requires ssh-keygen. Prefers the public key when available.
+Example: dot::static::ssh key-fingerprint --name work
+Returns 2 for usage errors, 1 for missing keys; backend failures are nonzero.
 EOF
                 return 0
                 ;;
@@ -500,6 +557,7 @@ EOF
         return 2
     fi
 
+    case "${hash}" in md5|sha256) ;; *) printf 'dot::static::ssh: invalid hash algorithm\n' >&2; return 2 ;; esac
     # resolve path
     local keypath="${name}"
     if [[ "${keypath:0:1}" != "/" ]]; then
@@ -527,10 +585,15 @@ function dot::static::ssh::key-type () {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --name|--dir)
+                [[ $# -ge 2 ]] || { printf 'dot::static::ssh: %s requires a value\n' "$1" >&2; return 2; } ;;
+        esac
+        case "$1" in
             --name) name="$2"; shift 2 ;;
             --dir)  dir="$2"; shift 2 ;;
             -h|--help)
                 echo "Usage: dot::static::ssh::key-type --name NAME [--dir DIR]"
+                printf '%s\n' 'Read-only type and bit length; requires ssh-keygen. Default directory: $HOME/.ssh.' 'Example: dot::static::ssh key-type --name work' 'Returns 2 for usage errors, 1 for missing/unreadable keys.'
                 return 0
                 ;;
             *)
@@ -578,10 +641,15 @@ function dot::static::ssh::public-key () {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --name|--dir)
+                [[ $# -ge 2 ]] || { printf 'dot::static::ssh: %s requires a value\n' "$1" >&2; return 2; } ;;
+        esac
+        case "$1" in
             --name) name="$2"; shift 2 ;;
             --dir)  dir="$2"; shift 2 ;;
             -h|--help)
                 echo "Usage: dot::static::ssh::public-key --name NAME [--dir DIR]"
+                printf '%s\n' 'Print the public key only. Default directory: $HOME/.ssh. Requires cat.' 'Example: dot::static::ssh public-key --name work' 'Returns 2 for usage errors, 1 for missing keys; read failures are nonzero.'
                 return 0
                 ;;
             *)
@@ -617,11 +685,16 @@ function dot::static::ssh::remove-key () {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --name|--dir)
+                [[ $# -ge 2 ]] || { printf 'dot::static::ssh: %s requires a value\n' "$1" >&2; return 2; } ;;
+        esac
+        case "$1" in
             --name)  name="$2"; shift 2 ;;
             --dir)   dir="$2"; shift 2 ;;
             --force) force=1; shift ;;
             -h|--help)
                 echo "Usage: dot::static::ssh::remove-key --name NAME [--dir DIR] [--force]"
+                printf '%s\n' 'Deletes the pair after confirmation; --force skips confirmation. No retry.' 'Default directory: $HOME/.ssh. Requires rm. Example: dot::static::ssh remove-key --name retired' 'Returns 2 for usage errors, 1 for missing keys; deletion failures are nonzero.'
                 return 0
                 ;;
             *)
@@ -654,8 +727,8 @@ function dot::static::ssh::remove-key () {
         fi
     fi
 
-    [[ -f "${keypath}" ]] && rm -f "${keypath}"
-    [[ -f "${keypath}.pub" ]] && rm -f "${keypath}.pub"
+    if [[ -f "${keypath}" ]]; then rm -f -- "${keypath}" || return $?; fi
+    if [[ -f "${keypath}.pub" ]]; then rm -f -- "${keypath}.pub" || return $?; fi
     echo "Removed: ${keypath}"
 }
 
@@ -668,11 +741,16 @@ function dot::static::ssh::add-key-to-agent () {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --name|--dir|--lifetime)
+                [[ $# -ge 2 ]] || { printf 'dot::static::ssh: %s requires a value\n' "$1" >&2; return 2; } ;;
+        esac
+        case "$1" in
             --name)     name="$2"; shift 2 ;;
             --dir)      dir="$2"; shift 2 ;;
             --lifetime) lifetime="$2"; shift 2 ;;
             -h|--help)
                 echo "Usage: dot::static::ssh::add-key-to-agent --name NAME [--dir DIR] [--lifetime SECONDS]"
+                printf '%s\n' 'Requires ssh-add and a running agent. Adds a key; uses Keychain on macOS. No retry.' 'Defaults: $HOME/.ssh and agent lifetime. Example: dot::static::ssh add-key-to-agent --name work --lifetime 3600' 'Returns 2 for usage errors, 1 for missing keys; backend failures are nonzero.'
                 return 0
                 ;;
             *)
@@ -695,6 +773,8 @@ function dot::static::ssh::add-key-to-agent () {
         return 1
     fi
 
+    case "${lifetime}" in *[!0-9]*) printf 'dot::static::ssh: lifetime must be seconds\n' >&2; return 2 ;; esac
+    command -v ssh-add >/dev/null 2>&1 || { printf 'dot::static::ssh: ssh-add is required\n' >&2; return 1; }
     local -a cmd=(ssh-add)
     [[ -n "${lifetime}" ]] && cmd+=(-t "${lifetime}")
 

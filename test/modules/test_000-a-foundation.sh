@@ -8,6 +8,8 @@ source "${_test_dir}/../mocks/env.sh"
 source "${_test_dir}/../mocks/tools.sh"
 
 # Source the module under test
+tic() { _mock_record tic; return 97; }
+infocmp() { _mock_record infocmp; return 96; }
 source_module "000-a-foundation.sh"
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
@@ -29,7 +31,7 @@ test_get_shell_name_lowercase() {
     result="$(dot::foundation::shell-name 2>/dev/null)"
     local lower=""
     lower="$(echo "${result}" | tr '[:upper:]' '[:lower:]')"
-    assert_eq "${lower}" "${result}"
+    assert_eq "${lower}" "${result}" "shell name is lowercase"
 }
 
 it "dot::foundation::shell-name returns a string" test_get_shell_name_returns_string
@@ -40,19 +42,19 @@ describe "000-a-foundation.sh: dot::foundation::secure-string()"
 test_get_secure_string_default_length() {
     local result=""
     result="$(dot::foundation::secure-string 2>/dev/null)"
-    assert_defined "result"
+    assert_defined "result" "default password is nonempty"
 }
 
 test_get_secure_string_custom_length() {
     local result=""
     result="$(dot::foundation::secure-string 20 2>/dev/null)"
-    assert_defined "result"
+    assert_defined "result" "custom password is nonempty"
 }
 
 test_get_secure_string_calls_pwgen() {
     mock_reset_calls
     dot::foundation::secure-string 10 > /dev/null 2>&1
-    assert_called "pwgen"
+    assert_called "pwgen" "password generator is invoked"
 }
 
 it "dot::foundation::secure-string returns a value" test_get_secure_string_default_length
@@ -65,7 +67,7 @@ test_get_processor_cores() {
     if typeset -f dot::mac::cpu-cores > /dev/null 2>&1; then
         local result=""
         result="$(dot::mac::cpu-cores 2>/dev/null)"
-        assert_defined "result"
+        assert_defined "result" "core count is nonempty"
     else
         skip "dot::mac::cpu-cores not defined (mac.sh not sourced)"
     fi
@@ -75,7 +77,7 @@ test_get_processor_brand() {
     if typeset -f dot::mac::cpu-brand > /dev/null 2>&1; then
         local result=""
         result="$(dot::mac::cpu-brand 2>/dev/null)"
-        assert_defined "result"
+        assert_defined "result" "brand is nonempty"
     else
         skip "dot::mac::cpu-brand not defined (mac.sh not sourced)"
     fi
@@ -84,4 +86,26 @@ test_get_processor_brand() {
 it "dot::mac::cpu-cores returns a value" test_get_processor_cores
 it "dot::mac::cpu-brand returns a value" test_get_processor_brand
 
+test_foundation_help() {
+    local topic="" result=""
+    for topic in compile-terminfo shell-name secure-string; do
+        result="$(dot::foundation help "${topic}")" || return 1
+        assert_contains "${result}" "dot::foundation::${topic}" 'leaf usage is documented' || return 1
+        dot::foundation "${topic}" --help >/dev/null || return 1
+    done
+    assert_not_called tic 'source and help do not compile' || return 1
+    assert_not_called infocmp 'source and help do not inspect terminfo'
+}
+
+test_foundation_failures() {
+    assert_exit_code 96 dot::foundation compile-terminfo || return 1
+    assert_not_called tic 'failed infocmp prevents compilation' || return 1
+    assert_exit_code 1 dot::foundation secure-string invalid || return 1
+    assert_exit_code 1 dot::foundation secure-string 0 || return 1
+    pwgen() { return 23; }
+    assert_exit_code 23 dot::foundation secure-string 12
+}
+
+it 'foundation help and sourcing avoid tools' test_foundation_help
+it 'foundation rejects bad inputs and propagates failures' test_foundation_failures
 tap_summary
