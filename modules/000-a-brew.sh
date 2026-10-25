@@ -54,8 +54,8 @@ dot::brew::help() {
     update|upgrade) usage='[brew-options...]'; purpose='Update package metadata; upgrade also upgrades packages. Backend arguments are forwarded.' ;;
     list) usage='[-t|--type formula|cask]'; purpose='List packages; default formula.' ;;
     resolve|recipe) usage='[-s cloud|dot] [-t formula|cask|mas|all]'; purpose='Resolve or print a Brewfile; defaults cloud/formula. No Brew prerequisite.' ;;
-    dump) usage='[-t formula|cask|mas|all] [-o file]'; purpose='Overwrite a Brewfile from installed packages; default iCloud formula file for this architecture.' ;;
-    load) usage='[-t formula|cask|mas|all] [-i file]'; purpose='Install a Brewfile; default iCloud formula file for this architecture. No retries.' ;;
+    dump) usage='[-t formula|cask|mas|all] [-o file]'; purpose='Overwrite a Brewfile from installed packages; default repository data/Brewfile for this type and architecture.' ;;
+    load) usage='[-t formula|cask|mas|all] [-i file]'; purpose='Install a Brewfile; default repository data/Brewfile for this type and architecture. No retries.' ;;
     parse-line) usage='<line>'; purpose='Print the operation and target from literal Brewfile text. Use family help; no Brew prerequisite.' ;;
     info) usage='<package> [brew-options...]'; purpose='Print package information as JSON.' ;;
     bottle-files) usage='<package>'; purpose='Download a bottle and list its archive paths (requires tar).' ;;
@@ -63,6 +63,9 @@ dot::brew::help() {
   esac
   printf '%s\n' "${purpose}"
   printf 'Usage: dot::brew %s %s\n       dot::brew::%s %s\n' "$1" "${usage}" "$1" "${usage}"
+  case "$1" in
+    dump|load) printf '%s\n' 'Default: <root>/data/Brewfile[.type].<arch>; formula omits .type. Root: DOT_DIR, then DOT_DIRECTORY, then DOT_ROOT, then $HOME/.dot. Explicit -o/-i overrides the default.' ;;
+  esac
   printf '%s\n' 'Options: -h, --help (except literal parse-line). Operations require brew unless noted; help does not.' 'Invalid input returns 1; backend failures are nonzero. No automatic installation of prerequisites.'
   printf 'Example: dot::brew help %s\n' "$1"
 }
@@ -305,7 +308,8 @@ function dot::brew::dump() {
   local output_file=""
   local usage="Usage: dot::brew::dump [-t type] [-o file]
   -t type   Dump type: formula (default), cask, mas, all
-  -o file   Output file path (default: \${ICLOUD}/dot/Brewfile[.type].\${arch})"
+  -o file   Output file path (default: <root>/data/Brewfile[.type].<arch>)
+  Root: DOT_DIR, then DOT_DIRECTORY, then DOT_ROOT, then \$HOME/.dot"
 
   local OPTIND=1 OPTARG="" opt=""
   while getopts "t:o:h" opt; do
@@ -318,24 +322,25 @@ function dot::brew::dump() {
   done
 
   local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
+  local base_dir="${DOT_DIR:-${DOT_DIRECTORY:-${DOT_ROOT:-${HOME}/.dot}}}/data"
   local flags=(--force)
 
   case "$dump_type" in
     formula|brew)
       flags+=(--formula --taps)
-      [[ -z "$output_file" ]] && output_file="${ICLOUD}/dot/Brewfile.${arch}"
+      [[ -z "$output_file" ]] && output_file="${base_dir}/Brewfile.${arch}"
       ;;
     cask)
       flags+=(--cask)
-      [[ -z "$output_file" ]] && output_file="${ICLOUD}/dot/Brewfile.cask.${arch}"
+      [[ -z "$output_file" ]] && output_file="${base_dir}/Brewfile.cask.${arch}"
       ;;
     mas)
       flags+=(--mas)
-      [[ -z "$output_file" ]] && output_file="${ICLOUD}/dot/Brewfile.mas.${arch}"
+      [[ -z "$output_file" ]] && output_file="${base_dir}/Brewfile.mas.${arch}"
       ;;
     all)
       flags+=(--formula --taps --cask --mas)
-      [[ -z "$output_file" ]] && output_file="${ICLOUD}/dot/Brewfile.all.${arch}"
+      [[ -z "$output_file" ]] && output_file="${base_dir}/Brewfile.all.${arch}"
       ;;
     *)
       echo "Unknown dump type: $dump_type" >&2
@@ -377,7 +382,8 @@ function dot::brew::load() {
   local input_file=""
   local usage="Usage: dot::brew::load [-t type] [-i file]
   -t type   Load type: formula (default), cask, mas, all
-  -i file   Input Brewfile path (default: \${ICLOUD}/dot/Brewfile[.type].\${arch})"
+  -i file   Input Brewfile path (default: <root>/data/Brewfile[.type].<arch>)
+  Root: DOT_DIR, then DOT_DIRECTORY, then DOT_ROOT, then \$HOME/.dot"
 
   local OPTIND=1 OPTARG="" opt=""
   while getopts "t:i:h" opt; do
@@ -391,22 +397,23 @@ function dot::brew::load() {
 
   local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
 
+  local base_dir="${DOT_DIR:-${DOT_DIRECTORY:-${DOT_ROOT:-${HOME}/.dot}}}/data"
   case "$load_type" in
     formula|brew)
-      [[ -z "$input_file" ]] && input_file="${ICLOUD}/dot/Brewfile.${arch}"
+      [[ -z "$input_file" ]] && input_file="${base_dir}/Brewfile.${arch}"
       ;;
     cask)
       if [[ "$OPERATING_SYSTEM" == "darwin" && "$CPU_ARCHITECTURE" == "i386" ]]; then
         echo "Skipping cask install on i386 architecture"
         return
       fi
-      [[ -z "$input_file" ]] && input_file="${ICLOUD}/dot/Brewfile.cask.${arch}"
+      [[ -z "$input_file" ]] && input_file="${base_dir}/Brewfile.cask.${arch}"
       ;;
     mas)
-      [[ -z "$input_file" ]] && input_file="${ICLOUD}/dot/Brewfile.mas.${arch}"
+      [[ -z "$input_file" ]] && input_file="${base_dir}/Brewfile.mas.${arch}"
       ;;
     all)
-      [[ -z "$input_file" ]] && input_file="${ICLOUD}/dot/Brewfile.all.${arch}"
+      [[ -z "$input_file" ]] && input_file="${base_dir}/Brewfile.all.${arch}"
       ;;
     *)
       echo "Unknown load type: $load_type" >&2
