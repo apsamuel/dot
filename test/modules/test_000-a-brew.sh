@@ -38,7 +38,41 @@ test_brew_forwarding() {
     assert_exit_code 24 dot::brew upgrade
 }
 
+test_brew_dump() {
+    brew() {
+        local argument=""
+        for argument in "$@"; do
+            [[ "${argument}" != --describe ]] || return 1
+        done
+        printf '<%s>\n' "$@"
+    }
+    local result="" dump_type="" expected="" suffix=""
+    result="$(dot::brew::dump)" || return 1
+    expected="$(printf '<%s>\n' bundle dump --force --formula --taps "--file=${ICLOUD}/dot/Brewfile.arm64")"
+    assert_eq "${expected}" "${result}" 'default dump omits disabled flag' || return 1
+    for dump_type in formula cask mas all; do
+        local -a type_flags=()
+        suffix=".${dump_type}"
+        case "${dump_type}" in
+            formula) type_flags=(--formula --taps); suffix="" ;;
+            cask) type_flags=(--cask) ;;
+            mas) type_flags=(--mas) ;;
+            all) type_flags=(--formula --taps --cask --mas) ;;
+        esac
+        result="$(dot::brew dump -t "${dump_type}")" || return 1
+        expected="$(printf '<%s>\n' bundle dump --force "${type_flags[@]}" "--file=${ICLOUD}/dot/Brewfile${suffix}.arm64")"
+        assert_eq "${expected}" "${result}" "${dump_type} dump preserves flags and default path" || return 1
+    done
+    result="$(dot::brew::dump -t cask -o "${TEST_TMPDIR}/quoted output/Brewfile")" || return 1
+    expected="$(printf '<%s>\n' bundle dump --force --cask "--file=${TEST_TMPDIR}/quoted output/Brewfile")"
+    assert_eq "${expected}" "${result}" 'custom output remains one argument' || return 1
+    brew() { return 24; }
+    assert_exit_code 24 dot::brew::dump || return 1
+    assert_exit_code 24 dot::brew dump -t cask
+}
+
 it 'contextual help bypasses brew' test_brew_help
 it 'type and architecture options are validated' test_brew_options
 it 'forwarded arguments and failures survive' test_brew_forwarding
+it 'dump uses supported flags and preserves paths and failures' test_brew_dump
 tap_summary

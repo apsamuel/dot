@@ -318,7 +318,7 @@ function dot::brew::dump() {
   done
 
   local arch="${CPU_ARCHITECTURE:-$(uname -m)}"
-  local flags=(--describe --force)
+  local flags=(--force)
 
   case "$dump_type" in
     formula|brew)
