@@ -1,9 +1,7 @@
+# Password manager that keeps all passwords secure behind one password
+cask "1password"
 # Command-line interface for 1Password
 cask "1password-cli"
-# Agent orchestration platform
-cask "antigravity"
-# Terminal interface for Antigravity agents
-cask "antigravity-cli"
 # Terminal-based AI coding assistant
 cask "claude-code"
 # Semantic code analysis engine
@@ -20,6 +18,8 @@ cask "crystalfetch"
 cask "dash"
 # Browser for SQLite databases
 cask "db-browser-for-sqlite"
+# Developer platform
+cask "dotnet-sdk"
 cask "font-caskaydia-mono-nerd-font"
 cask "font-fira-code-nerd-font"
 cask "font-hack-nerd-font"
@@ -46,6 +46,8 @@ cask "google-gemini"
 cask "kitty"
 # Free cross-platform office suite, fresh version
 cask "libreoffice"
+# Discover, download, and run local LLMs
+cask "lm-studio"
 # Visual diff and merge tool
 cask "meld"
 cask "microsoft-remote-desktop"

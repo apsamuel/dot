@@ -111,8 +111,6 @@ brew "diff-so-fancy"
 brew "direnv"
 # Trace a chain of DNS servers to the source
 brew "dnstracer"
-# Bash, Zsh and Fish completion for Docker
-brew "docker-completion"
 # Platform keystore credential helper for Docker
 brew "docker-credential-helper"
 # Text processing system for reStructuredText
@@ -147,10 +145,6 @@ brew "freeimage"
 brew "freerdp"
 # GNU awk utility
 brew "gawk"
-# Open-source, cross-platform JavaScript runtime environment
-brew "node"
-# Interact with Google Gemini AI models from the command-line
-brew "gemini-cli"
 # GitHub command-line tool
 brew "gh"
 # Library for JPEG-2000 image manipulation
@@ -281,6 +275,8 @@ brew "lolcat"
 brew "mactop"
 # Utility for directing compilation
 brew "make"
+# Open-source, cross-platform JavaScript runtime environment
+brew "node"
 # CLI for Node.js style checker and lint tool for Markdown files
 brew "markdownlint-cli"
 # Mac App Store command-line interface
